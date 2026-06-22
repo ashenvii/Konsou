@@ -15,9 +15,9 @@
  */
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { open } from "@tauri-apps/plugin-shell";
 import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
 import { isTauri, isAndroidUA } from "@/lib/platform";
+import { openExternal } from "@/lib/openExternal";
 import { generateVerifier, generateChallenge, generateState } from "./pkce";
 import {
   saveTokens,
@@ -143,7 +143,7 @@ async function desktopOAuth(verifier: string, challenge: string, state: string):
   const port = await invoke<number>("oauth_listen");
   const redirectUri = `http://localhost:${port}/callback`;
 
-  await open(buildAuthUrl(DESKTOP_CLIENT_ID, redirectUri, challenge, state).toString());
+  await openExternal(buildAuthUrl(DESKTOP_CLIENT_ID, redirectUri, challenge, state).toString());
 
   const callbackPath = await new Promise<string>((resolve, reject) => {
     let done = false;
@@ -190,7 +190,7 @@ async function androidOAuth(verifier: string, challenge: string, state: string):
     throw new Error("VITE_GOOGLE_ANDROID_CLIENT_ID is not set. Add it to your .env file.");
   }
 
-  await open(
+  await openExternal(
     buildAuthUrl(ANDROID_CLIENT_ID, ANDROID_REDIRECT_URI, challenge, state).toString(),
   );
 
