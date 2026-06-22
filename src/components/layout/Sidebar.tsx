@@ -3,8 +3,7 @@ import { Icon } from "@/components/ui/Icon";
 import { useNotificationStore } from "@/lib/store/notificationStore";
 import { useAuthStore } from "@/lib/store/authStore";
 import { NAV_ITEMS } from "./navConfig";
-
-const APP_VERSION = "0.1.0";
+import { APP_VERSION } from "@/lib/updater";
 
 export function Sidebar() {
   const unread = useNotificationStore((s) => s.unread);
