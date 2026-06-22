@@ -1,66 +1,56 @@
-/**
- * Lightweight update checker using the GitHub releases API.
- * No signing keys or tauri-plugin-updater required — just fetch.
- *
- * Set VITE_GITHUB_REPO=owner/repo in your .env to enable.
- * When a newer tag is found, returns the release info so the caller
- * can show a toast / prompt. Actual download opens the release page
- * in the browser.
- */
+import { isTauri } from "@/lib/platform";
 
-const GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO as string | undefined;
 export const APP_VERSION = "0.1.0";
 
-export interface ReleaseInfo {
+export interface PendingUpdate {
   version: string;
-  url: string;
-  notes: string | null;
+  install: () => Promise<void>;
 }
 
-/** Compare semver strings. Returns true if `a` is newer than `b`. */
-function isNewer(a: string, b: string): boolean {
-  const parse = (v: string) => v.replace(/^v/, "").split(".").map(Number);
-  const [aMaj, aMin, aPatch] = parse(a);
-  const [bMaj, bMin, bPatch] = parse(b);
-  if (aMaj !== bMaj) return aMaj > bMaj;
-  if (aMin !== bMin) return aMin > bMin;
-  return aPatch > bPatch;
+// Held after download so repeated checks return immediately
+let pending: PendingUpdate | null = null;
+
+/**
+ * Check GitHub for a newer release, download it silently, return it when ready.
+ * Throws on network/API errors so callers can surface them in UI if needed.
+ * Returns null if already up to date.
+ */
+export async function checkForUpdate(): Promise<PendingUpdate | null> {
+  if (pending) return pending;
+  if (!isTauri()) return null;
+
+  const { check } = await import("@tauri-apps/plugin-updater");
+  const { relaunch } = await import("@tauri-apps/plugin-process");
+
+  const update = await check();
+  if (!update?.available) return null;
+
+  // Download silently in the background — no progress UI
+  await update.download();
+
+  pending = {
+    version: update.version,
+    install: async () => {
+      await update.install();
+      await relaunch();
+    },
+  };
+
+  return pending;
 }
 
 /**
- * Check GitHub for a newer release.
- * Returns the release info if an update is available, null otherwise.
- * Silently swallows network/parse errors — update checks must never break the app.
+ * Called once on startup. Silently checks and downloads any update, then calls
+ * onReady so the caller can show a "ready to install" notification.
+ * Swallows all errors — update checks must never crash the app.
  */
-export async function checkForUpdate(): Promise<ReleaseInfo | null> {
-  if (!GITHUB_REPO) return null;
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
-      { headers: { Accept: "application/vnd.github+json" } },
-    );
-    if (!res.ok) return null;
-    const data = await res.json() as {
-      tag_name?: string;
-      html_url?: string;
-      body?: string;
-    };
-    const latest = data.tag_name?.replace(/^v/, "");
-    if (!latest || !isNewer(latest, APP_VERSION)) return null;
-    return {
-      version: latest,
-      url: data.html_url ?? `https://github.com/${GITHUB_REPO}/releases`,
-      notes: data.body?.split("\n")[0] ?? null,
-    };
-  } catch {
-    return null;
-  }
-}
-
-/** Manually trigger a check and open the release page if an update exists. */
-export async function checkAndNotify(
-  onUpdate: (info: ReleaseInfo) => void,
+export async function autoCheckAndDownload(
+  onReady: (update: PendingUpdate) => void,
 ): Promise<void> {
-  const info = await checkForUpdate();
-  if (info) onUpdate(info);
+  try {
+    const u = await checkForUpdate();
+    if (u) onReady(u);
+  } catch {
+    // Silent
+  }
 }

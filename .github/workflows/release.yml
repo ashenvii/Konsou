@@ -45,7 +45,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: app/package-lock.json
 
       - name: Set up Rust (stable)
         uses: dtolnay/rust-toolchain@stable
@@ -55,9 +55,10 @@ jobs:
       - name: Cache Rust build artefacts
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri -> target
+          workspaces: app/src-tauri -> target
 
       - name: Install JS dependencies
+        working-directory: app
         run: npm ci
 
       - name: Build and publish release
@@ -73,6 +74,8 @@ jobs:
           # Optional: your Ko-fi and GitHub links shown in Settings → About
           VITE_KOFI_URL: ${{ vars.VITE_KOFI_URL }}
           VITE_GITHUB_URL: ${{ vars.VITE_GITHUB_URL }}
+          # Tauri updater signing — required for silent auto-update to work
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           # macOS code signing (optional — app still works unsigned)
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -81,7 +84,7 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
-          projectPath: .
+          projectPath: ./app
           args: --target ${{ matrix.target }}
           tagName: ${{ github.ref_name }}
           releaseName: "Konsou ${{ github.ref_name }}"

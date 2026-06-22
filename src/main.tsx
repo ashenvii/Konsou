@@ -8,8 +8,7 @@ import { useListStore } from "@/lib/store/listStore";
 import { useNotificationStore } from "@/lib/store/notificationStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { syncManager } from "@/lib/sync/syncManager";
-import { checkAndNotify } from "@/lib/updater";
-import { openExternal } from "@/lib/openExternal";
+import { autoCheckAndDownload } from "@/lib/updater";
 import { toast } from "@/lib/store/toastStore";
 
 import "./styles/tokens.css";
@@ -46,13 +45,13 @@ async function bootstrap(): Promise<void> {
     void useNotificationStore
       .getState()
       .runDetection(useListStore.getState().entries);
-    // Check for app updates silently in background (no-op if VITE_GITHUB_REPO not set).
-    void checkAndNotify((info) => {
+    // Check for app updates silently; download in background; notify when ready to install.
+    void autoCheckAndDownload((update) => {
       toast.action({
-        message: `Konsou v${info.version} is available`,
-        actionLabel: "Download",
-        duration: 10_000,
-        onAction: () => void openExternal(info.url),
+        message: `Konsou v${update.version} downloaded — ready to install`,
+        actionLabel: "Update Now",
+        duration: 0, // persist until dismissed
+        onAction: () => void update.install(),
       });
     });
   } catch (err) {

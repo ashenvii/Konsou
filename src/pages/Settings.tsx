@@ -9,7 +9,7 @@ import { Text } from "@/components/ui/Text";
 import { isTauri } from "@/lib/platform";
 import { openExternal } from "@/lib/openExternal";
 import { syncManager } from "@/lib/sync/syncManager";
-import { checkAndNotify, APP_VERSION } from "@/lib/updater";
+import { checkForUpdate, APP_VERSION } from "@/lib/updater";
 import { toast } from "@/lib/store/toastStore";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useListStore } from "@/lib/store/listStore";
@@ -100,17 +100,21 @@ export function Settings() {
 
   const checkUpdate = async () => {
     setChecking(true);
-    let found = false;
-    await checkAndNotify((info) => {
-      found = true;
-      toast.action({
-        message: `v${info.version} is available`,
-        actionLabel: "Download",
-        duration: 8000,
-        onAction: () => void openExternal(info.url),
-      });
-    });
-    if (!found) toast.show("Konsou is up to date");
+    try {
+      const update = await checkForUpdate();
+      if (update) {
+        toast.action({
+          message: `v${update.version} ready — click to restart`,
+          actionLabel: "Update Now",
+          duration: 0,
+          onAction: () => void update.install(),
+        });
+      } else {
+        toast.show("Konsou is up to date");
+      }
+    } catch {
+      toast.error("Update check failed — try again later");
+    }
     setChecking(false);
   };
 
