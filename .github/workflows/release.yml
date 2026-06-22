@@ -17,10 +17,6 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-          - os: macos-latest
-            target: aarch64-apple-darwin   # Apple Silicon
-          - os: macos-13
-            target: x86_64-apple-darwin    # Intel Mac
           - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
 
@@ -75,10 +71,8 @@ jobs:
           VITE_GITHUB_URL: ${{ vars.VITE_GITHUB_URL }}
           # Tauri updater signing — required for silent auto-update to work
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          # NOTE: macOS ships UNSIGNED (no Apple Developer cert). Users right-click → Open
-          # on first launch (documented in the release notes). Do NOT add APPLE_* env vars
-          # here unless real signing secrets exist — tauri-action will attempt `security
-          # import` on an empty cert and fail the macOS build.
+          # Targets: Windows + Linux only (macOS intentionally dropped — no Apple hardware/cert).
+          # Builds are unsigned; that's expected for a free, self-distributed app.
         with:
           projectPath: .
           args: --target ${{ matrix.target }}
@@ -94,12 +88,10 @@ jobs:
             ### Download
             | Platform | File |
             |---|---|
-            | Windows | `.msi` installer |
-            | macOS (Apple Silicon) | `.dmg` |
-            | macOS (Intel) | `.dmg` |
-            | Linux | `.AppImage` or `.deb` |
+            | **Windows** | `.exe` installer (recommended) or `.msi` |
+            | Linux | `.AppImage` (portable) or `.deb` |
 
-            > **First time installing on macOS?** Right-click the `.dmg` → Open, then confirm you want to open it. This is a one-time step for apps not yet in the Mac App Store.
+            > **Windows SmartScreen warning?** Click **More info → Run anyway**. This appears for new apps that aren't yet code-signed; it's expected and safe.
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: true

@@ -4,14 +4,14 @@
 
 # Konsou
 
-**Offline-first anime tracker for Windows, macOS, and Linux.**
+**Offline-first anime tracker for Windows and Linux** _(Android coming soon)_.
 
 Track what you're watching. Get notified when sequels drop.  
 Your list lives on your device — optionally synced through your own Google Drive.
 
 [![GitHub release](https://img.shields.io/github/v/release/ashenvii/Konsou?style=flat-square&color=7c3aed)](https://github.com/ashenvii/Konsou/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square)](#download)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey?style=flat-square)](#download)
 
 </div>
 
@@ -23,12 +23,10 @@ Go to **[Releases](https://github.com/ashenvii/Konsou/releases/latest)** and gra
 
 | Platform | File |
 |---|---|
-| **Windows** | `Konsou_x.x.x_x64_en-US.msi` |
-| **macOS (Apple Silicon)** | `Konsou_x.x.x_aarch64.dmg` |
-| **macOS (Intel)** | `Konsou_x.x.x_x64.dmg` |
-| **Linux** | `Konsou_x.x.x_amd64.AppImage` or `.deb` |
+| **Windows** | `Konsou_x.x.x_x64-setup.exe` (recommended) or `.msi` |
+| **Linux** | `Konsou_x.x.x_amd64.AppImage` (portable) or `.deb` |
 
-> **macOS note:** Right-click the `.dmg` → Open → Confirm. One-time step for apps not yet in the Mac App Store.
+> **Windows SmartScreen warning?** Click **More info → Run anyway**. This is expected for new apps that aren't code-signed yet — it's safe.
 
 ---
 
