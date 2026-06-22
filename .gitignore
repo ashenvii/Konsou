@@ -1,0 +1,38 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build output
+dist
+dist-ssr
+*.local
+*.tsbuildinfo
+
+# Rust / Tauri
+src-tauri/target
+src-tauri/gen/schemas
+
+# Claude Code session memory
+.claude/
+
+# Editor / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+Thumbs.db
+
+# Env / secrets — never commit OAuth client IDs or Sentry tokens
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local SQLite databases
+*.db
+*.db-shm
+*.db-wal

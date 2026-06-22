@@ -1,0 +1,122 @@
+/* === KONSOU DESIGN TOKENS === */
+/* Color format: oklch(lightness% chroma hue). Hex equivalents in comments. */
+/* Authoritative source: "Konsou — UI & Design System.md" */
+
+:root {
+  /* ── Surfaces ─────────────────────────────────────────────── */
+  --color-base:          oklch(8.5% 0.012 280);   /* #0E0D12 — violet-cast near-black */
+  --color-surface:       oklch(11.5% 0.015 280);  /* #161420 — nav, sidebar, sheets */
+  --color-surface-2:     oklch(15.5% 0.022 280);  /* #1E1B2E — cards, inputs */
+  --color-surface-3:     oklch(18.5% 0.028 280);  /* #252238 — hover rows, tooltips */
+  --color-border:        oklch(100% 0 0 / 8%);    /* rgba(255,255,255,0.08) */
+  --color-border-strong: oklch(100% 0 0 / 16%);   /* rgba(255,255,255,0.16) */
+
+  /* ── Text ─────────────────────────────────────────────────── */
+  --color-text-primary:   oklch(100% 0 0 / 87%);  /* never pure white — prevents OLED halation */
+  --color-text-secondary: oklch(100% 0 0 / 60%);
+  --color-text-tertiary:  oklch(100% 0 0 / 38%);
+
+  /* ── Accent — violet (default; overridden by [data-accent]) ── */
+  --color-accent:      oklch(52% 0.27 290);        /* #7C5CFC */
+  --color-accent-glow: oklch(65% 0.18 290);        /* #A78BFA */
+  --color-accent-dim:  oklch(52% 0.27 290 / 15%);
+  --color-accent-h: 290;
+  --color-accent-l: 52%;
+  --color-accent-c: 0.27;
+
+  /* ── Status — semantic, not traffic-light ────────────────── */
+  --color-status-watching:   oklch(72% 0.12 165);  /* #4CC9A4 — teal, active/alive */
+  --color-status-completed:  oklch(52% 0.27 290);  /* #7C5CFC — violet, significant event */
+  --color-status-plan_to_watch: oklch(62% 0.15 250); /* #5B9CF6 — cool blue, aspirational */
+  --color-status-on_hold:    oklch(72% 0.16 60);   /* #F0A047 — amber, paused/warm */
+  --color-status-dropped:    oklch(64% 0.20 295);  /* #C77DFF — soft violet-rose */
+  --color-status-rewatching: oklch(76% 0.12 165);  /* lighter teal — revisiting */
+
+  /* ── Semantic ─────────────────────────────────────────────── */
+  --color-success: oklch(72% 0.12 165);   /* #4CC9A4 */
+  --color-warning: oklch(72% 0.16 60);    /* #F0A047 */
+  --color-error:   oklch(55% 0.20 10);    /* #E8507A — muted rose, not harsh red */
+  --color-info:    oklch(62% 0.15 250);   /* #5B9CF6 */
+
+  /* ── Typography ───────────────────────────────────────────── */
+  --font-sans: "Plus Jakarta Sans", "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+
+  --text-2xs:  10px;  --leading-2xs:  14px;
+  --text-xs:   11px;  --leading-xs:   15px;
+  --text-sm:   12px;  --leading-sm:   16px;
+  --text-base: 13px;  --leading-base: 18px;
+  --text-lg:   15px;  --leading-lg:   22px;
+  --text-xl:   18px;  --leading-xl:   26px;
+  --text-2xl:  24px;  --leading-2xl:  32px;
+  --text-3xl:  32px;  --leading-3xl:  40px;
+
+  /* ── Spacing (4px base unit) ──────────────────────────────── */
+  --space-1:   4px;   --space-2:   8px;   --space-3:  12px;
+  --space-4:  16px;   --space-5:  20px;   --space-6:  24px;
+  --space-8:  32px;   --space-10: 40px;   --space-12: 48px;
+  --space-16: 64px;   --space-20: 80px;
+
+  /* ── Radius ───────────────────────────────────────────────── */
+  --radius-sm:     4px;
+  --radius-md:     8px;
+  --radius-lg:    12px;
+  --radius-xl:    16px;
+  --radius-sheet: 28px;
+  --radius-full:  9999px;
+
+  /* ── Motion ───────────────────────────────────────────────── */
+  --duration-instant: 100ms;
+  --duration-fast:    150ms;
+  --duration-normal:  200ms;
+  --duration-push:    220ms;
+  --duration-sheet:   300ms;
+  --duration-hero:    400ms;
+
+  --ease-out:      cubic-bezier(0.0, 0.0, 0.2, 1.0);
+  --ease-in:       cubic-bezier(0.4, 0.0, 1.0, 1.0);
+  --ease-standard: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1.0);
+
+  /* ── Layout ───────────────────────────────────────────────── */
+  --sidebar-width:      256px;
+  --panel-width:        320px;
+  --nav-height:         80px;
+  --topbar-height:      56px;
+  --content-padding-sm: 16px;
+  --content-padding-lg: 24px;
+
+  /* ── Elevation (derived) ─────────────────────────────────── */
+  --shadow-card:     0 4px 16px oklch(0% 0 0 / 40%);
+  --shadow-card-hi:  0 6px 24px oklch(0% 0 0 / 50%);
+  --shadow-sheet:    0 -8px 40px oklch(0% 0 0 / 55%);
+  --shadow-pop:      0 8px 32px oklch(0% 0 0 / 50%);
+
+  /* In-list glow (accent state indicator). Hue tracks the active accent. */
+  --glow-in-list:
+    0 0 8px oklch(var(--color-accent-l) var(--color-accent-c) var(--color-accent-h) / 25%),
+    0 4px 16px oklch(0% 0 0 / 40%);
+  --glow-in-list-hover:
+    0 0 12px oklch(var(--color-accent-l) var(--color-accent-c) var(--color-accent-h) / 35%),
+    0 6px 24px oklch(0% 0 0 / 50%);
+}
+
+/* ── Accent variants (user-selectable in Settings → Appearance) ── */
+:root[data-accent="cobalt"] {
+  --color-accent:      oklch(58% 0.18 240);   /* #2B8FE8 */
+  --color-accent-glow: oklch(72% 0.12 240);   /* #67B8FF */
+  --color-accent-dim:  oklch(58% 0.18 240 / 15%);
+  --color-accent-h: 240;
+  --color-accent-l: 58%;
+  --color-accent-c: 0.18;
+}
+
+:root[data-accent="crimson"] {
+  --color-accent:      oklch(55% 0.20 10);    /* #E8507A */
+  --color-accent-glow: oklch(70% 0.14 10);    /* #FF8FAD */
+  --color-accent-dim:  oklch(55% 0.20 10 / 15%);
+  --color-accent-h: 10;
+  --color-accent-l: 55%;
+  --color-accent-c: 0.20;
+}
+/* Completed status is ALWAYS violet, even when the accent changes — it marks
+   the primary event Konsou celebrates. (Design System note.) */
