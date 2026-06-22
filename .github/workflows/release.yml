@@ -75,13 +75,10 @@ jobs:
           VITE_GITHUB_URL: ${{ vars.VITE_GITHUB_URL }}
           # Tauri updater signing — required for silent auto-update to work
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          # macOS code signing (optional — app still works unsigned)
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # NOTE: macOS ships UNSIGNED (no Apple Developer cert). Users right-click → Open
+          # on first launch (documented in the release notes). Do NOT add APPLE_* env vars
+          # here unless real signing secrets exist — tauri-action will attempt `security
+          # import` on an empty cert and fail the macOS build.
         with:
           projectPath: .
           args: --target ${{ matrix.target }}
