@@ -45,7 +45,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: app/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Set up Rust (stable)
         uses: dtolnay/rust-toolchain@stable
@@ -55,10 +55,9 @@ jobs:
       - name: Cache Rust build artefacts
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: app/src-tauri -> target
+          workspaces: src-tauri -> target
 
       - name: Install JS dependencies
-        working-directory: app
         run: npm ci
 
       - name: Build and publish release
@@ -84,7 +83,7 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
-          projectPath: ./app
+          projectPath: .
           args: --target ${{ matrix.target }}
           tagName: ${{ github.ref_name }}
           releaseName: "Konsou ${{ github.ref_name }}"
