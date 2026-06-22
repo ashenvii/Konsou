@@ -1,80 +1,124 @@
+<div align="center">
+
+<img src="public/konsou.svg" alt="Konsou" width="80" height="80" />
+
 # Konsou
 
-Offline-first anime tracker for desktop (Windows / macOS / Linux) and Android.
-Sign in once with Google, your list syncs through your own Google Drive. No forced
-scoring. The flagship feature is a **sequel radar** that proactively tells you when a
-completed anime gets a new season, movie, or continuation.
+**Offline-first anime tracker for Windows, macOS, and Linux.**
 
-> **Bundle identifier:** `com.konsou.app` — this is permanent. Never change it.
-> Changing it orphans every existing install's data (see Trap 8 in the design docs).
+Track what you're watching. Get notified when sequels drop.  
+Your list lives on your device — optionally synced through your own Google Drive.
 
-## Stack
+[![GitHub release](https://img.shields.io/github/v/release/ashenvii/Konsou?style=flat-square&color=7c3aed)](https://github.com/ashenvii/Konsou/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square)](#download)
+
+</div>
+
+---
+
+## Download
+
+Go to **[Releases](https://github.com/ashenvii/Konsou/releases/latest)** and grab the installer for your platform:
+
+| Platform | File |
+|---|---|
+| **Windows** | `Konsou_x.x.x_x64_en-US.msi` |
+| **macOS (Apple Silicon)** | `Konsou_x.x.x_aarch64.dmg` |
+| **macOS (Intel)** | `Konsou_x.x.x_x64.dmg` |
+| **Linux** | `Konsou_x.x.x_amd64.AppImage` or `.deb` |
+
+> **macOS note:** Right-click the `.dmg` → Open → Confirm. One-time step for apps not yet in the Mac App Store.
+
+---
+
+## Features
+
+- **Anime list** — Track status (watching, completed, plan to watch, on hold, dropped, rewatching), episodes, score, and personal notes
+- **Sequel radar** — Proactive alerts when a completed show gets a new season, movie, or OVA
+- **AniList import** — Import any public AniList profile in seconds; smart merge keeps your local edits
+- **Google Drive sync** — Sign in once, your list stays in sync across all your devices through your own Drive. No Konsou server ever sees your data
+- **Search & discover** — Browse seasonal anime, trending titles, and top rated — powered by AniList
+- **Offline-first** — Fully usable with no account and no internet connection
+
+---
+
+## Privacy
+
+Konsou stores your list on your device. When sync is enabled it writes to a private `appDataFolder` in your Google Drive that only Konsou can read — no Konsou server exists. See the full [Privacy Policy](https://ashenvii.github.io/Konsou/privacy.html).
+
+---
+
+## Building from source
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) 20+
+- [Rust](https://rustup.rs/) stable
+- Linux only: `libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev`
+
+### Setup
+
+```bash
+git clone https://github.com/ashenvii/Konsou.git
+cd Konsou
+npm install
+```
+
+Copy `.env.example` to `.env` and fill in your Google OAuth credentials (see `.env.example` for instructions). Leave them blank to use the app without sync.
+
+```bash
+# Browser preview — no Rust needed, uses in-memory storage shim
+npm run dev
+
+# Full desktop app
+npm run tauri:dev
+
+# Production build → src-tauri/target/release/bundle/
+npm run tauri:build
+```
+
+### Android
+
+Android builds share the same React frontend and most of the Rust backend. One-time setup:
+
+```bash
+npm run android:init   # generates src-tauri/gen/android (git-ignored)
+npm run android:dev    # hot-reload on device/emulator
+npm run android:build  # produces an APK
+```
+
+Requires JDK 17 and Android SDK. Pin to JDK 17 — other versions cause Gradle issues with Tauri 2.
+
+---
+
+## Tech stack
 
 | Layer | Choice |
 |---|---|
-| Shell | Tauri 2 (desktop + Android from one codebase) |
-| Frontend | React 19 + TypeScript + Vite 6 |
-| Routing | React Router 7 (**HashRouter** — required for the `tauri://` / `file://` origin) |
-| State | Zustand (UI/list) + TanStack Query (async/network) |
-| Lists | TanStack Virtual (every long list is virtualized) |
-| Database | SQLite via `tauri-plugin-sql` (WAL mode, versioned migrations) |
-| Icons | Phosphor Icons (`regular` + `fill` only) |
-| Styling | Token-driven plain CSS (OKLCH design tokens) |
+| Shell | Tauri 2 |
+| Frontend | React 19 + TypeScript + Vite |
+| State | Zustand + TanStack Query |
+| Database | SQLite (`tauri-plugin-sql`, WAL mode) |
+| Sync | Google Drive `appdata` scope via PKCE OAuth |
+| Anime data | AniList GraphQL API |
+| Icons | Phosphor Icons |
+| Styling | OKLCH design tokens, plain CSS |
 
-### Two deliberate deviations from the original blueprint
+---
 
-1. **Plain CSS instead of Tailwind.** The entire design system is expressed as OKLCH
-   CSS custom properties; Tailwind would only re-reference them. `src/styles/tokens.css`
-   is the single source of truth and matches the *UI & Design System* doc verbatim.
-2. **Typed GraphQL `fetch` client instead of urql.** Konsou's cache is the SQLite
-   TTL tables (`anime_cache`, `search_cache`, `relation_snapshots`), so urql's
-   normalized cache would be redundant. See `src/lib/api/anilist/`.
+## Contributing
 
-## Running it
+Issues and PRs are welcome. Please open an issue first for larger changes so we can discuss the approach.
 
-```bash
-npm install
+---
 
-# Web preview (fast iteration — uses an in-memory storage shim, AniList works via CORS)
-npm run dev            # http://localhost:1420
+## License
 
-# Real desktop app (SQLite + native HTTP) — requires the Rust toolchain
-npm run tauri:dev
-npm run tauri:build    # produces .msi / .dmg / .AppImage in src-tauri/target/release/bundle
-```
+MIT — see [LICENSE](LICENSE).
 
-The app is **offline-first**: it is fully usable with no account. Google sign-in and
-Drive sync are optional and live behind a clean interface (`src/lib/sync/`,
-`src/lib/auth/`) — currently stubbed pending OAuth client credentials.
+---
 
-### Storage abstraction
-
-`src/lib/db/driver.ts` picks a backend at runtime:
-
-- **Under Tauri** → real SQLite (`tauri-plugin-sql`, WAL, migrations).
-- **In a plain browser** (`npm run dev`) → an in-memory + `localStorage` shim so the
-  whole UI is demonstrable without the Rust runtime.
-
-Both implement the same `DbDriver` interface, so feature code never branches on platform.
-
-## Android
-
-```bash
-npm run android:init     # one-time; generates src-tauri/gen/android
-npm run android:dev
-npm run android:build    # outputs an APK for sideloading
-```
-
-Pin **JDK 17** and avoid Tauri **2.9.2** for Android (versionCode / back-button
-regressions). See `../Konsou — Mobile Trap Solutions.md`. The Android manifest must set
-`android:windowSoftInputMode="adjustResize"` after `android:init` (Trap 2).
-
-## Design docs
-
-The authoritative specs live one directory up, in the Obsidian vault:
-
-- `Konsou — v1 Foundation Blueprint.md` — structure, schema, CI/CD
-- `Konsou — UI & Design System.md` — tokens, components, motion
-- `Konsou — Interaction Design Map.md` — every gesture and state
-- `Konsou — Mobile Trap Solutions.md` — the 11 Android/desktop traps + fixes
-- `Konsou — Research Dossier.md` — APIs, sync, sequel-detection algorithm
+<div align="center">
+<sub>Made with care · <a href="https://ko-fi.com/ashenvii">Support on Ko-fi</a></sub>
+</div>
