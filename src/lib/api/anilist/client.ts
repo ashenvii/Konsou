@@ -9,11 +9,13 @@ import { anilistLimiter, delay } from "../rateLimiter";
 import { mapDetail, mapRelations, mapSummary } from "./mappers";
 import {
   BROWSE_QUERY,
+  BY_MAL_IDS_QUERY,
   DETAIL_QUERY,
   SEARCH_QUERY,
   USER_LIST_QUERY,
   buildRelationsBatchQuery,
 } from "./queries";
+import { jikanSearchMalIds } from "../jikan/client";
 import type { AnimeListEntry, ListStatus } from "@/types/list";
 
 const ENDPOINT = "https://graphql.anilist.co";
@@ -23,6 +25,10 @@ const DETAIL_TTL = 24 * 60 * 60 * 1000; // 24 hours
 const RELATION_TTL = 6 * 60 * 60 * 1000; // 6 hours
 const BATCH_SPACING_MS = 700; // AniList burst limiter guard
 const PER_PAGE = 24;
+// Below this many AniList hits on a typed-but-incomplete query, augment with the
+// Jikan/MAL substring fallback (AniList ranks partial prefixes conservatively).
+const SPARSE_RESULT_THRESHOLD = 5;
+const MIN_FALLBACK_QUERY_LEN = 3;
 
 export interface SearchPage {
   results: AnimeSummary[];
@@ -146,18 +152,63 @@ class AniListClient {
         page,
         perPage: PER_PAGE,
       });
-      const results = (data.Page.media ?? []).map(mapSummary);
+      let results: AnimeSummary[] = (data.Page.media ?? []).map(mapSummary);
+      let hasNextPage = data.Page.pageInfo?.hasNextPage ?? false;
+
+      // AniList's SEARCH_MATCH is conservative on partial prefixes ("frier" → 0,
+      // "shangr" → 1). When a typed query is sparse, augment with MAL/Jikan's
+      // substring match, rehydrated through AniList so ids/data stay native.
+      if (
+        page === 1 &&
+        trimmed.length >= MIN_FALLBACK_QUERY_LEN &&
+        results.length < SPARSE_RESULT_THRESHOLD
+      ) {
+        const extra = await this.prefixFallback(trimmed);
+        const seen = new Set(results.map((r) => r.id));
+        for (const m of extra) {
+          if (!seen.has(m.id)) {
+            seen.add(m.id);
+            results.push(m);
+          }
+        }
+        // The merged set isn't a single AniList page, so don't paginate it.
+        if (extra.length) hasNextPage = false;
+      }
+
       void safeCache(() =>
         getDb().then((db) => db.cacheSetSearch(key, trimmed, results)),
       );
-      return {
-        results,
-        hasNextPage: data.Page.pageInfo?.hasNextPage ?? false,
-        page,
-      };
+      return { results, hasNextPage, page };
     } catch (err) {
       if (cached) return { results: cached.results, hasNextPage: false, page };
       throw err;
+    }
+  }
+
+  /**
+   * Forgiving prefix fallback: ask Jikan (MAL) for matches, then rehydrate its
+   * MAL ids through AniList — preserving Jikan's popularity ordering. Returns []
+   * on any failure so search degrades to AniList-only, never breaks.
+   */
+  private async prefixFallback(query: string): Promise<AnimeSummary[]> {
+    try {
+      const malIds = await jikanSearchMalIds(query);
+      if (malIds.length === 0) return [];
+
+      const data = await this.request<any>(BY_MAL_IDS_QUERY, {
+        idMal_in: malIds,
+        perPage: malIds.length,
+      });
+      const media: AnimeSummary[] = (data.Page.media ?? []).map(mapSummary);
+
+      // AniList returns idMal_in matches in its own order — restore Jikan's.
+      const byMal = new Map(media.map((m) => [m.idMal, m]));
+      return malIds
+        .map((id) => byMal.get(id))
+        .filter((m): m is AnimeSummary => !!m);
+    } catch (e) {
+      console.warn("[search] Jikan prefix fallback failed:", e);
+      return [];
     }
   }
 

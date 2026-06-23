@@ -78,6 +78,16 @@ query Detail($id: Int!) {
   }
 }`;
 
+/** Rehydrate MAL ids (from the Jikan search fallback) into AniList media. */
+export const BY_MAL_IDS_QUERY = `
+query ByMalIds($idMal_in: [Int], $perPage: Int!) {
+  Page(page: 1, perPage: $perPage) {
+    media(idMal_in: $idMal_in, type: ANIME, isAdult: false) {
+      ${MEDIA_SUMMARY}
+    }
+  }
+}`;
+
 export const BROWSE_QUERY = `
 query Browse($page: Int!, $perPage: Int!, $sort: [MediaSort], $season: MediaSeason, $seasonYear: Int, $genre: String) {
   Page(page: $page, perPage: $perPage) {
