@@ -1,6 +1,10 @@
 import Database from "@tauri-apps/plugin-sql";
 import type { AnimeMedia, AnimeSummary, RelationNode } from "@/types/anime";
-import type { AnimeListEntry, ListEntryPatch } from "@/types/list";
+import type {
+  AnimeListEntry,
+  DeletionTombstone,
+  ListEntryPatch,
+} from "@/types/list";
 import type { KonsouNotification } from "@/types/notification";
 import type { KonsouDb } from "./contract";
 
@@ -59,14 +63,15 @@ export class TauriKonsouDb implements KonsouDb {
     const hasDub = e.has_dub === null ? null : e.has_dub ? 1 : 0;
     await this.db.execute(
       `INSERT INTO anime_list (
-         anilist_id, mal_id, title_romaji, title_english, cover_url,
+         anilist_id, mal_id, title_romaji, title_english, title_native, cover_url,
          total_episodes, status, episodes_watched, score, notes,
          added_at, updated_at, started_at, completed_at, has_dub
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
        ON CONFLICT(anilist_id) DO UPDATE SET
          mal_id          = excluded.mal_id,
          title_romaji    = excluded.title_romaji,
          title_english   = excluded.title_english,
+         title_native    = excluded.title_native,
          cover_url       = excluded.cover_url,
          total_episodes  = excluded.total_episodes,
          status          = excluded.status,
@@ -77,7 +82,7 @@ export class TauriKonsouDb implements KonsouDb {
          started_at      = excluded.started_at,
          completed_at    = excluded.completed_at`,
       [
-        e.anilist_id, e.mal_id, e.title_romaji, e.title_english, e.cover_url,
+        e.anilist_id, e.mal_id, e.title_romaji, e.title_english, e.title_native, e.cover_url,
         e.total_episodes, e.status, e.episodes_watched, e.score, e.notes,
         e.added_at, e.updated_at, e.started_at, e.completed_at, hasDub,
       ],
@@ -109,6 +114,43 @@ export class TauriKonsouDb implements KonsouDb {
     await this.db.execute("DELETE FROM anime_list WHERE anilist_id = $1", [
       anilistId,
     ]);
+  }
+
+  async listReplaceAll(entries: AnimeListEntry[]): Promise<void> {
+    await this.db.execute("DELETE FROM anime_list");
+    for (const e of entries) await this.listUpsert(e);
+  }
+
+  // ── Deletion tombstones ───────────────────────────────────
+  async tombstonesAll(): Promise<DeletionTombstone[]> {
+    return this.db.select<DeletionTombstone[]>(
+      "SELECT anilist_id, deleted_at FROM list_tombstones",
+    );
+  }
+
+  async tombstoneUpsert(t: DeletionTombstone): Promise<void> {
+    await this.db.execute(
+      `INSERT INTO list_tombstones (anilist_id, deleted_at) VALUES ($1,$2)
+       ON CONFLICT(anilist_id) DO UPDATE SET deleted_at = MAX(deleted_at, excluded.deleted_at)`,
+      [t.anilist_id, t.deleted_at],
+    );
+  }
+
+  async tombstoneRemove(anilistId: number): Promise<void> {
+    await this.db.execute(
+      "DELETE FROM list_tombstones WHERE anilist_id = $1",
+      [anilistId],
+    );
+  }
+
+  async tombstonesReplaceAll(tombstones: DeletionTombstone[]): Promise<void> {
+    await this.db.execute("DELETE FROM list_tombstones");
+    for (const t of tombstones) {
+      await this.db.execute(
+        "INSERT INTO list_tombstones (anilist_id, deleted_at) VALUES ($1,$2)",
+        [t.anilist_id, t.deleted_at],
+      );
+    }
   }
 
   // ── Caches ────────────────────────────────────────────────

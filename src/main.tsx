@@ -40,7 +40,11 @@ async function bootstrap(): Promise<void> {
     // Restore previously signed-in Google account from localStorage.
     useAuthStore.getState().restore();
     // Pull from Drive if signed in (non-blocking — failures are logged).
-    void syncManager.checkForUpdates();
+    // Refresh the list store if the pull merged anything, otherwise the merged
+    // entries sit in the DB but never reach the already-hydrated UI store.
+    void syncManager.checkForUpdates().then((changed) => {
+      if (changed) void useListStore.getState().load();
+    });
     // Flagship: scan completed/dropped entries for continuations (6h cooldown).
     void useNotificationStore
       .getState()

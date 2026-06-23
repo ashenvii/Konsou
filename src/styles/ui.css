@@ -225,6 +225,18 @@
   }
 }
 
+/* ── Sign-in reconcile prompt ──────────────────────────────── */
+.k-reconcile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.k-reconcile__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 /* ── Toasts ────────────────────────────────────────────────── */
 .k-toasts {
   position: fixed;

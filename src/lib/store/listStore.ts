@@ -103,6 +103,7 @@ export const useListStore = create<ListState>((set, get) => {
         mal_id: s.idMal ?? null,
         title_romaji: s.title.romaji,
         title_english: s.title.english ?? null,
+        title_native: s.title.native ?? null,
         cover_url: getCoverUrl(s.coverImage) || null,
         total_episodes: total,
         status,
@@ -120,6 +121,8 @@ export const useListStore = create<ListState>((set, get) => {
       try {
         const db = await getDb();
         await db.listUpsert(entry);
+        // Re-adding supersedes any prior deletion of this title.
+        await db.tombstoneRemove(s.id);
         queueSync();
       } catch {
         removeFromState(s.id);
@@ -145,6 +148,7 @@ export const useListStore = create<ListState>((set, get) => {
           : incoming;
         applyEntry(entry);
         await db.listUpsert(entry);
+        await db.tombstoneRemove(incoming.anilist_id);
         count++;
       }
       queueSync();
@@ -221,6 +225,9 @@ export const useListStore = create<ListState>((set, get) => {
         try {
           const db = await getDb();
           await db.listRemove(anilistId);
+          // Record a tombstone so the deletion propagates through sync instead
+          // of being resurrected by the next merge.
+          await db.tombstoneUpsert({ anilist_id: anilistId, deleted_at: Date.now() });
           queueSync();
         } catch {
           applyEntry(entry);
@@ -234,6 +241,7 @@ export const useListStore = create<ListState>((set, get) => {
       try {
         const db = await getDb();
         await db.listUpsert(entry);
+        await db.tombstoneRemove(entry.anilist_id);
         queueSync();
       } catch {
         removeFromState(entry.anilist_id);

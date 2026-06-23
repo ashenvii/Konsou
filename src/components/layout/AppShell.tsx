@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
 import { Toasts } from "@/components/ui/Toasts";
+import { ReconcilePrompt } from "@/components/ReconcilePrompt";
 import { useAndroidBack } from "@/hooks/useAndroidBack";
 import { useBreakpoint } from "@/hooks/useMediaQuery";
 import { registerLifecycleHandlers } from "@/lib/lifecycle";
@@ -46,6 +47,7 @@ export function AppShell() {
       </main>
       {!isDesktop && <BottomNav />}
       <Toasts />
+      <ReconcilePrompt />
     </div>
   );
 }

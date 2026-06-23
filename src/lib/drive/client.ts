@@ -12,7 +12,7 @@ import {
   type GoogleTokens,
 } from "@/lib/auth/tokenStore";
 import type { DriveMeta } from "@/types/sync";
-import type { AnimeListEntry } from "@/types/list";
+import type { AnimeListEntry, DeletionTombstone } from "@/types/list";
 
 const DRIVE_FILES = "https://www.googleapis.com/drive/v3/files";
 const UPLOAD_URL = "https://www.googleapis.com/upload/drive/v3/files";
@@ -29,6 +29,8 @@ export class DriveAuthError extends Error {
 export interface DriveListFile {
   version: 1;
   entries: AnimeListEntry[];
+  /** Optional for backward-compat with list.json written before tombstones existed. */
+  tombstones?: DeletionTombstone[];
   exported_at: number;
 }
 

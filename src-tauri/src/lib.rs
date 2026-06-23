@@ -167,6 +167,23 @@ pub fn run() {
             sql: "ALTER TABLE anime_list ADD COLUMN has_dub INTEGER;",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "deletion tombstones for sync",
+            sql: r#"
+CREATE TABLE IF NOT EXISTS list_tombstones (
+  anilist_id INTEGER PRIMARY KEY,
+  deleted_at INTEGER NOT NULL
+);
+"#,
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 4,
+            description: "add native title to anime_list",
+            sql: "ALTER TABLE anime_list ADD COLUMN title_native TEXT;",
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

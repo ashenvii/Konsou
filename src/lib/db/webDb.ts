@@ -1,5 +1,9 @@
 import type { AnimeMedia, AnimeSummary, RelationNode } from "@/types/anime";
-import type { AnimeListEntry, ListEntryPatch } from "@/types/list";
+import type {
+  AnimeListEntry,
+  DeletionTombstone,
+  ListEntryPatch,
+} from "@/types/list";
 import type { KonsouNotification } from "@/types/notification";
 import type { KonsouDb } from "./contract";
 
@@ -10,6 +14,7 @@ import type { KonsouDb } from "./contract";
  */
 const LS = {
   list: "konsou.web.list",
+  tombstones: "konsou.web.tombstones",
   notifications: "konsou.web.notifications",
   settings: "konsou.web.settings",
   notifId: "konsou.web.notif_id",
@@ -83,6 +88,44 @@ export class WebKonsouDb implements KonsouDb {
 
   async listRemove(anilistId: number): Promise<void> {
     this.saveList(this.loadList().filter((e) => e.anilist_id !== anilistId));
+  }
+
+  async listReplaceAll(entries: AnimeListEntry[]): Promise<void> {
+    this.saveList(entries.map((e) => ({ ...e })));
+  }
+
+  // ── Deletion tombstones ───────────────────────────────────
+  private loadTombs(): DeletionTombstone[] {
+    return read<DeletionTombstone[]>(LS.tombstones, []);
+  }
+  private saveTombs(t: DeletionTombstone[]): void {
+    write(LS.tombstones, t);
+  }
+
+  async tombstonesAll(): Promise<DeletionTombstone[]> {
+    return this.loadTombs();
+  }
+
+  async tombstoneUpsert(t: DeletionTombstone): Promise<void> {
+    const all = this.loadTombs();
+    const idx = all.findIndex((x) => x.anilist_id === t.anilist_id);
+    if (idx >= 0) {
+      all[idx] = {
+        ...all[idx],
+        deleted_at: Math.max(all[idx].deleted_at, t.deleted_at),
+      };
+    } else {
+      all.push(t);
+    }
+    this.saveTombs(all);
+  }
+
+  async tombstoneRemove(anilistId: number): Promise<void> {
+    this.saveTombs(this.loadTombs().filter((t) => t.anilist_id !== anilistId));
+  }
+
+  async tombstonesReplaceAll(tombstones: DeletionTombstone[]): Promise<void> {
+    this.saveTombs(tombstones);
   }
 
   // ── Caches (in-memory) ────────────────────────────────────

@@ -1,5 +1,9 @@
 import type { AnimeMedia, AnimeSummary, RelationNode } from "@/types/anime";
-import type { AnimeListEntry, ListEntryPatch } from "@/types/list";
+import type {
+  AnimeListEntry,
+  DeletionTombstone,
+  ListEntryPatch,
+} from "@/types/list";
 import type { KonsouNotification } from "@/types/notification";
 
 /**
@@ -21,7 +25,19 @@ export interface KonsouDb {
     anilistId: number,
     patch: ListEntryPatch & { updated_at: number },
   ): Promise<void>;
+  /** Pure row delete — does NOT write a tombstone (callers own that). */
   listRemove(anilistId: number): Promise<void>;
+  /** Wipe and re-seed the whole list — used by the "replace" sync strategies. */
+  listReplaceAll(entries: AnimeListEntry[]): Promise<void>;
+
+  // ── Deletion tombstones ────────────────────────────────────
+  tombstonesAll(): Promise<DeletionTombstone[]>;
+  /** Insert or bump a tombstone, keeping the latest `deleted_at`. */
+  tombstoneUpsert(t: DeletionTombstone): Promise<void>;
+  /** Drop a tombstone (an entry was re-added, superseding its deletion). */
+  tombstoneRemove(anilistId: number): Promise<void>;
+  /** Replace the whole tombstone set — used after a merge or replace. */
+  tombstonesReplaceAll(tombstones: DeletionTombstone[]): Promise<void>;
 
   // ── Caches ─────────────────────────────────────────────────
   cacheGetAnime(

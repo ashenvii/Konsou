@@ -1,6 +1,7 @@
 import { isTauri } from "./platform";
 import { syncQueue } from "./sync/queue";
 import { syncManager } from "./sync/syncManager";
+import { useListStore } from "./store/listStore";
 
 /**
  * Flush pending writes before Android suspends the app, and check Drive for
@@ -17,7 +18,9 @@ export async function registerLifecycleHandlers(): Promise<() => void> {
     void syncQueue.flushNow();
   });
   const unFocus = await appWindow.listen("tauri://focus", () => {
-    void syncManager.checkForUpdates();
+    void syncManager.checkForUpdates().then((changed) => {
+      if (changed) void useListStore.getState().load();
+    });
   });
 
   return () => {
