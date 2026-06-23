@@ -31,6 +31,7 @@ export function mapSummary(raw: any): AnimeSummary {
     id: raw.id,
     idMal: raw.idMal ?? null,
     title: raw.title,
+    synonyms: raw.synonyms ?? [],
     coverImage: raw.coverImage ?? null,
     bannerImage: raw.bannerImage ?? null,
     format: raw.format ?? null,

@@ -4,6 +4,7 @@ import type {
   AccentName,
   SortSpec,
   ThemeMode,
+  TitleLanguage,
   ViewMode,
 } from "@/types/list";
 
@@ -15,6 +16,7 @@ interface SettingsState {
   accent: AccentName;
   defaultView: ViewMode;
   defaultSort: SortSpec;
+  titleLanguage: TitleLanguage;
   sequelNotifications: boolean;
   telemetry: boolean;
   recentSearches: string[];
@@ -25,6 +27,7 @@ interface SettingsState {
   setAccent: (a: AccentName) => void;
   setDefaultView: (v: ViewMode) => void;
   setDefaultSort: (s: SortSpec) => void;
+  setTitleLanguage: (l: TitleLanguage) => void;
   setSequelNotifications: (on: boolean) => void;
   setTelemetry: (on: boolean) => void;
   addRecentSearch: (q: string) => void;
@@ -61,6 +64,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   accent: "violet",
   defaultView: "grid",
   defaultSort: { key: "updated", order: "desc" },
+  titleLanguage: "romaji",
   sequelNotifications: true,
   telemetry: true,
   recentSearches: [],
@@ -81,6 +85,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       defaultSort: s.default_sort
         ? (JSON.parse(s.default_sort) as SortSpec)
         : { key: "updated", order: "desc" },
+      titleLanguage: (s.title_language as TitleLanguage) ?? "romaji",
       sequelNotifications: s.sequel_notifications !== "false",
       telemetry: s.telemetry !== "false",
       recentSearches: s.recent_searches
@@ -106,6 +111,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setDefaultSort: (defaultSort) => {
     set({ defaultSort });
     void persist("default_sort", JSON.stringify(defaultSort));
+  },
+  setTitleLanguage: (titleLanguage) => {
+    set({ titleLanguage });
+    void persist("title_language", titleLanguage);
   },
   setSequelNotifications: (on) => {
     set({ sequelNotifications: on });

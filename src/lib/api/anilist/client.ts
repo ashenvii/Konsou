@@ -128,7 +128,9 @@ class AniListClient {
 
   /** Cache-first search. Falls back to stale cache on network failure. */
   async search(query: string, page = 1): Promise<SearchPage> {
-    const trimmed = query.trim();
+    // Collapse stray/duplicate whitespace so "  attack   on titan " and
+    // "attack on titan" share a cache entry and one clean network query.
+    const trimmed = query.replace(/\s+/g, " ").trim();
     const key = hashKey(`search:${trimmed.toLowerCase()}:${page}`);
 
     const cached = await safeCache(() =>
@@ -282,6 +284,7 @@ class AniListClient {
           mal_id: e.media.idMal ?? null,
           title_romaji: e.media.title?.romaji ?? "Unknown",
           title_english: e.media.title?.english ?? null,
+          title_native: e.media.title?.native ?? null,
           cover_url: e.media.coverImage?.medium ?? null,
           total_episodes: e.media.episodes ?? null,
           status,

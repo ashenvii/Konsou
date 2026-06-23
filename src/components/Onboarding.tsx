@@ -3,7 +3,9 @@ import { Bell, CloudArrowUp, List } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
+import { TITLE_LANGUAGE_OPTIONS } from "@/lib/format";
 import { useAuthStore } from "@/lib/store/authStore";
+import { useSettingsStore } from "@/lib/store/settingsStore";
 
 const ONBOARDED_KEY = "konsou.onboarded";
 
@@ -31,6 +33,8 @@ export function Onboarding() {
   );
   const connect = useAuthStore((s) => s.connect);
   const connecting = useAuthStore((s) => s.connecting);
+  const titleLanguage = useSettingsStore((s) => s.titleLanguage);
+  const setTitleLanguage = useSettingsStore((s) => s.setTitleLanguage);
 
   if (!visible) return null;
 
@@ -74,6 +78,26 @@ export function Onboarding() {
             </li>
           ))}
         </ul>
+
+        <div className="k-onboarding__titlepref">
+          <Text size="xs" weight={600} color="tertiary">
+            SHOW TITLES IN
+          </Text>
+          <div className="k-onboarding__titleopts">
+            {TITLE_LANGUAGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                className={`k-titleopt${titleLanguage === opt.id ? " k-titleopt--active" : ""}`}
+                onClick={() => setTitleLanguage(opt.id)}
+                aria-pressed={titleLanguage === opt.id}
+              >
+                <span className="k-titleopt__label">{opt.label}</span>
+                <span className="k-titleopt__example">{opt.example}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="k-onboarding__actions">
           <Button

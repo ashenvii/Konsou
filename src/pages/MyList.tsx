@@ -8,23 +8,35 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
-import { entryToSummary, preferredTitle } from "@/lib/format";
+import { entryToSummary, normalizeForSearch, preferredTitle } from "@/lib/format";
 import { useListStore } from "@/lib/store/listStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
-import type { AnimeListEntry, ListFilter, SortSpec } from "@/types/list";
+import type {
+  AnimeListEntry,
+  ListFilter,
+  SortSpec,
+  TitleLanguage,
+} from "@/types/list";
 
 const LAST_FILTER_KEY = "konsou.last_filter";
 
-function compareEntries(a: AnimeListEntry, b: AnimeListEntry, sort: SortSpec): number {
+function entryTitle(e: AnimeListEntry, pref: TitleLanguage): string {
+  return preferredTitle(
+    { romaji: e.title_romaji, english: e.title_english, native: e.title_native },
+    pref,
+  );
+}
+
+function compareEntries(
+  a: AnimeListEntry,
+  b: AnimeListEntry,
+  sort: SortSpec,
+  pref: TitleLanguage,
+): number {
   const dir = sort.order === "asc" ? 1 : -1;
   switch (sort.key) {
     case "title":
-      return (
-        dir *
-        preferredTitle({ romaji: a.title_romaji, english: a.title_english }).localeCompare(
-          preferredTitle({ romaji: b.title_romaji, english: b.title_english }),
-        )
-      );
+      return dir * entryTitle(a, pref).localeCompare(entryTitle(b, pref));
     case "score":
       return dir * ((a.score ?? -1) - (b.score ?? -1));
     case "episodes":
@@ -44,6 +56,7 @@ export function MyList() {
 
   const defaultView = useSettingsStore((s) => s.defaultView);
   const defaultSort = useSettingsStore((s) => s.defaultSort);
+  const titleLanguage = useSettingsStore((s) => s.titleLanguage);
   const setDefaultView = useSettingsStore((s) => s.setDefaultView);
   const setDefaultSort = useSettingsStore((s) => s.setDefaultSort);
 
@@ -71,17 +84,21 @@ export function MyList() {
   const filtered = useMemo(() => {
     const base =
       filter === "all" ? entries : entries.filter((e) => e.status === filter);
-    return [...base].sort((a, b) => compareEntries(a, b, defaultSort));
-  }, [entries, filter, defaultSort]);
+    return [...base].sort((a, b) => compareEntries(a, b, defaultSort, titleLanguage));
+  }, [entries, filter, defaultSort, titleLanguage]);
 
   const items = useMemo(() => filtered.map(entryToSummary), [filtered]);
 
   const dimmedIds = useMemo(() => {
-    const q = debouncedSearch.trim().toLowerCase();
+    const q = normalizeForSearch(debouncedSearch);
     if (!q) return null;
     const set = new Set<number>();
     for (const e of filtered) {
-      const hay = `${e.title_romaji} ${e.title_english ?? ""}`.toLowerCase();
+      // Match across all three titles, accent/case-folded, so a Japanese name
+      // (romaji or native) finds the entry regardless of the display preference.
+      const hay = normalizeForSearch(
+        `${e.title_romaji} ${e.title_english ?? ""} ${e.title_native ?? ""}`,
+      );
       if (hay.includes(q)) set.add(e.anilist_id);
     }
     return set;

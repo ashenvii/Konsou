@@ -4,6 +4,7 @@ const MEDIA_SUMMARY = `
   id
   idMal
   title { romaji english native }
+  synonyms
   coverImage { extraLarge large medium color }
   bannerImage
   format
@@ -101,7 +102,7 @@ query UserList($userName: String!) {
         media {
           id
           idMal
-          title { romaji english }
+          title { romaji english native }
           coverImage { medium }
           episodes
         }

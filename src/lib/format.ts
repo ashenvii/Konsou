@@ -6,14 +6,18 @@ import type {
   MediaFormat,
   AniListMediaStatus,
 } from "@/types/anime";
-import type { AnimeListEntry, ListStatus } from "@/types/list";
+import type { AnimeListEntry, ListStatus, TitleLanguage } from "@/types/list";
 
 /** Build a card-level summary from a stored list entry (for offline rendering). */
 export function entryToSummary(e: AnimeListEntry): AnimeSummary {
   return {
     id: e.anilist_id,
     idMal: e.mal_id,
-    title: { romaji: e.title_romaji, english: e.title_english },
+    title: {
+      romaji: e.title_romaji,
+      english: e.title_english,
+      native: e.title_native,
+    },
     coverImage: { large: e.cover_url ?? undefined },
     episodes: e.total_episodes,
   };
@@ -30,15 +34,96 @@ export function getCoverUrl(
   return cover?.[COVER_SIZE] ?? cover?.medium ?? cover?.extraLarge ?? fallback;
 }
 
-export function preferredTitle(title: AnimeTitle): string {
-  return title.english?.trim() || title.romaji;
+/** Selectable title languages with labels + a live example (shown in onboarding
+ *  and Settings). Example uses Frieren across all three scripts. */
+export const TITLE_LANGUAGE_OPTIONS: {
+  id: TitleLanguage;
+  label: string;
+  example: string;
+}[] = [
+  { id: "romaji", label: "Romaji", example: "Sousou no Frieren" },
+  { id: "english", label: "English", example: "Frieren: Beyond Journey's End" },
+  { id: "native", label: "Japanese", example: "葬送のフリーレン" },
+];
+
+/** Order in which to fall back when a title is missing for the chosen language. */
+const TITLE_FALLBACK: Record<TitleLanguage, (keyof AnimeTitle)[]> = {
+  romaji: ["romaji", "english", "native"],
+  english: ["english", "romaji", "native"],
+  native: ["native", "romaji", "english"],
+};
+
+/** Order in which to pick a *secondary* (other-language) title to surface. */
+const SECONDARY_ORDER: Record<TitleLanguage, (keyof AnimeTitle)[]> = {
+  // Romaji shown → English is the most useful "other name" to check.
+  romaji: ["english", "native"],
+  // English shown → Romaji is the most recognizable Japanese form.
+  english: ["romaji", "native"],
+  // Native shown → Romaji reads for non-JP users, English as backup.
+  native: ["romaji", "english"],
+};
+
+function pick(title: AnimeTitle, key: keyof AnimeTitle): string {
+  const v = title[key];
+  return typeof v === "string" ? v.trim() : "";
 }
 
-export function secondaryTitle(title: AnimeTitle): string | null {
-  if (title.english && title.english.trim() && title.english !== title.romaji) {
-    return title.romaji;
+/** The title to show first, honoring the user's language preference. */
+export function preferredTitle(
+  title: AnimeTitle,
+  pref: TitleLanguage = "romaji",
+): string {
+  for (const key of TITLE_FALLBACK[pref]) {
+    const v = pick(title, key);
+    if (v) return v;
+  }
+  return "Untitled";
+}
+
+/** The best single other-language title to show beneath the primary, or null. */
+export function secondaryTitle(
+  title: AnimeTitle,
+  pref: TitleLanguage = "romaji",
+): string | null {
+  const primary = preferredTitle(title, pref);
+  for (const key of SECONDARY_ORDER[pref]) {
+    const v = pick(title, key);
+    if (v && v !== primary) return v;
   }
   return null;
+}
+
+/** Every distinct title other than the primary — used on the detail page so the
+ *  user can read the other-language name(s) without opening Settings. */
+export function alternateTitles(
+  title: AnimeTitle,
+  pref: TitleLanguage = "romaji",
+): string[] {
+  const primary = preferredTitle(title, pref);
+  const out: string[] = [];
+  const seen = new Set([primary]);
+  for (const key of SECONDARY_ORDER[pref]) {
+    const v = pick(title, key);
+    if (v && !seen.has(v)) {
+      seen.add(v);
+      out.push(v);
+    }
+  }
+  return out;
+}
+
+/**
+ * Normalize text for forgiving local matching: lowercase, fold diacritics and
+ * macrons (ō→o, é→e), drop combining marks, and collapse runs of whitespace.
+ * Used for My List search and to clean query input before it hits the network.
+ */
+export function normalizeForSearch(s: string): string {
+  return s
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 const STATUS_LABELS: Record<ListStatus, string> = {

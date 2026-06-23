@@ -118,6 +118,8 @@ export interface AnimeSummary {
   id: number;
   idMal?: number | null;
   title: AnimeTitle;
+  /** AniList alt names: fan abbreviations + alternate romanizations ("AoT", "SnK"). */
+  synonyms?: string[];
   coverImage?: CoverImage | null;
   bannerImage?: string | null;
   format?: MediaFormat | null;

@@ -12,6 +12,7 @@ import { alertBucket } from "@/lib/sequel/detector";
 import { formatFuzzyDate, preferredTitle, timeUntil } from "@/lib/format";
 import { useListStore } from "@/lib/store/listStore";
 import { useNotificationStore } from "@/lib/store/notificationStore";
+import { useSettingsStore } from "@/lib/store/settingsStore";
 import type { AlertBucket, KonsouNotification } from "@/types/notification";
 
 const BUCKET_ORDER: { id: AlertBucket; label: string }[] = [
@@ -41,12 +42,17 @@ function AlertCard({ n }: { n: KonsouNotification }) {
   const sourceEntry = useListStore((s) => s.map[n.source_id]);
   const addFromSummary = useListStore((s) => s.addFromSummary);
   const dismiss = useNotificationStore((s) => s.dismiss);
+  const titleLanguage = useSettingsStore((s) => s.titleLanguage);
 
   const sourceTitle = sourceEntry
-    ? preferredTitle({
-        romaji: sourceEntry.title_romaji,
-        english: sourceEntry.title_english,
-      })
+    ? preferredTitle(
+        {
+          romaji: sourceEntry.title_romaji,
+          english: sourceEntry.title_english,
+          native: sourceEntry.title_native,
+        },
+        titleLanguage,
+      )
     : "a completed anime";
 
   const add = (status: "watching" | "plan_to_watch") => {

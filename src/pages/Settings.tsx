@@ -6,6 +6,7 @@ import { Icon } from "@/components/ui/Icon";
 import { ImportSheet } from "@/components/ui/ImportSheet";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Text } from "@/components/ui/Text";
+import { TITLE_LANGUAGE_OPTIONS } from "@/lib/format";
 import { isTauri } from "@/lib/platform";
 import { openExternal } from "@/lib/openExternal";
 import { syncManager } from "@/lib/sync/syncManager";
@@ -170,6 +171,25 @@ export function Settings() {
         </Section>
 
         <Section title="List">
+          <Row
+            label="Title language"
+            hint={`Example: ${
+              TITLE_LANGUAGE_OPTIONS.find((o) => o.id === settings.titleLanguage)
+                ?.example ?? ""
+            }`}
+          >
+            <div className="k-segmented">
+              {TITLE_LANGUAGE_OPTIONS.map((o) => (
+                <button
+                  key={o.id}
+                  className={`k-segmented__btn${settings.titleLanguage === o.id ? " k-segmented__btn--active" : ""}`}
+                  onClick={() => settings.setTitleLanguage(o.id)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </Row>
           <Row label="Default view">
             <div className="k-segmented">
               {VIEWS.map((v) => (

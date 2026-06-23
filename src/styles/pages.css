@@ -809,6 +809,49 @@
   justify-content: center;
 }
 
+/* ── Onboarding title-language picker ──────────────────────── */
+.k-onboarding__titlepref {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  text-align: left;
+}
+.k-onboarding__titleopts {
+  display: flex;
+  gap: var(--space-2);
+}
+.k-titleopt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+.k-titleopt--active {
+  border-color: var(--color-accent);
+  background: var(--color-surface-3);
+}
+.k-titleopt__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.k-titleopt__example {
+  font-size: var(--text-2xs);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ── Import sheet ──────────────────────────────────────────── */
 .k-import {
   display: flex;

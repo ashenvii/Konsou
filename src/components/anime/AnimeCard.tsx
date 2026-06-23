@@ -14,7 +14,9 @@ import {
   formatScore,
   getCoverUrl,
   preferredTitle,
+  secondaryTitle,
 } from "@/lib/format";
+import { useSettingsStore } from "@/lib/store/settingsStore";
 import type { AnimeSummary } from "@/types/anime";
 import type { ListStatus, ViewMode } from "@/types/list";
 
@@ -41,7 +43,9 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
     hasDub === true ? "DUB+SUB" :
     hasDub === false ? "SUB" :
     null;
-  const title = preferredTitle(media.title);
+  const titleLanguage = useSettingsStore((s) => s.titleLanguage);
+  const title = preferredTitle(media.title, titleLanguage);
+  const subtitle = secondaryTitle(media.title, titleLanguage);
   const cover = getCoverUrl(media.coverImage);
   const total = entry?.total_episodes ?? media.episodes ?? null;
   const watched = entry?.episodes_watched ?? 0;
@@ -104,6 +108,11 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
               <Text size="sm" weight={600} clamp={2} className="k-card__title">
                 {title}
               </Text>
+              {subtitle && (
+                <span className="k-card__subtitle" title={subtitle}>
+                  {subtitle}
+                </span>
+              )}
               <div className="k-card__footermeta">
                 {inList && (
                   <span className="k-card__epcaption">
@@ -170,6 +179,11 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
             <Text size="base" weight={600} clamp={1}>
               {title}
             </Text>
+            {subtitle && (
+              <Text size="xs" color="tertiary" clamp={1}>
+                {subtitle}
+              </Text>
+            )}
             {meta && (
               <Text size="xs" color="secondary" clamp={1}>
                 {meta}
