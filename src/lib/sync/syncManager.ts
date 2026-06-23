@@ -240,10 +240,13 @@ class SyncManager {
       return;
     }
 
-    // merge
+    // merge. A failed Drive read now throws (see drive/client.ts) rather than
+    // returning null, so we never silently merge against an empty remote and
+    // overwrite Drive with local-only data.
     const remoteFile = remoteMeta
       ? await driveRead<DriveListFile>("list.json")
       : null;
+    const remotePulled = remoteFile?.entries?.length ?? 0;
     const n = await this._applyMerge(
       remoteFile?.entries ?? [],
       remoteFile?.tombstones ?? [],
@@ -252,7 +255,7 @@ class SyncManager {
     await this._push();
     this.record(
       "info",
-      `reconcile(merge): ${n.entries} entries, ${n.tombstones} tombstones`,
+      `reconcile(merge): pulled ${remotePulled} from Drive → ${n.entries} entries, ${n.tombstones} tombstones`,
     );
   }
 

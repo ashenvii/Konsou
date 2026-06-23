@@ -89,7 +89,13 @@ async function findFileId(name: string, token: string): Promise<string | null> {
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) return null;
+  // A failed lookup is NOT the same as "file absent" — surface it so callers
+  // (reconcile/merge) abort instead of treating the remote as empty and then
+  // overwriting Drive with local-only data. Genuine absence falls through to
+  // the empty `files` array below and returns null.
+  if (!res.ok) {
+    throw new Error(`Drive lookup failed for ${name}: ${res.status}`);
+  }
 
   const data = await res.json() as { files?: { id: string }[] };
   const id = data.files?.[0]?.id ?? null;
@@ -109,7 +115,11 @@ export async function driveRead<T>(name: string): Promise<T | null> {
   const res = await fetch(`${DRIVE_FILES}/${id}?alt=media`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) return null;
+  // The file exists (we have its id) but the content fetch failed — throw so a
+  // reconcile/merge aborts rather than silently treating the remote as empty.
+  if (!res.ok) {
+    throw new Error(`Drive read failed for ${name}: ${res.status}`);
+  }
   return res.json() as Promise<T>;
 }
 
