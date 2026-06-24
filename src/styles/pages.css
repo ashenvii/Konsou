@@ -910,6 +910,40 @@
   justify-content: flex-end;
 }
 
+/* Unmatched MAL titles report */
+.k-import__unmatched {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+.k-import__unmatched-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.k-import__copy {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+.k-import__unmatched-list {
+  margin: 0;
+  padding-left: var(--space-4);
+  max-height: 140px;
+  overflow-y: auto;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
 /* ── Dev log ───────────────────────────────────────────────── */
 .k-devlog {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;

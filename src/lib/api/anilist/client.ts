@@ -16,7 +16,16 @@ import {
   buildRelationsBatchQuery,
 } from "./queries";
 import { jikanSearchMalIds } from "../jikan/client";
+import { getCoverUrl, normalizeForSearch, preferredTitle } from "@/lib/format";
+import type { MalRawEntry } from "../mal/parseExport";
 import type { AnimeListEntry, ListStatus } from "@/types/list";
+
+/** Outcome of a MAL import: resolved Konsou entries + titles we couldn't map. */
+export interface MalResolveResult {
+  entries: AnimeListEntry[];
+  unmatched: { mal_id: number; title: string }[];
+  total: number;
+}
 
 const ENDPOINT = "https://graphql.anilist.co";
 
@@ -352,6 +361,84 @@ class AniListClient {
     }
 
     return entries;
+  }
+
+  /**
+   * Resolve parsed MAL export entries onto AniList ids so they fit Konsou's
+   * AniList-keyed model. Two-stage matching maximizes hits:
+   *   1. batch lookup by MAL id (idMal_in, 50/request) — exact, covers most;
+   *   2. for stragglers, an AniList title search, accepting only a confident
+   *      match (same MAL id, or an exact normalized-title match).
+   * Whatever still can't be matched is returned in `unmatched` for the user to
+   * add manually, rather than being silently dropped.
+   */
+  async resolveMalEntries(raw: MalRawEntry[]): Promise<MalResolveResult> {
+    const now = Date.now();
+    const byMal = new Map(raw.map((r) => [r.mal_id, r]));
+    const ids = [...byMal.keys()];
+    const media = new Map<number, AnimeSummary>(); // mal_id → AniList media
+
+    // Stage 1 — exact batch resolution by MAL id.
+    for (let i = 0; i < ids.length; i += 50) {
+      const chunk = ids.slice(i, i + 50);
+      const data = await this.request<any>(BY_MAL_IDS_QUERY, {
+        idMal_in: chunk,
+        perPage: 50,
+      });
+      for (const m of (data.Page.media ?? []).map(mapSummary) as AnimeSummary[]) {
+        if (m.idMal != null) media.set(m.idMal, m);
+      }
+      if (i + 50 < ids.length) await delay(700);
+    }
+
+    // Stage 2 — title-search fallback for the unmatched remainder.
+    const unmatched: { mal_id: number; title: string }[] = [];
+    for (const id of ids.filter((x) => !media.has(x))) {
+      const r = byMal.get(id)!;
+      let hit: AnimeSummary | undefined;
+      try {
+        const target = normalizeForSearch(r.title);
+        const page = await this.search(r.title, 1);
+        hit =
+          page.results.find((x) => x.idMal === id) ??
+          page.results.find(
+            (x) =>
+              normalizeForSearch(preferredTitle(x.title, "romaji")) === target ||
+              normalizeForSearch(x.title.english ?? "") === target,
+          );
+      } catch {
+        /* network hiccup — treat as unmatched */
+      }
+      if (hit) media.set(id, hit);
+      else unmatched.push({ mal_id: id, title: r.title });
+    }
+
+    // Build Konsou entries from the matches.
+    const entries: AnimeListEntry[] = [];
+    for (const [malId, m] of media) {
+      const r = byMal.get(malId)!;
+      const isDone = r.status === "completed" || r.status === "rewatching";
+      entries.push({
+        anilist_id: m.id,
+        mal_id: malId,
+        title_romaji: m.title.romaji,
+        title_english: m.title.english ?? null,
+        title_native: m.title.native ?? null,
+        cover_url: getCoverUrl(m.coverImage) || null,
+        total_episodes: m.episodes ?? r.total_episodes,
+        status: r.status,
+        episodes_watched: r.episodes_watched,
+        score: r.score,
+        notes: null,
+        has_dub: null,
+        added_at: now,
+        updated_at: now,
+        started_at: r.started_at,
+        completed_at: isDone ? r.finished_at : null,
+      });
+    }
+
+    return { entries, unmatched, total: raw.length };
   }
 }
 
