@@ -1,13 +1,13 @@
 import { useState } from "react";
 import {
-  Funnel,
-  ListBullets,
-  MagnifyingGlass,
-  Rows,
-  SortAscending,
-  SquaresFour,
+  ArrowUpDown,
+  Filter,
+  LayoutGrid,
+  List,
+  Rows3,
+  Search,
   X,
-} from "@phosphor-icons/react";
+} from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Icon } from "@/components/ui/Icon";
 import { listStatusLabel } from "@/lib/format";
@@ -15,10 +15,10 @@ import { LIST_STATUSES } from "@/types/list";
 import { statusMeta } from "@/components/anime/statusMeta";
 import type { ListFilter, SortSpec, ViewMode } from "@/types/list";
 
-const VIEW_ICONS: Record<ViewMode, typeof SquaresFour> = {
-  grid: SquaresFour,
-  list: Rows,
-  compact: ListBullets,
+const VIEW_ICONS: Record<ViewMode, typeof LayoutGrid> = {
+  grid: LayoutGrid,
+  list: Rows3,
+  compact: List,
 };
 
 const SORT_LABELS: Record<SortSpec["key"], string> = {
@@ -62,7 +62,7 @@ export function ListToolbar({
       <div className="k-toolbar__searchrow">
         <div className="k-searchbar">
           <Icon
-            icon={MagnifyingGlass}
+            icon={Search}
             size={18}
             color="var(--color-text-tertiary)"
           />
@@ -96,7 +96,7 @@ export function ListToolbar({
             aria-expanded={filterSheetOpen}
             aria-label="Filter by status"
           >
-            <Icon icon={Funnel} size={18} />
+            <Icon icon={Filter} size={18} />
             <span className="k-toolbar__filter-label">{activeLabel}</span>
             {activeCount > 0 && (
               <span className="k-toolbar__filter-count">{activeCount}</span>
@@ -108,7 +108,7 @@ export function ListToolbar({
             onClick={onOpenSort}
             aria-label="Sort"
           >
-            <Icon icon={SortAscending} size={18} />
+            <Icon icon={ArrowUpDown} size={18} />
             <span className="k-toolbar__sort-label">{SORT_LABELS[sort.key]}</span>
           </button>
           <div className="k-viewtoggle" role="group" aria-label="View mode">
@@ -141,7 +141,7 @@ export function ListToolbar({
           {tabs.map((t) => {
             const label = t === "all" ? "All entries" : listStatusLabel(t);
             const count = counts[t] ?? 0;
-            const OptionIcon = t === "all" ? Funnel : statusMeta(t).icon;
+            const OptionIcon = t === "all" ? Filter : statusMeta(t).icon;
             const color = t === "all" ? undefined : statusMeta(t).color;
             return (
               <button

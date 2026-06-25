@@ -1,4 +1,4 @@
-import { Image } from "@phosphor-icons/react";
+import { Image } from "lucide-react";
 import { useLazyImage } from "@/hooks/useLazyImage";
 import { Icon } from "@/components/ui/Icon";
 

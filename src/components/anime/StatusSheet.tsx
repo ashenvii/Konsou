@@ -1,4 +1,4 @@
-import { Trash } from "@phosphor-icons/react";
+import { Trash2 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Icon } from "@/components/ui/Icon";
 import { LIST_STATUSES } from "@/types/list";
@@ -60,7 +60,7 @@ export function StatusSheet({
             onClose();
           }}
         >
-          <Icon icon={Trash} size={18} color="var(--color-error)" />
+          <Icon icon={Trash2} size={18} color="var(--color-error)" />
           Remove from list
         </button>
       )}

@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MagnifyingGlass } from "@phosphor-icons/react";
 import { AnimeCollection } from "@/components/list/AnimeCollection";
 import { ListToolbar } from "@/components/list/ListToolbar";
 import { SortSheet } from "@/components/list/SortSheet";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ImportSheet } from "@/components/ui/ImportSheet";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
 import { entryToSummary, normalizeForSearch, preferredTitle } from "@/lib/format";
@@ -65,6 +65,7 @@ export function MyList() {
   );
   const [search, setSearch] = useState("");
   const [sortOpen, setSortOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 400);
 
   const counts = useMemo(() => {
@@ -124,16 +125,29 @@ export function MyList() {
   if (entries.length === 0) {
     return (
       <div className="k-page">
-        <EmptyState
-          icon={MagnifyingGlass}
-          title="Your list is empty"
-          subtitle="Search for anime to start tracking — no score required."
-          action={
+        <div className="k-mylist-empty">
+          <div className="k-mylist-empty__shelf" aria-hidden>
+            <div className="k-mylist-empty__cover" />
+            <div className="k-mylist-empty__cover" />
+            <div className="k-mylist-empty__cover" />
+          </div>
+          <p className="k-mylist-empty__title">Your collection starts here</p>
+          <p className="k-mylist-empty__sub">
+            Track what you're watching, planning, or have finished — no score required.
+          </p>
+          <div className="k-mylist-empty__actions">
             <Button variant="primary" onClick={() => navigate("/search")}>
-              Go to Search
+              Search for anime
             </Button>
-          }
-        />
+            <p className="k-mylist-empty__import">
+              Already on AniList?{" "}
+              <button type="button" onClick={() => setImportOpen(true)}>
+                Import your list
+              </button>
+            </p>
+          </div>
+        </div>
+        <ImportSheet open={importOpen} onClose={() => setImportOpen(false)} />
       </div>
     );
   }
@@ -158,12 +172,24 @@ export function MyList() {
           subtitle={`Add anime to your ${filter === "all" ? "" : filter.replace(/_/g, " ")} list.`}
         />
       ) : (
-        <AnimeCollection
-          items={items}
-          view={defaultView}
-          dimmedIds={dimmedIds}
-          showStatus={filter === "all"}
-        />
+        <>
+          {defaultView === "list" && (
+            <div className="k-row-header">
+              <div className="k-row-header__thumb" />
+              <div className="k-row-header__title">Title</div>
+              <div className="k-row-header__status">Status</div>
+              <div className="k-row-header__ep">Ep.</div>
+              <div className="k-row-header__score">Score</div>
+              <div className="k-row-header__action" />
+            </div>
+          )}
+          <AnimeCollection
+            items={items}
+            view={defaultView}
+            dimmedIds={dimmedIds}
+            showStatus={filter === "all"}
+          />
+        </>
       )}
 
       <SortSheet

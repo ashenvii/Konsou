@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Minus, Plus } from "@phosphor-icons/react";
+import { Minus, Plus } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Icon } from "@/components/ui/Icon";
 import { useListStore } from "@/lib/store/listStore";
