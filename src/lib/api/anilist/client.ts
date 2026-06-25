@@ -6,6 +6,7 @@ import type {
   RelationNode,
 } from "@/types/anime";
 import { anilistLimiter, delay } from "../rateLimiter";
+import type { Priority } from "../rateLimiter";
 import { mapDetail, mapRelations, mapSummary } from "./mappers";
 import {
   BROWSE_QUERY,
@@ -33,6 +34,12 @@ const SEARCH_TTL = 10 * 60 * 1000; // 10 minutes
 const DETAIL_TTL = 24 * 60 * 60 * 1000; // 24 hours
 const RELATION_TTL = 6 * 60 * 60 * 1000; // 6 hours
 const BATCH_SPACING_MS = 700; // AniList burst limiter guard
+// AniList caps query complexity at 500 per request, and each aliased
+// `Media { relations { … } }` in the sequel-detection batch costs ~30. A
+// 50-id batch is ~1500 and is rejected outright (HTTP 400, no data), which
+// silently zeroes out detection for anyone with a large list. 12 ids ≈ 360,
+// leaving headroom against the cap and any future field additions.
+const RELATIONS_BATCH_SIZE = 12;
 const PER_PAGE = 24;
 // Below this many AniList hits on a typed-but-incomplete query, augment with the
 // Jikan/MAL substring fallback (AniList ranks partial prefixes conservatively).
@@ -83,12 +90,13 @@ class AniListClient {
   private async request<T>(
     query: string,
     variables?: Record<string, unknown>,
+    priority: Priority = "high",
   ): Promise<T> {
     let networkRetries = 0;
     let serverRetries = 0;
 
     for (;;) {
-      await anilistLimiter.acquire();
+      await anilistLimiter.acquire(priority);
       try {
         const res = await fetch(ENDPOINT, {
           method: "POST",
@@ -105,17 +113,32 @@ class AniListClient {
           throw new HttpError(429, retryAfter);
         }
         if (res.status >= 500) throw new HttpError(res.status);
-        if (res.status >= 400) {
-          // 4xx — do not retry.
-          const body = await res.text().catch(() => "");
-          throw new Error(`AniList ${res.status}: ${body.slice(0, 200)}`);
-        }
 
-        const json = await res.json();
-        if (json.errors?.length) {
-          throw new Error(json.errors[0]?.message ?? "AniList GraphQL error");
+        // Parse the body even on a 4xx: AniList delivers GraphQL partial
+        // success with a non-200 status. A batched query (sequel detection's
+        // aliased multi-Media request) that includes a deleted or private
+        // related media returns HTTP 404, yet the body still carries every
+        // resolvable alias in `data`, with the missing one set to null and
+        // reported in `errors`. Throwing on the status — or on any error —
+        // would discard the whole batch and silently abort detection, so we
+        // only treat the response as fatal when there's no usable data at all.
+        const json = await res.json().catch(() => null);
+        // Honor any response that carries a `data` object, even on a 4xx and
+        // even when every field is null. AniList reports unresolvable ids as
+        // per-field 404s (`errors`) while still returning a `data` map with
+        // those aliases set to null — including a whole batch of not-found ids
+        // (`{ m1: null, m2: null }`). Those nulls are legitimate "no such
+        // media" results, not a failed request, so callers handle them (the
+        // relation mapper treats a null alias as no relations). Only a missing
+        // or null `data` is a real failure.
+        if (json?.data != null) return json.data as T;
+
+        if (res.status >= 400) {
+          throw new Error(
+            `AniList ${res.status}: ${JSON.stringify(json ?? {}).slice(0, 200)}`,
+          );
         }
-        return json.data as T;
+        throw new Error(json?.errors?.[0]?.message ?? "AniList GraphQL error");
       } catch (err) {
         if (err instanceof HttpError && err.status === 429) {
           // Limiter already paused; loop and try again.
@@ -232,6 +255,11 @@ class AniListClient {
 
     try {
       const data = await this.request<any>(DETAIL_QUERY, { id });
+      // A deleted/private id resolves to null even on an otherwise-OK response.
+      if (!data?.Media) {
+        if (cached) return cached.data;
+        throw new Error(`AniList media ${id} not found`);
+      }
       const media = mapDetail(data.Media);
       void safeCache(() => getDb().then((db) => db.cacheSetAnime(id, media)));
       return media;
@@ -266,10 +294,15 @@ class AniListClient {
 
   /**
    * Relations for many anime at once. Reads the 6h snapshot cache first, only
-   * fetching the ids whose snapshot is missing/expired, batched ≤50 per request
-   * with 700ms spacing (sequel-detection burst guard).
+   * fetching the ids whose snapshot is missing/expired, batched ≤12 per request
+   * (AniList complexity cap) with 700ms spacing. Defaults to `low` priority —
+   * sequel detection is background work that must yield to the user's own
+   * searches and page loads.
    */
-  async getRelationsBatch(ids: number[]): Promise<RelationMap> {
+  async getRelationsBatch(
+    ids: number[],
+    priority: Priority = "low",
+  ): Promise<RelationMap> {
     const result: RelationMap = {};
     const stale: number[] = [];
 
@@ -284,21 +317,82 @@ class AniListClient {
       }
     }
 
-    for (let i = 0; i < stale.length; i += 50) {
-      const chunk = stale.slice(i, i + 50);
-      const data = await this.request<any>(buildRelationsBatchQuery(chunk));
-      for (const id of chunk) {
-        const media = data[`m${id}`];
-        const relations = media ? mapRelations(media) : [];
+    for (let i = 0; i < stale.length; i += RELATIONS_BATCH_SIZE) {
+      const chunk = stale.slice(i, i + RELATIONS_BATCH_SIZE);
+      await this.resolveRelationChunk(chunk, priority, result);
+      if (i + RELATIONS_BATCH_SIZE < stale.length) await delay(BATCH_SPACING_MS);
+    }
+
+    return result;
+  }
+
+  /**
+   * Resolve one chunk of relation ids into `result`, caching as it goes.
+   *
+   * AniList nulls out the ENTIRE batch (and returns HTTP 404) if even one id is
+   * not-found — and deleted/private nodes are common in real franchise graphs,
+   * so a naive batch silently loses every co-batched valid id. We recover them
+   * by binary-splitting a chunk that came back with nulls until the not-found
+   * id is isolated to a size-1 request. Crucially we never cache a null as `[]`
+   * for a multi-id chunk (that poisoned valid ids for the 6h TTL); an id is only
+   * recorded as "no relations" once a lone request confirms it's genuinely
+   * not-found.
+   */
+  private async resolveRelationChunk(
+    chunk: number[],
+    priority: Priority,
+    result: RelationMap,
+  ): Promise<void> {
+    if (chunk.length === 0) return;
+
+    let data: Record<string, unknown>;
+    try {
+      data = await this.request<Record<string, unknown>>(
+        buildRelationsBatchQuery(chunk),
+        undefined,
+        priority,
+      );
+    } catch (e) {
+      // Network/server failure (not a per-id 404) — leave the whole chunk
+      // unresolved and uncached so the next scan retries it.
+      console.warn("[anilist] relations chunk request failed, skipping:", e);
+      return;
+    }
+
+    const missing: number[] = [];
+    for (const id of chunk) {
+      const media = data[`m${id}`];
+      if (media != null) {
+        const relations = mapRelations(media);
         result[id] = relations;
         void safeCache(() =>
           getDb().then((db) => db.setRelationSnapshot(id, relations)),
         );
+      } else {
+        missing.push(id);
       }
-      if (i + 50 < stale.length) await delay(BATCH_SPACING_MS);
     }
 
-    return result;
+    if (missing.length === 0) return;
+
+    if (missing.length === 1) {
+      // A lone id that resolves to null is genuinely not-found — record empty
+      // relations and cache it so we don't keep re-probing a dead node.
+      const id = missing[0];
+      result[id] = [];
+      void safeCache(() =>
+        getDb().then((db) => db.setRelationSnapshot(id, [])),
+      );
+      return;
+    }
+
+    // ≥1 not-found id nulled the batch — split to isolate it and recover the
+    // valid ids that came along for the ride.
+    const mid = Math.ceil(missing.length / 2);
+    await delay(BATCH_SPACING_MS);
+    await this.resolveRelationChunk(missing.slice(0, mid), priority, result);
+    await delay(BATCH_SPACING_MS);
+    await this.resolveRelationChunk(missing.slice(mid), priority, result);
   }
 
   /**
