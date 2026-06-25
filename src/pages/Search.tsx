@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { MagnifyingGlass, X } from "@phosphor-icons/react";
+import { Search as SearchIcon, X } from "lucide-react";
 import { AnimeCollection } from "@/components/list/AnimeCollection";
 import { Chip } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -45,7 +45,7 @@ export function Search() {
     <div className="k-page k-search">
       <div className="k-search__bar">
         <div className="k-searchbar">
-          <Icon icon={MagnifyingGlass} size={18} color="var(--color-text-tertiary)" />
+          <Icon icon={SearchIcon} size={18} color="var(--color-text-tertiary)" />
           <input
             ref={inputRef}
             className="k-searchbar__input"

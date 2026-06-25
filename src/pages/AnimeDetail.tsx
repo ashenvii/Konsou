@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode, UIEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  CaretLeft,
-  Export,
+  ChevronLeft,
   Plus,
+  Share2,
   Star,
-  TelevisionSimple,
-} from "@phosphor-icons/react";
+  Tv,
+} from "lucide-react";
 import { AnimeCover } from "@/components/anime/AnimeCover";
 import { EditSheet } from "@/components/anime/EditSheet";
 import { EpisodeCounter } from "@/components/anime/EpisodeCounter";
@@ -470,7 +470,7 @@ export function AnimeDetail() {
                       onClick={() => void openExternal(l.url)}
                     >
                       <span className="k-availability__top">
-                        <TelevisionSimple size={16} />
+                        <Tv size={16} />
                         <span>{l.site}</span>
                       </span>
                       <span className="k-availability__meta">
@@ -610,7 +610,7 @@ function DetailTopBar({
   return (
     <header className={`k-detail__topbar${solid ? " k-detail__topbar--solid" : ""}`}>
       <button type="button" className="k-icon-btn k-detail__topbtn" onClick={onBack} aria-label="Back">
-        <Icon icon={CaretLeft} size={20} />
+        <Icon icon={ChevronLeft} size={20} />
       </button>
       {title && (
         <Text size="lg" weight={600} clamp={1} className="k-detail__topbartitle">
@@ -619,7 +619,7 @@ function DetailTopBar({
       )}
       {onShare && (
         <button type="button" className="k-icon-btn k-detail__topbtn" onClick={onShare} aria-label="Share">
-          <Icon icon={Export} size={20} />
+          <Icon icon={Share2} size={20} />
         </button>
       )}
     </header>

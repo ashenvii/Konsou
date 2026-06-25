@@ -1,3 +1,4 @@
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { isTauri } from "./platform";
 import { syncQueue } from "./sync/queue";
 import { syncManager } from "./sync/syncManager";
@@ -11,7 +12,6 @@ import { useListStore } from "./store/listStore";
 export async function registerLifecycleHandlers(): Promise<() => void> {
   if (!isTauri()) return () => {};
 
-  const { getCurrentWindow } = await import("@tauri-apps/api/window");
   const appWindow = getCurrentWindow();
 
   const unBlur = await appWindow.listen("tauri://blur", () => {
