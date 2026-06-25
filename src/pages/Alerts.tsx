@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowsClockwise, BellSimple, CaretDown } from "@phosphor-icons/react";
+import { Bell, ChevronDown, RotateCw } from "lucide-react";
 import { AnimeCover } from "@/components/anime/AnimeCover";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -113,8 +113,9 @@ function AlertCard({ n }: { n: KonsouNotification }) {
 export function Alerts() {
   const items = useNotificationStore((s) => s.items);
   const checking = useNotificationStore((s) => s.checking);
+  const progress = useNotificationStore((s) => s.progress);
   const markAllSeen = useNotificationStore((s) => s.markAllSeen);
-  const runDetection = useNotificationStore((s) => s.runDetection);
+  const refreshAll = useNotificationStore((s) => s.refreshAll);
   const entries = useListStore((s) => s.entries);
   const [collapsed, setCollapsed] = useState<Set<AlertBucket>>(new Set());
 
@@ -144,23 +145,29 @@ export function Alerts() {
     <div className="k-page">
       <PageHeader
         title="Alerts"
-        subtitle="Sequel radar"
+        subtitle={
+          checking
+            ? progress && progress.total > 0
+              ? `Scanning ${progress.done}/${progress.total}…`
+              : "Scanning…"
+            : "Sequel radar"
+        }
         right={
           <button
             type="button"
             className={`k-icon-btn${checking ? " k-icon-btn--spin" : ""}`}
-            onClick={() => void runDetection(entries, true)}
+            onClick={() => void refreshAll(entries)}
             aria-label="Check for new sequels"
             disabled={checking}
           >
-            <Icon icon={ArrowsClockwise} size={18} />
+            <Icon icon={RotateCw} size={18} />
           </button>
         }
       />
 
       {items.length === 0 ? (
         <EmptyState
-          icon={BellSimple}
+          icon={Bell}
           title="You're all caught up"
           subtitle="We'll alert you when something related to your completed anime is announced."
         />
@@ -184,7 +191,7 @@ export function Alerts() {
                     className="k-alertgroup__chevron"
                     style={{ transform: isCollapsed ? "rotate(-90deg)" : "none" }}
                   >
-                    <Icon icon={CaretDown} size={16} />
+                    <Icon icon={ChevronDown} size={16} />
                   </span>
                 </button>
                 {!isCollapsed &&

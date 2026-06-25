@@ -45,10 +45,17 @@ async function bootstrap(): Promise<void> {
     void syncManager.checkForUpdates().then((changed) => {
       if (changed) void useListStore.getState().load();
     });
-    // Flagship: scan completed/dropped entries for continuations (6h cooldown).
-    void useNotificationStore
-      .getState()
-      .runDetection(useListStore.getState().entries);
+    // Flagship: drip-scan completed/dropped entries for continuations. Only the
+    // seeds whose adaptive schedule is due are checked, at background priority,
+    // so this never competes with the user's first searches. A periodic tick
+    // keeps draining due seeds while the app stays open — spreading even a
+    // multi-thousand-entry list across days instead of one startup burst.
+    const scheduledScan = () =>
+      void useNotificationStore
+        .getState()
+        .runScheduledScan(useListStore.getState().entries);
+    scheduledScan();
+    setInterval(scheduledScan, 15 * 60 * 1000);
     // Check for app updates silently; download in background; notify when ready to install.
     void autoCheckAndDownload((update) => {
       toast.action({

@@ -124,6 +124,12 @@ export const useListStore = create<ListState>((set, get) => {
         // Re-adding supersedes any prior deletion of this title.
         await db.tombstoneRemove(s.id);
         queueSync();
+        // Immediately scan this one new seed for sequels when added as
+        // completed/dropped (foreground priority — the user is right here).
+        if (status === "completed" || status === "dropped") {
+          const { useNotificationStore } = await import("./notificationStore");
+          void useNotificationStore.getState().scanSeed(get().entries, s.id);
+        }
       } catch {
         removeFromState(s.id);
         toast.error("Couldn't add to your list");
@@ -178,6 +184,11 @@ export const useListStore = create<ListState>((set, get) => {
         patch.started_at = Date.now();
       }
       await patchEntry(anilistId, patch);
+      // Scan just this seed immediately when marked completed/dropped.
+      if (status === "completed" || status === "dropped") {
+        const { useNotificationStore } = await import("./notificationStore");
+        void useNotificationStore.getState().scanSeed(get().entries, anilistId);
+      }
     },
 
     setEpisodes: async (anilistId, episodes) => {
