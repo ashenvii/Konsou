@@ -2,48 +2,68 @@ import { create } from "zustand";
 import { getDb } from "@/lib/db";
 import type {
   AccentName,
+  ColorTheme,
+  SidebarMode,
   SortSpec,
-  ThemeMode,
+  TitleLanguage,
   ViewMode,
 } from "@/types/list";
 
 const RECENT_SEARCH_LIMIT = 5;
 
+/** Each color theme ships with a paired accent. Picking a theme auto-sets it;
+ *  the user can override the accent independently afterwards. */
+export const THEME_DEFAULT_ACCENTS: Record<ColorTheme, AccentName> = {
+  void:     "sakura",
+  ocean:    "aqua",
+  ember:    "amber",
+  forest:   "jade",
+  midnight: "cobalt",
+  crimson:  "crimson",
+  paper:    "sakura",
+  ash:      "cobalt",
+};
+
 interface SettingsState {
   loaded: boolean;
-  theme: ThemeMode;
+  colorTheme: ColorTheme;
   accent: AccentName;
   defaultView: ViewMode;
   defaultSort: SortSpec;
+  titleLanguage: TitleLanguage;
   sequelNotifications: boolean;
   telemetry: boolean;
   recentSearches: string[];
   devMode: boolean;
+  sidebarMode: SidebarMode;
 
   load: () => Promise<void>;
-  setTheme: (t: ThemeMode) => void;
+  setColorTheme: (t: ColorTheme) => void;
   setAccent: (a: AccentName) => void;
   setDefaultView: (v: ViewMode) => void;
   setDefaultSort: (s: SortSpec) => void;
+  setTitleLanguage: (l: TitleLanguage) => void;
   setSequelNotifications: (on: boolean) => void;
   setTelemetry: (on: boolean) => void;
   addRecentSearch: (q: string) => void;
   removeRecentSearch: (q: string) => void;
   enableDevMode: () => void;
+  setSidebarMode: (m: SidebarMode) => void;
+}
+
+function applyColorTheme(theme: ColorTheme): void {
+  document.documentElement.setAttribute("data-theme", theme);
 }
 
 function applyAccent(accent: AccentName): void {
   document.documentElement.setAttribute("data-accent", accent);
 }
-function applyTheme(theme: ThemeMode): void {
-  // Dark-first: light theme is a future addition. Persisted now for forward-compat.
-  const resolved =
-    theme === "system"
-      ? window.matchMedia?.("(prefers-color-scheme: light)").matches
-        ? "light"
-        : "dark"
-      : theme;
-  document.documentElement.setAttribute("data-theme", resolved);
+
+/** Validate the persisted sidebar mode, migrating the old "always-open" value. */
+function normalizeSidebarMode(raw: string | undefined): SidebarMode {
+  if (raw === "rail" || raw === "hover" || raw === "expanded") return raw;
+  if (raw === "always-open") return "expanded";
+  return "hover";
 }
 
 async function persist(key: string, value: string): Promise<void> {
@@ -57,43 +77,54 @@ async function persist(key: string, value: string): Promise<void> {
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   loaded: false,
-  theme: "dark",
-  accent: "violet",
+  colorTheme: "void",
+  accent: "sakura",
   defaultView: "grid",
   defaultSort: { key: "updated", order: "desc" },
+  titleLanguage: "romaji",
   sequelNotifications: true,
   telemetry: true,
   recentSearches: [],
   devMode: false,
+  sidebarMode: "hover",
 
   load: async () => {
     const db = await getDb();
     const s = await db.settingsGetAll();
-    const accent = (s.accent as AccentName) ?? "violet";
-    const theme = (s.theme as ThemeMode) ?? "dark";
+    const colorTheme = (s.color_theme as ColorTheme) ?? "void";
+    const accent =
+      (s.accent as AccentName) ?? THEME_DEFAULT_ACCENTS[colorTheme];
+    applyColorTheme(colorTheme);
     applyAccent(accent);
-    applyTheme(theme);
     set({
       loaded: true,
+      colorTheme,
       accent,
-      theme,
       defaultView: (s.default_view as ViewMode) ?? "grid",
       defaultSort: s.default_sort
         ? (JSON.parse(s.default_sort) as SortSpec)
         : { key: "updated", order: "desc" },
+      titleLanguage: (s.title_language as TitleLanguage) ?? "romaji",
       sequelNotifications: s.sequel_notifications !== "false",
       telemetry: s.telemetry !== "false",
       recentSearches: s.recent_searches
         ? (JSON.parse(s.recent_searches) as string[])
         : [],
+      sidebarMode: normalizeSidebarMode(s.sidebar_mode),
     });
   },
 
-  setTheme: (theme) => {
-    applyTheme(theme);
-    set({ theme });
-    void persist("theme", theme);
+  /** Picking a theme updates both the surface palette and resets accent to
+   *  the theme's paired default. User can override accent afterwards. */
+  setColorTheme: (colorTheme) => {
+    const accent = THEME_DEFAULT_ACCENTS[colorTheme];
+    applyColorTheme(colorTheme);
+    applyAccent(accent);
+    set({ colorTheme, accent });
+    void persist("color_theme", colorTheme);
+    void persist("accent", accent);
   },
+
   setAccent: (accent) => {
     applyAccent(accent);
     set({ accent });
@@ -106,6 +137,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setDefaultSort: (defaultSort) => {
     set({ defaultSort });
     void persist("default_sort", JSON.stringify(defaultSort));
+  },
+  setTitleLanguage: (titleLanguage) => {
+    set({ titleLanguage });
+    void persist("title_language", titleLanguage);
   },
   setSequelNotifications: (on) => {
     set({ sequelNotifications: on });
@@ -131,4 +166,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     void persist("recent_searches", JSON.stringify(next));
   },
   enableDevMode: () => set({ devMode: true }),
+  setSidebarMode: (sidebarMode) => {
+    set({ sidebarMode });
+    void persist("sidebar_mode", sidebarMode);
+  },
 }));

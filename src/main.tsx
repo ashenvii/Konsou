@@ -40,11 +40,22 @@ async function bootstrap(): Promise<void> {
     // Restore previously signed-in Google account from localStorage.
     useAuthStore.getState().restore();
     // Pull from Drive if signed in (non-blocking — failures are logged).
-    void syncManager.checkForUpdates();
-    // Flagship: scan completed/dropped entries for continuations (6h cooldown).
-    void useNotificationStore
-      .getState()
-      .runDetection(useListStore.getState().entries);
+    // Refresh the list store if the pull merged anything, otherwise the merged
+    // entries sit in the DB but never reach the already-hydrated UI store.
+    void syncManager.checkForUpdates().then((changed) => {
+      if (changed) void useListStore.getState().load();
+    });
+    // Flagship: drip-scan completed/dropped entries for continuations. Only the
+    // seeds whose adaptive schedule is due are checked, at background priority,
+    // so this never competes with the user's first searches. A periodic tick
+    // keeps draining due seeds while the app stays open — spreading even a
+    // multi-thousand-entry list across days instead of one startup burst.
+    const scheduledScan = () =>
+      void useNotificationStore
+        .getState()
+        .runScheduledScan(useListStore.getState().entries);
+    scheduledScan();
+    setInterval(scheduledScan, 15 * 60 * 1000);
     // Check for app updates silently; download in background; notify when ready to install.
     void autoCheckAndDownload((update) => {
       toast.action({

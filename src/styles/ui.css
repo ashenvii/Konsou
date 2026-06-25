@@ -225,6 +225,18 @@
   }
 }
 
+/* ── Sign-in reconcile prompt ──────────────────────────────── */
+.k-reconcile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.k-reconcile__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 /* ── Toasts ────────────────────────────────────────────────── */
 .k-toasts {
   position: fixed;
@@ -262,10 +274,11 @@
   animation: konsou-pop-in var(--duration-normal) var(--ease-out);
 }
 .k-toast--success {
-  border-left: 3px solid var(--color-success);
+  box-shadow: 0 0 0 1px var(--color-success), var(--shadow-pop);
 }
 .k-toast--error {
-  border-left: 3px solid var(--color-error);
+  background: color-mix(in oklch, var(--color-error) 9%, var(--color-surface-3));
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--color-error) 35%, transparent), var(--shadow-pop);
 }
 .k-toast__msg {
   flex: 1;
@@ -273,8 +286,8 @@
 .k-toast__action {
   color: var(--color-accent-glow);
   font-weight: 700;
-  text-transform: uppercase;
-  font-size: var(--text-xs);
-  letter-spacing: 0.04em;
+  font-size: var(--text-sm);
   padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
 }

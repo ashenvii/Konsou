@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { isTauri } from "@/lib/platform";
 import { toast } from "@/lib/store/toastStore";
 
@@ -23,7 +24,6 @@ export function useAndroidBack() {
     let active = true;
 
     (async () => {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
       if (!active) return;
       const appWindow = getCurrentWindow();
 

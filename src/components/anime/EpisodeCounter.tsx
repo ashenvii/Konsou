@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Minus, Plus, X } from "@phosphor-icons/react";
+import { Minus, Plus, X } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
 import { useEpisodeIncrement } from "@/hooks/useEpisodeIncrement";
 import { useListStore } from "@/lib/store/listStore";

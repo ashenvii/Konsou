@@ -1,6 +1,8 @@
+import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { isTauri } from "@/lib/platform";
 
-export const APP_VERSION = "0.1.0";
+export const APP_VERSION = "0.2.0";
 
 export interface PendingUpdate {
   version: string;
@@ -18,9 +20,6 @@ let pending: PendingUpdate | null = null;
 export async function checkForUpdate(): Promise<PendingUpdate | null> {
   if (pending) return pending;
   if (!isTauri()) return null;
-
-  const { check } = await import("@tauri-apps/plugin-updater");
-  const { relaunch } = await import("@tauri-apps/plugin-process");
 
   const update = await check();
   if (!update?.available) return null;

@@ -1,4 +1,8 @@
-import type { AnimeListEntry, ListStatus } from "@/types/list";
+import type {
+  AnimeListEntry,
+  DeletionTombstone,
+  ListStatus,
+} from "@/types/list";
 
 /**
  * Field-level, clock-skew-tolerant merge for Drive sync. Pure logic, no I/O —
@@ -61,18 +65,69 @@ export function mergeAnimeEntry(
   };
 }
 
-/** Merge two full lists keyed by anilist_id. */
+export interface MergeResult {
+  entries: AnimeListEntry[];
+  tombstones: DeletionTombstone[];
+}
+
+/** Union two tombstone sets, keeping the latest deletion time per id. */
+export function mergeTombstones(
+  a: DeletionTombstone[],
+  b: DeletionTombstone[],
+): DeletionTombstone[] {
+  const byId = new Map<number, number>();
+  for (const t of [...a, ...b]) {
+    byId.set(t.anilist_id, Math.max(byId.get(t.anilist_id) ?? 0, t.deleted_at));
+  }
+  return [...byId].map(([anilist_id, deleted_at]) => ({ anilist_id, deleted_at }));
+}
+
+/**
+ * Merge two full lists (with their tombstones) keyed by anilist_id.
+ *
+ * Deletions reconcile against edits by timestamp: a tombstone wins only when its
+ * `deleted_at` is at or after the entry's `updated_at`. A later re-add (which
+ * bumps `updated_at`) therefore resurrects the entry and drops the tombstone.
+ * Tombstones for ids absent from both lists are kept so the deletion keeps
+ * propagating to devices that still hold the entry.
+ */
 export function mergeLists(
   local: AnimeListEntry[],
   remote: AnimeListEntry[],
-): AnimeListEntry[] {
+  localTombstones: DeletionTombstone[] = [],
+  remoteTombstones: DeletionTombstone[] = [],
+): MergeResult {
   const byId = new Map<number, AnimeListEntry>();
   for (const e of local) byId.set(e.anilist_id, e);
   for (const r of remote) {
     const l = byId.get(r.anilist_id);
     byId.set(r.anilist_id, l ? mergeAnimeEntry(l, r) : r);
   }
-  return [...byId.values()];
+
+  const tombById = new Map<number, number>();
+  for (const t of mergeTombstones(localTombstones, remoteTombstones)) {
+    tombById.set(t.anilist_id, t.deleted_at);
+  }
+
+  const entries: AnimeListEntry[] = [];
+  const tombstones: DeletionTombstone[] = [];
+  for (const e of byId.values()) {
+    const deletedAt = tombById.get(e.anilist_id);
+    if (deletedAt != null && deletedAt >= e.updated_at) {
+      // Deletion is newer than the last edit — drop the entry, keep the tombstone.
+      tombstones.push({ anilist_id: e.anilist_id, deleted_at: deletedAt });
+    } else {
+      // Entry is live (never deleted, or re-added after the deletion).
+      entries.push(e);
+    }
+    tombById.delete(e.anilist_id);
+  }
+  // Tombstones whose entry isn't present anywhere — keep propagating them.
+  for (const [anilist_id, deleted_at] of tombById) {
+    tombstones.push({ anilist_id, deleted_at });
+  }
+
+  return { entries, tombstones };
 }
 
 function minDefined(a: number | null, b: number | null): number | null {

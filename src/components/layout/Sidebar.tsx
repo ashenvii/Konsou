@@ -1,18 +1,88 @@
+import { useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Icon } from "@/components/ui/Icon";
 import { useNotificationStore } from "@/lib/store/notificationStore";
 import { useAuthStore } from "@/lib/store/authStore";
+import { useSettingsStore } from "@/lib/store/settingsStore";
 import { NAV_ITEMS } from "./navConfig";
 import { APP_VERSION } from "@/lib/updater";
 
+/**
+ * In "hover" mode the rail expands to the full width, but we collapse it early
+ * once the pointer drifts past the labels into the empty zone on the right — so
+ * the user never has to travel to the 220px edge to dismiss it. CLOSE_X is
+ * measured from the sidebar's LEFT edge, which stays put while the width
+ * animates; reading the right edge mid-animation is what caused the old flicker.
+ */
+const EXPANDED_WIDTH = 220;
+const CLOSE_X = EXPANDED_WIDTH - 48; // 172px — past the labels, before the edge
+const CLOSE_DELAY = 160;
+
 export function Sidebar() {
-  const unread = useNotificationStore((s) => s.unread);
+  const alertCount = useNotificationStore((s) => s.items.length);
   const account = useAuthStore((s) => s.account);
+  const sidebarMode = useSettingsStore((s) => s.sidebarMode);
+
+  const [hovered, setHovered] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const isHoverMode = sidebarMode === "hover";
+  const expanded = sidebarMode === "expanded" || (isHoverMode && hovered);
+
+  const cancelClose = () => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = undefined;
+    }
+  };
+  const scheduleClose = () => {
+    if (closeTimer.current) return;
+    closeTimer.current = setTimeout(() => {
+      closeTimer.current = undefined;
+      setHovered(false);
+    }, CLOSE_DELAY);
+  };
+  const open = () => {
+    cancelClose();
+    setHovered(true);
+  };
+  const closeNow = () => {
+    cancelClose();
+    setHovered(false);
+  };
+
+  // Collapse early when the pointer enters the empty strip right of the labels.
+  const onMove = (e: React.MouseEvent<HTMLElement>) => {
+    if (!isHoverMode || !hovered) return;
+    const x = e.clientX - e.currentTarget.getBoundingClientRect().left;
+    if (x > CLOSE_X) scheduleClose();
+    else cancelClose();
+  };
+
+  // Only the hover mode reacts to the pointer/focus; rail and expanded are static.
+  const hoverProps = isHoverMode
+    ? {
+        onMouseEnter: open,
+        onMouseLeave: closeNow,
+        onMouseMove: onMove,
+        onFocusCapture: open,
+        onBlurCapture: (e: React.FocusEvent<HTMLElement>) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) closeNow();
+        },
+      }
+    : {};
 
   return (
-    <aside className="k-sidebar">
+    <aside
+      className="k-sidebar"
+      data-mode={sidebarMode}
+      data-expanded={expanded || undefined}
+      {...hoverProps}
+    >
       <div className="k-sidebar__brand">
-        <img src="/konsou.svg" alt="" width={32} height={32} />
+        <span className="k-sidebar__logomark">
+          <img src="/konsou.svg" alt="Konsou" width={32} height={32} />
+        </span>
         <span className="k-sidebar__wordmark">Konsou</span>
       </div>
 
@@ -21,6 +91,7 @@ export function Sidebar() {
           <NavLink
             key={item.to}
             to={item.to}
+            title={item.label}
             className={({ isActive }) =>
               `k-sidebar__item${isActive ? " k-sidebar__item--active" : ""}`
             }
@@ -33,13 +104,13 @@ export function Sidebar() {
                     size={22}
                     weight={isActive ? "fill" : "regular"}
                   />
-                  {item.badge && unread > 0 && (
+                  {item.badge && alertCount > 0 && (
                     <span className="k-nav__badge">
-                      {unread > 9 ? "9+" : unread}
+                      {alertCount > 9 ? "9+" : alertCount}
                     </span>
                   )}
                 </span>
-                <span>{item.label}</span>
+                <span className="k-sidebar__label">{item.label}</span>
               </>
             )}
           </NavLink>

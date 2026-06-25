@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Check } from "@phosphor-icons/react";
+import { ArrowDown, ArrowUp, Check } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Icon } from "@/components/ui/Icon";
 import { SORT_LABELS } from "./ListToolbar";

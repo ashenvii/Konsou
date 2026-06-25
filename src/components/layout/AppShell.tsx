@@ -3,13 +3,16 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
 import { Toasts } from "@/components/ui/Toasts";
+import { ReconcilePrompt } from "@/components/ReconcilePrompt";
 import { useAndroidBack } from "@/hooks/useAndroidBack";
 import { useBreakpoint } from "@/hooks/useMediaQuery";
 import { registerLifecycleHandlers } from "@/lib/lifecycle";
+import { useSettingsStore } from "@/lib/store/settingsStore";
 import { NAV_ITEMS } from "./navConfig";
 
 export function AppShell() {
   const { isDesktop } = useBreakpoint();
+  const sidebarMode = useSettingsStore((s) => s.sidebarMode);
   const navigate = useNavigate();
   useAndroidBack();
 
@@ -39,13 +42,17 @@ export function AppShell() {
   }, [isDesktop, navigate]);
 
   return (
-    <div className={`k-shell${isDesktop ? " k-shell--desktop" : ""}`}>
+    <div
+      className={`k-shell${isDesktop ? " k-shell--desktop" : ""}`}
+      data-sidebar={isDesktop ? sidebarMode : undefined}
+    >
       {isDesktop && <Sidebar />}
       <main className="k-shell__content">
         <Outlet />
       </main>
       {!isDesktop && <BottomNav />}
       <Toasts />
+      <ReconcilePrompt />
     </div>
   );
 }

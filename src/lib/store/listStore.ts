@@ -103,6 +103,7 @@ export const useListStore = create<ListState>((set, get) => {
         mal_id: s.idMal ?? null,
         title_romaji: s.title.romaji,
         title_english: s.title.english ?? null,
+        title_native: s.title.native ?? null,
         cover_url: getCoverUrl(s.coverImage) || null,
         total_episodes: total,
         status,
@@ -120,7 +121,15 @@ export const useListStore = create<ListState>((set, get) => {
       try {
         const db = await getDb();
         await db.listUpsert(entry);
+        // Re-adding supersedes any prior deletion of this title.
+        await db.tombstoneRemove(s.id);
         queueSync();
+        // Immediately scan this one new seed for sequels when added as
+        // completed/dropped (foreground priority — the user is right here).
+        if (status === "completed" || status === "dropped") {
+          const { useNotificationStore } = await import("./notificationStore");
+          void useNotificationStore.getState().scanSeed(get().entries, s.id);
+        }
       } catch {
         removeFromState(s.id);
         toast.error("Couldn't add to your list");
@@ -145,6 +154,7 @@ export const useListStore = create<ListState>((set, get) => {
           : incoming;
         applyEntry(entry);
         await db.listUpsert(entry);
+        await db.tombstoneRemove(incoming.anilist_id);
         count++;
       }
       queueSync();
@@ -174,6 +184,11 @@ export const useListStore = create<ListState>((set, get) => {
         patch.started_at = Date.now();
       }
       await patchEntry(anilistId, patch);
+      // Scan just this seed immediately when marked completed/dropped.
+      if (status === "completed" || status === "dropped") {
+        const { useNotificationStore } = await import("./notificationStore");
+        void useNotificationStore.getState().scanSeed(get().entries, anilistId);
+      }
     },
 
     setEpisodes: async (anilistId, episodes) => {
@@ -221,6 +236,9 @@ export const useListStore = create<ListState>((set, get) => {
         try {
           const db = await getDb();
           await db.listRemove(anilistId);
+          // Record a tombstone so the deletion propagates through sync instead
+          // of being resurrected by the next merge.
+          await db.tombstoneUpsert({ anilist_id: anilistId, deleted_at: Date.now() });
           queueSync();
         } catch {
           applyEntry(entry);
@@ -234,6 +252,7 @@ export const useListStore = create<ListState>((set, get) => {
       try {
         const db = await getDb();
         await db.listUpsert(entry);
+        await db.tombstoneRemove(entry.anilist_id);
         queueSync();
       } catch {
         removeFromState(entry.anilist_id);

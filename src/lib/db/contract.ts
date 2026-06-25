@@ -1,6 +1,19 @@
 import type { AnimeMedia, AnimeSummary, RelationNode } from "@/types/anime";
-import type { AnimeListEntry, ListEntryPatch } from "@/types/list";
+import type {
+  AnimeListEntry,
+  DeletionTombstone,
+  ListEntryPatch,
+} from "@/types/list";
 import type { KonsouNotification } from "@/types/notification";
+
+/** A seed's adaptive re-scan schedule (see src/lib/sequel/schedule.ts). */
+export interface ScanScheduleEntry {
+  anilist_id: number;
+  last_check_at: number;
+  next_check_at: number;
+  /** Consecutive checks that turned up nothing new — drives exponential backoff. */
+  quiet_streak: number;
+}
 
 /**
  * The data-access contract. Feature code and stores talk ONLY to this interface,
@@ -21,7 +34,19 @@ export interface KonsouDb {
     anilistId: number,
     patch: ListEntryPatch & { updated_at: number },
   ): Promise<void>;
+  /** Pure row delete — does NOT write a tombstone (callers own that). */
   listRemove(anilistId: number): Promise<void>;
+  /** Wipe and re-seed the whole list — used by the "replace" sync strategies. */
+  listReplaceAll(entries: AnimeListEntry[]): Promise<void>;
+
+  // ── Deletion tombstones ────────────────────────────────────
+  tombstonesAll(): Promise<DeletionTombstone[]>;
+  /** Insert or bump a tombstone, keeping the latest `deleted_at`. */
+  tombstoneUpsert(t: DeletionTombstone): Promise<void>;
+  /** Drop a tombstone (an entry was re-added, superseding its deletion). */
+  tombstoneRemove(anilistId: number): Promise<void>;
+  /** Replace the whole tombstone set — used after a merge or replace. */
+  tombstonesReplaceAll(tombstones: DeletionTombstone[]): Promise<void>;
 
   // ── Caches ─────────────────────────────────────────────────
   cacheGetAnime(
@@ -42,6 +67,11 @@ export interface KonsouDb {
     anilistId: number,
   ): Promise<{ relations: RelationNode[]; checkedAt: number } | null>;
   setRelationSnapshot(anilistId: number, relations: RelationNode[]): Promise<void>;
+
+  // ── Sequel-scan schedule (per completed/dropped seed) ──────
+  /** Every scheduled seed, keyed by anilist_id. Seeds with no row are "due now". */
+  scheduleGetAll(): Promise<Record<number, ScanScheduleEntry>>;
+  scheduleSet(entry: ScanScheduleEntry): Promise<void>;
 
   // ── Notifications (sequel radar) ───────────────────────────
   notificationsActive(): Promise<KonsouNotification[]>;

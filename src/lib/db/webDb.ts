@@ -1,7 +1,11 @@
 import type { AnimeMedia, AnimeSummary, RelationNode } from "@/types/anime";
-import type { AnimeListEntry, ListEntryPatch } from "@/types/list";
+import type {
+  AnimeListEntry,
+  DeletionTombstone,
+  ListEntryPatch,
+} from "@/types/list";
 import type { KonsouNotification } from "@/types/notification";
-import type { KonsouDb } from "./contract";
+import type { KonsouDb, ScanScheduleEntry } from "./contract";
 
 /**
  * Browser-only backend used by `npm run dev`. Persists the durable tables to
@@ -10,9 +14,11 @@ import type { KonsouDb } from "./contract";
  */
 const LS = {
   list: "konsou.web.list",
+  tombstones: "konsou.web.tombstones",
   notifications: "konsou.web.notifications",
   settings: "konsou.web.settings",
   notifId: "konsou.web.notif_id",
+  schedule: "konsou.web.scan_schedule",
 };
 
 function read<T>(key: string, fallback: T): T {
@@ -85,6 +91,44 @@ export class WebKonsouDb implements KonsouDb {
     this.saveList(this.loadList().filter((e) => e.anilist_id !== anilistId));
   }
 
+  async listReplaceAll(entries: AnimeListEntry[]): Promise<void> {
+    this.saveList(entries.map((e) => ({ ...e })));
+  }
+
+  // ── Deletion tombstones ───────────────────────────────────
+  private loadTombs(): DeletionTombstone[] {
+    return read<DeletionTombstone[]>(LS.tombstones, []);
+  }
+  private saveTombs(t: DeletionTombstone[]): void {
+    write(LS.tombstones, t);
+  }
+
+  async tombstonesAll(): Promise<DeletionTombstone[]> {
+    return this.loadTombs();
+  }
+
+  async tombstoneUpsert(t: DeletionTombstone): Promise<void> {
+    const all = this.loadTombs();
+    const idx = all.findIndex((x) => x.anilist_id === t.anilist_id);
+    if (idx >= 0) {
+      all[idx] = {
+        ...all[idx],
+        deleted_at: Math.max(all[idx].deleted_at, t.deleted_at),
+      };
+    } else {
+      all.push(t);
+    }
+    this.saveTombs(all);
+  }
+
+  async tombstoneRemove(anilistId: number): Promise<void> {
+    this.saveTombs(this.loadTombs().filter((t) => t.anilist_id !== anilistId));
+  }
+
+  async tombstonesReplaceAll(tombstones: DeletionTombstone[]): Promise<void> {
+    this.saveTombs(tombstones);
+  }
+
   // ── Caches (in-memory) ────────────────────────────────────
   async cacheGetAnime(anilistId: number) {
     return this.animeCache.get(anilistId) ?? null;
@@ -110,6 +154,21 @@ export class WebKonsouDb implements KonsouDb {
     relations: RelationNode[],
   ): Promise<void> {
     this.relationCache.set(anilistId, { relations, checkedAt: Date.now() });
+  }
+
+  // ── Sequel-scan schedule ──────────────────────────────────
+  async scheduleGetAll(): Promise<Record<number, ScanScheduleEntry>> {
+    const rows = read<ScanScheduleEntry[]>(LS.schedule, []);
+    const out: Record<number, ScanScheduleEntry> = {};
+    for (const r of rows) out[r.anilist_id] = r;
+    return out;
+  }
+  async scheduleSet(entry: ScanScheduleEntry): Promise<void> {
+    const rows = read<ScanScheduleEntry[]>(LS.schedule, []);
+    const idx = rows.findIndex((r) => r.anilist_id === entry.anilist_id);
+    if (idx >= 0) rows[idx] = entry;
+    else rows.push(entry);
+    write(LS.schedule, rows);
   }
 
   // ── Notifications ─────────────────────────────────────────

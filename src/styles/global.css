@@ -20,6 +20,11 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+[data-theme="paper"],
+[data-theme="ash"] {
+  color-scheme: light;
+}
+
 body {
   font-family: var(--font-sans);
   font-size: var(--text-base);

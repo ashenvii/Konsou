@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimeCollection } from "@/components/list/AnimeCollection";
 import { Chip } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -101,7 +101,7 @@ export function Discover() {
             onClick={() => setSeasonOffset((o) => o - 1)}
             aria-label="Previous season"
           >
-            <Icon icon={CaretLeft} size={18} />
+            <Icon icon={ChevronLeft} size={18} />
           </button>
           <span className="k-season-nav__label">
             {season.season.charAt(0) + season.season.slice(1).toLowerCase()} {season.year}
@@ -112,7 +112,7 @@ export function Discover() {
             onClick={() => setSeasonOffset((o) => o + 1)}
             aria-label="Next season"
           >
-            <Icon icon={CaretRight} size={18} />
+            <Icon icon={ChevronRight} size={18} />
           </button>
         </div>
       ) : (

@@ -16,6 +16,9 @@ src-tauri/gen/schemas
 # Claude Code session memory
 .claude/
 
+# /impeccable design session artifacts
+.impeccable/
+
 # Editor / OS
 .DS_Store
 .vscode/*

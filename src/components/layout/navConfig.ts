@@ -1,4 +1,4 @@
-import { Bell, Compass, Gear, List, MagnifyingGlass } from "@phosphor-icons/react";
+import { Bell, Compass, List, Search, Settings } from "lucide-react";
 import type { IconComponent } from "@/components/ui/Icon";
 
 export interface NavItem {
@@ -11,8 +11,8 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "My List", icon: List },
-  { to: "/search", label: "Search", icon: MagnifyingGlass },
+  { to: "/search", label: "Search", icon: Search },
   { to: "/discover", label: "Discover", icon: Compass },
   { to: "/alerts", label: "Alerts", icon: Bell, badge: true },
-  { to: "/settings", label: "Settings", icon: Gear },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];

@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode, UIEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  CaretLeft,
-  Export,
+  ChevronLeft,
   Plus,
+  Share2,
   Star,
-  TelevisionSimple,
-} from "@phosphor-icons/react";
+  Tv,
+} from "lucide-react";
 import { AnimeCover } from "@/components/anime/AnimeCover";
 import { EditSheet } from "@/components/anime/EditSheet";
 import { EpisodeCounter } from "@/components/anime/EpisodeCounter";
@@ -21,18 +21,19 @@ import { Text } from "@/components/ui/Text";
 import { useAnimeDetail } from "@/hooks/useAniList";
 import {
   airingStatusLabel,
+  alternateTitles,
   formatFuzzyDate,
   formatLabel,
   formatScore,
   getCoverUrl,
   preferredTitle,
-  secondaryTitle,
   seasonYearLabel,
   stripHtml,
 } from "@/lib/format";
 import { openExternal } from "@/lib/openExternal";
 import { toast } from "@/lib/store/toastStore";
 import { useListStore } from "@/lib/store/listStore";
+import { useSettingsStore } from "@/lib/store/settingsStore";
 import type {
   AnimeMedia,
   AnimeTitle,
@@ -196,8 +197,12 @@ export function AnimeDetail() {
   const [topbarSolid, setTopbarSolid] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
 
-  const title = media ? preferredTitle(media.title) : "";
-  const secondary = media ? secondaryTitle(media.title) : null;
+  const titleLanguage = useSettingsStore((s) => s.titleLanguage);
+  const title = media ? preferredTitle(media.title, titleLanguage) : "";
+  // Always surface the other-language title(s) inline so the reader can check
+  // the alternate name without changing their Settings preference.
+  const alternates = media ? alternateTitles(media.title, titleLanguage) : [];
+  const synonyms = media?.synonyms?.filter((s) => s.trim()) ?? [];
   const inList = !!entry;
 
   const metaBits = media
@@ -293,9 +298,14 @@ export function AnimeDetail() {
             <Text as="h1" size="2xl" weight={700} clamp={3}>
               {title}
             </Text>
-            {secondary && (
-              <Text size="sm" color="secondary" clamp={1}>
-                {secondary}
+            {alternates.map((alt) => (
+              <Text key={alt} size="sm" color="secondary" clamp={1}>
+                {alt}
+              </Text>
+            ))}
+            {synonyms.length > 0 && (
+              <Text size="xs" color="tertiary" clamp={1} title={synonyms.join(" · ")}>
+                Also known as: {synonyms.slice(0, 3).join(" · ")}
               </Text>
             )}
             <Text size="sm" color="secondary" className="k-detail__meta">
@@ -460,7 +470,7 @@ export function AnimeDetail() {
                       onClick={() => void openExternal(l.url)}
                     >
                       <span className="k-availability__top">
-                        <TelevisionSimple size={16} />
+                        <Tv size={16} />
                         <span>{l.site}</span>
                       </span>
                       <span className="k-availability__meta">
@@ -600,7 +610,7 @@ function DetailTopBar({
   return (
     <header className={`k-detail__topbar${solid ? " k-detail__topbar--solid" : ""}`}>
       <button type="button" className="k-icon-btn k-detail__topbtn" onClick={onBack} aria-label="Back">
-        <Icon icon={CaretLeft} size={20} />
+        <Icon icon={ChevronLeft} size={20} />
       </button>
       {title && (
         <Text size="lg" weight={600} clamp={1} className="k-detail__topbartitle">
@@ -609,7 +619,7 @@ function DetailTopBar({
       )}
       {onShare && (
         <button type="button" className="k-icon-btn k-detail__topbtn" onClick={onShare} aria-label="Share">
-          <Icon icon={Export} size={20} />
+          <Icon icon={Share2} size={20} />
         </button>
       )}
     </header>
