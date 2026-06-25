@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { CSSProperties, MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Star } from "@phosphor-icons/react";
+import { Bookmark, Check, Pause, Play, Plus, RotateCw, Star } from "lucide-react";
 import { AnimeCover } from "./AnimeCover";
 import { StatusSheet } from "./StatusSheet";
 import { statusMeta } from "./statusMeta";
@@ -50,6 +50,10 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
   const total = entry?.total_episodes ?? media.episodes ?? null;
   const watched = entry?.episodes_watched ?? 0;
   const status = entry ? statusMeta(entry.status) : null;
+  // Watching + rewatching share the progressive "color-in" treatment: the cover
+  // starts greyscale and the watched episodes reveal it in colour, left → right.
+  const progressive =
+    entry?.status === "watching" || entry?.status === "rewatching";
 
   const { increment, pending } = useEpisodeIncrement(media.id, watched, total);
 
@@ -86,24 +90,79 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
     return (
       <>
         <article
-          className={`k-card k-card--grid${inList ? " k-card--inlist" : ""}`}
-          style={inList && status ? { "--card-status": status.color } as CSSProperties : undefined}
+          className={`k-card k-card--grid${inList && entry ? ` k-card--inlist k-card--status-${entry.status}` : ""}`}
+          style={
+            inList && status
+              ? ({
+                  "--card-status": status.color,
+                  ...(progressive && total != null
+                    ? { "--progress": `${progressPct}%` }
+                    : {}),
+                } as CSSProperties)
+              : undefined
+          }
           onClick={open}
         >
           <div className="k-card__cover">
             <AnimeCover src={cover} alt={title} radius="0" />
+            {progressive && total != null && cover && (
+              <>
+                <div
+                  className="k-card__reveal"
+                  aria-hidden
+                  style={{ backgroundImage: `url("${cover}")` }}
+                />
+                <div className="k-card__front" aria-hidden>
+                  <span className="k-card__epnow">EP {watched}</span>
+                </div>
+              </>
+            )}
+            {entry?.status === "dropped" && cover && (
+              <div
+                className="k-card__mono"
+                aria-hidden
+                style={{ backgroundImage: `url("${cover}")` }}
+              />
+            )}
             <div className="k-card__scrim" />
-            {status && (
-              <span className="k-card__statusicon" aria-label={status.label} title={status.label} style={{ color: status.color }}>
-                <Icon icon={status.icon} size={16} weight="fill" />
+
+            {/* Per-status marker — a different shape/position for each state. */}
+            {entry?.status === "watching" && (
+              <span className="k-mark k-mark--left">
+                <span className="k-mark__icon">
+                  <Icon icon={Play} size={13} weight="fill" />
+                </span>
+                Watching
               </span>
             )}
-            {entry?.score != null && (
-              <span className="k-card__score">
-                <Icon icon={Star} size={11} weight="fill" />
-                {formatScore(entry.score)}
+            {entry?.status === "rewatching" && (
+              <span className="k-mark k-mark--left k-mark--spin">
+                <span className="k-mark__icon">
+                  <Icon icon={RotateCw} size={13} weight="fill" />
+                </span>
+                Rewatch
               </span>
             )}
+            {entry?.status === "completed" && (
+              <span className="k-seal" aria-label={status?.label} title={status?.label}>
+                <Icon icon={Check} size={17} strokeWidth={3} />
+              </span>
+            )}
+            {entry?.status === "plan_to_watch" && (
+              <span className="k-bookmark" aria-label={status?.label} title={status?.label}>
+                <Icon icon={Bookmark} size={13} fill />
+              </span>
+            )}
+            {entry?.status === "dropped" && <span className="k-ribbon">Dropped</span>}
+            {entry?.status === "on_hold" && (
+              <span className="k-hold" aria-label={status?.label}>
+                <span className="k-hold__circle">
+                  <Icon icon={Pause} size={24} weight="fill" />
+                </span>
+                <span className="k-hold__label">On hold</span>
+              </span>
+            )}
+
             <div className="k-card__footer">
               <Text size="sm" weight={600} clamp={2} className="k-card__title">
                 {title}
@@ -119,17 +178,18 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
                     {watched}/{total ?? "?"}
                   </span>
                 )}
+                {entry?.score != null && (
+                  <span className="k-card__scorechip">
+                    <Icon icon={Star} size={10} fill />
+                    {formatScore(entry.score)}
+                  </span>
+                )}
                 {dubLabel && (
                   <span className={`k-card__dubtag${dubLabel === "DUB+SUB" ? " k-card__dubtag--dub" : " k-card__dubtag--sub"}`}>
                     {dubLabel}
                   </span>
                 )}
               </div>
-              {showStatus && status && (
-                <span className="k-card__statuslabel" style={{ color: status.color }}>
-                  {status.label}
-                </span>
-              )}
             </div>
             <button
               type="button"

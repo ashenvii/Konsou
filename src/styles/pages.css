@@ -166,6 +166,8 @@
 @media (min-width: 1024px) {
   .k-alerts {
     padding-inline: var(--content-padding-lg);
+  }
+  .k-alerts > * {
     max-width: 720px;
   }
 }
@@ -588,6 +590,102 @@
   background: var(--color-surface-3);
 }
 
+/* ── My List atmospheric empty state ──────────────────────── */
+.k-mylist-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  gap: var(--space-3);
+  position: relative;
+  overflow: hidden;
+}
+/* Three ghost cover cards stacked behind the headline, giving the
+   illusion of a collection waiting to be filled */
+.k-mylist-empty__shelf {
+  position: relative;
+  width: 160px;
+  height: 100px;
+  margin-bottom: var(--space-4);
+  flex: none;
+}
+.k-mylist-empty__cover {
+  position: absolute;
+  width: 66px;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
+.k-mylist-empty__cover:nth-child(1) {
+  left: 0;
+  top: 16px;
+  transform: rotate(-8deg);
+  z-index: 1;
+  background: var(--color-surface-3);
+}
+.k-mylist-empty__cover:nth-child(2) {
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  z-index: 3;
+  background: var(--color-surface-2);
+  box-shadow: 0 4px 16px oklch(0% 0 0 / 30%);
+}
+.k-mylist-empty__cover:nth-child(3) {
+  right: 0;
+  top: 16px;
+  transform: rotate(8deg);
+  z-index: 1;
+  background: var(--color-surface-3);
+}
+/* Accent shimmer on the center card */
+.k-mylist-empty__cover:nth-child(2)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--color-accent) 12%, transparent) 0%,
+    transparent 60%
+  );
+}
+.k-mylist-empty__title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+.k-mylist-empty__sub {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  max-width: 260px;
+  line-height: 1.5;
+}
+.k-mylist-empty__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.k-mylist-empty__import {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+.k-mylist-empty__import button {
+  color: var(--color-accent-glow);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ── Settings ──────────────────────────────────────────────── */
 .k-settings {
   flex: 1;
@@ -596,6 +694,8 @@
 @media (min-width: 1024px) {
   .k-settings {
     padding-inline: var(--content-padding-lg);
+  }
+  .k-settings > * {
     max-width: 720px;
   }
 }
@@ -659,6 +759,50 @@
 }
 .k-segmented__btn--active {
   background: var(--color-surface-3);
+  color: var(--color-text-primary);
+}
+
+/* ── Color theme picker ────────────────────────────────────── */
+.k-colorthemes {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.k-colortheme {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+.k-colortheme__preview {
+  width: 52px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px oklch(0% 0 0 / 12%);
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow    var(--duration-fast) var(--ease-out);
+}
+.k-colortheme--active .k-colortheme__preview {
+  border-color: var(--color-text-primary);
+  box-shadow: inset 0 0 0 1px oklch(0% 0 0 / 12%), inset 0 0 0 4px var(--color-base);
+}
+.k-colortheme__strip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 11px;
+}
+.k-colortheme__label {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.k-colortheme--active .k-colortheme__label {
   color: var(--color-text-primary);
 }
 
@@ -810,6 +954,20 @@
 }
 
 /* ── Onboarding title-language picker ──────────────────────── */
+/* desktop sidebar preference — hidden on mobile (no sidebar there) */
+.k-onboarding__sidebarpref {
+  display: none;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  text-align: left;
+}
+@media (min-width: 768px) {
+  .k-onboarding__sidebarpref {
+    display: flex;
+  }
+}
+
 .k-onboarding__titlepref {
   display: flex;
   flex-direction: column;

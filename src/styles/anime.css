@@ -62,10 +62,11 @@
   padding: var(--space-4) var(--space-2);
   border-radius: var(--radius-lg);
   background: var(--color-surface-2);
-  border: 1.5px solid transparent;
+  border: 2px solid transparent;
   color: var(--color-text-secondary);
   font-size: var(--text-xs);
   font-weight: 500;
+  position: relative;
   transition:
     background-color var(--duration-normal) var(--ease-out),
     border-color var(--duration-normal) var(--ease-out),
@@ -73,13 +74,26 @@
 }
 .k-status-option:hover {
   background: var(--color-surface-3);
+  color: var(--color-text-primary);
 }
 .k-status-option:active {
   transform: scale(0.96);
 }
 .k-status-option--active {
-  background: var(--color-surface-3);
+  /* border-color set via inline style to match status color */
+  background: color-mix(in oklch, currentColor 10%, var(--color-surface-2));
   color: var(--color-text-primary);
+}
+/* Checkmark dot in top-right corner of active status option */
+.k-status-option--active::after {
+  content: "";
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: currentColor;
 }
 .k-status-remove {
   display: flex;
@@ -212,53 +226,301 @@
     transparent 58%
   );
 }
-/* Top accent stripe — the primary at-a-glance status signal */
-.k-card--grid.k-card--inlist::before {
+/* ── Per-status markers ──────────────────────────────────────────
+   Each state gets a deliberately different marker SHAPE + POSITION so the
+   grid never looks like one template recoloured: chips on the left, a seal /
+   bookmark on the right, a diagonal ribbon in the corner, a centered hold.
+   All draw their colour from the shared --card-status token (the exact colour
+   the Change-Status icons use), darkened in OKLAB so the hue never shifts. */
+
+/* Chip — pill tag pinned to a top corner (watching, rewatching). */
+.k-mark {
+  position: absolute;
+  top: var(--space-2);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: calc(100% - 2 * var(--space-2));
+  height: 22px;
+  padding: 0 9px 0 7px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fff;
+  background: color-mix(in oklab, var(--card-status) 50%, #000);
+  border: 1px solid var(--card-status);
+  box-shadow: 0 2px 8px oklch(0% 0 0 / 45%);
+}
+.k-mark--left {
+  left: var(--space-2);
+}
+.k-mark--right {
+  right: var(--space-2);
+}
+.k-mark__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--card-status);
+  filter: drop-shadow(0 1px 1px oklch(0% 0 0 / 70%));
+}
+
+/* Seal — circular "finished" stamp (completed), top-right. */
+.k-seal {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  color: #fff;
+  background: color-mix(in oklab, var(--card-status) 58%, #000);
+  border: 1.5px solid var(--card-status);
+  box-shadow:
+    0 0 12px color-mix(in oklab, var(--card-status) 55%, transparent),
+    0 2px 6px oklch(0% 0 0 / 50%);
+}
+
+/* Bookmark — ribbon hanging from the top edge (plan to watch), top-right. */
+.k-bookmark {
+  position: absolute;
+  top: 0;
+  right: 14px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 30px;
+  padding-bottom: 5px;
+  color: #fff;
+  background: color-mix(in oklab, var(--card-status) 56%, #000);
+  border: 1px solid var(--card-status);
+  border-top: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
+  box-shadow: 0 2px 6px oklch(0% 0 0 / 50%);
+}
+
+/* Ribbon — diagonal corner banner stamped across the top-left (dropped). */
+.k-ribbon {
+  position: absolute;
+  top: 12px;
+  left: -30px;
+  z-index: 3;
+  width: 120px;
+  padding: 3px 0;
+  transform: rotate(-45deg);
+  text-align: center;
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
+  background: color-mix(in oklab, var(--card-status) 62%, #000);
+  border-block: 1px solid color-mix(in oklab, var(--card-status) 80%, #fff);
+  box-shadow: 0 2px 8px oklch(0% 0 0 / 55%);
+}
+
+/* Hold — centered pause + label, the "frozen" treatment (on hold). */
+.k-hold {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+.k-hold__circle {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-full);
+  color: #fff;
+  background: color-mix(in oklab, var(--card-status) 46%, #000);
+  border: 2px solid var(--card-status);
+  box-shadow: 0 4px 16px oklch(0% 0 0 / 55%);
+}
+.k-hold__label {
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 1px 3px oklch(0% 0 0 / 85%);
+}
+
+/* Watching "color-in": the cover starts dark + black-and-white; the watched
+   fraction (left → right, --progress) is revealed in full colour, so the art
+   literally fills in with colour as you watch. */
+.k-card__reveal {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  clip-path: inset(0 calc(100% - var(--progress, 0%)) 0 0);
+  pointer-events: none;
+  transition: clip-path var(--duration-normal) var(--ease-out);
+}
+.k-card__front {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--progress, 0%);
+  width: 2px;
+  pointer-events: none;
+  background: var(--card-status, var(--color-accent));
+  box-shadow: 0 0 8px color-mix(in oklab, var(--card-status, var(--color-accent)) 80%, transparent);
+  transition: left var(--duration-normal) var(--ease-out);
+}
+/* Current episode, riding the colour/B&W boundary (watching + rewatching). */
+.k-card__epnow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--card-status) 55%, #000);
+  border: 1px solid var(--card-status);
+  color: #fff;
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px oklch(0% 0 0 / 55%);
+}
+
+/* ── Per-status cover treatments ─────────────────────────────────
+   The poster itself reacts to the state, so cards feel different at a glance
+   even before you read the marker. */
+/* Completed — done & settled: a green glow around the card, and the poster
+   itself dimmed a notch. The dim makes the green "finished" seal stand out and
+   signals "watched" at a glance, while staying bright enough to read every
+   cover clearly when you show your list to someone. */
+.k-card--status-completed.k-card--grid.k-card--inlist {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--card-status) 55%, transparent),
+    0 0 18px color-mix(in oklab, var(--card-status) 26%, transparent),
+    0 4px 16px oklch(0% 0 0 / 40%);
+}
+.k-card--status-completed.k-card--grid .k-cover__img {
+  filter: brightness(0.8) saturate(0.95);
+}
+/* Plan to watch — not started: cover slightly faded. */
+.k-card--status-plan_to_watch .k-cover__img {
+  filter: brightness(0.9) saturate(0.9);
+}
+/* Watching + rewatching — base cover is the "not yet watched" half: greyscale
+   + darker; the watched episodes reveal it in full colour (.k-card__reveal). */
+.k-card--status-watching .k-cover__img,
+.k-card--status-rewatching .k-cover__img {
+  filter: grayscale(1) brightness(0.7);
+}
+.k-card--status-watching .k-card__progress,
+.k-card--status-rewatching .k-card__progress {
+  display: none;
+}
+/* On hold — frozen: cover dimmed + desaturated under the centered pause. */
+.k-card--status-on_hold .k-cover__img {
+  filter: brightness(0.5) saturate(0.65);
+}
+/* Dropped — abandoned: a hard 45° black-and-white wedge cuts in from the
+   top-left corner (where the ribbon sits), so it stands out instantly even
+   against bright, busy anime art. The rest of the poster stays in colour so
+   the diagonal boundary reads sharply. */
+.k-card__mono {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-size: cover;
+  background-position: center;
+  filter: grayscale(1) contrast(1.05) brightness(0.78);
+  clip-path: polygon(0 0, 100% 0, 0 72%);
+  pointer-events: none;
+}
+.k-card--status-dropped .k-card__cover::after {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: var(--card-status, var(--color-accent));
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  z-index: 2;
-  box-shadow: 0 0 8px color-mix(in oklch, var(--card-status, var(--color-accent)) 60%, transparent);
-}
-/* Status icon pill — top-left, single occurrence; tinted by status color */
-.k-card__statusicon {
-  position: absolute;
-  top: var(--space-2);
-  left: var(--space-2);
+  height: 16%;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: var(--radius-full);
-  background: color-mix(in oklch, var(--card-status, var(--color-accent)) 28%, oklch(0% 0 0 / 75%));
-  border: 1px solid color-mix(in oklch, var(--card-status, var(--color-accent)) 45%, transparent);
-  backdrop-filter: blur(4px);
-  box-shadow: 0 1px 4px oklch(0% 0 0 / 50%);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--card-status) 50%, transparent),
+    transparent
+  );
 }
-/* Score badge: frosted-glass, standalone absolute top-right */
-.k-card__score {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
+
+/* ── State motion — subtle, GPU-cheap, motion-safe only ──────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .k-mark--spin .k-mark__icon {
+    animation: k-card-spin 4s linear infinite;
+  }
+  .k-card--status-on_hold .k-hold__circle {
+    animation: k-card-breathe 3s ease-in-out infinite;
+  }
+  .k-card--status-watching .k-card__front,
+  .k-card--status-rewatching .k-card__front {
+    animation: k-card-frontpulse 2.2s ease-in-out infinite;
+  }
+}
+@keyframes k-card-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes k-card-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+@keyframes k-card-frontpulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+/* Score — small chip in the footer meta row, so the top corners stay free for
+   the per-status marker. */
+.k-card__scorechip {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 2px var(--space-2);
+  height: 14px;
+  padding: 0 5px;
   border-radius: var(--radius-sm);
   background: oklch(0% 0 0 / 55%);
-  backdrop-filter: blur(4px);
-  color: var(--color-text-primary);
-  font-size: var(--text-xs);
-  font-weight: 600;
+  color: #fff;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex: none;
 }
-.k-card__score svg {
+.k-card__scorechip svg {
   color: var(--color-warning);
 }
 /* Dub/sub chip — grid footer, shown on any card with known dub status */
@@ -318,16 +580,6 @@
   color: var(--color-text-secondary);
   font-variant-numeric: tabular-nums;
 }
-.k-card__statuslabel {
-  display: inline-block;
-  max-width: 100%;
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  opacity: 0.9;
-}
 
 .k-card__quick {
   position: absolute;
@@ -335,8 +587,8 @@
   bottom: var(--space-2);
   display: grid;
   place-items: center;
-  min-width: 30px;
-  height: 30px;
+  min-width: 36px;
+  height: 36px;
   padding: 0 var(--space-2);
   border-radius: var(--radius-full);
   background: var(--color-accent);
@@ -363,7 +615,7 @@
 }
 .k-card__progress-fill {
   height: 100%;
-  background: var(--color-accent);
+  background: var(--card-status, var(--color-accent));
   transition: width var(--duration-normal) var(--ease-out);
 }
 
@@ -652,7 +904,7 @@
   padding: var(--space-3);
   color: var(--color-text-primary);
   font-size: var(--text-base);
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 .k-edit__notes {
   resize: vertical;
