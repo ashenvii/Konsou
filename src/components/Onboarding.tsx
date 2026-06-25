@@ -61,7 +61,9 @@ export function Onboarding() {
     <div className="k-onboarding" role="dialog" aria-modal aria-label="Welcome to Konsou">
       <div className="k-onboarding__card">
         <div className="k-onboarding__logo">
-          <span className="k-onboarding__logomark">K</span>
+          <span className="k-onboarding__logomark">
+            <img src="/konsou.svg" alt="" />
+          </span>
         </div>
         <Text size="2xl" weight={700} className="k-onboarding__title">
           Welcome to Konsou
@@ -90,7 +92,7 @@ export function Onboarding() {
 
         <div className="k-onboarding__titlepref">
           <Text size="xs" weight={600} color="tertiary">
-            SHOW TITLES IN
+            Title language
           </Text>
           <div className="k-onboarding__titleopts">
             {TITLE_LANGUAGE_OPTIONS.map((opt) => (
@@ -110,7 +112,7 @@ export function Onboarding() {
 
         <div className="k-onboarding__sidebarpref">
           <Text size="xs" weight={600} color="tertiary">
-            SIDEBAR STYLE
+            Sidebar style
           </Text>
           <div className="k-onboarding__titleopts">
             {SIDEBAR_MODES.map((m) => (
