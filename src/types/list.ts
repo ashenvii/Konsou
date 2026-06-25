@@ -77,8 +77,9 @@ export interface SortSpec {
 /** "all" is the no-filter pseudo-tab on My List. */
 export type ListFilter = ListStatus | "all";
 
-export type AccentName = "violet" | "cobalt" | "crimson";
-export type ThemeMode = "dark" | "light" | "system";
+export type AccentName = "violet" | "cobalt" | "crimson" | "sakura" | "amber" | "aqua" | "jade";
+export type ThemeMode = "dark" | "light" | "system"; // reserved for future brightness toggle
+export type ColorTheme = "void" | "ocean" | "ember" | "forest" | "midnight" | "crimson" | "paper" | "ash";
 
 /**
  * Which title a user sees first. Mirrors AniList's title-language setting:
@@ -87,3 +88,11 @@ export type ThemeMode = "dark" | "light" | "system";
  *  - native  → Japanese script ("葬送のフリーレン")
  */
 export type TitleLanguage = "romaji" | "english" | "native";
+
+/**
+ * Desktop sidebar behaviour:
+ *  - rail     → static icon-only rail, never expands
+ *  - hover    → collapsed rail that expands over the content while pointed at
+ *  - expanded → permanently open; the page reflows to sit beside it
+ */
+export type SidebarMode = "rail" | "hover" | "expanded";

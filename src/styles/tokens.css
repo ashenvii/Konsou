@@ -1,42 +1,49 @@
 /* === KONSOU DESIGN TOKENS === */
-/* Color format: oklch(lightness% chroma hue). Hex equivalents in comments. */
-/* Authoritative source: "Konsou — UI & Design System.md" */
+/* Color format: oklch(lightness% chroma hue). */
 
 :root {
-  /* ── Surfaces ─────────────────────────────────────────────── */
-  --color-base:          oklch(8.5% 0.012 280);   /* #0E0D12 — violet-cast near-black */
-  --color-surface:       oklch(11.5% 0.015 280);  /* #161420 — nav, sidebar, sheets */
-  --color-surface-2:     oklch(15.5% 0.022 280);  /* #1E1B2E — cards, inputs */
-  --color-surface-3:     oklch(18.5% 0.028 280);  /* #252238 — hover rows, tooltips */
-  --color-border:        oklch(100% 0 0 / 8%);    /* rgba(255,255,255,0.08) */
-  --color-border-strong: oklch(100% 0 0 / 16%);   /* rgba(255,255,255,0.16) */
+  /* ── Void surfaces (default dark — violet cast) ───────────── */
+  /* Chroma is high enough to feel distinctly purple, not just "dark grey". */
+  --color-base:          oklch(8%  0.022 280);
+  --color-surface:       oklch(11% 0.028 280);
+  --color-surface-2:     oklch(15% 0.038 280);
+  --color-surface-3:     oklch(19% 0.048 280);
+  --color-border:        oklch(100% 0 0 / 8%);
+  --color-border-strong: oklch(100% 0 0 / 18%);
 
   /* ── Text ─────────────────────────────────────────────────── */
-  --color-text-primary:   oklch(100% 0 0 / 87%);  /* never pure white — prevents OLED halation */
+  --color-text-primary:   oklch(100% 0 0 / 90%);
   --color-text-secondary: oklch(100% 0 0 / 60%);
   --color-text-tertiary:  oklch(100% 0 0 / 38%);
 
-  /* ── Accent — violet (default; overridden by [data-accent]) ── */
-  --color-accent:      oklch(52% 0.27 290);        /* #7C5CFC */
-  --color-accent-glow: oklch(65% 0.18 290);        /* #A78BFA */
+  /* ── Accent — violet fallback; always overridden by [data-accent] ── */
+  --color-accent:      oklch(52% 0.27 290);
+  --color-accent-glow: oklch(65% 0.18 290);
   --color-accent-dim:  oklch(52% 0.27 290 / 15%);
   --color-accent-h: 290;
   --color-accent-l: 52%;
   --color-accent-c: 0.27;
 
-  /* ── Status — semantic, not traffic-light ────────────────── */
-  --color-status-watching:   oklch(72% 0.12 165);  /* #4CC9A4 — teal, active/alive */
-  --color-status-completed:  oklch(52% 0.27 290);  /* #7C5CFC — violet, significant event */
-  --color-status-plan_to_watch: oklch(62% 0.15 250); /* #5B9CF6 — cool blue, aspirational */
-  --color-status-on_hold:    oklch(72% 0.16 60);   /* #F0A047 — amber, paused/warm */
-  --color-status-dropped:    oklch(64% 0.20 295);  /* #C77DFF — soft violet-rose */
-  --color-status-rewatching: oklch(76% 0.12 165);  /* lighter teal — revisiting */
+  /* ── Status — semantic ───────────────────────────────────────
+     Each status owns a distinct hue so it reads at a glance:
+       completed   → green  (most positive, celebratory)
+       watching    → blue   (active)
+       plan_to_watch → amber (future-oriented)
+       dropped     → red    (negative / stop)
+       on_hold     → purple (neutral / paused)
+       rewatching  → teal   (distinct from watching)                */
+  --color-status-watching:      oklch(64% 0.17 250);
+  --color-status-completed:     oklch(72% 0.17 150);
+  --color-status-plan_to_watch: oklch(80% 0.15 85);
+  --color-status-on_hold:       oklch(60% 0.19 300);
+  --color-status-dropped:       oklch(61% 0.21 25);
+  --color-status-rewatching:    oklch(73% 0.13 195);
 
   /* ── Semantic ─────────────────────────────────────────────── */
-  --color-success: oklch(72% 0.12 165);   /* #4CC9A4 */
-  --color-warning: oklch(72% 0.16 60);    /* #F0A047 */
-  --color-error:   oklch(55% 0.20 10);    /* #E8507A — muted rose, not harsh red */
-  --color-info:    oklch(62% 0.15 250);   /* #5B9CF6 */
+  --color-success: oklch(72% 0.12 165);
+  --color-warning: oklch(72% 0.16 60);
+  --color-error:   oklch(55% 0.20 10);
+  --color-info:    oklch(62% 0.15 250);
 
   /* ── Typography ───────────────────────────────────────────── */
   --font-sans: "Plus Jakarta Sans", "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
@@ -78,45 +85,237 @@
   --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1.0);
 
   /* ── Layout ───────────────────────────────────────────────── */
-  --sidebar-width:      256px;
+  --sidebar-width:      220px;
+  --sidebar-width-collapsed: 64px;
   --panel-width:        320px;
-  --nav-height:         80px;
+  --nav-height:         76px;
   --topbar-height:      56px;
   --content-padding-sm: 16px;
   --content-padding-lg: 24px;
 
-  /* ── Elevation (derived) ─────────────────────────────────── */
-  --shadow-card:     0 4px 16px oklch(0% 0 0 / 40%);
-  --shadow-card-hi:  0 6px 24px oklch(0% 0 0 / 50%);
-  --shadow-sheet:    0 -8px 40px oklch(0% 0 0 / 55%);
-  --shadow-pop:      0 8px 32px oklch(0% 0 0 / 50%);
+  /* ── Elevation ───────────────────────────────────────────── */
+  --shadow-card:    0 4px 16px oklch(0% 0 0 / 45%);
+  --shadow-card-hi: 0 6px 28px oklch(0% 0 0 / 55%);
+  --shadow-sheet:   0 -8px 40px oklch(0% 0 0 / 60%);
+  --shadow-pop:     0 8px 32px oklch(0% 0 0 / 52%);
 
-  /* In-list glow (accent state indicator). Hue tracks the active accent. */
+  /* In-list glow — hue tracks the active accent automatically. */
   --glow-in-list:
-    0 0 8px oklch(var(--color-accent-l) var(--color-accent-c) var(--color-accent-h) / 25%),
-    0 4px 16px oklch(0% 0 0 / 40%);
+    0 0 10px oklch(var(--color-accent-l) var(--color-accent-c) var(--color-accent-h) / 28%),
+    0 4px 16px oklch(0% 0 0 / 44%);
   --glow-in-list-hover:
-    0 0 12px oklch(var(--color-accent-l) var(--color-accent-c) var(--color-accent-h) / 35%),
-    0 6px 24px oklch(0% 0 0 / 50%);
+    0 0 16px oklch(var(--color-accent-l) var(--color-accent-c) var(--color-accent-h) / 38%),
+    0 6px 24px oklch(0% 0 0 / 54%);
 }
 
-/* ── Accent variants (user-selectable in Settings → Appearance) ── */
-:root[data-accent="cobalt"] {
-  --color-accent:      oklch(58% 0.18 240);   /* #2B8FE8 */
-  --color-accent-glow: oklch(72% 0.12 240);   /* #67B8FF */
-  --color-accent-dim:  oklch(58% 0.18 240 / 15%);
-  --color-accent-h: 240;
-  --color-accent-l: 58%;
-  --color-accent-c: 0.18;
+/* ═══════════════════════════════════════════════════════════════════
+   DARK THEMES
+   Each overrides the surface palette and bundles a default accent.
+   Higher chroma = distinctive, not generic dark grey.
+   Accent overrides ([data-accent]) come AFTER in the file and always win.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Ocean — ink-blue water, saturated navy depths */
+[data-theme="ocean"] {
+  --color-base:      oklch(7.5%  0.026 218);
+  --color-surface:   oklch(10.5% 0.034 218);
+  --color-surface-2: oklch(14.5% 0.046 218);
+  --color-surface-3: oklch(18%   0.056 218);
+  --color-border:        oklch(100% 0 0 / 9%);
+  --color-border-strong: oklch(100% 0 0 / 20%);
+
+  --color-accent:      oklch(71% 0.16 190);
+  --color-accent-glow: oklch(82% 0.12 190);
+  --color-accent-dim:  oklch(71% 0.16 190 / 15%);
+  --color-accent-h: 190; --color-accent-l: 71%; --color-accent-c: 0.16;
 }
 
-:root[data-accent="crimson"] {
-  --color-accent:      oklch(55% 0.20 10);    /* #E8507A */
-  --color-accent-glow: oklch(70% 0.14 10);    /* #FF8FAD */
-  --color-accent-dim:  oklch(55% 0.20 10 / 15%);
-  --color-accent-h: 10;
-  --color-accent-l: 55%;
-  --color-accent-c: 0.20;
+/* Ember — smoldering amber coal, every surface radiates warmth */
+[data-theme="ember"] {
+  --color-base:      oklch(8%    0.026 28);
+  --color-surface:   oklch(11%   0.032 28);
+  --color-surface-2: oklch(15%   0.044 28);
+  --color-surface-3: oklch(19%   0.054 28);
+  --color-border:        oklch(100% 0 0 / 8%);
+  --color-border-strong: oklch(100% 0 0 / 18%);
+
+  /* Warm text — creamier white */
+  --color-text-primary:   oklch(97% 0.008 55 / 90%);
+  --color-text-secondary: oklch(97% 0.008 55 / 60%);
+  --color-text-tertiary:  oklch(97% 0.008 55 / 38%);
+
+  --color-accent:      oklch(70% 0.18 55);
+  --color-accent-glow: oklch(84% 0.14 55);
+  --color-accent-dim:  oklch(70% 0.18 55 / 15%);
+  --color-accent-h: 55; --color-accent-l: 70%; --color-accent-c: 0.18;
 }
-/* Completed status is ALWAYS violet, even when the accent changes — it marks
-   the primary event Konsou celebrates. (Design System note.) */
+
+/* Forest — ancient black-green, like light through a closed canopy */
+[data-theme="forest"] {
+  --color-base:      oklch(8%    0.026 148);
+  --color-surface:   oklch(11%   0.032 148);
+  --color-surface-2: oklch(15%   0.044 148);
+  --color-surface-3: oklch(19%   0.054 148);
+  --color-border:        oklch(100% 0 0 / 8%);
+  --color-border-strong: oklch(100% 0 0 / 18%);
+
+  --color-accent:      oklch(65% 0.18 148);
+  --color-accent-glow: oklch(76% 0.13 148);
+  --color-accent-dim:  oklch(65% 0.18 148 / 15%);
+  --color-accent-h: 148; --color-accent-l: 65%; --color-accent-c: 0.18;
+}
+
+/* Midnight — the deepest navy, electric against the black */
+[data-theme="midnight"] {
+  --color-base:      oklch(6.5%  0.034 258);
+  --color-surface:   oklch(9.5%  0.042 258);
+  --color-surface-2: oklch(13.5% 0.055 258);
+  --color-surface-3: oklch(17%   0.066 258);
+  --color-border:        oklch(100% 0 0 / 10%);
+  --color-border-strong: oklch(100% 0 0 / 22%);
+
+  /* Cool-tinted text reads against the saturated navy */
+  --color-text-primary:   oklch(96% 0.006 250 / 90%);
+  --color-text-secondary: oklch(96% 0.006 250 / 60%);
+  --color-text-tertiary:  oklch(96% 0.006 250 / 38%);
+
+  --color-accent:      oklch(60% 0.22 242);
+  --color-accent-glow: oklch(74% 0.16 242);
+  --color-accent-dim:  oklch(60% 0.22 242 / 15%);
+  --color-accent-h: 242; --color-accent-l: 60%; --color-accent-c: 0.22;
+}
+
+/* Crimson — dried blood in the shadows, vivid rose cuts through */
+[data-theme="crimson"] {
+  --color-base:      oklch(8%    0.026 8);
+  --color-surface:   oklch(11%   0.032 8);
+  --color-surface-2: oklch(15%   0.044 8);
+  --color-surface-3: oklch(19%   0.054 8);
+  --color-border:        oklch(100% 0 0 / 8%);
+  --color-border-strong: oklch(100% 0 0 / 18%);
+
+  --color-accent:      oklch(57% 0.24 10);
+  --color-accent-glow: oklch(70% 0.18 10);
+  --color-accent-dim:  oklch(57% 0.24 10 / 15%);
+  --color-accent-h: 10; --color-accent-l: 57%; --color-accent-c: 0.24;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIGHT THEMES
+   High-contrast editorial feel — white cards, ink text, vivid accent.
+   Not pastel. Not washed out. The accent sings because the bg is clean.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Paper — manga page: almost-white canvas, tinted sidebar, ink text */
+[data-theme="paper"] {
+  --color-base:          oklch(98.5% 0.003 280);   /* canvas: barely-there violet whisper */
+  --color-surface:       oklch(93.5% 0.010 280);   /* sidebar/nav: visibly tinted */
+  --color-surface-2:     oklch(100%  0 0);          /* cards: float as pure white */
+  --color-surface-3:     oklch(90%   0.014 280);   /* hover: clearly darker */
+  --color-border:        oklch(0% 0 0 / 8%);
+  --color-border-strong: oklch(0% 0 0 / 16%);
+
+  --color-text-primary:   oklch(9%  0.018 280);    /* near ink-black */
+  --color-text-secondary: oklch(26% 0.014 280);
+  --color-text-tertiary:  oklch(46% 0.009 280);    /* 4.5:1 on white, 4.6:1 on canvas */
+
+  --shadow-card:    0 1px 3px oklch(0% 0 0 / 8%), 0 0 0 1px oklch(0% 0 0 / 5%);
+  --shadow-card-hi: 0 4px 14px oklch(0% 0 0 / 10%), 0 0 0 1px oklch(0% 0 0 / 6%);
+  --shadow-sheet:   0 -4px 28px oklch(0% 0 0 / 14%);
+  --shadow-pop:     0 4px 18px oklch(0% 0 0 / 14%);
+
+  /* Light-mode glow: ring instead of bloom — cleaner on white */
+  --glow-in-list:
+    0 0 0 1px var(--color-accent-dim),
+    0 2px 10px oklch(0% 0 0 / 6%);
+  --glow-in-list-hover:
+    0 0 0 2px var(--color-accent-dim),
+    0 4px 14px oklch(0% 0 0 / 8%);
+
+  --color-accent:      oklch(65% 0.23 350);
+  --color-accent-glow: oklch(77% 0.17 350);
+  --color-accent-dim:  oklch(65% 0.23 350 / 18%);
+  --color-accent-h: 350; --color-accent-l: 65%; --color-accent-c: 0.23;
+}
+
+/* Ash — cool slate canvas, white cards pop, cobalt accent cuts sharp */
+[data-theme="ash"] {
+  --color-base:          oklch(91%  0.015 245);    /* distinctive blue-gray slate */
+  --color-surface:       oklch(97%  0.006 245);    /* nav: lighter (inverted hierarchy) */
+  --color-surface-2:     oklch(100% 0 0);           /* cards: pure white on slate */
+  --color-surface-3:     oklch(86%  0.022 245);    /* hover: deeper into the slate */
+  --color-border:        oklch(0% 0 0 / 10%);
+  --color-border-strong: oklch(0% 0 0 / 20%);
+
+  --color-text-primary:   oklch(8%  0.024 245);    /* deep blue-black */
+  --color-text-secondary: oklch(25% 0.016 245);
+  --color-text-tertiary:  oklch(43% 0.011 245);    /* 4.6:1 on slate bg */
+
+  --shadow-card:    0 2px 8px oklch(0% 0 0 / 10%);
+  --shadow-card-hi: 0 4px 16px oklch(0% 0 0 / 13%);
+  --shadow-sheet:   0 -4px 28px oklch(0% 0 0 / 14%);
+  --shadow-pop:     0 4px 18px oklch(0% 0 0 / 14%);
+
+  --glow-in-list:
+    0 0 0 1px var(--color-accent-dim),
+    0 2px 10px oklch(0% 0 0 / 7%);
+  --glow-in-list-hover:
+    0 0 0 2px var(--color-accent-dim),
+    0 4px 14px oklch(0% 0 0 / 10%);
+
+  --color-accent:      oklch(48% 0.24 242);
+  --color-accent-glow: oklch(62% 0.20 242);
+  --color-accent-dim:  oklch(48% 0.24 242 / 18%);
+  --color-accent-h: 242; --color-accent-l: 48%; --color-accent-c: 0.24;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ACCENT OVERRIDES
+   Come after all theme blocks — always win in the cascade.
+   Set via [data-accent] attribute; lets users mix any surface + color.
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-accent="violet"] {
+  --color-accent:      oklch(52% 0.27 290);
+  --color-accent-glow: oklch(65% 0.18 290);
+  --color-accent-dim:  oklch(52% 0.27 290 / 15%);
+  --color-accent-h: 290; --color-accent-l: 52%; --color-accent-c: 0.27;
+}
+[data-accent="cobalt"] {
+  --color-accent:      oklch(58% 0.22 242);
+  --color-accent-glow: oklch(72% 0.16 242);
+  --color-accent-dim:  oklch(58% 0.22 242 / 15%);
+  --color-accent-h: 242; --color-accent-l: 58%; --color-accent-c: 0.22;
+}
+[data-accent="crimson"] {
+  --color-accent:      oklch(57% 0.24 10);
+  --color-accent-glow: oklch(70% 0.18 10);
+  --color-accent-dim:  oklch(57% 0.24 10 / 15%);
+  --color-accent-h: 10; --color-accent-l: 57%; --color-accent-c: 0.24;
+}
+[data-accent="sakura"] {
+  --color-accent:      oklch(65% 0.23 350);
+  --color-accent-glow: oklch(77% 0.17 350);
+  --color-accent-dim:  oklch(65% 0.23 350 / 15%);
+  --color-accent-h: 350; --color-accent-l: 65%; --color-accent-c: 0.23;
+}
+[data-accent="amber"] {
+  --color-accent:      oklch(70% 0.20 55);
+  --color-accent-glow: oklch(84% 0.15 55);
+  --color-accent-dim:  oklch(70% 0.20 55 / 15%);
+  --color-accent-h: 55; --color-accent-l: 70%; --color-accent-c: 0.20;
+}
+[data-accent="aqua"] {
+  --color-accent:      oklch(71% 0.18 190);
+  --color-accent-glow: oklch(82% 0.13 190);
+  --color-accent-dim:  oklch(71% 0.18 190 / 15%);
+  --color-accent-h: 190; --color-accent-l: 71%; --color-accent-c: 0.18;
+}
+[data-accent="jade"] {
+  --color-accent:      oklch(65% 0.18 148);
+  --color-accent-glow: oklch(76% 0.13 148);
+  --color-accent-dim:  oklch(65% 0.18 148 / 15%);
+  --color-accent-h: 148; --color-accent-l: 65%; --color-accent-c: 0.18;
+}
+
+/* Completed status stays violet across all themes — Konsou's signature. */
