@@ -1,7 +1,7 @@
 import { anilist } from "@/lib/api/anilist/client";
+import type { Priority } from "@/lib/api/rateLimiter";
 import { getCoverUrl, preferredTitle } from "@/lib/format";
 import type { AniListMediaStatus, FuzzyDate, RelationNode } from "@/types/anime";
-import type { AnimeListEntry } from "@/types/list";
 import type { AlertType, KonsouNotification } from "@/types/notification";
 
 /**
@@ -32,31 +32,34 @@ function alertTypeFor(rel: RelationNode): AlertType {
   return "sequel";
 }
 
-export interface DetectOptions {
-  /** Skip the whole run if the last full check was within this window (ms). */
-  cooldownMs?: number;
-  lastCheckAt?: number | null;
+/** Statuses that make a franchise "volatile" — i.e. likely to gain a new entry,
+ *  so its seed should be re-checked often rather than backed off. */
+const VOLATILE_STATUSES: AniListMediaStatus[] = ["RELEASING", "NOT_YET_RELEASED"];
+
+export interface DetectResult {
+  /** Continuations to insert (caller dedupes via UNIQUE(source_id, related_id)). */
+  notifications: Omit<KonsouNotification, "id">[];
+  /** Seeds whose franchise contains a releasing/announced entry (check often). */
+  volatileSeeds: Set<number>;
 }
 
 /**
- * Returns the notifications to be inserted (caller dedupes via the DB's
- * UNIQUE(source_id, related_id)). Pure of side effects beyond AniList's own
- * relation-snapshot cache.
+ * Walk the AniList relation graph out from the given seed ids and surface
+ * continuations the user hasn't added. `inList` is the full set of tracked ids
+ * (used to filter out things already on the list) and is independent of which
+ * seeds we're scanning this pass — the scheduler scans seeds in batches, but
+ * always filters against the whole list.
+ *
+ * Pure of side effects beyond AniList's own relation-snapshot cache;
+ * persistence and scheduling are the caller's concern.
  */
 export async function detectSequels(
-  entries: AnimeListEntry[],
-  options: DetectOptions = {},
-): Promise<Omit<KonsouNotification, "id">[]> {
-  if (options.cooldownMs && options.lastCheckAt) {
-    if (Date.now() - options.lastCheckAt < options.cooldownMs) return [];
-  }
-
-  const inList = new Set(entries.map((e) => e.anilist_id));
-  const seeds = entries
-    .filter((e) => e.status === "completed" || e.status === "dropped")
-    .map((e) => e.anilist_id);
-
-  if (seeds.length === 0) return [];
+  seeds: number[],
+  inList: Set<number>,
+  priority: Priority = "low",
+): Promise<DetectResult> {
+  const volatileSeeds = new Set<number>();
+  if (seeds.length === 0) return { notifications: [], volatileSeeds };
 
   const visited = new Set<number>();
   const originOf = new Map<number, number>(); // node id → originating seed id
@@ -67,7 +70,7 @@ export async function detectSequels(
   let depth = 0;
 
   while (level.length > 0 && depth < MAX_DEPTH) {
-    const relationMap = await anilist.getRelationsBatch(level);
+    const relationMap = await anilist.getRelationsBatch(level, priority);
     const next: number[] = [];
 
     for (const id of level) {
@@ -85,6 +88,12 @@ export async function detectSequels(
         if (!shouldWalk) continue;
 
         if (!originOf.has(rel.id)) originOf.set(rel.id, origin);
+
+        // A releasing/announced entry anywhere in the franchise makes the
+        // originating seed volatile, regardless of whether it's already tracked.
+        if (rel.status && VOLATILE_STATUSES.includes(rel.status)) {
+          volatileSeeds.add(origin);
+        }
 
         // Actionable + not already tracked + not already found.
         if (
@@ -117,7 +126,7 @@ export async function detectSequels(
     depth++;
   }
 
-  return [...found.values()];
+  return { notifications: [...found.values()], volatileSeeds };
 }
 
 /** Bucket an alert for the Alerts page grouping. */

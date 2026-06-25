@@ -184,6 +184,20 @@ CREATE TABLE IF NOT EXISTS list_tombstones (
             sql: "ALTER TABLE anime_list ADD COLUMN title_native TEXT;",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "per-seed sequel scan schedule",
+            sql: r#"
+CREATE TABLE IF NOT EXISTS scan_schedule (
+  anilist_id    INTEGER PRIMARY KEY,
+  last_check_at INTEGER NOT NULL,
+  next_check_at INTEGER NOT NULL,
+  quiet_streak  INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_scan_schedule_due ON scan_schedule(next_check_at);
+"#,
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

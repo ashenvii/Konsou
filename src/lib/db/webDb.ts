@@ -5,7 +5,7 @@ import type {
   ListEntryPatch,
 } from "@/types/list";
 import type { KonsouNotification } from "@/types/notification";
-import type { KonsouDb } from "./contract";
+import type { KonsouDb, ScanScheduleEntry } from "./contract";
 
 /**
  * Browser-only backend used by `npm run dev`. Persists the durable tables to
@@ -18,6 +18,7 @@ const LS = {
   notifications: "konsou.web.notifications",
   settings: "konsou.web.settings",
   notifId: "konsou.web.notif_id",
+  schedule: "konsou.web.scan_schedule",
 };
 
 function read<T>(key: string, fallback: T): T {
@@ -153,6 +154,21 @@ export class WebKonsouDb implements KonsouDb {
     relations: RelationNode[],
   ): Promise<void> {
     this.relationCache.set(anilistId, { relations, checkedAt: Date.now() });
+  }
+
+  // ── Sequel-scan schedule ──────────────────────────────────
+  async scheduleGetAll(): Promise<Record<number, ScanScheduleEntry>> {
+    const rows = read<ScanScheduleEntry[]>(LS.schedule, []);
+    const out: Record<number, ScanScheduleEntry> = {};
+    for (const r of rows) out[r.anilist_id] = r;
+    return out;
+  }
+  async scheduleSet(entry: ScanScheduleEntry): Promise<void> {
+    const rows = read<ScanScheduleEntry[]>(LS.schedule, []);
+    const idx = rows.findIndex((r) => r.anilist_id === entry.anilist_id);
+    if (idx >= 0) rows[idx] = entry;
+    else rows.push(entry);
+    write(LS.schedule, rows);
   }
 
   // ── Notifications ─────────────────────────────────────────

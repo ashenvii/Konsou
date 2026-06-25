@@ -6,7 +6,7 @@ import type {
   ListEntryPatch,
 } from "@/types/list";
 import type { KonsouNotification } from "@/types/notification";
-import type { KonsouDb } from "./contract";
+import type { KonsouDb, ScanScheduleEntry } from "./contract";
 
 /**
  * Production backend. Real SQLite via tauri-plugin-sql. Schema migrations are
@@ -218,6 +218,28 @@ export class TauriKonsouDb implements KonsouDb {
       `INSERT INTO relation_snapshots (anilist_id, relations_json, checked_at) VALUES ($1,$2,$3)
        ON CONFLICT(anilist_id) DO UPDATE SET relations_json = excluded.relations_json, checked_at = excluded.checked_at`,
       [anilistId, JSON.stringify(relations), Date.now()],
+    );
+  }
+
+  // ── Sequel-scan schedule ──────────────────────────────────
+  async scheduleGetAll(): Promise<Record<number, ScanScheduleEntry>> {
+    const rows = await this.db.select<ScanScheduleEntry[]>(
+      "SELECT anilist_id, last_check_at, next_check_at, quiet_streak FROM scan_schedule",
+    );
+    const out: Record<number, ScanScheduleEntry> = {};
+    for (const r of rows) out[r.anilist_id] = r;
+    return out;
+  }
+
+  async scheduleSet(entry: ScanScheduleEntry): Promise<void> {
+    await this.db.execute(
+      `INSERT INTO scan_schedule (anilist_id, last_check_at, next_check_at, quiet_streak)
+       VALUES ($1,$2,$3,$4)
+       ON CONFLICT(anilist_id) DO UPDATE SET
+         last_check_at = excluded.last_check_at,
+         next_check_at = excluded.next_check_at,
+         quiet_streak  = excluded.quiet_streak`,
+      [entry.anilist_id, entry.last_check_at, entry.next_check_at, entry.quiet_streak],
     );
   }
 
