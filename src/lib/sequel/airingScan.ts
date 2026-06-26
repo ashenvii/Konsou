@@ -40,7 +40,7 @@ export async function scanPlanToWatchAirings(
     if (!info) continue;
 
     if (info.status !== entry.airing_status) {
-      await db.listUpdate(entry.anilist_id, { airing_status: info.status });
+      await db.listUpdate(entry.anilist_id, { airing_status: info.status, updated_at: now });
       updatedIds.push(entry.anilist_id);
     }
 
