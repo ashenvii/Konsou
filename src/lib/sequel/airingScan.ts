@@ -1,5 +1,5 @@
 import { anilist } from "@/lib/api/anilist/client";
-import type { DbDriver } from "@/lib/db/contract";
+import type { KonsouDb } from "@/lib/db/contract";
 import type { AnimeListEntry } from "@/types/list";
 import type { KonsouNotification } from "@/types/notification";
 
@@ -20,7 +20,7 @@ export interface AiringScanResult {
  */
 export async function scanPlanToWatchAirings(
   entries: AnimeListEntry[],
-  db: DbDriver,
+  db: KonsouDb,
 ): Promise<AiringScanResult> {
   const targets = entries.filter(
     (e) =>

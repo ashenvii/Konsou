@@ -278,7 +278,7 @@ export function FranchiseSheet({
         }
         onPick={onAddPick}
         disabledStatuses={
-          pendingAdd ? getDisabledStatuses(pendingAdd.status) : undefined
+          pendingAdd ? getDisabledStatuses(pendingAdd.status ?? null) : undefined
         }
       />
 
