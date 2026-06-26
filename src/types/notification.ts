@@ -1,6 +1,6 @@
 import type { AniListMediaStatus } from "./anime";
 
-export type AlertType = "sequel" | "side_story" | "spin_off" | "movie";
+export type AlertType = "sequel" | "side_story" | "spin_off" | "movie" | "started_airing";
 
 /** Mirrors the `notifications` SQLite table. */
 export interface KonsouNotification {

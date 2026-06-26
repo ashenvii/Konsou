@@ -191,7 +191,10 @@ export class WebKonsouDb implements KonsouDb {
     const all = this.loadNotifs();
     if (
       all.some(
-        (x) => x.source_id === n.source_id && x.related_id === n.related_id,
+        (x) =>
+          x.source_id === n.source_id &&
+          x.related_id === n.related_id &&
+          x.type === n.type,
       )
     ) {
       return false;

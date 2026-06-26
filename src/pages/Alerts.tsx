@@ -22,6 +22,11 @@ const BUCKET_ORDER: { id: AlertBucket; label: string }[] = [
 ];
 
 function statusLine(n: KonsouNotification): string {
+  if (n.type === "started_airing") {
+    return n.airing_at
+      ? `Now airing · estimated finish ${timeUntil(n.airing_at)}`
+      : "Now airing";
+  }
   if (n.related_status === "RELEASING")
     return n.airing_at ? `Airing now · next ${timeUntil(n.airing_at)}` : "Airing now";
   if (n.related_status === "NOT_YET_RELEASED") {
@@ -83,18 +88,35 @@ function AlertCard({ n }: { n: KonsouNotification }) {
           {n.related_title}
         </Text>
         <Text size="xs" color="secondary" clamp={1}>
-          {n.type.replace(/_/g, " ")} of {sourceTitle}
+          {n.type === "started_airing"
+            ? "In your plan-to-watch"
+            : `${n.type.replace(/_/g, " ")} of ${sourceTitle}`}
         </Text>
         <Text size="xs" color="tertiary">
           {statusLine(n)}
         </Text>
         <div className="k-alert__actions">
-          <Button size="sm" variant="primary" onClick={() => add("watching")}>
-            Watching
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => add("plan_to_watch")}>
-            Plan
-          </Button>
+          {n.type !== "started_airing" && (
+            <>
+              <Button size="sm" variant="primary" onClick={() => add("watching")}>
+                Watching
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => add("plan_to_watch")}>
+                Plan
+              </Button>
+            </>
+          )}
+          {n.type === "started_airing" && (
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => {
+                navigate(`/anime/${n.related_id}`);
+              }}
+            >
+              View
+            </Button>
+          )}
           <Button
             size="sm"
             variant="ghost"

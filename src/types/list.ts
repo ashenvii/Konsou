@@ -37,6 +37,14 @@ export interface AnimeListEntry {
   completed_at: number | null;
   /** null = not yet determined (detail not visited), true = dub available, false = sub only */
   has_dub: boolean | null;
+  /** anilist_id of the first entry in this franchise's SEQUEL chain. null = unresolved or standalone. */
+  franchise_root_id: number | null;
+  /**
+   * AniList media airing status at the time of last sync. Drives status-picker guards and
+   * plan-to-watch airing notifications. null = unknown (entry predates this field).
+   * Values: "FINISHED" | "RELEASING" | "NOT_YET_RELEASED" | "CANCELLED" | "HIATUS"
+   */
+  airing_status: string | null;
 }
 
 /**
@@ -61,6 +69,8 @@ export type ListEntryPatch = Partial<
     | "completed_at"
     | "total_episodes"
     | "has_dub"
+    | "franchise_root_id"
+    | "airing_status"
   >
 >;
 

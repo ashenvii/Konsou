@@ -62,6 +62,12 @@ export function mergeAnimeEntry(
     started_at: minDefined(local.started_at, remote.started_at),
     completed_at: maxDefined(local.completed_at, remote.completed_at),
     updated_at: Math.max(local.updated_at, remote.updated_at),
+    // Prefer whichever device has already resolved the franchise root.
+    franchise_root_id: local.franchise_root_id ?? remote.franchise_root_id,
+    // Airing status only advances (NOT_YET_RELEASED → RELEASING → FINISHED).
+    // Take the further-along value so a device that already scanned the new
+    // status doesn't get regressed by a stale remote.
+    airing_status: advanceAiringStatus(local.airing_status, remote.airing_status),
   };
 }
 
@@ -128,6 +134,20 @@ export function mergeLists(
   }
 
   return { entries, tombstones };
+}
+
+const AIRING_RANK: Record<string, number> = {
+  NOT_YET_RELEASED: 0,
+  HIATUS: 1,
+  RELEASING: 2,
+  CANCELLED: 3,
+  FINISHED: 3,
+};
+
+function advanceAiringStatus(a: string | null, b: string | null): string | null {
+  if (!a) return b;
+  if (!b) return a;
+  return (AIRING_RANK[a] ?? 0) >= (AIRING_RANK[b] ?? 0) ? a : b;
 }
 
 function minDefined(a: number | null, b: number | null): number | null {

@@ -76,3 +76,19 @@ export function useAnimeDetail(id: number | null) {
     networkMode: "offlineFirst",
   });
 }
+
+/**
+ * Fetch relations for a set of tracked entry ids and return the union.
+ * Used by FranchiseSheet so untracked sequels/movies that are only direct
+ * relations of S2+ (not of S1) still surface in the "Related" section.
+ */
+export function useFranchiseRelations(ids: number[], enabled: boolean) {
+  const key = [...ids].sort().join(",");
+  return useQuery({
+    queryKey: ["franchise-relations", key],
+    queryFn: () => anilist.getRelationsBatch(ids, "high"),
+    enabled: enabled && ids.length > 0,
+    staleTime: 6 * 60 * 60 * 1000,
+    networkMode: "offlineFirst",
+  });
+}
