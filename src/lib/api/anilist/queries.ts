@@ -114,6 +114,7 @@ query UserList($userName: String!) {
           idMal
           title { romaji english native }
           coverImage { medium }
+          status
           episodes
         }
       }
@@ -132,4 +133,18 @@ export function buildRelationsBatchQuery(ids: number[]): string {
     )
     .join("\n");
   return `query RelationsBatch {\n${aliases}\n}`;
+}
+
+export function buildAiringStatusBatchQuery(ids: number[]): string {
+  const aliases = ids
+    .map(
+      (id) => `  m${id}: Media(id: ${id}, type: ANIME) {
+    id
+    status
+    episodes
+    nextAiringEpisode { airingAt episode timeUntilAiring }
+  }`,
+    )
+    .join("\n");
+  return `query AiringStatusBatch {\n${aliases}\n}`;
 }

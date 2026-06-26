@@ -95,6 +95,11 @@
   border-radius: var(--radius-full);
   background: currentColor;
 }
+.k-status-option--disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .k-status-remove {
   display: flex;
   align-items: center;
@@ -811,6 +816,38 @@
   text-align: right;
   font-weight: 700;
   font-size: var(--text-sm);
+}
+
+/* ── Franchise chip ────────────────────────────────────────── */
+.k-franchise-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 14px;
+  padding: 0 5px;
+  border-radius: var(--radius-sm);
+  background: oklch(100% 0 0 / 10%);
+  color: oklch(100% 0 0 / 65%);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  flex: none;
+}
+/* List / compact variant on a lighter surface */
+.k-franchise-chip--row {
+  background: var(--color-surface-3);
+  color: var(--color-text-tertiary);
+}
+/* The quick-action on a franchise card opens the sheet, not +1 */
+.k-card__quick--sheet {
+  background: var(--color-surface-3);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+.k-card--grid:hover .k-card__quick--sheet {
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
 }
 
 /* ── Edit sheet ────────────────────────────────────────────── */

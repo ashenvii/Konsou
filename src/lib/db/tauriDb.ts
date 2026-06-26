@@ -22,6 +22,8 @@ const UPDATABLE_COLUMNS: (keyof ListEntryPatch | "updated_at")[] = [
   "completed_at",
   "total_episodes",
   "has_dub",
+  "franchise_root_id",
+  "airing_status",
   "updated_at",
 ];
 
@@ -65,26 +67,30 @@ export class TauriKonsouDb implements KonsouDb {
       `INSERT INTO anime_list (
          anilist_id, mal_id, title_romaji, title_english, title_native, cover_url,
          total_episodes, status, episodes_watched, score, notes,
-         added_at, updated_at, started_at, completed_at, has_dub
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+         added_at, updated_at, started_at, completed_at, has_dub, franchise_root_id,
+         airing_status
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
        ON CONFLICT(anilist_id) DO UPDATE SET
-         mal_id          = excluded.mal_id,
-         title_romaji    = excluded.title_romaji,
-         title_english   = excluded.title_english,
-         title_native    = excluded.title_native,
-         cover_url       = excluded.cover_url,
-         total_episodes  = excluded.total_episodes,
-         status          = excluded.status,
-         episodes_watched= excluded.episodes_watched,
-         score           = excluded.score,
-         notes           = excluded.notes,
-         updated_at      = excluded.updated_at,
-         started_at      = excluded.started_at,
-         completed_at    = excluded.completed_at`,
+         mal_id           = excluded.mal_id,
+         title_romaji     = excluded.title_romaji,
+         title_english    = excluded.title_english,
+         title_native     = excluded.title_native,
+         cover_url        = excluded.cover_url,
+         total_episodes   = excluded.total_episodes,
+         status           = excluded.status,
+         episodes_watched = excluded.episodes_watched,
+         score            = excluded.score,
+         notes            = excluded.notes,
+         updated_at       = excluded.updated_at,
+         started_at       = excluded.started_at,
+         completed_at     = excluded.completed_at,
+         franchise_root_id = excluded.franchise_root_id,
+         airing_status    = excluded.airing_status`,
       [
         e.anilist_id, e.mal_id, e.title_romaji, e.title_english, e.title_native, e.cover_url,
         e.total_episodes, e.status, e.episodes_watched, e.score, e.notes,
         e.added_at, e.updated_at, e.started_at, e.completed_at, hasDub,
+        e.franchise_root_id ?? null, e.airing_status ?? null,
       ],
     );
   }

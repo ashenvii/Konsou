@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { getDb } from "@/lib/db";
 import { getCoverUrl, preferredTitle } from "@/lib/format";
+import { resolveFranchiseChain } from "@/lib/franchise/cascade";
 import { syncQueue } from "@/lib/sync/queue";
 import { syncManager } from "@/lib/sync/syncManager";
 import { toast } from "./toastStore";
@@ -65,6 +66,75 @@ export const useListStore = create<ListState>((set, get) => {
     });
   };
 
+  /**
+   * Walk the PREQUEL chain for `primaryId`, add missing ancestors as completed,
+   * and stamp franchise_root_id on the primary entry and any existing ancestors.
+   * Runs entirely in the background — errors are swallowed so they never block
+   * the original add.
+   */
+  const runFranchiseCascade = async (primaryId: number): Promise<void> => {
+    try {
+      const inList = new Set(get().entries.map((e) => e.anilist_id));
+      const { rootId, toAdd, toUpdate } = await resolveFranchiseChain(primaryId, inList);
+
+      // Give the newly added entry its franchise root.
+      await patchEntry(primaryId, { franchise_root_id: rootId });
+
+      // Stamp already-tracked ancestors that were added before this feature.
+      for (const id of toUpdate) {
+        await patchEntry(id, { franchise_root_id: rootId });
+      }
+
+      if (toAdd.length === 0) return;
+
+      const db = await getDb();
+      const now = Date.now();
+
+      for (const rel of toAdd) {
+        const total = rel.episodes ?? null;
+        const entry: AnimeListEntry = {
+          anilist_id: rel.id,
+          mal_id: rel.idMal ?? null,
+          title_romaji: rel.title.romaji,
+          title_english: rel.title.english ?? null,
+          title_native: rel.title.native ?? null,
+          cover_url: getCoverUrl(rel.coverImage) || null,
+          total_episodes: total,
+          status: "completed",
+          episodes_watched: total ?? 0,
+          score: null,
+          notes: null,
+          has_dub: null,
+          franchise_root_id: rootId,
+          airing_status: rel.status ?? null,
+          added_at: now,
+          updated_at: now,
+          started_at: null,
+          completed_at: now,
+        };
+        applyEntry(entry);
+        try {
+          await db.listUpsert(entry);
+          await db.tombstoneRemove(rel.id);
+        } catch {
+          removeFromState(rel.id);
+        }
+      }
+
+      queueSync();
+
+      const msg =
+        toAdd.length === 1
+          ? `Also added "${preferredTitle(toAdd[0].title)}" as completed`
+          : `Also added ${toAdd.length} prior entries as completed`;
+      toast.success(msg);
+    } catch (err) {
+      console.warn("[cascade] franchise chain resolve failed:", err);
+      // Non-fatal: the primary entry is already in the list, just ungrouped until
+      // the user visits its detail page and the root is resolved there.
+    }
+  };
+
   /** Optimistic field patch with DB write + revert-on-failure. */
   const patchEntry = async (anilistId: number, patch: ListEntryPatch) => {
     const prev = get().map[anilistId];
@@ -81,6 +151,44 @@ export const useListStore = create<ListState>((set, get) => {
     }
   };
 
+  /**
+   * Background pass that stamps franchise_root_id on entries that were added
+   * before this feature shipped. Runs at "low" priority so it never competes
+   * with foreground API calls. Already-resolved entries are skipped, and when
+   * one chain walk resolves multiple chain members those are also skipped in
+   * subsequent iterations.
+   */
+  const resolveOrphanRoots = async (): Promise<void> => {
+    const unresolved = get().entries.filter((e) => e.franchise_root_id == null);
+    if (unresolved.length === 0) return;
+
+    for (const entry of unresolved) {
+      // Another iteration may have already resolved this via toUpdate.
+      if (get().map[entry.anilist_id]?.franchise_root_id != null) continue;
+
+      try {
+        const inList = new Set(get().entries.map((e) => e.anilist_id));
+        const { rootId, toUpdate } = await resolveFranchiseChain(
+          entry.anilist_id,
+          inList,
+          "low",
+        );
+
+        await patchEntry(entry.anilist_id, { franchise_root_id: rootId });
+
+        // Stamp the rest of the chain that's already in the list so the loop
+        // can skip them — avoids redundant chain walks for sibling seasons.
+        for (const id of toUpdate) {
+          if (get().map[id]?.franchise_root_id == null) {
+            await patchEntry(id, { franchise_root_id: rootId });
+          }
+        }
+      } catch {
+        // Non-fatal. The entry stays ungrouped until the next app launch.
+      }
+    }
+  };
+
   return {
     loaded: false,
     entries: [],
@@ -90,6 +198,7 @@ export const useListStore = create<ListState>((set, get) => {
       const db = await getDb();
       const entries = await db.listAll();
       set({ entries, map: indexBy(entries), loaded: true });
+      void resolveOrphanRoots();
     },
 
     isInList: (anilistId) => !!get().map[anilistId],
@@ -111,6 +220,8 @@ export const useListStore = create<ListState>((set, get) => {
         score: null,
         notes: null,
         has_dub: null,
+        franchise_root_id: null,
+        airing_status: s.status ?? null,
         added_at: now,
         updated_at: now,
         started_at:
@@ -129,6 +240,12 @@ export const useListStore = create<ListState>((set, get) => {
         if (status === "completed" || status === "dropped") {
           const { useNotificationStore } = await import("./notificationStore");
           void useNotificationStore.getState().scanSeed(get().entries, s.id);
+        }
+        // Walk the PREQUEL chain, add missing ancestors as completed, and tag
+        // all franchise members with franchise_root_id. Skipped if dropped —
+        // a dropped series doesn't imply the user watched everything before it.
+        if (status !== "dropped") {
+          void runFranchiseCascade(s.id);
         }
       } catch {
         removeFromState(s.id);
@@ -202,6 +319,8 @@ export const useListStore = create<ListState>((set, get) => {
     incrementEpisodes: async (anilistId, delta) => {
       const prev = get().map[anilistId];
       if (!prev) return;
+      // Episode tracking only makes sense while actively watching.
+      if (prev.status !== "watching" && prev.status !== "rewatching") return;
       await get().setEpisodes(anilistId, prev.episodes_watched + delta);
     },
 

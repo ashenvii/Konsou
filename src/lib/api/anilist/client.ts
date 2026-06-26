@@ -14,6 +14,7 @@ import {
   DETAIL_QUERY,
   SEARCH_QUERY,
   USER_LIST_QUERY,
+  buildAiringStatusBatchQuery,
   buildRelationsBatchQuery,
 } from "./queries";
 import { jikanSearchMalIds } from "../jikan/client";
@@ -446,6 +447,8 @@ class AniListClient {
           score: e.score && (e.score as number) > 0 ? (e.score as number) : null,
           notes: (e.notes as string) || null,
           has_dub: null,
+          franchise_root_id: null,
+          airing_status: (e.media.status as string) ?? null,
           added_at: now,
           updated_at: now,
           started_at: toMs(e.startedAt),
@@ -525,6 +528,8 @@ class AniListClient {
         score: r.score,
         notes: null,
         has_dub: null,
+        franchise_root_id: null,
+        airing_status: m.status ?? null,
         added_at: now,
         updated_at: now,
         started_at: r.started_at,
@@ -533,6 +538,43 @@ class AniListClient {
     }
 
     return { entries, unmatched, total: raw.length };
+  }
+
+  /**
+   * Fetch current airing status + episode count for a batch of ids. Used by
+   * the plan-to-watch airing scan to detect NOT_YET_RELEASED → RELEASING
+   * transitions without going through the full relations machinery.
+   */
+  async getAiringStatusBatch(
+    ids: number[],
+    priority: Priority = "low",
+  ): Promise<Map<number, { status: string; episodes: number | null; nextAiringAt: number | null }>> {
+    const result = new Map<number, { status: string; episodes: number | null; nextAiringAt: number | null }>();
+
+    for (let i = 0; i < ids.length; i += RELATIONS_BATCH_SIZE) {
+      const chunk = ids.slice(i, i + RELATIONS_BATCH_SIZE);
+      try {
+        const data = await this.request<Record<string, any>>(
+          buildAiringStatusBatchQuery(chunk),
+          undefined,
+          priority,
+        );
+        for (const id of chunk) {
+          const m = data[`m${id}`];
+          if (!m) continue;
+          result.set(id, {
+            status: m.status as string,
+            episodes: (m.episodes as number) ?? null,
+            nextAiringAt: m.nextAiringEpisode?.airingAt ?? null,
+          });
+        }
+      } catch {
+        /* partial failure — skip the chunk, caller will retry next cycle */
+      }
+      if (i + RELATIONS_BATCH_SIZE < ids.length) await delay(BATCH_SPACING_MS);
+    }
+
+    return result;
   }
 }
 

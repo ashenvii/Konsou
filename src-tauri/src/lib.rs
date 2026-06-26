@@ -198,6 +198,48 @@ CREATE INDEX IF NOT EXISTS idx_scan_schedule_due ON scan_schedule(next_check_at)
 "#,
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "franchise grouping root id",
+            sql: r#"
+ALTER TABLE anime_list ADD COLUMN franchise_root_id INTEGER;
+CREATE INDEX IF NOT EXISTS idx_list_franchise ON anime_list(franchise_root_id);
+"#,
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 7,
+            description: "airing status for status validation and plan-to-watch alerts",
+            sql: "ALTER TABLE anime_list ADD COLUMN airing_status TEXT;",
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 8,
+            description: "started_airing alert type",
+            sql: r#"
+CREATE TABLE IF NOT EXISTS notifications_new (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  source_id      INTEGER NOT NULL,
+  related_id     INTEGER NOT NULL,
+  type           TEXT NOT NULL CHECK(type IN (
+                   'sequel', 'side_story', 'spin_off', 'movie', 'started_airing'
+                 )),
+  related_title  TEXT NOT NULL,
+  related_cover  TEXT,
+  related_status TEXT NOT NULL,
+  airing_at      INTEGER,
+  seen           INTEGER NOT NULL DEFAULT 0,
+  dismissed      INTEGER NOT NULL DEFAULT 0,
+  created_at     INTEGER NOT NULL,
+  UNIQUE(source_id, related_id, type)
+);
+INSERT OR IGNORE INTO notifications_new SELECT * FROM notifications;
+DROP TABLE notifications;
+ALTER TABLE notifications_new RENAME TO notifications;
+CREATE INDEX IF NOT EXISTS idx_notifications_active ON notifications(dismissed, seen);
+"#,
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

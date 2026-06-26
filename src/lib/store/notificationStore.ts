@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db";
 import { isEnabled } from "@/lib/features";
 import { detectSequels } from "@/lib/sequel/detector";
 import { computeNextCheck, selectDueSeeds } from "@/lib/sequel/schedule";
+import { scanPlanToWatchAirings } from "@/lib/sequel/airingScan";
 import { toast } from "./toastStore";
 import { useSettingsStore } from "./settingsStore";
 import type { ScanScheduleEntry } from "@/lib/db/contract";
@@ -110,6 +111,25 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
     runScheduledScan: async (entries) => {
       if (!enabled() || get().checking) return;
       const db = await getDb();
+
+      // Airing scan runs first — low-cost since it only hits plan_to_watch entries
+      // with NOT_YET_RELEASED status, and those shrink as anime start airing.
+      try {
+        const { notifications: airingAlerts, updatedIds } =
+          await scanPlanToWatchAirings(entries, db);
+        for (const n of airingAlerts) {
+          await db.notificationInsertIfNew(n);
+        }
+        if (updatedIds.length > 0) {
+          // Reload the full list so in-memory entries reflect the new airing_status.
+          const { useListStore } = await import("./listStore");
+          await useListStore.getState().load();
+        }
+        if (airingAlerts.length > 0) await get().load();
+      } catch (err) {
+        console.error("[alerts] airing scan failed:", err);
+      }
+
       const schedule = await db.scheduleGetAll();
       const due = selectDueSeeds(seedIdsOf(entries), schedule, SCAN_BUDGET);
       if (due.length === 0) return;
@@ -119,7 +139,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         const inList = new Set(entries.map((e) => e.anilist_id));
         const inserted = await scanSeeds(due, inList, "low", schedule);
         await db.settingsSet(LAST_CHECK_KEY, String(Date.now()));
-        if (inserted > 0) await get().load(); // stale-while-revalidate refresh
+        if (inserted > 0) await get().load();
       } catch (err) {
         console.error("[alerts] scheduled scan failed:", err);
       } finally {
