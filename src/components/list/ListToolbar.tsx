@@ -70,17 +70,17 @@ export function ListToolbar({
             className="k-searchbar__input"
             type="search"
             inputMode="search"
-            placeholder="Filter your list…"
+            placeholder="Search your list…"
             value={search}
             onChange={(e) => onSearch(e.target.value)}
-            aria-label="Filter your list"
+            aria-label="Search your list"
           />
           {search && (
             <button
               type="button"
               className="k-searchbar__clear"
               onClick={() => onSearch("")}
-              aria-label="Clear filter"
+              aria-label="Clear search"
             >
               <Icon icon={X} size={16} />
             </button>

@@ -6,6 +6,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-06-30
+
+### Added
+- **Search your list** — the list search now filters down to just the entries
+  that match, with a result count, instead of dimming non-matches in place. On a
+  large library you no longer scroll hunting for a highlighted card.
+- **Schedule page** — a weekly airing calendar for the shows you're watching,
+  built from AniList airing data.
+- **Stats page** — local totals: entries by status, episodes and time watched,
+  and a status breakdown. No account required.
+
+### Changed
+- **New signature look** — Konsou now leads with a sunset amber/coral identity on
+  warm near-black surfaces, replacing the muted violet default. Purple lives on as
+  the Void theme for anyone who wants it.
+- **Refreshed logo and app icons** — the K mark is redrawn in the amber-to-coral
+  palette with a teal accent, and the desktop/mobile icon set was regenerated to
+  match.
+- **List + franchise redesign** — segmented per-season progress bar and franchise
+  badge on grid cards; list and compact rows enriched to match (poster, status
+  pill, season chip, progress, score) via a shared SeasonBar.
+- **Franchise sheet → season manager** — art-backed header with aggregate
+  progress, numbered season rows with an inline stepper, per-season and
+  per-franchise remove, and a prominent "Up next".
+- **Navigation** — Settings, Account, and Stats moved behind the avatar (top bar
+  on mobile, sidebar footer on desktop), making room for the Schedule tab without
+  growing the bar. Pages gained an optional back button.
+- **Onboarding** — trimmed to the core value props, title-language choice, and
+  Connect Google.
+
+### Fixed
+- **Clickable affordances** — hover and press states across cards, rows, and the
+  franchise sheet so interactive controls read as interactive.
+- **Build** — corrected the `airingScan` list update and the
+  `DbDriver`→`KonsouDb` import in the franchise sheet.
+
 ## [0.2.0] — 2026-06-25
 
 ### Added

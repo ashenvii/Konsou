@@ -29,13 +29,14 @@ const GITHUB_URL = (import.meta.env.VITE_GITHUB_URL as string | undefined) ?? "h
 /* Curated to four strong, distinct moods: brand-violet dark, cool teal dark,
  * warm ember dark, and a clean light. Quality over a wall of swatches. */
 const COLOR_THEMES: { id: ColorTheme; label: string; surface: string; accent: string }[] = [
+  { id: "ember", label: "Ember", surface: "oklch(16%   0.052 34)",  accent: "oklch(70% 0.20 45)"  },
   { id: "void",  label: "Void",  surface: "oklch(15%   0.038 280)", accent: "oklch(65% 0.23 350)" },
   { id: "ocean", label: "Ocean", surface: "oklch(14.5% 0.046 218)", accent: "oklch(71% 0.18 190)" },
-  { id: "ember", label: "Ember", surface: "oklch(15%   0.044 28)",  accent: "oklch(70% 0.20 55)"  },
   { id: "paper", label: "Paper", surface: "oklch(98.5% 0.003 280)", accent: "oklch(65% 0.23 350)" },
 ];
 
 const ACCENTS: { id: AccentName; label: string; color: string }[] = [
+  { id: "coral",   label: "Coral",   color: "oklch(70% 0.20 45)"  },
   { id: "violet",  label: "Violet",  color: "oklch(52% 0.27 290)" },
   { id: "sakura",  label: "Sakura",  color: "oklch(65% 0.23 350)" },
   { id: "cobalt",  label: "Cobalt",  color: "oklch(58% 0.18 240)" },

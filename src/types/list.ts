@@ -87,7 +87,7 @@ export interface SortSpec {
 /** "all" is the no-filter pseudo-tab on My List. */
 export type ListFilter = ListStatus | "all";
 
-export type AccentName = "violet" | "cobalt" | "crimson" | "sakura" | "amber" | "aqua" | "jade";
+export type AccentName = "coral" | "violet" | "cobalt" | "crimson" | "sakura" | "amber" | "aqua" | "jade";
 export type ThemeMode = "dark" | "light" | "system"; // reserved for future brightness toggle
 export type ColorTheme = "void" | "ocean" | "ember" | "forest" | "midnight" | "crimson" | "paper" | "ash";
 

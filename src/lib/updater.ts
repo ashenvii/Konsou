@@ -2,7 +2,7 @@ import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { isTauri } from "@/lib/platform";
 
-export const APP_VERSION = "0.2.0";
+export const APP_VERSION = "0.4.0";
 
 export interface PendingUpdate {
   version: string;

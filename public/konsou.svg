@@ -1,14 +1,18 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="k-grad" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#A78BFA" />
-      <stop offset="1" stop-color="#7C5CFC" />
+    <linearGradient id="k-grad" x1="20" y1="16" x2="42" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFB45C" />
+      <stop offset="1" stop-color="#FF5E3A" />
+    </linearGradient>
+    <linearGradient id="k-bg" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1C140D" />
+      <stop offset="1" stop-color="#120D09" />
     </linearGradient>
   </defs>
-  <rect x="4" y="4" width="56" height="56" rx="16" fill="#161420" />
-  <rect x="4.5" y="4.5" width="55" height="55" rx="15.5" stroke="#7C5CFC" stroke-opacity="0.5" />
+  <rect x="4" y="4" width="56" height="56" rx="17" fill="url(#k-bg)" />
+  <rect x="4.75" y="4.75" width="54.5" height="54.5" rx="16.25" stroke="#FF7A4D" stroke-opacity="0.45" />
   <!-- stylized K / play motif -->
-  <path d="M22 18V46" stroke="url(#k-grad)" stroke-width="6" stroke-linecap="round" />
-  <path d="M40 18L26 32L40 46" stroke="url(#k-grad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
-  <circle cx="44" cy="22" r="4" fill="#4CC9A4" />
+  <path d="M22 17.5V46.5" stroke="url(#k-grad)" stroke-width="6" stroke-linecap="round" />
+  <path d="M40.5 17.5L26 32L40.5 46.5" stroke="url(#k-grad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="44.5" cy="21.5" r="4" fill="#2FE3BE" />
 </svg>

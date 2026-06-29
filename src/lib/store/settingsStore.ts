@@ -16,7 +16,7 @@ const RECENT_SEARCH_LIMIT = 5;
 export const THEME_DEFAULT_ACCENTS: Record<ColorTheme, AccentName> = {
   void:     "sakura",
   ocean:    "aqua",
-  ember:    "amber",
+  ember:    "coral",
   forest:   "jade",
   midnight: "cobalt",
   crimson:  "crimson",
@@ -77,8 +77,8 @@ async function persist(key: string, value: string): Promise<void> {
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   loaded: false,
-  colorTheme: "void",
-  accent: "sakura",
+  colorTheme: "ember",
+  accent: "coral",
   defaultView: "grid",
   defaultSort: { key: "updated", order: "desc" },
   titleLanguage: "romaji",
@@ -91,7 +91,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   load: async () => {
     const db = await getDb();
     const s = await db.settingsGetAll();
-    const colorTheme = (s.color_theme as ColorTheme) ?? "void";
+    const colorTheme = (s.color_theme as ColorTheme) ?? "ember";
     const accent =
       (s.accent as AccentName) ?? THEME_DEFAULT_ACCENTS[colorTheme];
     applyColorTheme(colorTheme);

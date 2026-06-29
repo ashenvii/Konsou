@@ -130,24 +130,30 @@
   --color-accent-h: 190; --color-accent-l: 71%; --color-accent-c: 0.16;
 }
 
-/* Ember — smoldering amber coal, every surface radiates warmth */
+/* Ember — sunset coal: warm near-black surfaces with a real amber glow in them.
+   Chroma is pushed past "tinted grey" so the dark actually reads as warm, not
+   muted. This is Konsou's default identity. */
 [data-theme="ember"] {
-  --color-base:      oklch(8%    0.026 28);
-  --color-surface:   oklch(11%   0.032 28);
-  --color-surface-2: oklch(15%   0.044 28);
-  --color-surface-3: oklch(19%   0.054 28);
-  --color-border:        oklch(100% 0 0 / 8%);
-  --color-border-strong: oklch(100% 0 0 / 18%);
+  --color-base:      oklch(8.5%  0.032 34);
+  --color-surface:   oklch(12%   0.040 34);
+  --color-surface-2: oklch(16%   0.052 34);
+  --color-surface-3: oklch(20%   0.062 34);
+  --color-border:        oklch(90% 0.04 45 / 9%);
+  --color-border-strong: oklch(90% 0.05 45 / 20%);
 
   /* Warm text — creamier white */
-  --color-text-primary:   oklch(97% 0.008 55 / 90%);
-  --color-text-secondary: oklch(97% 0.008 55 / 60%);
-  --color-text-tertiary:  oklch(97% 0.008 55 / 38%);
+  --color-text-primary:   oklch(97% 0.010 55 / 92%);
+  --color-text-secondary: oklch(97% 0.010 55 / 62%);
+  --color-text-tertiary:  oklch(97% 0.010 55 / 40%);
 
-  --color-accent:      oklch(70% 0.18 55);
-  --color-accent-glow: oklch(84% 0.14 55);
-  --color-accent-dim:  oklch(70% 0.18 55 / 15%);
-  --color-accent-h: 55; --color-accent-l: 70%; --color-accent-c: 0.18;
+  /* Warm shadow + a coral-tinted card glow give the shell depth instead of flat black. */
+  --shadow-card:    0 4px 16px oklch(2% 0.03 34 / 55%);
+  --shadow-card-hi: 0 6px 28px oklch(2% 0.03 34 / 62%);
+
+  --color-accent:      oklch(70% 0.20 45);
+  --color-accent-glow: oklch(83% 0.15 40);
+  --color-accent-dim:  oklch(70% 0.20 45 / 15%);
+  --color-accent-h: 45; --color-accent-l: 70%; --color-accent-c: 0.20;
 }
 
 /* Forest — ancient black-green, like light through a closed canopy */
@@ -275,6 +281,12 @@
    Set via [data-accent] attribute; lets users mix any surface + color.
    ═══════════════════════════════════════════════════════════════════ */
 
+[data-accent="coral"] {
+  --color-accent:      oklch(70% 0.20 45);
+  --color-accent-glow: oklch(83% 0.15 40);
+  --color-accent-dim:  oklch(70% 0.20 45 / 15%);
+  --color-accent-h: 45; --color-accent-l: 70%; --color-accent-c: 0.20;
+}
 [data-accent="violet"] {
   --color-accent:      oklch(52% 0.27 290);
   --color-accent-glow: oklch(65% 0.18 290);

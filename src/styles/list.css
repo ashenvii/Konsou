@@ -30,6 +30,19 @@
   flex: none;
   background: var(--color-base);
 }
+.k-list-results {
+  flex: none;
+  margin: 0;
+  padding: 0 var(--content-padding-sm) var(--space-2);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-tertiary);
+}
+@media (min-width: 1024px) {
+  .k-list-results {
+    padding-inline: var(--content-padding-lg);
+  }
+}
 .k-toolbar__searchrow {
   display: flex;
   align-items: center;

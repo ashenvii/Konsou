@@ -98,22 +98,21 @@ export function MyList() {
     return filtered.sort((a, b) => compareGroups(a, b, defaultSort, titleLanguage));
   }, [entries, filter, defaultSort, titleLanguage]);
 
-  // DIM-style search: a group stays bright if any of its entries match.
-  const dimmedIds = useMemo(() => {
-    const q = normalizeForSearch(debouncedSearch);
-    if (!q) return null;
-    const bright = new Set<number>();
-    for (const group of groups) {
-      const hit = group.entries.some((e) => {
-        const hay = normalizeForSearch(
+  // Search filters the list DOWN to just what matches, so a 4000-entry library
+  // collapses to the handful you typed instead of making you scroll hunting for
+  // a dimmed-but-still-present card.
+  const query = normalizeForSearch(debouncedSearch);
+  const searching = query.length > 0;
+  const visibleGroups = useMemo(() => {
+    if (!query) return groups;
+    return groups.filter((group) =>
+      group.entries.some((e) =>
+        normalizeForSearch(
           `${e.title_romaji} ${e.title_english ?? ""} ${e.title_native ?? ""}`,
-        );
-        return hay.includes(q);
-      });
-      if (hit) bright.add(group.rootId);
-    }
-    return bright;
-  }, [debouncedSearch, groups]);
+        ).includes(query),
+      ),
+    );
+  }, [query, groups]);
 
   const onFilter = (f: ListFilter) => {
     setFilter(f);
@@ -176,20 +175,32 @@ export function MyList() {
         onOpenSort={() => setSortOpen(true)}
       />
 
-      {groups.length === 0 ? (
-        <EmptyState
-          title="Nothing here yet"
-          subtitle={`Add anime to your ${filter === "all" ? "" : filter.replace(/_/g, " ")} list.`}
-        />
-      ) : (
-        <>
-          <FranchiseCollection
-            groups={groups}
-            view={defaultView}
-            dimmedIds={dimmedIds}
-            showStatus={filter === "all"}
+      {searching && visibleGroups.length > 0 && (
+        <p className="k-list-results">
+          {visibleGroups.length}{" "}
+          {visibleGroups.length === 1 ? "match" : "matches"} for “
+          {debouncedSearch.trim()}”
+        </p>
+      )}
+
+      {visibleGroups.length === 0 ? (
+        searching ? (
+          <EmptyState
+            title="No matches"
+            subtitle={`Nothing in your list matches “${debouncedSearch.trim()}”.`}
           />
-        </>
+        ) : (
+          <EmptyState
+            title="Nothing here yet"
+            subtitle={`Add anime to your ${filter === "all" ? "" : filter.replace(/_/g, " ")} list.`}
+          />
+        )
+      ) : (
+        <FranchiseCollection
+          groups={visibleGroups}
+          view={defaultView}
+          showStatus={filter === "all"}
+        />
       )}
 
       <SortSheet
