@@ -79,7 +79,7 @@ export function ReconcilePrompt() {
             disabled={busy}
             onClick={() => setConfirm("use_drive")}
           >
-            Use Drive — replace this device
+            Use Drive (replace this device)
           </Button>
           <Button
             variant="secondary"
@@ -87,7 +87,7 @@ export function ReconcilePrompt() {
             disabled={busy}
             onClick={() => setConfirm("use_local")}
           >
-            Use this device — replace Drive
+            Use this device (replace Drive)
           </Button>
         </div>
       </div>

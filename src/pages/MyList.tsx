@@ -143,7 +143,7 @@ export function MyList() {
           </div>
           <p className="k-mylist-empty__title">Your collection starts here</p>
           <p className="k-mylist-empty__sub">
-            Track what you're watching, planning, or have finished — no score required.
+            Track what you're watching, planning, or have finished. No score required.
           </p>
           <div className="k-mylist-empty__actions">
             <Button variant="primary" onClick={() => navigate("/search")}>
@@ -183,16 +183,6 @@ export function MyList() {
         />
       ) : (
         <>
-          {defaultView === "list" && (
-            <div className="k-row-header">
-              <div className="k-row-header__thumb" />
-              <div className="k-row-header__title">Title</div>
-              <div className="k-row-header__status">Status</div>
-              <div className="k-row-header__ep">Ep.</div>
-              <div className="k-row-header__score">Score</div>
-              <div className="k-row-header__action" />
-            </div>
-          )}
           <FranchiseCollection
             groups={groups}
             view={defaultView}

@@ -6,13 +6,6 @@ import { Text } from "@/components/ui/Text";
 import { TITLE_LANGUAGE_OPTIONS } from "@/lib/format";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
-import type { SidebarMode } from "@/types/list";
-
-const SIDEBAR_MODES: { id: SidebarMode; label: string; sub: string }[] = [
-  { id: "rail",     label: "Icon rail",   sub: "Icons only"  },
-  { id: "hover",    label: "On hover",    sub: "Expands"     },
-  { id: "expanded", label: "Always open", sub: "Pinned open" },
-];
 
 const ONBOARDED_KEY = "konsou.onboarded";
 
@@ -42,8 +35,6 @@ export function Onboarding() {
   const connecting = useAuthStore((s) => s.connecting);
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
   const setTitleLanguage = useSettingsStore((s) => s.setTitleLanguage);
-  const sidebarMode = useSettingsStore((s) => s.sidebarMode);
-  const setSidebarMode = useSettingsStore((s) => s.setSidebarMode);
 
   if (!visible) return null;
 
@@ -105,26 +96,6 @@ export function Onboarding() {
               >
                 <span className="k-titleopt__label">{opt.label}</span>
                 <span className="k-titleopt__example">{opt.example}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="k-onboarding__sidebarpref">
-          <Text size="xs" weight={600} color="tertiary">
-            Sidebar style
-          </Text>
-          <div className="k-onboarding__titleopts">
-            {SIDEBAR_MODES.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                className={`k-titleopt${sidebarMode === m.id ? " k-titleopt--active" : ""}`}
-                onClick={() => setSidebarMode(m.id)}
-                aria-pressed={sidebarMode === m.id}
-              >
-                <span className="k-titleopt__label">{m.label}</span>
-                <span className="k-titleopt__example">{m.sub}</span>
               </button>
             ))}
           </div>

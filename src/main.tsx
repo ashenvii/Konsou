@@ -59,7 +59,7 @@ async function bootstrap(): Promise<void> {
     // Check for app updates silently; download in background; notify when ready to install.
     void autoCheckAndDownload((update) => {
       toast.action({
-        message: `Konsou v${update.version} downloaded — ready to install`,
+        message: `Konsou v${update.version} downloaded, ready to install`,
         actionLabel: "Update Now",
         duration: 0, // persist until dismissed
         onAction: () => void update.install(),

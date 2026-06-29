@@ -118,7 +118,13 @@ export function Sidebar() {
       </nav>
 
       <div className="k-sidebar__footer">
-        <div className="k-sidebar__account">
+        <NavLink
+          to="/settings"
+          title="Settings, account & stats"
+          className={({ isActive }) =>
+            `k-sidebar__account${isActive ? " k-sidebar__account--active" : ""}`
+          }
+        >
           <div className="k-sidebar__avatar" aria-hidden>
             {account?.avatarUrl ? (
               <img src={account.avatarUrl} alt="" />
@@ -128,13 +134,13 @@ export function Sidebar() {
           </div>
           <div className="k-sidebar__accountinfo">
             <span className="k-sidebar__accountname">
-              {account?.name ?? "Offline"}
+              {account?.name ?? "Settings"}
             </span>
             <span className="k-sidebar__accountmeta">
-              {account?.email ?? "Not signed in"}
+              {account?.email ?? "Account & stats"}
             </span>
           </div>
-        </div>
+        </NavLink>
         <span className="k-sidebar__version">v{APP_VERSION}</span>
       </div>
     </aside>

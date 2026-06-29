@@ -127,7 +127,7 @@ export function ImportSheet({ open, onClose }: Props) {
       toast.success(`Imported ${count} anime`);
       handleClose();
     } catch {
-      toast.error("Import failed — please try again.");
+      toast.error("Import failed. Please try again.");
       setPhase("preview");
     }
   };
@@ -163,7 +163,7 @@ export function ImportSheet({ open, onClose }: Props) {
               <>
                 <Text size="sm" color="secondary">
                   Enter an AniList username to import their public list. Existing
-                  entries are merged — your progress and notes are never replaced.
+                  entries are merged: your progress and notes are never replaced.
                 </Text>
                 <div className="k-import__row">
                   <input
@@ -255,7 +255,7 @@ export function ImportSheet({ open, onClose }: Props) {
                   </button>
                 </div>
                 <Text size="xs" color="tertiary">
-                  These have no AniList entry under the same ID or title — normal
+                  These have no AniList entry under the same ID or title, normal
                   for some specials/OVAs and cross-site naming differences. Add them
                   manually via Search.
                 </Text>
@@ -268,7 +268,7 @@ export function ImportSheet({ open, onClose }: Props) {
             )}
 
             <Text size="xs" color="tertiary">
-              Entries already in your list are merged — your score, notes, and
+              Entries already in your list are merged: your score, notes, and
               progress are never replaced.
             </Text>
             <div className="k-import__actions">

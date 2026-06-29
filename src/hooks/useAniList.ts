@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { anilist } from "@/lib/api/anilist/client";
-import type { BrowseSort, SearchPage } from "@/lib/api/anilist/client";
+import type { AiringStatus, BrowseSort, SearchPage } from "@/lib/api/anilist/client";
 import type { AnimeSummary, MediaSeason } from "@/types/anime";
 
 const FIVE_MIN = 5 * 60 * 1000;
@@ -65,6 +65,27 @@ export function useDiscover(params: DiscoverParams) {
     refetch: q.refetch,
     isRefetching: q.isRefetching,
   };
+}
+
+/**
+ * Live airing status + next-episode timestamp for the user's tracked ids,
+ * powering the Schedule page. Cached 30m; serves stale offline so the calendar
+ * still renders without a network round-trip.
+ */
+export function useAiringSchedule(ids: number[], enabled = true) {
+  const key = [...ids].sort((a, b) => a - b).join(",");
+  return useQuery({
+    queryKey: ["airing-schedule", key],
+    queryFn: async () => {
+      const map = await anilist.getAiringStatusBatch(ids, "high");
+      const out: Record<number, AiringStatus> = {};
+      for (const [id, info] of map) out[id] = info;
+      return out;
+    },
+    enabled: enabled && ids.length > 0,
+    staleTime: 30 * 60 * 1000,
+    networkMode: "offlineFirst",
+  });
 }
 
 export function useAnimeDetail(id: number | null) {

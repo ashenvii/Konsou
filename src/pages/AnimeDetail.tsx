@@ -215,6 +215,12 @@ export function AnimeDetail() {
     : [];
 
   const seasonRows = useMemo(() => (media ? getSeasonRows(media) : []), [media]);
+  // The current title is the hero of this page; don't list it again under
+  // "Related Series". Only the other seasons/entries belong there.
+  const relatedRows = useMemo(
+    () => seasonRows.filter((r) => r.id !== media?.id),
+    [seasonRows, media],
+  );
   const streamingLinks = useMemo(
     () => (media?.externalLinks ?? []).filter(isStreamingLink),
     [media],
@@ -394,10 +400,10 @@ export function AnimeDetail() {
             </div>
           </section>
 
-          {seasonRows.length > 1 && (
+          {relatedRows.length > 0 && (
             <Section title="Related Series">
               <div className="k-seasonrows">
-                {seasonRows.map((row) => (
+                {relatedRows.map((row) => (
                   <button
                     key={row.id}
                     type="button"

@@ -30,6 +30,8 @@ interface ListState {
   setScore: (anilistId: number, score: number | null) => Promise<void>;
   patch: (anilistId: number, patch: ListEntryPatch) => Promise<void>;
   remove: (anilistId: number) => void;
+  removeMany: (anilistIds: number[]) => void;
+  clearAll: (opts?: { propagateToDrive?: boolean }) => Promise<void>;
   restore: (entry: AnimeListEntry) => Promise<void>;
 }
 
@@ -364,6 +366,75 @@ export const useListStore = create<ListState>((set, get) => {
           toast.error("Couldn't remove that entry");
         }
       }, 4000);
+    },
+
+    removeMany: (anilistIds) => {
+      const removed = anilistIds
+        .map((id) => get().map[id])
+        .filter((e): e is AnimeListEntry => !!e);
+      if (removed.length === 0) return;
+      for (const e of removed) removeFromState(e.anilist_id);
+
+      let undone = false;
+      toast.action({
+        message:
+          removed.length === 1
+            ? `Removed ${preferredTitle({
+                romaji: removed[0].title_romaji,
+                english: removed[0].title_english,
+              })}`
+            : `Removed ${removed.length} seasons`,
+        actionLabel: "Undo",
+        duration: 4000,
+        onAction: () => {
+          undone = true;
+          for (const e of removed) applyEntry(e);
+        },
+      });
+      setTimeout(async () => {
+        if (undone) return;
+        try {
+          const db = await getDb();
+          const now = Date.now();
+          for (const e of removed) {
+            await db.listRemove(e.anilist_id);
+            await db.tombstoneUpsert({ anilist_id: e.anilist_id, deleted_at: now });
+          }
+          queueSync();
+        } catch {
+          for (const e of removed) applyEntry(e);
+          toast.error("Couldn't remove those entries");
+        }
+      }, 4000);
+    },
+
+    clearAll: async ({ propagateToDrive = false } = {}) => {
+      const previous = get().entries;
+      if (previous.length === 0) return;
+      // Optimistic wipe: the UI empties immediately.
+      set({ entries: [], map: {} });
+      try {
+        const db = await getDb();
+        await db.listReplaceAll([]);
+        if (propagateToDrive) {
+          // Tombstone every cleared id so the empty state wins the next merge
+          // on other devices instead of being resurrected.
+          const now = Date.now();
+          const tombstones = previous.map((e) => ({
+            anilist_id: e.anilist_id,
+            deleted_at: now,
+          }));
+          await db.tombstonesReplaceAll(tombstones);
+          await syncManager.pushNow();
+        } else {
+          // Local-only clear: drop tombstones too so a future sign-in pulls
+          // cleanly from Drive without local deletions overriding it.
+          await db.tombstonesReplaceAll([]);
+        }
+      } catch {
+        set({ entries: previous, map: indexBy(previous) });
+        toast.error("Couldn't clear your list");
+      }
     },
 
     restore: async (entry) => {

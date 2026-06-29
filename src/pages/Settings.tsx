@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { CSSProperties, ReactNode } from "react";
-import { CodeXml, ExternalLink, Heart } from "lucide-react";
+import { BarChart3, ChevronRight, CodeXml, ExternalLink, Heart, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { Icon } from "@/components/ui/Icon";
 import { ImportSheet } from "@/components/ui/ImportSheet";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -24,25 +26,21 @@ const GITHUB_URL = (import.meta.env.VITE_GITHUB_URL as string | undefined) ?? "h
 /** Visual previews for each color theme. `surface` = what the dark backgrounds look
  *  like; `accent` = the paired default accent strip. These are approximations for
  *  the swatch — the actual CSS vars do the real work. */
+/* Curated to four strong, distinct moods: brand-violet dark, cool teal dark,
+ * warm ember dark, and a clean light. Quality over a wall of swatches. */
 const COLOR_THEMES: { id: ColorTheme; label: string; surface: string; accent: string }[] = [
-  { id: "void",     label: "Void",     surface: "oklch(15%   0.038 280)", accent: "oklch(65% 0.23 350)" },
-  { id: "ocean",    label: "Ocean",    surface: "oklch(14.5% 0.046 218)", accent: "oklch(71% 0.18 190)" },
-  { id: "ember",    label: "Ember",    surface: "oklch(15%   0.044 28)",  accent: "oklch(70% 0.20 55)"  },
-  { id: "forest",   label: "Forest",   surface: "oklch(15%   0.044 148)", accent: "oklch(65% 0.18 148)" },
-  { id: "midnight", label: "Midnight", surface: "oklch(13.5% 0.055 258)", accent: "oklch(60% 0.22 242)" },
-  { id: "crimson",  label: "Crimson",  surface: "oklch(15%   0.044 8)",   accent: "oklch(57% 0.24 10)"  },
-  { id: "paper",    label: "Paper",    surface: "oklch(98.5% 0.003 280)", accent: "oklch(65% 0.23 350)" },
-  { id: "ash",      label: "Ash",      surface: "oklch(91%   0.015 245)", accent: "oklch(48% 0.24 242)" },
+  { id: "void",  label: "Void",  surface: "oklch(15%   0.038 280)", accent: "oklch(65% 0.23 350)" },
+  { id: "ocean", label: "Ocean", surface: "oklch(14.5% 0.046 218)", accent: "oklch(71% 0.18 190)" },
+  { id: "ember", label: "Ember", surface: "oklch(15%   0.044 28)",  accent: "oklch(70% 0.20 55)"  },
+  { id: "paper", label: "Paper", surface: "oklch(98.5% 0.003 280)", accent: "oklch(65% 0.23 350)" },
 ];
 
 const ACCENTS: { id: AccentName; label: string; color: string }[] = [
-  { id: "sakura",  label: "Sakura",  color: "oklch(65% 0.23 350)" },
   { id: "violet",  label: "Violet",  color: "oklch(52% 0.27 290)" },
+  { id: "sakura",  label: "Sakura",  color: "oklch(65% 0.23 350)" },
   { id: "cobalt",  label: "Cobalt",  color: "oklch(58% 0.18 240)" },
-  { id: "crimson", label: "Crimson", color: "oklch(55% 0.20 10)"  },
   { id: "amber",   label: "Amber",   color: "oklch(70% 0.18 55)"  },
   { id: "aqua",    label: "Aqua",    color: "oklch(71% 0.16 190)" },
-  { id: "jade",    label: "Jade",    color: "oklch(63% 0.16 155)" },
 ];
 const VIEWS: ViewMode[] = ["grid", "list", "compact"];
 
@@ -90,13 +88,17 @@ function Row({
 }
 
 export function Settings() {
+  const navigate = useNavigate();
   const settings = useSettingsStore();
   const account = useAuthStore((s) => s.account);
   const connect = useAuthStore((s) => s.connect);
   const connecting = useAuthStore((s) => s.connecting);
   const restoreDismissed = useNotificationStore((s) => s.restoreDismissed);
+  const clearAll = useListStore((s) => s.clearAll);
+  const entryCount = useListStore((s) => s.entries.length);
   const [versionTaps, setVersionTaps] = useState(0);
   const [importOpen, setImportOpen] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [checking, setChecking] = useState(false);
 
   const exportJson = () => {
@@ -129,7 +131,7 @@ export function Settings() {
       const update = await checkForUpdate();
       if (update) {
         toast.action({
-          message: `v${update.version} ready — click to restart`,
+          message: `v${update.version} ready, click to restart`,
           actionLabel: "Update Now",
           duration: 0,
           onAction: () => void update.install(),
@@ -138,15 +140,30 @@ export function Settings() {
         toast.show("Konsou is up to date");
       }
     } catch {
-      toast.show("Couldn't reach update server — you may already be on the latest version");
+      toast.show("Couldn't reach update server. You may already be on the latest version");
     }
     setChecking(false);
   };
 
   return (
     <div className="k-page">
-      <PageHeader title="Settings" />
+      <PageHeader title="Settings" onBack={() => navigate(-1)} />
       <div className="k-settings konsou-scroll">
+        <button
+          type="button"
+          className="k-settings__statslink"
+          onClick={() => navigate("/stats")}
+        >
+          <span className="k-settings__statsicon">
+            <Icon icon={BarChart3} size={20} />
+          </span>
+          <span className="k-settings__statstext">
+            <Text size="base" weight={600}>Your stats</Text>
+            <Text size="xs" color="tertiary">Episodes, time watched, and status breakdown</Text>
+          </span>
+          <Icon icon={ChevronRight} size={18} color="var(--color-text-tertiary)" />
+        </button>
+
         <Section title="Account">
           <Row
             label={account ? account.name : "Not signed in"}
@@ -168,7 +185,7 @@ export function Settings() {
           {/* Color theme — sets both the surface palette AND the default accent */}
           <div className="k-settings__row k-settings__row--col">
             <Text size="base" weight={500}>Color theme</Text>
-            <Text size="xs" color="tertiary">Picking a theme also sets its paired accent — change Accent below to mix.</Text>
+            <Text size="xs" color="tertiary">Picking a theme also sets its paired accent. Change Accent below to mix.</Text>
             <div className="k-colorthemes">
               {COLOR_THEMES.map((t) => (
                 <button
@@ -288,6 +305,22 @@ export function Settings() {
               Import
             </Button>
           </Row>
+          <Row
+            label={account ? "Clear synced list" : "Clear local list"}
+            hint={
+              account
+                ? "Erases every entry here and on Google Drive"
+                : "Erases every entry stored on this device"
+            }
+          >
+            <Button
+              variant="danger"
+              disabled={entryCount === 0}
+              onClick={() => setConfirmClear(true)}
+            >
+              <Icon icon={Trash2} size={15} /> Clear
+            </Button>
+          </Row>
         </Section>
 
         <Section title="About">
@@ -324,6 +357,24 @@ export function Settings() {
         </Section>
 
         <ImportSheet open={importOpen} onClose={() => setImportOpen(false)} />
+
+        <ConfirmSheet
+          open={confirmClear}
+          onClose={() => setConfirmClear(false)}
+          icon={Trash2}
+          danger
+          title={account ? "Clear synced list?" : "Clear local list?"}
+          message={
+            account
+              ? `This permanently removes all ${entryCount} ${entryCount === 1 ? "entry" : "entries"} from this device and your Google Drive. This can't be undone.`
+              : `This permanently removes all ${entryCount} ${entryCount === 1 ? "entry" : "entries"} stored on this device. This can't be undone.`
+          }
+          confirmLabel="Clear everything"
+          onConfirm={() => {
+            void clearAll({ propagateToDrive: !!account });
+            toast.show(account ? "List cleared everywhere" : "Local list cleared");
+          }}
+        />
 
         {settings.devMode && (
           <Section title="Developer">

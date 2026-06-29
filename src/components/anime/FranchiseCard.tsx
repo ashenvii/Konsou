@@ -9,6 +9,7 @@ import {
   RotateCw,
 } from "lucide-react";
 import { AnimeCover } from "./AnimeCover";
+import { SeasonBar } from "./SeasonBar";
 import { statusMeta } from "./statusMeta";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
@@ -27,7 +28,7 @@ interface FranchiseCardProps {
 export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
 
-  const { displayEntry, entries, rootId, totalWatched, totalEpisodes } = group;
+  const { displayEntry, entries, rootId, totalWatched, totalEpisodes, isGroup } = group;
   const status = statusMeta(displayEntry.status);
 
   // Use the root entry's title as the franchise name; fall back to the
@@ -55,15 +56,17 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
       ? Math.min(100, (displayWatched / displayTotal) * 100)
       : 0;
 
-  const epLabel =
-    `${totalWatched} / ${totalEpisodes != null ? totalEpisodes : "?"}`;
-  const countLabel = `${entries.length}`;
+  const seasonCount = entries.length;
+  const doneSeasons = entries.filter((e) => e.status === "completed").length;
+  const epLabel = `${totalWatched} / ${totalEpisodes != null ? totalEpisodes : "?"}`;
+  const seasonLabel = `${seasonCount} seasons`;
+  const seasonSummary = `${doneSeasons} done`;
 
   // ── Grid ──────────────────────────────────────────────────
   if (view === "grid") {
     return (
       <article
-        className={`k-card k-card--grid k-card--inlist k-card--status-${displayEntry.status}`}
+        className={`k-card k-card--grid k-card--inlist${isGroup ? " k-card--group" : ""} k-card--status-${displayEntry.status}`}
         style={{
           "--card-status": status.color,
           ...(progressive && displayTotal != null
@@ -98,8 +101,16 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
 
           <div className="k-card__scrim" />
 
+          {/* Franchise badge, top-left: the umbrella made obvious at a glance. */}
+          {isGroup && (
+            <span className="k-franchise-badge" title={`${seasonCount} seasons tracked`}>
+              <Icon icon={Layers} size={11} />
+              {seasonCount}
+            </span>
+          )}
+
           {displayEntry.status === "watching" && (
-            <span className="k-mark k-mark--left">
+            <span className={`k-mark ${isGroup ? "k-mark--right" : "k-mark--left"}`}>
               <span className="k-mark__icon">
                 <Icon icon={Play} size={13} weight="fill" />
               </span>
@@ -107,7 +118,7 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
             </span>
           )}
           {displayEntry.status === "rewatching" && (
-            <span className="k-mark k-mark--left k-mark--spin">
+            <span className={`k-mark k-mark--spin ${isGroup ? "k-mark--right" : "k-mark--left"}`}>
               <span className="k-mark__icon">
                 <Icon icon={RotateCw} size={13} weight="fill" />
               </span>
@@ -141,40 +152,32 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
               {title}
             </Text>
             <div className="k-card__footermeta">
-              {group.isGroup && (
-                <span className="k-franchise-chip">
-                  <Icon icon={Layers} size={9} />
-                  {countLabel}
-                </span>
+              {/* For groups the footer carries the franchise total (distinct from
+                  the per-season "EP" marker). For a single it's hidden only when the
+                  EP marker is actually shown (progressive + known total), otherwise
+                  the count would simply repeat. */}
+              {(isGroup || !(progressive && displayTotal != null)) && (
+                <span className="k-card__epcaption">{epLabel}</span>
               )}
-              <span className="k-card__epcaption">{epLabel}</span>
               {displayEntry.score != null && (
                 <span className="k-card__scorechip">
                   {formatScore(displayEntry.score)}
                 </span>
               )}
             </div>
+            {/* Segmented season bar: one chunk per tracked season. */}
+            <SeasonBar entries={entries} size="grid" className="k-card__seasonbar" />
           </div>
 
-          {/* Opens the franchise sheet instead of +1 */}
+          {/* Opens the franchise sheet */}
           <button
             type="button"
             className="k-card__quick k-card__quick--sheet"
             onClick={(e) => { e.stopPropagation(); onOpen(); }}
-            aria-label="View franchise"
+            aria-label={isGroup ? "Manage seasons" : "View details"}
           >
-            <Icon icon={ChevronRight} size={18} />
+            <Icon icon={isGroup ? Layers : ChevronRight} size={16} />
           </button>
-
-          {/* Progress bar for aggregate completion */}
-          {totalEpisodes != null && (
-            <div className="k-card__progress">
-              <div
-                className="k-card__progress-fill"
-                style={{ width: `${Math.min(100, (totalWatched / totalEpisodes) * 100)}%` }}
-              />
-            </div>
-          )}
         </div>
       </article>
     );
@@ -184,37 +187,45 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
   if (view === "list") {
     return (
       <article
-        className="k-card k-row k-card--inlist"
+        className={`k-card k-row k-card--inlist${isGroup ? " k-card--group" : ""}`}
         style={{ "--card-status": status.color } as CSSProperties}
         onClick={onOpen}
       >
-        <AnimeCover src={cover} alt={title} decorative className="k-row__thumb" />
+        <div className="k-row__poster">
+          <AnimeCover src={cover} alt={title} decorative radius="var(--radius-sm)" />
+        </div>
         <div className="k-row__main">
-          <Text size="base" weight={600} clamp={1}>
+          <Text size="base" weight={600} clamp={1} className="k-row__title">
             {title}
           </Text>
-          {group.isGroup && (
-            <span className="k-franchise-chip k-franchise-chip--row">
-              <Icon icon={Layers} size={9} />
-              {countLabel} in series
+          <div className="k-row__sub">
+            <span className="k-pill" style={{ color: status.color }}>
+              <Icon icon={status.icon} size={12} weight="fill" />
+              {status.label}
             </span>
+            {isGroup && (
+              <>
+                <span className="k-chip-mini">
+                  <Icon icon={Layers} size={10} />
+                  {seasonLabel}
+                </span>
+                <span className="k-row__dim">{seasonSummary}</span>
+              </>
+            )}
+          </div>
+          <SeasonBar entries={entries} size="row" className="k-row__seasonbar" />
+        </div>
+        <div className="k-row__metacol">
+          <span className="k-row__ep">{epLabel}</span>
+          {displayEntry.score != null && (
+            <span className="k-row__scoreval">★ {formatScore(displayEntry.score)}</span>
           )}
-        </div>
-        <div className="k-row__status">
-          <span className="k-row__statusinline" style={{ color: status.color }}>
-            <Icon icon={status.icon} size={14} weight="fill" />
-            <span className="k-row__statuslabel">{status.label}</span>
-          </span>
-        </div>
-        <div className="k-row__ep">{epLabel}</div>
-        <div className="k-row__score">
-          {displayEntry.score != null ? formatScore(displayEntry.score) : ""}
         </div>
         <button
           type="button"
           className="k-row__action"
           onClick={(e) => { e.stopPropagation(); onOpen(); }}
-          aria-label="View franchise"
+          aria-label="Manage seasons"
         >
           <Icon icon={ChevronRight} size={18} />
         </button>
@@ -225,21 +236,30 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
   // ── Compact ───────────────────────────────────────────────
   return (
     <article
-      className="k-card k-compact k-card--inlist"
+      className={`k-card k-compact k-card--inlist${isGroup ? " k-card--group" : ""}`}
       style={{ "--card-status": status.color } as CSSProperties}
       onClick={onOpen}
     >
-      <AnimeCover src={cover} alt={title} decorative className="k-compact__thumb" />
-      <Text size="base" weight={500} clamp={1} className="k-compact__title">
-        {title}
-      </Text>
+      <AnimeCover src={cover} alt={title} decorative className="k-compact__thumb" radius="var(--radius-sm)" />
+      <div className="k-compact__body">
+        <Text size="base" weight={500} clamp={1} className="k-compact__title">
+          {title}
+        </Text>
+        {isGroup && (
+          <span className="k-chip-mini">
+            <Icon icon={Layers} size={10} />
+            {seasonCount}
+          </span>
+        )}
+      </div>
       <span className="k-compact__ep">{epLabel}</span>
-      <span className="k-compact__statusicon" style={{ color: status.color }}>
+      <span className="k-compact__statusicon" style={{ color: status.color }} title={status.label}>
         <Icon icon={status.icon} size={14} weight="fill" />
       </span>
       <span className="k-compact__score">
         {displayEntry.score != null ? formatScore(displayEntry.score) : ""}
       </span>
+      <SeasonBar entries={entries} size="row" className="k-compact__seasonbar" />
     </article>
   );
 }

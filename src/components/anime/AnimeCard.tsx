@@ -3,6 +3,7 @@ import type { CSSProperties, MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bookmark, Check, Pause, Play, Plus, RotateCw, Star } from "lucide-react";
 import { AnimeCover } from "./AnimeCover";
+import { SeasonBar } from "./SeasonBar";
 import { StatusSheet } from "./StatusSheet";
 import { statusMeta } from "./statusMeta";
 import { Icon } from "@/components/ui/Icon";
@@ -173,7 +174,7 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
                 </span>
               )}
               <div className="k-card__footermeta">
-                {inList && (
+                {inList && !(progressive && total != null) && (
                   <span className="k-card__epcaption">
                     {watched}/{total ?? "?"}
                   </span>
@@ -190,6 +191,9 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
                   </span>
                 )}
               </div>
+              {inList && entry && (
+                <SeasonBar entries={[entry]} size="grid" className="k-card__seasonbar" />
+              )}
             </div>
             <button
               type="button"
@@ -207,14 +211,6 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
                 <Icon icon={Plus} size={18} />
               )}
             </button>
-            {inList && total != null && (
-              <div className="k-card__progress">
-                <div
-                  className="k-card__progress-fill"
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
-            )}
           </div>
         </article>
         {sheet}
@@ -234,35 +230,38 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
           style={inList && status ? { "--card-status": status.color } as CSSProperties : undefined}
           onClick={open}
         >
-          <AnimeCover src={cover} alt={title} decorative className="k-row__thumb" />
+          <div className="k-row__poster">
+            <AnimeCover src={cover} alt={title} decorative radius="var(--radius-sm)" />
+          </div>
           <div className="k-row__main">
-            <Text size="base" weight={600} clamp={1}>
+            <Text size="base" weight={600} clamp={1} className="k-row__title">
               {title}
             </Text>
-            {subtitle && (
-              <Text size="xs" color="tertiary" clamp={1}>
-                {subtitle}
-              </Text>
-            )}
-            {meta && (
-              <Text size="xs" color="secondary" clamp={1}>
-                {meta}
-              </Text>
+            <div className="k-row__sub">
+              {status ? (
+                <span className="k-pill" style={{ color: status.color }}>
+                  <Icon icon={status.icon} size={12} weight="fill" />
+                  {status.label}
+                </span>
+              ) : (
+                meta && <span className="k-row__dim">{meta}</span>
+              )}
+              {dubLabel && (
+                <span className={`k-chip-mini${dubLabel === "DUB+SUB" ? " k-chip-mini--accent" : ""}`}>
+                  {dubLabel}
+                </span>
+              )}
+              {subtitle && <span className="k-row__dim k-row__secondary">{subtitle}</span>}
+            </div>
+            {inList && entry && (
+              <SeasonBar entries={[entry]} size="row" className="k-row__seasonbar" />
             )}
           </div>
-          <div className="k-row__status">
-            {status && (
-              <span className="k-row__statusinline" style={{ color: status.color }}>
-                <Icon icon={status.icon} size={14} weight="fill" />
-                <span className="k-row__statuslabel">{status.label}</span>
-              </span>
+          <div className="k-row__metacol">
+            <span className="k-row__ep">{inList ? `${watched} / ${total ?? "?"}` : ""}</span>
+            {entry?.score != null && (
+              <span className="k-row__scoreval">★ {formatScore(entry.score)}</span>
             )}
-          </div>
-          <div className="k-row__ep">
-            {inList ? `${watched} / ${total ?? "?"}` : ""}
-          </div>
-          <div className="k-row__score">
-            {entry?.score != null ? formatScore(entry.score) : ""}
           </div>
           <button
             type="button"
@@ -286,18 +285,20 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
         style={inList && status ? { "--card-status": status.color } as CSSProperties : undefined}
         onClick={open}
       >
-        <AnimeCover src={cover} alt={title} decorative className="k-compact__thumb" />
-        <Text size="base" weight={500} clamp={1} className="k-compact__title">
-          {title}
-        </Text>
+        <AnimeCover src={cover} alt={title} decorative className="k-compact__thumb" radius="var(--radius-sm)" />
+        <div className="k-compact__body">
+          <Text size="base" weight={500} clamp={1} className="k-compact__title">
+            {title}
+          </Text>
+          {showStatus && status && (
+            <span className="k-compact__statuslabel" style={{ color: status.color }}>
+              {status.label}
+            </span>
+          )}
+        </div>
         {inList && (
           <span className="k-compact__ep">
             {watched}/{total ?? "?"}
-          </span>
-        )}
-        {showStatus && status && (
-          <span className="k-compact__status" style={{ color: status.color }}>
-            {status.label}
           </span>
         )}
         {status && (
@@ -308,6 +309,9 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
         <span className="k-compact__score">
           {entry?.score != null ? formatScore(entry.score) : ""}
         </span>
+        {inList && entry && (
+          <SeasonBar entries={[entry]} size="row" className="k-compact__seasonbar" />
+        )}
       </article>
       {sheet}
     </>

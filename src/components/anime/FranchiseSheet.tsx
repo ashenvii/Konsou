@@ -1,17 +1,27 @@
 import { useMemo, useState } from "react";
-import { Calendar, ChevronRight, Plus, Zap } from "lucide-react";
+import {
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  Minus,
+  Plus,
+  Trash2,
+  Zap,
+} from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { AnimeCover } from "./AnimeCover";
 import { StatusSheet } from "./StatusSheet";
 import { statusMeta } from "./statusMeta";
+import { seasonSegment } from "./SeasonBar";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
 import { useFranchiseRelations } from "@/hooks/useAniList";
-import { formatLabel, getCoverUrl, preferredTitle } from "@/lib/format";
+import { formatLabel, formatScore, getCoverUrl, preferredTitle } from "@/lib/format";
 import { getDisabledStatuses } from "@/lib/statusValidation";
 import { useListStore } from "@/lib/store/listStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import type { CSSProperties } from "react";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
 import type { AnimeSummary, FuzzyDate, RelationNode } from "@/types/anime";
 import type { AnimeListEntry, ListStatus } from "@/types/list";
@@ -68,6 +78,7 @@ export function FranchiseSheet({
   const addFromSummary = useListStore((s) => s.addFromSummary);
   const updateStatus = useListStore((s) => s.updateStatus);
   const remove = useListStore((s) => s.remove);
+  const removeMany = useListStore((s) => s.removeMany);
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
 
   const [pendingAdd, setPendingAdd] = useState<AnimeSummary | null>(null);
@@ -79,22 +90,16 @@ export function FranchiseSheet({
     [group],
   );
 
-  // Fetch relations for every tracked entry so we can extend the chain beyond
-  // what's directly adjacent to the root. Cached 6h in react-query + SQLite.
   const { data: relMap, isLoading: relLoading } = useFranchiseRelations(
     trackedIdList,
     open,
   );
-
-  // --- All useMemos before the guard ---
 
   const trackedMap = useMemo(
     () => new Map(group?.entries.map((e) => [e.anilist_id, e]) ?? []),
     [group],
   );
 
-  // Flat index of every RelationNode discovered from tracked entries' relations.
-  // Gives us display data (title, cover, format, airing status) for untracked nodes.
   const allRelNodes = useMemo(() => {
     const m = new Map<number, RelationNode>();
     for (const rels of Object.values(relMap ?? {})) {
@@ -103,15 +108,9 @@ export function FranchiseSheet({
     return m;
   }, [relMap]);
 
-  // Build the ordered main story chain (SEQUEL walk from root) and the side
-  // content list. Runs after relMap is available; falls back to just the root
-  // while loading so the skeleton count is sensible.
   const { mainChainIds, sideIds } = useMemo(() => {
     if (!group) return { mainChainIds: [], sideIds: [] };
 
-    // Walk SEQUEL edges from the franchise root. relMap only contains data for
-    // tracked entries, so the chain naturally extends to the first untracked
-    // entry at the current frontier (the one the user should add next).
     const mainChainIds: number[] = [group.rootId];
     const inMain = new Set<number>([group.rootId]);
 
@@ -125,9 +124,6 @@ export function FranchiseSheet({
       current = sequel.id;
     }
 
-    // Side content: SIDE_STORY / SPIN_OFF / PARENT / SUMMARY entries from any
-    // tracked entry's relations, plus any tracked entry that fell outside the
-    // main SEQUEL chain (e.g., a movie tracked independently).
     const sideIds: number[] = [];
     const inSide = new Set<number>();
 
@@ -158,7 +154,6 @@ export function FranchiseSheet({
     return { mainChainIds, sideIds };
   }, [group, relMap, trackedMap, allRelNodes]);
 
-  // --- Guard ---
   if (!group) return null;
 
   const rootEntry =
@@ -173,14 +168,18 @@ export function FranchiseSheet({
     titleLanguage,
   );
 
+  const seasonCount = group.entries.length;
+  const overallPct =
+    group.totalEpisodes != null && group.totalEpisodes > 0
+      ? Math.round((group.totalWatched / group.totalEpisodes) * 100)
+      : null;
   const epSummary =
     group.totalEpisodes != null
-      ? `${group.totalWatched} / ${group.totalEpisodes} eps`
-      : `${group.totalWatched} eps watched`;
+      ? `${group.totalWatched} / ${group.totalEpisodes} episodes`
+      : `${group.totalWatched} episodes watched`;
 
-  const summaryLine = group.isGroup
-    ? `${group.entries.length} tracked · ${epSummary}`
-    : epSummary;
+  const art = rootEntry.cover_url ?? group.displayEntry.cover_url ?? undefined;
+  const poster = group.displayEntry.cover_url ?? rootEntry.cover_url ?? undefined;
 
   const pendingStatusEntry =
     pendingStatusId != null
@@ -209,62 +208,133 @@ export function FranchiseSheet({
     }
   };
 
-  // Render one row -- tracked entries show status controls, untracked show Add.
-  const renderEntry = (id: number) => {
+  const removeFranchise = () => {
+    removeMany(group.entries.map((e) => e.anilist_id));
+    onClose();
+  };
+
+  // The first untracked entry in the main chain is the "up next" frontier.
+  const frontierId = mainChainIds.find((id) => !trackedMap.has(id));
+
+  const renderTracked = (id: number, seasonNo: number | null) => {
     const tracked = trackedMap.get(id);
-    if (tracked) {
-      return (
-        <TrackedRow
-          key={id}
-          entry={tracked}
-          titleLanguage={titleLanguage}
-          onNavigate={(entryId) => {
-            onClose();
-            onNavigate(entryId);
-          }}
-          onStatusTap={(entryId) => setPendingStatusId(entryId)}
-        />
-      );
-    }
+    if (!tracked) return null;
+    return (
+      <SeasonRow
+        key={id}
+        entry={tracked}
+        seasonNo={seasonNo}
+        titleLanguage={titleLanguage}
+        onOpen={(entryId) => {
+          onClose();
+          onNavigate(entryId);
+        }}
+        onStatusTap={(entryId) => setPendingStatusId(entryId)}
+        onRemove={(entryId) => {
+          remove(entryId);
+          if (group.entries.length <= 1) onClose();
+        }}
+      />
+    );
+  };
+
+  const renderUntracked = (id: number, isFrontier: boolean) => {
     const relNode = allRelNodes.get(id);
-    if (relNode) {
-      return (
-        <UntrackedRow
-          key={id}
-          rel={relNode}
-          titleLanguage={titleLanguage}
-          onAdd={() => setPendingAdd(relationToSummary(relNode))}
-        />
-      );
-    }
-    return null;
+    if (!relNode) return null;
+    return (
+      <AddRow
+        key={id}
+        rel={relNode}
+        featured={isFrontier}
+        titleLanguage={titleLanguage}
+        onAdd={() => setPendingAdd(relationToSummary(relNode))}
+      />
+    );
   };
 
   return (
     <>
-      <BottomSheet open={open} onClose={onClose} title={franchiseTitle}>
-        <p className="k-fsheet-summary">{summaryLine}</p>
+      <BottomSheet open={open} onClose={onClose}>
+        <div className="k-fhead">
+          {art && (
+            <div
+              className="k-fhead__art"
+              aria-hidden
+              style={{ backgroundImage: `url("${art}")` }}
+            />
+          )}
+          <div className="k-fhead__scrim" aria-hidden />
+          <div className="k-fhead__row">
+            <div className="k-fhead__cover">
+              <AnimeCover src={poster} alt={franchiseTitle} decorative radius="var(--radius-md)" />
+            </div>
+            <div className="k-fhead__info">
+              <Text as="h2" size="xl" weight={700} clamp={2} className="k-fhead__title">
+                {franchiseTitle}
+              </Text>
+              <div className="k-fhead__stats">
+                {group.isGroup && <span>{seasonCount} seasons</span>}
+                <span>{epSummary}</span>
+                {overallPct != null && <span className="k-fhead__pct">{overallPct}%</span>}
+              </div>
+              <div className="k-fhead__bar">
+                {group.entries.map((e) => {
+                  const { pct, color } = seasonSegment(e);
+                  return (
+                    <span
+                      key={e.anilist_id}
+                      className="k-fhead__seg"
+                      style={{ "--seg": color } as CSSProperties}
+                    >
+                      <span style={{ width: `${pct}%` }} />
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {relLoading ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="k-seasonlist">
             {Array.from({ length: Math.max(3, group.entries.length + 1) }).map(
               (_, i) => (
-                <Skeleton key={i} height={64} radius="var(--radius-sm)" />
+                <Skeleton key={i} height={72} radius="var(--radius-lg)" />
               ),
             )}
           </div>
         ) : (
           <>
-            <div>{mainChainIds.map(renderEntry)}</div>
+            <p className="k-fsheet-heading">
+              {group.isGroup ? "Seasons" : "Tracked"}
+            </p>
+            <div className="k-seasonlist">
+              {mainChainIds.map((id, i) =>
+                trackedMap.has(id)
+                  ? renderTracked(id, group.isGroup ? i + 1 : null)
+                  : renderUntracked(id, id === frontierId),
+              )}
+            </div>
 
             {sideIds.length > 0 && (
               <>
                 <p className="k-fsheet-heading">Also in this franchise</p>
-                <div>{sideIds.map(renderEntry)}</div>
+                <div className="k-seasonlist">
+                  {sideIds.map((id) =>
+                    trackedMap.has(id)
+                      ? renderTracked(id, null)
+                      : renderUntracked(id, false),
+                  )}
+                </div>
               </>
             )}
           </>
         )}
+
+        <button type="button" className="k-fsheet-remove" onClick={removeFranchise}>
+          <Icon icon={Trash2} size={16} />
+          {group.isGroup ? "Remove whole franchise" : "Remove from list"}
+        </button>
       </BottomSheet>
 
       {/* Add an untracked entry */}
@@ -311,21 +381,26 @@ export function FranchiseSheet({
   );
 }
 
-// ── Row components ────────────────────────────────────────────────────────────
+// ── Rows ──────────────────────────────────────────────────────────────────────
 
-function TrackedRow({
+function SeasonRow({
   entry,
+  seasonNo,
   titleLanguage,
-  onNavigate,
+  onOpen,
   onStatusTap,
+  onRemove,
 }: {
   entry: AnimeListEntry;
+  seasonNo: number | null;
   titleLanguage: string;
-  onNavigate: (id: number) => void;
+  onOpen: (id: number) => void;
   onStatusTap: (id: number) => void;
+  onRemove: (id: number) => void;
 }) {
   const incrementEpisodes = useListStore((s) => s.incrementEpisodes);
   const meta = statusMeta(entry.status);
+  const { pct, color } = seasonSegment(entry);
 
   const title = preferredTitle(
     {
@@ -336,8 +411,7 @@ function TrackedRow({
     titleLanguage as never,
   );
 
-  const isActive =
-    entry.status === "watching" || entry.status === "rewatching";
+  const isActive = entry.status === "watching" || entry.status === "rewatching";
   const epText = `${entry.episodes_watched} / ${entry.total_episodes ?? "?"}`;
   const canDecrement = isActive && entry.episodes_watched > 0;
   const canIncrement =
@@ -346,76 +420,92 @@ function TrackedRow({
       entry.episodes_watched < entry.total_episodes);
 
   return (
-    <div className="k-frow">
-      <AnimeCover
-        src={entry.cover_url ?? undefined}
-        alt={title}
-        decorative
-        className="k-frow__cover"
-      />
-      <div className="k-frow__main">
-        <Text size="sm" weight={600} clamp={1}>
-          {title}
-        </Text>
-        <div className="k-frow__controls">
+    <div className="k-srow" style={{ "--card-status": color } as CSSProperties}>
+      <button
+        type="button"
+        className="k-srow__open"
+        onClick={() => onOpen(entry.anilist_id)}
+        aria-label={`Open ${title}`}
+      >
+        <div className="k-srow__cover">
+          <AnimeCover src={entry.cover_url ?? undefined} alt={title} decorative radius="var(--radius-sm)" />
+          {seasonNo != null && <span className="k-srow__num">S{seasonNo}</span>}
+          <span className="k-srow__openhint" aria-hidden>
+            <Icon icon={ChevronRight} size={18} />
+          </span>
+        </div>
+      </button>
+
+      <div className="k-srow__main">
+        <button type="button" className="k-srow__titlebtn" onClick={() => onOpen(entry.anilist_id)}>
+          <Text size="sm" weight={600} clamp={1}>
+            {title}
+          </Text>
+        </button>
+        <div className="k-srow__controls">
           <button
             type="button"
-            className="k-frow__status-btn"
+            className="k-pill k-srow__statusbtn"
             style={{ color: meta.color }}
             onClick={() => onStatusTap(entry.anilist_id)}
-            aria-label="Change status"
+            aria-label={`Change status (currently ${meta.label})`}
           >
-            <Icon icon={meta.icon} size={11} weight="fill" />
+            <Icon icon={meta.icon} size={12} weight="fill" />
             {meta.label}
+            <Icon icon={ChevronDown} size={12} className="k-srow__caret" />
           </button>
-
           {isActive ? (
-            <div className="k-frow__epc">
+            <div className="k-srow__stepper">
               <button
                 type="button"
-                className="k-frow__epc-btn"
                 onClick={() => void incrementEpisodes(entry.anilist_id, -1)}
                 disabled={!canDecrement}
-                aria-label="Remove episode"
+                aria-label="Remove one episode"
               >
-                −
+                <Icon icon={Minus} size={14} />
               </button>
-              <span className="k-frow__epc-num">{epText}</span>
+              <span className="k-srow__epnum">{epText}</span>
               <button
                 type="button"
-                className="k-frow__epc-btn"
                 onClick={() => void incrementEpisodes(entry.anilist_id, 1)}
                 disabled={!canIncrement}
-                aria-label="Add episode"
+                aria-label="Add one episode"
               >
-                +
+                <Icon icon={Plus} size={14} />
               </button>
             </div>
           ) : (
-            <span className="k-frow__meta" style={{ marginLeft: "auto" }}>
-              {epText}
-            </span>
+            <span className="k-srow__ep">{epText}</span>
+          )}
+          {entry.score != null && (
+            <span className="k-srow__score">★ {formatScore(entry.score)}</span>
           )}
         </div>
+        <div className="k-srow__bar">
+          <span style={{ width: `${pct}%` }} />
+        </div>
       </div>
+
       <button
         type="button"
-        className="k-frow__action"
-        onClick={() => onNavigate(entry.anilist_id)}
-        aria-label="View details"
+        className="k-srow__remove"
+        onClick={() => onRemove(entry.anilist_id)}
+        aria-label={`Remove ${title}`}
       >
-        <Icon icon={ChevronRight} size={18} />
+        <Icon icon={Trash2} size={16} />
       </button>
     </div>
   );
 }
 
-function UntrackedRow({
+function AddRow({
   rel,
+  featured,
   titleLanguage,
   onAdd,
 }: {
   rel: RelationNode;
+  featured: boolean;
   titleLanguage: string;
   onAdd: () => void;
 }) {
@@ -431,28 +521,29 @@ function UntrackedRow({
     .join(" · ");
 
   return (
-    <div className="k-frow k-frow--untracked">
-      <AnimeCover src={cover} alt={title} decorative className="k-frow__cover" />
-      <div className="k-frow__main">
+    <div className={`k-srow k-srow--add${featured ? " k-srow--next" : ""}`}>
+      <div className="k-srow__cover">
+        <AnimeCover src={cover} alt={title} decorative radius="var(--radius-sm)" />
+      </div>
+      <div className="k-srow__main">
+        {featured && <span className="k-srow__nextlabel">Up next</span>}
         <Text size="sm" weight={600} clamp={1}>
           {title}
         </Text>
-        <div className="k-frow__controls">
-          {meta && <span className="k-frow__meta">{meta}</span>}
+        <div className="k-srow__controls">
+          {meta && <span className="k-srow__dim">{meta}</span>}
           {isSideContent && (
-            <span className="k-frow__reltag">
-              {sideLabel(rel.relationType)}
-            </span>
+            <span className="k-chip-mini">{sideLabel(rel.relationType)}</span>
           )}
           {isAiring && (
-            <span className="k-frow__reltag k-frow__reltag--airing">
-              <Icon icon={Zap} size={9} weight="fill" />
+            <span className="k-chip-mini k-chip-mini--accent">
+              <Icon icon={Zap} size={10} weight="fill" />
               airing
             </span>
           )}
           {isUpcoming && (
-            <span className="k-frow__reltag k-frow__reltag--upcoming">
-              <Icon icon={Calendar} size={9} />
+            <span className="k-chip-mini">
+              <Icon icon={Calendar} size={10} />
               upcoming
             </span>
           )}
@@ -460,11 +551,12 @@ function UntrackedRow({
       </div>
       <button
         type="button"
-        className="k-frow__action k-frow__action--add"
+        className={`k-srow__add${featured ? " k-srow__add--primary" : ""}`}
         onClick={onAdd}
         aria-label={`Add ${title}`}
       >
-        <Icon icon={Plus} size={18} />
+        <Icon icon={Plus} size={16} />
+        {featured && <span>Add</span>}
       </button>
     </div>
   );

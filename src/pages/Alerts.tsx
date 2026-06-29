@@ -39,7 +39,7 @@ function statusLine(n: KonsouNotification): string {
       : null;
     return d ? `Announced · ${d}` : "Announced · date TBD";
   }
-  return "Already aired — you may have missed it";
+  return "Already aired, you may have missed it";
 }
 
 function AlertCard({ n }: { n: KonsouNotification }) {

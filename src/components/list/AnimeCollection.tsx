@@ -16,7 +16,7 @@ interface AnimeCollectionProps {
 }
 
 const MIN_COL_WIDTH = 190;
-const ROW_HEIGHT = { list: 72, compact: 48 };
+const ROW_HEIGHT = { list: 84, compact: 54 };
 
 export function AnimeCollection({
   items,

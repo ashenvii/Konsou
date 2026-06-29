@@ -55,6 +55,14 @@ export interface SearchPage {
 
 export type RelationMap = Record<number, RelationNode[]>;
 
+/** Live airing snapshot for one media (Schedule page + plan-to-watch scan). */
+export interface AiringStatus {
+  status: string;
+  episodes: number | null;
+  nextAiringAt: number | null;
+  nextEpisode: number | null;
+}
+
 export type BrowseSort = "TRENDING_DESC" | "SCORE_DESC" | "POPULARITY_DESC";
 
 /** Stable, fast key for cache lookups (no crypto needed — collisions are harmless). */
@@ -548,8 +556,8 @@ class AniListClient {
   async getAiringStatusBatch(
     ids: number[],
     priority: Priority = "low",
-  ): Promise<Map<number, { status: string; episodes: number | null; nextAiringAt: number | null }>> {
-    const result = new Map<number, { status: string; episodes: number | null; nextAiringAt: number | null }>();
+  ): Promise<Map<number, AiringStatus>> {
+    const result = new Map<number, AiringStatus>();
 
     for (let i = 0; i < ids.length; i += RELATIONS_BATCH_SIZE) {
       const chunk = ids.slice(i, i + RELATIONS_BATCH_SIZE);
@@ -566,6 +574,7 @@ class AniListClient {
             status: m.status as string,
             episodes: (m.episodes as number) ?? null,
             nextAiringAt: m.nextAiringEpisode?.airingAt ?? null,
+            nextEpisode: m.nextAiringEpisode?.episode ?? null,
           });
         }
       } catch {

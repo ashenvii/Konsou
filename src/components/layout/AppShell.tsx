@@ -1,7 +1,8 @@
 import { useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
+import { TopBar } from "./TopBar";
 import { Toasts } from "@/components/ui/Toasts";
 import { ReconcilePrompt } from "@/components/ReconcilePrompt";
 import { useAndroidBack } from "@/hooks/useAndroidBack";
@@ -14,6 +15,10 @@ export function AppShell() {
   const { isDesktop } = useBreakpoint();
   const sidebarMode = useSettingsStore((s) => s.sidebarMode);
   const navigate = useNavigate();
+  const location = useLocation();
+  // The detail page owns the whole viewport (immersive banner + its own back
+  // bar), so the mobile top bar stands down there.
+  const isImmersive = location.pathname.startsWith("/anime/");
   useAndroidBack();
 
   useEffect(() => {
@@ -47,6 +52,7 @@ export function AppShell() {
       data-sidebar={isDesktop ? sidebarMode : undefined}
     >
       {isDesktop && <Sidebar />}
+      {!isDesktop && !isImmersive && <TopBar />}
       <main className="k-shell__content">
         <Outlet />
       </main>

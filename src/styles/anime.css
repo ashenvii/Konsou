@@ -648,13 +648,13 @@
   }
 }
 
-/* ── Card: list row ────────────────────────────────────────── */
+/* ── Card: list row (rich) ─────────────────────────────────── */
 .k-row {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  height: 72px;
-  padding: 0 var(--space-3);
+  height: 84px;
+  padding: var(--space-2) var(--space-3);
   border: none;
   border-bottom: 1px solid var(--color-border);
   border-radius: 0;
@@ -670,9 +670,16 @@
 .k-row.k-card--inlist:hover {
   background: color-mix(in oklch, var(--card-status, var(--color-accent)) 10%, var(--color-surface-2));
 }
-.k-row__thumb {
+/* 2:3 poster — covers stay the hero even in the dense view. */
+.k-row__poster {
+  position: relative;
   width: 48px;
+  height: 68px;
   flex: none;
+}
+.k-row__poster .k-cover {
+  width: 48px;
+  height: 68px;
   border-radius: var(--radius-sm);
 }
 .k-row__main {
@@ -680,45 +687,54 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 5px;
 }
-.k-row__status {
-  width: 120px;
-  flex: none;
+.k-row__title {
+  color: var(--color-text-primary);
 }
-.k-row__statusinline {
-  display: inline-flex;
+.k-row__sub {
+  display: flex;
   align-items: center;
-  gap: var(--space-1);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  white-space: nowrap;
+  gap: var(--space-2);
+  min-width: 0;
 }
-.k-row__statuslabel {
+.k-row__dim {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+}
+.k-row__secondary {
+  min-width: 0;
+}
+.k-row__seasonbar {
+  max-width: 280px;
+}
+.k-row__metacol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex: none;
+  min-width: 56px;
 }
 .k-row__ep {
-  width: 64px;
-  flex: none;
-  text-align: right;
   font-variant-numeric: tabular-nums;
   font-size: var(--text-sm);
+  font-weight: 600;
   color: var(--color-text-secondary);
 }
-.k-row__score {
-  width: 40px;
-  flex: none;
-  text-align: right;
+.k-row__scoreval {
+  font-size: var(--text-xs);
   font-weight: 700;
-  font-size: var(--text-base);
-  color: var(--color-text-primary);
+  color: var(--color-warning);
+  white-space: nowrap;
 }
 .k-row__action {
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
   border-radius: var(--radius-md);
@@ -732,78 +748,64 @@
 @media (max-width: 520px) {
   .k-row {
     gap: var(--space-2);
-    height: 68px;
     padding-inline: var(--space-2);
   }
-  .k-row__thumb {
-    width: 42px;
-  }
-  .k-row__status {
-    width: 92px;
-  }
-  .k-row__ep {
-    width: 44px;
-    font-size: var(--text-xs);
-  }
-  .k-row__score {
+  .k-row__secondary {
     display: none;
   }
-  .k-row__action {
-    width: 38px;
-    height: 38px;
-  }
-}
-@media (max-width: 380px) {
-  .k-row__status {
-    width: 24px;
-  }
-  .k-row__statuslabel {
-    display: none;
-  }
-  .k-row__ep {
-    display: none;
+  .k-row__seasonbar {
+    max-width: none;
   }
 }
 
-/* ── Card: compact ─────────────────────────────────────────── */
+/* ── Card: compact (rich-slim) ─────────────────────────────── */
 .k-compact {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  height: 48px;
+  height: 54px;
   padding: 0 var(--space-3);
   border: none;
+  border-bottom: 1px solid var(--color-border);
   border-radius: 0;
   background: transparent;
 }
 .k-compact:hover {
-  background: var(--color-accent-dim);
+  background: var(--color-surface-2);
 }
 .k-compact.k-card--inlist {
   box-shadow: none;
   background: color-mix(in oklch, var(--card-status, var(--color-accent)) 5%, transparent);
 }
 .k-compact.k-card--inlist:hover {
-  background: color-mix(in oklch, var(--card-status, var(--color-accent)) 12%, var(--color-surface-1));
+  background: color-mix(in oklch, var(--card-status, var(--color-accent)) 12%, var(--color-surface-2));
 }
 .k-compact__thumb {
-  width: 32px;
+  width: 30px;
+  height: 44px;
   flex: none;
   border-radius: var(--radius-sm);
 }
-.k-compact__title {
+.k-compact__body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.k-compact__title {
+  min-width: 0;
+}
+.k-compact__statuslabel {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  white-space: nowrap;
 }
 .k-compact__ep {
   font-variant-numeric: tabular-nums;
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
-}
-.k-compact__status {
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  white-space: nowrap;
+  flex: none;
 }
 .k-compact__statusicon {
   display: flex;
@@ -816,38 +818,194 @@
   text-align: right;
   font-weight: 700;
   font-size: var(--text-sm);
+  color: var(--color-warning);
+  flex: none;
+}
+/* Slim season bar pinned to the bottom edge of the compact row. */
+.k-compact {
+  position: relative;
+}
+.k-compact__seasonbar {
+  position: absolute;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: 0;
+  width: auto;
 }
 
-/* ── Franchise chip ────────────────────────────────────────── */
-.k-franchise-chip {
+/* ── Interaction affordances (rows are clickable, controls press) ──
+   Hover lifts the poster and warms the chevron so a row reads as "tap me";
+   the quick/action buttons dip on press for tactile feedback. All transform/
+   colour only, and the global reduced-motion guard neutralises the movement. */
+.k-row__poster .k-cover__img,
+.k-compact__thumb .k-cover__img {
+  transition: transform 220ms var(--ease-out);
+}
+@media (hover: hover) {
+  .k-row:hover .k-row__poster .k-cover__img,
+  .k-compact:hover .k-compact__thumb .k-cover__img {
+    transform: scale(1.07);
+  }
+  .k-row:hover .k-row__title {
+    color: var(--color-accent-glow);
+  }
+  .k-row:hover .k-row__action {
+    color: var(--color-accent-glow);
+    transform: translateX(2px);
+  }
+}
+.k-row__title {
+  transition: color 150ms var(--ease-out);
+}
+.k-row__action {
+  transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out),
+    transform 140ms var(--ease-out);
+}
+.k-row__action:active {
+  transform: scale(0.9);
+}
+/* Card quick action: pops on hover (already revealed) and dips on press. */
+.k-card__quick {
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+.k-card__quick:hover {
+  filter: brightness(1.08);
+}
+.k-card__quick:active,
+.k-card--grid:hover .k-card__quick:active {
+  transform: scale(0.88);
+}
+
+/* ── Season bar: one segment per tracked season ────────────────
+   The umbrella made legible: each segment fills to that season's watched
+   fraction and takes that status's colour, so a row of chunks reads as
+   "N seasons, where I am in each" without any text. */
+.k-seasonbar {
+  display: flex;
+  width: 100%;
+  flex: none;
+}
+.k-seasonbar--grid {
+  gap: 3px;
+  height: 4px;
+}
+.k-seasonbar--row {
+  gap: 2px;
+  height: 3px;
+}
+.k-seasonbar__seg {
+  position: relative;
+  flex: 1;
+  min-width: 3px;
+  border-radius: var(--radius-full);
+  background: oklch(100% 0 0 / 14%);
+  overflow: hidden;
+}
+.k-seasonbar__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--seg, var(--color-accent));
+  box-shadow: 0 0 6px color-mix(in oklab, var(--seg, var(--color-accent)) 55%, transparent);
+  transition: width var(--duration-normal) var(--ease-out);
+}
+/* On a dark cover the grid bar needs a touch more presence. */
+.k-card__seasonbar {
+  margin-top: 5px;
+}
+.k-card--grid .k-seasonbar__seg {
+  background: oklch(0% 0 0 / 45%);
+}
+
+/* ── Franchise badge: top-left umbrella count on grid covers ─── */
+.k-franchise-badge {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: var(--radius-full);
+  background: oklch(0% 0 0 / 62%);
+  border: 1px solid oklch(100% 0 0 / 18%);
+  color: #fff;
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 6px oklch(0% 0 0 / 45%);
+}
+
+/* Footer season tag (grid) */
+.k-card__seasontag {
   display: inline-flex;
   align-items: center;
   gap: 3px;
   height: 14px;
   padding: 0 5px;
   border-radius: var(--radius-sm);
-  background: oklch(100% 0 0 / 10%);
-  color: oklch(100% 0 0 / 65%);
+  background: oklch(100% 0 0 / 12%);
+  color: oklch(100% 0 0 / 78%);
   font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.03em;
   white-space: nowrap;
   flex: none;
 }
-/* List / compact variant on a lighter surface */
-.k-franchise-chip--row {
-  background: var(--color-surface-3);
-  color: var(--color-text-tertiary);
+
+/* ── Shared row/compact accents ────────────────────────────── */
+/* Status pill — used in list rows + franchise sheet. */
+.k-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 8px 0 6px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, currentColor 14%, transparent);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  white-space: nowrap;
+  flex: none;
 }
-/* The quick-action on a franchise card opens the sheet, not +1 */
-.k-card__quick--sheet {
+/* Mini chip — season count, dub, format. */
+.k-chip-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
   background: var(--color-surface-3);
   color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  white-space: nowrap;
+  flex: none;
+}
+.k-chip-mini--accent {
+  background: color-mix(in oklch, var(--color-accent) 20%, transparent);
+  color: var(--color-accent-glow);
+}
+
+/* The quick-action on a franchise card opens the sheet, not +1 */
+.k-card__quick--sheet {
+  background: oklch(0% 0 0 / 60%);
+  color: #fff;
+  border: 1px solid oklch(100% 0 0 / 20%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 .k-card--grid:hover .k-card__quick--sheet {
-  background: var(--color-surface-2);
-  color: var(--color-text-primary);
+  background: var(--color-accent);
+  border-color: transparent;
 }
 
 /* ── Edit sheet ────────────────────────────────────────────── */
