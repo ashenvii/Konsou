@@ -45,7 +45,10 @@ export function Onboarding() {
 
   const connectAndDismiss = async () => {
     await connect();
-    dismiss();
+    // connect() reports failure through a toast, not a throw. Only leave
+    // onboarding once an account is actually connected, so a failed sign-in
+    // does not silently look like success.
+    if (useAuthStore.getState().account) dismiss();
   };
 
   return (
