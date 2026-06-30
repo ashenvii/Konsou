@@ -60,7 +60,7 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Google OAuth credentials — add these in GitHub → Settings → Secrets
+          # Google OAuth credentials: add these in GitHub Settings, Secrets
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           VITE_GOOGLE_CLIENT_SECRET: ${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}
           VITE_GOOGLE_ANDROID_CLIENT_ID: ${{ secrets.VITE_GOOGLE_ANDROID_CLIENT_ID }}
@@ -69,10 +69,11 @@ jobs:
           # Optional: your Ko-fi and GitHub links shown in Settings → About
           VITE_KOFI_URL: ${{ vars.VITE_KOFI_URL }}
           VITE_GITHUB_URL: ${{ vars.VITE_GITHUB_URL }}
-          # Tauri updater signing — required for silent auto-update to work
+          # Tauri updater signing: required for silent auto-update to work
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          # Targets: Windows + Linux only (macOS intentionally dropped — no Apple hardware/cert).
-          # Builds are unsigned; that's expected for a free, self-distributed app.
+          # Targets: Windows + Linux only (macOS intentionally dropped, no Apple hardware/cert).
+          # Desktop builds are unsigned; that's expected for a free, self-distributed app.
+          # Android is not built here yet: attach the signed APK to the draft release manually.
         with:
           projectPath: .
           args: --target ${{ matrix.target }}
@@ -90,8 +91,11 @@ jobs:
             |---|---|
             | **Windows** | `.exe` installer (recommended) or `.msi` |
             | Linux | `.AppImage` (portable) or `.deb` |
+            | **Android** | `.apk` (arm64, sideload) |
 
             > **Windows SmartScreen warning?** Click **More info → Run anyway**. This appears for new apps that aren't yet code-signed; it's expected and safe.
+            >
+            > **Android Play Protect warning?** Tap **More details → Install anyway**. Sideloaded apps don't come from the Play Store. To update later, install the next release's APK over the old one.
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: true

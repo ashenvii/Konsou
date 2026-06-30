@@ -4,13 +4,13 @@
 
 # Konsou
 
-**Anime tracker for Windows and Linux.**
+**Anime tracker for Windows, Linux, and Android.**
 
 Your list lives on your device, syncs through your own Google Drive, and checks for sequel announcements on completed shows.
 
-[![GitHub release](https://img.shields.io/github/v/release/ashenvii/Konsou?style=flat-square&color=7c3aed)](https://github.com/ashenvii/Konsou/releases/latest)
+[![GitHub release](https://img.shields.io/github/v/release/ashenvii/Konsou?style=flat-square&color=ff5e3a)](https://github.com/ashenvii/Konsou/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey?style=flat-square)](#download)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Android-lightgrey?style=flat-square)](#download)
 
 </div>
 
@@ -24,8 +24,11 @@ Go to **[Releases](https://github.com/ashenvii/Konsou/releases/latest)** and gra
 |---|---|
 | **Windows** | `Konsou_x.x.x_x64-setup.exe` (per-user install, no admin required) |
 | **Linux** | `Konsou_x.x.x_amd64.AppImage` (portable) or `.deb` |
+| **Android** | `Konsou-x.x.x-arm64.apk` (sideload) |
 
 > **Windows SmartScreen warning?** Click **More info → Run anyway**. This is expected for apps that aren't code-signed yet. It's safe.
+>
+> **Android Play Protect warning?** Tap **More details → Install anyway**. Sideloaded apps don't come from the Play Store, so Android flags them by default. To update later, download the next APK from Releases; it installs over the old one.
 
 ---
 
@@ -39,13 +42,15 @@ Konsou is a tracker, not a social platform. No accounts, no followers, no discov
 
 **Import.** Pull in any public AniList profile by username, or import a MyAnimeList XML export. Both use a merge that keeps your local edits (scores, notes, manual status changes) intact rather than overwriting them.
 
-**Search and discovery.** Live search backed by AniList GraphQL, with a Jikan fallback for partial matches and romanisation variants that AniList misses. Browse Seasonal, Trending, and Top Rated. Title language (Romaji, English, Native) is a setting that applies everywhere.
+**Search and discovery.** Live search backed by AniList GraphQL, with a Jikan fallback for partial matches and romanisation variants that AniList misses. Browse Seasonal, Trending, and Top Rated. Title language (Romaji, English, Native) is a setting that applies everywhere. Searching your own list filters it down to the matches with a count, rather than dimming the rest in place.
+
+**Schedule and stats.** A weekly airing calendar for the shows you're watching, and a local stats view with counts by status plus episodes and time watched. Both come from what's already on your device.
 
 **Google Drive sync.** Sign in once with Google. Your list syncs to a private `appDataFolder` in your Drive that only Konsou can read. Conflict resolution is field-level: episode progress takes the higher value, status follows a priority order, scores and notes go last-write-wins. No Konsou server exists. The sync path is your device to Google's servers.
 
 **Appearance.** Eight surface themes (Void, Ocean, Ember, Forest, Midnight, Crimson, Paper, Ash), each with a paired accent. Accents are independently overridable. Sidebar runs in rail, hover, or pinned-expanded mode on desktop.
 
-**Auto-update.** The app checks for updates on launch and shows a persistent toast when one is available. Install and relaunch in one click.
+**Auto-update.** On desktop, the app checks for updates on launch and shows a toast when one is available; install and relaunch in one click. Android updates are manual: download the latest APK from Releases and it installs over the existing app.
 
 ---
 
@@ -83,6 +88,18 @@ npm run tauri:dev
 # Production build, output at src-tauri/target/release/bundle/
 npm run tauri:build
 ```
+
+### Android
+
+Building for Android also needs a JDK 17, the Android SDK and NDK, and the Rust Android targets. With `JAVA_HOME`, `ANDROID_HOME`, and `NDK_HOME` set:
+
+```bash
+npm run android:init    # one-time, scaffolds src-tauri/gen/android
+npm run android:dev     # run on a connected device or emulator
+npm run android:build   # release APK
+```
+
+A signed release APK needs `src-tauri/gen/android/keystore.properties` pointing at your keystore. Without it the build is unsigned.
 
 ---
 

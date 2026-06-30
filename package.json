@@ -1,9 +1,9 @@
 {
   "name": "konsou",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
-  "description": "Offline-first anime tracker with sequel radar — Tauri 2 + React 19",
+  "description": "Offline-first anime tracker with sequel radar. Tauri 2 + React 19.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
