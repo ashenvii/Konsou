@@ -1,11 +1,18 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
+import { readFileSync } from "node:fs";
 import process from "node:process";
 
 const host = process.env.TAURI_DEV_HOST;
 
-// https://vite.dev/config/ — tailored for Tauri development.
+// Single source of truth for the app version: package.json. Injected as
+// __APP_VERSION__ so nothing in the app hardcodes a version string.
+const pkg = JSON.parse(
+  readFileSync(new URL("./package.json", import.meta.url), "utf-8"),
+) as { version: string };
+
+// https://vite.dev/config/, tailored for Tauri development.
 export default defineConfig(() => ({
   plugins: [react()],
 
@@ -27,6 +34,10 @@ export default defineConfig(() => ({
       // Don't watch the Rust side.
       ignored: ["**/src-tauri/**"],
     },
+  },
+
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
 
   // Env vars with these prefixes are exposed via import.meta.env in the app.

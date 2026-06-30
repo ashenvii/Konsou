@@ -1,5 +1,5 @@
 /**
- * Drive sync orchestrator. Owns the pull/push cycle; never blocks the UI —
+ * Drive sync orchestrator. Owns the pull/push cycle; never blocks the UI:
  * failures are logged and silently retried on the next cycle.
  *
  * Pull flow: read Drive meta.json → compare sync_version → if Drive is newer,
@@ -12,6 +12,7 @@
 import { isEnabled } from "@/lib/features";
 import { getDb } from "@/lib/db";
 import { getDeviceId } from "@/lib/platform";
+import { APP_VERSION } from "@/lib/version";
 import { loadTokens } from "@/lib/auth/tokenStore";
 import {
   driveRead,
@@ -51,7 +52,7 @@ class SyncManager {
     if (level === "error") console.warn(`[sync] ${msg}`);
   }
 
-  /** Last 50 sync events — surfaced in Settings dev mode. */
+  /** Last 50 sync events, surfaced in Settings dev mode. */
   getDebugLog(): readonly LogEntry[] {
     return this.log;
   }
@@ -80,7 +81,7 @@ class SyncManager {
       const remoteMeta = await driveReadMeta();
 
       if (!remoteMeta) {
-        // First time syncing from this account — just push.
+        // First time syncing from this account, just push.
         this.record("info", "checkForUpdates: no remote data, pushing initial copy");
         await this._push();
         return false;
@@ -116,7 +117,7 @@ class SyncManager {
 
       // Adopt Drive's version before pushing so our follow-up push supersedes
       // the remote state (remote+1) instead of regressing sync_version back to
-      // localVersion+1 — which would strand any device that is further ahead.
+      // localVersion+1, which would strand any device that is further ahead.
       await db.settingsSet("sync.version", String(remoteMeta.sync_version));
 
       // Push the merged result so all devices converge to the same state.
@@ -124,7 +125,7 @@ class SyncManager {
       return changed;
     } catch (e) {
       if (e instanceof DriveAuthError) {
-        this.record("error", `checkForUpdates: auth expired — ${e.message}`);
+        this.record("error", `checkForUpdates: auth expired: ${e.message}`);
       } else {
         this.record(
           "error",
@@ -145,7 +146,7 @@ class SyncManager {
       await this._push();
     } catch (e) {
       if (e instanceof DriveAuthError) {
-        this.record("error", `pushNow: auth expired — ${e.message}`);
+        this.record("error", `pushNow: auth expired: ${e.message}`);
       } else {
         this.record(
           "error",
@@ -158,7 +159,7 @@ class SyncManager {
   /**
    * Merge remote data into the local DB: upsert surviving entries, delete the
    * ones a tombstone now wins over, and replace the local tombstone set with the
-   * merged result. Returns the post-merge counts. Pure DB I/O — no network.
+   * merged result. Returns the post-merge counts. Pure DB I/O, no network.
    */
   /**
    * Run once right after sign-in (including re-login). Probes Drive and local:
@@ -166,7 +167,7 @@ class SyncManager {
    *    merge/use-drive/use-local prompt and later calls {@link reconcile}.
    *  - otherwise the safe action is unambiguous and applied immediately (pull
    *    Drive when local is empty, push local otherwise).
-   * Drive errors are swallowed — the background pull retries on focus.
+   * Drive errors are swallowed; the background pull retries on focus.
    */
   async signInSync(): Promise<SignInSyncResult> {
     const empty: SignInSyncResult = {
@@ -190,7 +191,7 @@ class SyncManager {
       if (localCount > 0 && remoteCount > 0) {
         this.record(
           "info",
-          `signInSync: conflict — local ${localCount} vs remote ${remoteCount}, prompting`,
+          `signInSync: conflict, local ${localCount} vs remote ${remoteCount}, prompting`,
         );
         return { promptNeeded: true, localCount, remoteCount };
       }
@@ -300,7 +301,7 @@ class SyncManager {
       sync_version: newVersion,
       last_device_id: getDeviceId(),
       last_sync_at: Date.now(),
-      app_version: "0.1.0",
+      app_version: APP_VERSION,
     };
     await driveWrite("meta.json", meta);
 

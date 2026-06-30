@@ -2,7 +2,8 @@ import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { isTauri } from "@/lib/platform";
 
-export const APP_VERSION = "0.4.0";
+// Re-exported so existing imports (Sidebar, Settings) keep working.
+export { APP_VERSION } from "@/lib/version";
 
 export interface PendingUpdate {
   version: string;
@@ -24,7 +25,7 @@ export async function checkForUpdate(): Promise<PendingUpdate | null> {
   const update = await check();
   if (!update?.available) return null;
 
-  // Download silently in the background — no progress UI
+  // Download silently in the background, no progress UI
   await update.download();
 
   pending = {
@@ -41,7 +42,7 @@ export async function checkForUpdate(): Promise<PendingUpdate | null> {
 /**
  * Called once on startup. Silently checks and downloads any update, then calls
  * onReady so the caller can show a "ready to install" notification.
- * Swallows all errors — update checks must never crash the app.
+ * Swallows all errors; update checks must never crash the app.
  */
 export async function autoCheckAndDownload(
   onReady: (update: PendingUpdate) => void,
