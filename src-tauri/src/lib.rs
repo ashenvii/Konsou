@@ -242,18 +242,23 @@ CREATE INDEX IF NOT EXISTS idx_notifications_active ON notifications(dismissed, 
         },
     ];
 
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![oauth_listen])
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(
             tauri_plugin_sql::Builder::default()
                 .add_migrations("sqlite:konsou.db", migrations)
                 .build(),
-        )
+        );
+
+    // The updater plugin is desktop-only; it has no Android/iOS implementation.
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+
+    builder
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

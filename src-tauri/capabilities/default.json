@@ -15,7 +15,6 @@
     "shell:allow-open",
     "os:default",
     "deep-link:default",
-    "updater:default",
     "process:allow-restart"
   ]
 }
