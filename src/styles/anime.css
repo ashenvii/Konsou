@@ -201,6 +201,9 @@
 /* ── Card: grid (cover is the hero) ────────────────────────── */
 .k-card--grid {
   overflow: hidden;
+  /* Isolate each card as its own layout/paint boundary so scrolling a long
+     grid does not force the browser to re-evaluate work across cards. */
+  contain: layout paint style;
 }
 .k-card__cover {
   position: relative;
@@ -553,7 +556,8 @@
 }
 .k-card__dubtag--sub {
   background: oklch(100% 0 0 / 8%);
-  color: var(--color-text-secondary);
+  /* Fixed light: over the cover art. */
+  color: oklch(100% 0 0 / 82%);
 }
 .k-card__footer {
   position: absolute;
@@ -564,9 +568,15 @@
   flex-direction: column;
   gap: 2px;
   pointer-events: none;
+  /* Reserve the bottom-right corner for the quick-add button so the title and
+     meta never sit underneath it. The button is always visible on touch. */
+  padding-right: calc(36px + var(--space-1));
 }
 .k-card__title {
-  color: var(--color-text-primary);
+  /* Fixed light: this title sits over the cover art + dark scrim on every
+     theme, so it must not follow the theme text color (which is dark on the
+     light Paper theme and becomes unreadable over the image). */
+  color: oklch(100% 0 0 / 96%);
   text-shadow: 0 1px 3px oklch(0% 0 0 / 70%);
 }
 .k-card__subtitle {
@@ -582,7 +592,8 @@
 .k-card__epcaption {
   font-size: var(--text-2xs);
   font-weight: 600;
-  color: var(--color-text-secondary);
+  /* Fixed light: sits over the cover art, same as the title. */
+  color: oklch(100% 0 0 / 80%);
   font-variant-numeric: tabular-nums;
 }
 

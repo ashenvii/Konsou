@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import type { CSSProperties, MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bookmark, Check, Pause, Play, Plus, RotateCw, Star } from "lucide-react";
@@ -27,7 +27,7 @@ interface AnimeCardProps {
   showStatus?: boolean;
 }
 
-export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
+function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
   const navigate = useNavigate();
   const entry = useListStore((s) => s.map[media.id]);
   const addFromSummary = useListStore((s) => s.addFromSummary);
@@ -165,7 +165,7 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
             )}
 
             <div className="k-card__footer">
-              <Text size="sm" weight={600} clamp={2} className="k-card__title">
+              <Text size="sm" weight={600} clamp={2} color="onCover" className="k-card__title">
                 {title}
               </Text>
               {subtitle && (
@@ -317,3 +317,8 @@ export function AnimeCard({ media, view, showStatus = false }: AnimeCardProps) {
     </>
   );
 }
+
+// Memoized: the collection re-renders on every scroll frame as the virtual
+// window shifts. Without this, every visible card re-runs its store selectors
+// and hooks each frame, which is the main source of scroll jank on long lists.
+export const AnimeCard = memo(AnimeCardImpl);

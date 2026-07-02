@@ -10,7 +10,7 @@ type TextSize =
   | "xl"
   | "2xl"
   | "3xl";
-type TextColor = "primary" | "secondary" | "tertiary" | "accent";
+type TextColor = "primary" | "secondary" | "tertiary" | "accent" | "onCover";
 type TextWeight = 400 | 500 | 600 | 700 | 800;
 
 interface TextProps {
@@ -33,6 +33,8 @@ const colorVar: Record<TextColor, string> = {
   secondary: "var(--color-text-secondary)",
   tertiary: "var(--color-text-tertiary)",
   accent: "var(--color-accent)",
+  // Fixed light for text sitting over cover art / a dark scrim on any theme.
+  onCover: "oklch(100% 0 0 / 96%)",
 };
 
 /** Typographic primitive — the single place font sizing/weight/color is decided. */
