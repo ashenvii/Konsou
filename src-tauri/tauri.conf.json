@@ -35,12 +35,6 @@
       ]
     },
     "deep-link": {
-      "mobile": [
-        {
-          "schemes": ["konsou"],
-          "host": "callback"
-        }
-      ],
       "desktop": {
         "schemes": ["konsou"]
       }

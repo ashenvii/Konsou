@@ -44,10 +44,12 @@ export const useAuthStore = create<AuthState>((set) => ({
         await useListStore.getState().load();
       }
     } catch (e) {
-      toast.show(
-        e instanceof Error ? e.message : "Sign-in failed",
-        "default",
-      );
+      // Native (Tauri) rejections come back as plain strings, not Error
+      // objects, so surface the real reason instead of a generic fallback.
+      console.error("Google sign-in failed:", e);
+      const msg =
+        e instanceof Error ? e.message : typeof e === "string" ? e : String(e);
+      toast.show(msg || "Sign-in failed", "default");
     } finally {
       set({ connecting: false });
     }

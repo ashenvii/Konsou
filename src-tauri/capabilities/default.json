@@ -13,6 +13,10 @@
     "sql:allow-select",
     "sql:allow-close",
     "shell:allow-open",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://*" }, { "url": "http://*" }]
+    },
     "os:default",
     "deep-link:default",
     "process:allow-restart"
