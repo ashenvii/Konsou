@@ -103,6 +103,7 @@ class AniListClient {
   ): Promise<T> {
     let networkRetries = 0;
     let serverRetries = 0;
+    let rateLimitRetries = 0;
 
     for (;;) {
       await anilistLimiter.acquire(priority);
@@ -117,7 +118,12 @@ class AniListClient {
         });
 
         if (res.status === 429) {
-          const retryAfter = Number(res.headers.get("Retry-After") ?? "60");
+          // AniList's window resets every 60s, so never pause the whole bucket
+          // for longer than that even if Retry-After is missing, unparseable, or
+          // absurdly large. An over-long pause stalls every query app-wide and
+          // looks like a dead app until restart.
+          const raw = Number(res.headers.get("Retry-After"));
+          const retryAfter = Math.min(Number.isFinite(raw) && raw > 0 ? raw : 60, 60);
           anilistLimiter.backoff(retryAfter);
           throw new HttpError(429, retryAfter);
         }
@@ -150,8 +156,11 @@ class AniListClient {
         throw new Error(json?.errors?.[0]?.message ?? "AniList GraphQL error");
       } catch (err) {
         if (err instanceof HttpError && err.status === 429) {
-          // Limiter already paused; loop and try again.
-          continue;
+          // Limiter already paused for the (capped) Retry-After; wait it out and
+          // retry, but give up after a few rounds so a persistent rate-limit
+          // surfaces as a retryable error instead of an endless spinner.
+          if (rateLimitRetries++ < 4) continue;
+          throw err;
         }
         if (err instanceof HttpError && err.status >= 500) {
           if (serverRetries++ < 2) {
