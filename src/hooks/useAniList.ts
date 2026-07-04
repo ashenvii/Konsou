@@ -1,5 +1,7 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { anilist } from "@/lib/api/anilist/client";
+import { indexSummaries } from "@/lib/search/localTitleIndex";
 import type { AiringStatus, BrowseSort, SearchPage } from "@/lib/api/anilist/client";
 import type { AnimeSummary, MediaSeason } from "@/types/anime";
 
@@ -11,16 +13,40 @@ function flatten(pages: SearchPage[] | undefined): AnimeSummary[] {
 
 /** Debounced search (caller passes an already-debounced query). */
 export function useAniListSearch(query: string) {
+  const queryClient = useQueryClient();
   const enabled = query.trim().length >= 2;
+  const normalized = query.trim().toLowerCase();
+
+  // Abort the in-flight search for the previous query string the moment the user
+  // types more. Without this, a superseded search (and its Jikan + AniList
+  // rehydrate fan-out) keeps draining the shared rate limiter, which is what made
+  // typing a long title feel sluggish.
+  const prevKey = useRef<string | null>(null);
+  useEffect(() => {
+    const prev = prevKey.current;
+    if (prev !== null && prev !== normalized) {
+      void queryClient.cancelQueries({ queryKey: ["search", prev], exact: true });
+    }
+    prevKey.current = normalized;
+  }, [normalized, queryClient]);
+
   const q = useInfiniteQuery({
-    queryKey: ["search", query.trim().toLowerCase()],
-    queryFn: ({ pageParam }) => anilist.search(query, pageParam),
+    queryKey: ["search", normalized],
+    queryFn: ({ pageParam, signal }) => anilist.search(query, pageParam, signal),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasNextPage ? last.page + 1 : undefined),
     enabled,
     staleTime: FIVE_MIN,
     networkMode: "offlineFirst",
   });
+
+  // Feed results into the local title index so the offline "did you mean"
+  // fallback can re-find them later, even from a typo.
+  useEffect(() => {
+    const items = flatten(q.data?.pages);
+    if (items.length) indexSummaries(items);
+  }, [q.data]);
+
   return {
     results: flatten(q.data?.pages),
     isLoading: enabled && q.isLoading,
@@ -38,6 +64,8 @@ export interface DiscoverParams {
   season?: MediaSeason;
   seasonYear?: number;
   genre?: string;
+  /** AniList tag name (themes like "Isekai" are tags, not genres). */
+  tag?: string;
 }
 
 export function useDiscover(params: DiscoverParams) {
@@ -48,6 +76,7 @@ export function useDiscover(params: DiscoverParams) {
       params.season ?? null,
       params.seasonYear ?? null,
       params.genre ?? null,
+      params.tag ?? null,
     ],
     queryFn: ({ pageParam }) => anilist.browse({ ...params, page: pageParam }),
     initialPageParam: 1,
@@ -55,6 +84,13 @@ export function useDiscover(params: DiscoverParams) {
     staleTime: FIVE_MIN,
     networkMode: "offlineFirst",
   });
+
+  // Browsing also seeds the offline "did you mean" corpus.
+  useEffect(() => {
+    const items = flatten(q.data?.pages);
+    if (items.length) indexSummaries(items);
+  }, [q.data]);
+
   return {
     results: flatten(q.data?.pages),
     isLoading: q.isLoading,

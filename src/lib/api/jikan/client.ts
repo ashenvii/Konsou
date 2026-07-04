@@ -14,6 +14,7 @@ const JIKAN_SEARCH = "https://api.jikan.moe/v4/anime";
 export async function jikanSearchMalIds(
   query: string,
   limit = 12,
+  signal?: AbortSignal,
 ): Promise<number[]> {
   const url = new URL(JIKAN_SEARCH);
   url.searchParams.set("q", query);
@@ -22,7 +23,7 @@ export async function jikanSearchMalIds(
   url.searchParams.set("order_by", "popularity");
   url.searchParams.set("sort", "asc");
 
-  const res = await fetch(url);
+  const res = await fetch(url, { signal });
   if (!res.ok) return [];
 
   const data = (await res.json()) as { data?: { mal_id?: number }[] };

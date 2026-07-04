@@ -24,16 +24,6 @@
                 <!-- AndroidTV support -->
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
-            <!-- Google OAuth redirect. The Android client uses the reverse
-                 client-id custom scheme. Registered by hand because the tauri
-                 deep-link plugin's mobile config only supports https App Links,
-                 not custom schemes. -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.googleusercontent.apps.1058268587609-17cr7n73sm1gvhu0qaakd0hoh31gdvlt" />
-            </intent-filter>
             <!-- DEEP LINK PLUGIN. AUTO-GENERATED. DO NOT REMOVE. -->
             
             <!-- DEEP LINK PLUGIN. AUTO-GENERATED. DO NOT REMOVE. -->

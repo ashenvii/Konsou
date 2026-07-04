@@ -1,22 +1,20 @@
 /**
- * Google OAuth 2.0 + PKCE — dual-platform implementation.
+ * Google OAuth 2.0 + PKCE.
  *
- * Desktop (Windows / macOS / Linux):
- *   Rust `oauth_listen` command binds a random localhost port → system browser
- *   opens Google's consent page → redirect lands on that port → Rust emits
- *   `oauth-callback` event with the raw callback path.
+ * Both desktop and Android use the same loopback flow: the Rust `oauth_listen`
+ * command binds a random 127.0.0.1 port, the system browser opens Google's
+ * consent page, the redirect lands on that port, and Rust emits an
+ * `oauth-callback` event with the raw callback path.
  *
- * Android:
- *   Tauri deep-link plugin registers Google's reverse-client-id scheme
- *   (com.googleusercontent.apps.<id>). Chrome opens Google's consent page, the
- *   redirect fires that scheme back to the OS, which hands the URL to the app,
- *   and `onOpenUrl` fires with the full URL. Android uses a separate OAuth
- *   client with no secret, verified by package name + SHA-1 fingerprint.
+ * Android originally tried a custom-URI-scheme redirect. It did reach the app,
+ * but Tauri's deep-link plugin never surfaced the URL (it only tracks schemes
+ * from its own config, which rejects custom schemes), so Android routes through
+ * the loopback listener too. It reuses the desktop client and secret, which is
+ * fine for an installed app.
  */
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { onOpenUrl, getCurrent } from "@tauri-apps/plugin-deep-link";
-import { isTauri, isAndroidUA } from "@/lib/platform";
+import { isTauri } from "@/lib/platform";
 import { openExternal } from "@/lib/openExternal";
 import { generateVerifier, generateChallenge, generateState } from "./pkce";
 import {
@@ -30,21 +28,9 @@ import {
 
 export type GoogleAccount = StoredAccount;
 
-// Desktop client — has a secret, uses localhost redirect.
+// Both platforms use this client (has a secret, loopback redirect).
 const DESKTOP_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
 const DESKTOP_CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET as string;
-
-// Android client — no secret, verified by package name + SHA-1.
-const ANDROID_CLIENT_ID = import.meta.env.VITE_GOOGLE_ANDROID_CLIENT_ID as string;
-// Google issues Android/iOS clients a reverse-DNS custom scheme for the OAuth
-// redirect (com.googleusercontent.apps.<id>). This scheme is also what the
-// Android manifest registers as a deep link, configured in tauri.conf.json
-// under plugins.deep-link.mobile — keep the two in sync.
-const ANDROID_REDIRECT_SCHEME = `com.googleusercontent.apps.${ANDROID_CLIENT_ID.replace(
-  /\.apps\.googleusercontent\.com$/,
-  "",
-)}`;
-const ANDROID_REDIRECT_URI = `${ANDROID_REDIRECT_SCHEME}:/oauth2redirect`;
 
 const SCOPES = [
   "openid",
@@ -140,7 +126,7 @@ async function fetchUserInfo(accessToken: string): Promise<GoogleAccount> {
 }
 
 // ---------------------------------------------------------------------------
-// Desktop flow — localhost TCP server via Rust command
+// Loopback flow (desktop + Android): localhost TCP server via Rust command
 // ---------------------------------------------------------------------------
 
 async function desktopOAuth(verifier: string, challenge: string, state: string): Promise<GoogleAccount> {
@@ -192,113 +178,13 @@ async function desktopOAuth(verifier: string, challenge: string, state: string):
 }
 
 // ---------------------------------------------------------------------------
-// Android flow — deep link via konsou://callback
-// ---------------------------------------------------------------------------
-
-async function androidOAuth(verifier: string, challenge: string, state: string): Promise<GoogleAccount> {
-  if (!ANDROID_CLIENT_ID) {
-    throw new Error("VITE_GOOGLE_ANDROID_CLIENT_ID is not set. Add it to your .env file.");
-  }
-
-  await openExternal(
-    buildAuthUrl(ANDROID_CLIENT_ID, ANDROID_REDIRECT_URI, challenge, state).toString(),
-  );
-
-  const callbackUrl = await new Promise<string>((resolve, reject) => {
-    let done = false;
-    let unlisten: (() => void) | undefined;
-
-    // Only accept a redirect for THIS attempt (matching state), so a stale URL
-    // left over from a previous attempt cannot be picked up by the poll.
-    const pick = (urls: string[] | null | undefined) =>
-      urls?.find((u) => {
-        if (!u.startsWith(ANDROID_REDIRECT_SCHEME)) return false;
-        try {
-          return new URL(u).searchParams.get("state") === state;
-        } catch {
-          return false;
-        }
-      });
-
-    const cleanup = () => {
-      clearTimeout(timeout);
-      clearInterval(poll);
-      unlisten?.();
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-    const finish = (url: string) => {
-      if (done) return;
-      done = true;
-      cleanup();
-      resolve(url);
-    };
-
-    const timeout = setTimeout(() => {
-      if (done) return;
-      done = true;
-      cleanup();
-      reject(new Error("Sign-in timed out. Please try again."));
-    }, 5 * 60_000);
-
-    // Live event: fires when the redirect opens the app fresh.
-    onOpenUrl((urls) => {
-      const u = pick(urls);
-      if (u) finish(u);
-    })
-      .then((fn) => {
-        unlisten = fn;
-      })
-      .catch(reject);
-
-    // Warm-resume fallback: when the browser hands the redirect back to the
-    // already-running app it arrives via onNewIntent, which onOpenUrl does not
-    // reliably surface. Re-check the plugin's current URL whenever the app
-    // regains focus.
-    async function onVisible() {
-      if (done) return;
-      try {
-        const u = pick(await getCurrent());
-        if (u) finish(u);
-      } catch {
-        /* ignore, the live event or timeout still applies */
-      }
-    }
-    document.addEventListener("visibilitychange", onVisible);
-    // Belt-and-suspenders: poll the current URL in case neither the live event
-    // nor a visibility change fires when the app is resumed by the redirect.
-    const poll = setInterval(onVisible, 800);
-  });
-
-  const url = new URL(callbackUrl);
-  if (url.searchParams.get("error")) throw new Error("Google sign-in was cancelled or denied.");
-  const code = url.searchParams.get("code");
-  const returnedState = url.searchParams.get("state");
-  if (!code) throw new Error("OAuth: no authorization code in callback");
-  if (returnedState !== state) throw new Error("OAuth: state mismatch — possible CSRF");
-
-  // Android client has no secret.
-  await exchangeCode({
-    code,
-    verifier,
-    clientId: ANDROID_CLIENT_ID,
-    clientSecret: null,
-    redirectUri: ANDROID_REDIRECT_URI,
-  });
-
-  const tokens = loadTokens()!;
-  const account = await fetchUserInfo(tokens.access_token);
-  saveAccount(account);
-  return account;
-}
-
-// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 export async function startGoogleOAuth(): Promise<GoogleAccount> {
   if (!isTauri()) {
     throw new Error(
-      "Google sign-in requires the desktop or Android app — not available in browser preview.",
+      "Google sign-in requires the desktop or Android app, not available in browser preview.",
     );
   }
 
@@ -306,15 +192,8 @@ export async function startGoogleOAuth(): Promise<GoogleAccount> {
   const challenge = await generateChallenge(verifier);
   const state = generateState();
 
-  // Both desktop and Android use the localhost-listener (loopback) flow. The
-  // Android custom-URI-scheme redirect did reach the app, but the deep-link
-  // plugin never surfaced its URL (it only tracks schemes from its own config,
-  // which rejects custom schemes), so the loopback listener is used instead.
-  // androidOAuth is kept for reference while the loopback path is validated.
-  const useDeepLinkFlow = false;
-  return useDeepLinkFlow && isAndroidUA()
-    ? androidOAuth(verifier, challenge, state)
-    : desktopOAuth(verifier, challenge, state);
+  // Desktop and Android both use the loopback listener flow.
+  return desktopOAuth(verifier, challenge, state);
 }
 
 /** Restore a previously signed-in account from localStorage (call on app init). */

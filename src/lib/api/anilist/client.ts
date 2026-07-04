@@ -42,9 +42,11 @@ const BATCH_SPACING_MS = 700; // AniList burst limiter guard
 // leaving headroom against the cap and any future field additions.
 const RELATIONS_BATCH_SIZE = 12;
 const PER_PAGE = 24;
-// Below this many AniList hits on a typed-but-incomplete query, augment with the
-// Jikan/MAL substring fallback (AniList ranks partial prefixes conservatively).
-const SPARSE_RESULT_THRESHOLD = 5;
+// Only when AniList returns nothing do we augment with the Jikan/MAL substring
+// fallback. AniList ranks partial prefixes conservatively ("frier" → 0), so a
+// zero-result query is the tell that its matcher whiffed. When it returns even
+// one hit, the extra Jikan + rehydrate round-trip isn't worth the rate-limiter
+// cost it adds on every keystroke.
 const MIN_FALLBACK_QUERY_LEN = 3;
 
 export interface SearchPage {
@@ -64,6 +66,11 @@ export interface AiringStatus {
 }
 
 export type BrowseSort = "TRENDING_DESC" | "SCORE_DESC" | "POPULARITY_DESC";
+
+/** True for a fetch/request aborted via AbortSignal (superseded search, etc.). */
+function isAbortError(err: unknown): boolean {
+  return (err as { name?: string } | null)?.name === "AbortError";
+}
 
 /** Stable, fast key for cache lookups (no crypto needed — collisions are harmless). */
 function hashKey(s: string): string {
@@ -100,13 +107,18 @@ class AniListClient {
     query: string,
     variables?: Record<string, unknown>,
     priority: Priority = "high",
+    signal?: AbortSignal,
   ): Promise<T> {
     let networkRetries = 0;
     let serverRetries = 0;
     let rateLimitRetries = 0;
 
     for (;;) {
+      // Bail before spending a token (or a round-trip) if the caller — a
+      // superseded search, say — has already been cancelled.
+      if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
       await anilistLimiter.acquire(priority);
+      if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
       try {
         const res = await fetch(ENDPOINT, {
           method: "POST",
@@ -115,6 +127,7 @@ class AniListClient {
             Accept: "application/json",
           },
           body: JSON.stringify({ query, variables }),
+          signal,
         });
 
         if (res.status === 429) {
@@ -155,6 +168,9 @@ class AniListClient {
         }
         throw new Error(json?.errors?.[0]?.message ?? "AniList GraphQL error");
       } catch (err) {
+        // A cancelled request (a fast typist superseding a search) must surface
+        // immediately, never get retried.
+        if (isAbortError(err)) throw err;
         if (err instanceof HttpError && err.status === 429) {
           // Limiter already paused for the (capped) Retry-After; wait it out and
           // retry, but give up after a few rounds so a persistent rate-limit
@@ -183,7 +199,7 @@ class AniListClient {
   }
 
   /** Cache-first search. Falls back to stale cache on network failure. */
-  async search(query: string, page = 1): Promise<SearchPage> {
+  async search(query: string, page = 1, signal?: AbortSignal): Promise<SearchPage> {
     // Collapse stray/duplicate whitespace so "  attack   on titan " and
     // "attack on titan" share a cache entry and one clean network query.
     const trimmed = query.replace(/\s+/g, " ").trim();
@@ -197,23 +213,26 @@ class AniListClient {
     }
 
     try {
-      const data = await this.request<any>(SEARCH_QUERY, {
-        search: trimmed,
-        page,
-        perPage: PER_PAGE,
-      });
+      const data = await this.request<any>(
+        SEARCH_QUERY,
+        { search: trimmed, page, perPage: PER_PAGE },
+        "high",
+        signal,
+      );
       let results: AnimeSummary[] = (data.Page.media ?? []).map(mapSummary);
       let hasNextPage = data.Page.pageInfo?.hasNextPage ?? false;
 
-      // AniList's SEARCH_MATCH is conservative on partial prefixes ("frier" → 0,
-      // "shangr" → 1). When a typed query is sparse, augment with MAL/Jikan's
-      // substring match, rehydrated through AniList so ids/data stay native.
+      // AniList's SEARCH_MATCH whiffs entirely on some partial prefixes
+      // ("frier" → 0). Only then augment with MAL/Jikan's substring match,
+      // rehydrated through AniList so ids/data stay native. Skipped once AniList
+      // returns anything, and skipped if this search was already superseded.
       if (
         page === 1 &&
         trimmed.length >= MIN_FALLBACK_QUERY_LEN &&
-        results.length < SPARSE_RESULT_THRESHOLD
+        results.length === 0 &&
+        !signal?.aborted
       ) {
-        const extra = await this.prefixFallback(trimmed);
+        const extra = await this.prefixFallback(trimmed, signal);
         const seen = new Set(results.map((r) => r.id));
         for (const m of extra) {
           if (!seen.has(m.id)) {
@@ -225,11 +244,18 @@ class AniListClient {
         if (extra.length) hasNextPage = false;
       }
 
-      void safeCache(() =>
-        getDb().then((db) => db.cacheSetSearch(key, trimmed, results)),
-      );
+      // Never cache emptiness: a transient upstream miss (Jikan down, rate
+      // limit) would otherwise pin "no results" for the TTL even though the
+      // title exists. Empty is cheap to re-ask for.
+      if (results.length > 0) {
+        void safeCache(() =>
+          getDb().then((db) => db.cacheSetSearch(key, trimmed, results)),
+        );
+      }
       return { results, hasNextPage, page };
     } catch (err) {
+      // A cancelled search has no result to show and no failure to recover from.
+      if (isAbortError(err)) throw err;
       if (cached) return { results: cached.results, hasNextPage: false, page };
       throw err;
     }
@@ -240,15 +266,20 @@ class AniListClient {
    * MAL ids through AniList — preserving Jikan's popularity ordering. Returns []
    * on any failure so search degrades to AniList-only, never breaks.
    */
-  private async prefixFallback(query: string): Promise<AnimeSummary[]> {
+  private async prefixFallback(
+    query: string,
+    signal?: AbortSignal,
+  ): Promise<AnimeSummary[]> {
     try {
-      const malIds = await jikanSearchMalIds(query);
+      const malIds = await jikanSearchMalIds(query, 12, signal);
       if (malIds.length === 0) return [];
 
-      const data = await this.request<any>(BY_MAL_IDS_QUERY, {
-        idMal_in: malIds,
-        perPage: malIds.length,
-      });
+      const data = await this.request<any>(
+        BY_MAL_IDS_QUERY,
+        { idMal_in: malIds, perPage: malIds.length },
+        "high",
+        signal,
+      );
       const media: AnimeSummary[] = (data.Page.media ?? []).map(mapSummary);
 
       // AniList returns idMal_in matches in its own order — restore Jikan's.
@@ -257,6 +288,8 @@ class AniListClient {
         .map((id) => byMal.get(id))
         .filter((m): m is AnimeSummary => !!m);
     } catch (e) {
+      // Let a cancellation propagate; only genuine failures degrade to [].
+      if (isAbortError(e)) throw e;
       console.warn("[search] Jikan prefix fallback failed:", e);
       return [];
     }
@@ -293,6 +326,8 @@ class AniListClient {
     season?: MediaSeason;
     seasonYear?: number;
     genre?: string;
+    /** AniList tag name, e.g. "Isekai" — themes are tags, not genres. */
+    tag?: string;
   }): Promise<SearchPage> {
     const page = params.page ?? 1;
     const data = await this.request<any>(BROWSE_QUERY, {
@@ -302,6 +337,7 @@ class AniListClient {
       season: params.season ?? null,
       seasonYear: params.seasonYear ?? null,
       genre: params.genre ?? null,
+      tag: params.tag ?? null,
     });
     return {
       results: (data.Page.media ?? []).map(mapSummary),
