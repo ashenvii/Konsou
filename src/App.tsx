@@ -3,12 +3,17 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { Onboarding } from "@/components/Onboarding";
 import { MyList } from "@/pages/MyList";
-import { Search } from "@/pages/Search";
 import { Discover } from "@/pages/Discover";
 import { Schedule } from "@/pages/Schedule";
 import { Alerts } from "@/pages/Alerts";
 import { AnimeDetail } from "@/pages/AnimeDetail";
-import { Settings } from "@/pages/Settings";
+import { SettingsHub } from "@/pages/settings/SettingsHub";
+import { AccountSettings } from "@/pages/settings/AccountSettings";
+import { AppearanceSettings } from "@/pages/settings/AppearanceSettings";
+import { LibrarySettings } from "@/pages/settings/LibrarySettings";
+import { NotificationsSettings } from "@/pages/settings/NotificationsSettings";
+import { SupportSettings } from "@/pages/settings/SupportSettings";
+import { AboutSettings } from "@/pages/settings/AboutSettings";
 import { Stats } from "@/pages/Stats";
 
 function Wrap({ name, children }: { name: string; children: React.ReactNode }) {
@@ -22,11 +27,20 @@ export function App() {
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<Wrap name="My List"><MyList /></Wrap>} />
-          <Route path="search" element={<Wrap name="Search"><Search /></Wrap>} />
+          {/* Search merged into Discover; keep the path alive for old links. */}
+          <Route path="search" element={<Navigate to="/discover" replace />} />
           <Route path="discover" element={<Wrap name="Discover"><Discover /></Wrap>} />
           <Route path="schedule" element={<Wrap name="Schedule"><Schedule /></Wrap>} />
           <Route path="alerts" element={<Wrap name="Alerts"><Alerts /></Wrap>} />
-          <Route path="settings" element={<Wrap name="Settings"><Settings /></Wrap>} />
+          <Route path="settings">
+            <Route index element={<Wrap name="Settings"><SettingsHub /></Wrap>} />
+            <Route path="account" element={<Wrap name="Account"><AccountSettings /></Wrap>} />
+            <Route path="appearance" element={<Wrap name="Appearance"><AppearanceSettings /></Wrap>} />
+            <Route path="library" element={<Wrap name="Library & Sync"><LibrarySettings /></Wrap>} />
+            <Route path="notifications" element={<Wrap name="Notifications"><NotificationsSettings /></Wrap>} />
+            <Route path="support" element={<Wrap name="Support"><SupportSettings /></Wrap>} />
+            <Route path="about" element={<Wrap name="About"><AboutSettings /></Wrap>} />
+          </Route>
           <Route path="stats" element={<Wrap name="Stats"><Stats /></Wrap>} />
           <Route path="anime/:id" element={<Wrap name="Anime Detail"><AnimeDetail /></Wrap>} />
         </Route>
