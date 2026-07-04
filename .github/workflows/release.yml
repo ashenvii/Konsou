@@ -99,3 +99,32 @@ jobs:
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: true
+
+  # After both platform builds have uploaded, drop the updater .sig files from
+  # the release. Their signatures are already embedded inside latest.json (that
+  # is what the auto-updater actually reads), so the standalone .sig assets are
+  # redundant and only clutter the download list. latest.json and every
+  # installer are kept.
+  tidy-assets:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Remove redundant .sig assets from the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          names=$(gh release view "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --json assets --jq '.assets[].name | select(endswith(".sig"))')
+          if [ -z "$names" ]; then
+            echo "No .sig assets to remove."
+            exit 0
+          fi
+          echo "$names" | while IFS= read -r name; do
+            [ -n "$name" ] || continue
+            echo "Removing $name"
+            gh release delete-asset "${{ github.ref_name }}" "$name" \
+              --repo "${{ github.repository }}" --yes
+          done
