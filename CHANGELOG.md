@@ -6,6 +6,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-04
+
+### Added
+- **Discover and Search are one page now.** Discover leads with a search bar; type
+  to search, or leave it empty to browse Seasonal, Trending, and Top Rated. A new
+  Themes row (Isekai, Reincarnation, Mecha, and more) sits alongside Genres and
+  combines with them.
+- **Stats is its own tab, rebuilt around time.** It opens with how much of your
+  life you have spent watching, in plain figures, with a movies-worth comparison,
+  then breaks down what you are watching now and how many episodes are left to
+  catch up, a score histogram, and your most-watched franchises.
+- **The Related tab shows the whole series.** Instead of just the next entry, it
+  walks the full franchise chain into watch order, numbered, with your own progress
+  on each entry so you can see what is left and where to go next.
+- **Grab anywhere to scroll on desktop.** Hold the mouse anywhere on a page and
+  drag to pan, the way you would on a touchscreen.
+- **Offline "did you mean".** When a search comes back empty or you are offline,
+  Konsou suggests close matches from your library and titles you have seen this
+  session.
+- **A dedicated Support page.** Tip on Ko-fi, contribute on GitHub, star the repo,
+  or share Konsou, with a clear reminder that the app is free with no ads.
+
+### Changed
+- **Back stays inside a tab.** Each tab keeps its own history, so back walks that
+  tab's steps and never jumps to another tab or unwinds your whole session. At a
+  tab's home screen a second back asks to exit. Re-tapping the tab you are on
+  returns it to the top, and tapping again picks your place back up.
+- **Settings is a hub of focused pages** (Account, Appearance, Library & Sync,
+  Notifications, Support, About) instead of one long screen.
+- **The detail page** gained Overview / Cast / Related / Similar tabs, the trailer,
+  copy-title and Google shortcuts, and a fuller release panel with a live
+  next-episode countdown.
+- **Faster on Android**, with lighter cards and tighter list rendering, plus a
+  condensed one-row list toolbar and a multi-select status filter.
+- Bottom sheets now drag to close.
+- Status rules are enforced everywhere: an unaired show can only be planned, held,
+  or dropped, and an airing show cannot be marked complete until its finale.
+
+### Fixed
+- The current-episode badge on a card no longer clips past the edge at the very
+  start or end of a season.
+- A rate-limit response no longer stalls every following request until you restart.
+- Light-theme card text and the add button no longer overlap.
+- A brief upstream hiccup no longer pins an empty "no results" state.
+
 ## [0.5.0] - 2026-06-30
 
 ### Added
@@ -116,7 +161,8 @@ Initial release.
 - First-run onboarding, error boundaries, and an in-app update checker.
 - Cross-platform release pipeline (Windows / Linux) via GitHub Actions.
 
-[Unreleased]: https://github.com/ashenvii/Konsou/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/ashenvii/Konsou/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/ashenvii/Konsou/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ashenvii/Konsou/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/ashenvii/Konsou/compare/v0.3.0...v0.4.0
 [0.2.0]: https://github.com/ashenvii/Konsou/compare/v0.1.0...v0.2.0
