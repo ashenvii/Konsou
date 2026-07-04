@@ -1,10 +1,10 @@
 import { ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/ui/Icon";
 import type { IconComponent } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Text } from "@/components/ui/Text";
+import { goBack } from "@/hooks/useAppBack";
 
 /** Standard chrome for a Settings sub-page: header with back + scroll body. */
 export function SettingsSubPage({
@@ -16,10 +16,9 @@ export function SettingsSubPage({
   subtitle?: string;
   children: ReactNode;
 }) {
-  const navigate = useNavigate();
   return (
     <div className="k-page">
-      <PageHeader title={title} subtitle={subtitle} onBack={() => navigate(-1)} />
+      <PageHeader title={title} subtitle={subtitle} onBack={goBack} />
       <div className="k-settings konsou-scroll">{children}</div>
     </div>
   );
@@ -78,19 +77,30 @@ export function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-/** A tappable category row on the Settings hub: icon, label/hint, chevron. */
+export type HubTone =
+  | "account"
+  | "appearance"
+  | "library"
+  | "notifications"
+  | "about";
+
+/** A tappable category row on the Settings hub: icon, label/hint, chevron.
+ *  Each destination carries its own icon color so the hub reads as places,
+ *  not a list of identical rows. */
 export function HubRow({
   icon,
   label,
   hint,
   onClick,
   accent,
+  tone,
 }: {
   icon: IconComponent;
   label: string;
   hint?: string;
   onClick: () => void;
   accent?: boolean;
+  tone?: HubTone;
 }) {
   return (
     <button
@@ -98,7 +108,7 @@ export function HubRow({
       className={`k-hubrow${accent ? " k-hubrow--support" : ""}`}
       onClick={onClick}
     >
-      <span className="k-hubrow__icon">
+      <span className={`k-hubrow__icon${tone ? ` k-hubrow__icon--${tone}` : ""}`}>
         <Icon icon={icon} size={20} />
       </span>
       <span className="k-hubrow__text">

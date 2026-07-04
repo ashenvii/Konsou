@@ -1,13 +1,62 @@
-import { Code2, Coffee, Heart, Share2, Star } from "lucide-react";
+import { ArrowUpRight, Code2, Coffee, Heart, Share2, Star } from "lucide-react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { Section, Row, SettingsSubPage } from "@/components/settings/parts";
+import type { IconComponent } from "@/components/ui/Icon";
+import { SettingsSubPage } from "@/components/settings/parts";
 import { Text } from "@/components/ui/Text";
 import { openExternal } from "@/lib/openExternal";
 import { toast } from "@/lib/store/toastStore";
 
 const KOFI_URL = (import.meta.env.VITE_KOFI_URL as string | undefined) ?? "https://ko-fi.com";
 const GITHUB_URL = (import.meta.env.VITE_GITHUB_URL as string | undefined) ?? "https://github.com";
+
+/** One way to help: a whole-row tap target with its own color identity. */
+function SupportAction({
+  icon,
+  tone,
+  title,
+  hint,
+  onClick,
+}: {
+  icon: IconComponent;
+  tone: "kofi" | "code" | "star" | "share";
+  title: string;
+  hint: string;
+  onClick: () => void;
+}) {
+  return (
+    <button type="button" className="k-supportaction" onClick={onClick}>
+      <span className={`k-supportaction__icon k-supportaction__icon--${tone}`}>
+        <Icon icon={icon} size={19} />
+      </span>
+      <span className="k-supportaction__text">
+        <Text size="base" weight={600}>
+          {title}
+        </Text>
+        <Text size="xs" color="tertiary">
+          {hint}
+        </Text>
+      </span>
+      <span className="k-supportaction__arrow">
+        <Icon icon={ArrowUpRight} size={16} />
+      </span>
+    </button>
+  );
+}
+
+function SupportHeading({ children }: { children: ReactNode }) {
+  return (
+    <Text
+      size="xs"
+      weight={600}
+      color="tertiary"
+      className="k-settings__sectiontitle"
+    >
+      {children}
+    </Text>
+  );
+}
 
 export function SupportSettings() {
   const share = async () => {
@@ -45,30 +94,44 @@ export function SupportSettings() {
         <Button variant="primary" onClick={() => void openExternal(KOFI_URL)}>
           <Icon icon={Coffee} size={16} /> Buy me a coffee
         </Button>
+        <span className="k-support__heronote">
+          No ads, no premium tier, no unlock codes.
+        </span>
       </div>
 
-      <Section title="More ways to help">
-        <Row label="Tip on Ko-fi" hint="One-off or monthly, any amount helps">
-          <Button variant="secondary" onClick={() => void openExternal(KOFI_URL)}>
-            <Icon icon={Heart} size={15} color="var(--color-error)" /> Open
-          </Button>
-        </Row>
-        <Row label="Contribute on GitHub" hint="Report bugs, suggest features, or send a pull request">
-          <Button variant="secondary" onClick={() => void openExternal(GITHUB_URL)}>
-            <Icon icon={Code2} size={15} /> Open
-          </Button>
-        </Row>
-        <Row label="Star the repo" hint="A quick way to help others find Konsou">
-          <Button variant="secondary" onClick={() => void openExternal(GITHUB_URL)}>
-            <Icon icon={Star} size={15} /> Star
-          </Button>
-        </Row>
-        <Row label="Share Konsou" hint="Tell a friend who's still juggling spreadsheets">
-          <Button variant="secondary" onClick={() => void share()}>
-            <Icon icon={Share2} size={15} /> Share
-          </Button>
-        </Row>
-      </Section>
+      <section className="k-settings__section">
+        <SupportHeading>MORE WAYS TO HELP</SupportHeading>
+        <div className="k-support__actions">
+          <SupportAction
+            icon={Heart}
+            tone="kofi"
+            title="Tip on Ko-fi"
+            hint="One-off or monthly, any amount helps"
+            onClick={() => void openExternal(KOFI_URL)}
+          />
+          <SupportAction
+            icon={Code2}
+            tone="code"
+            title="Contribute on GitHub"
+            hint="Report bugs, suggest features, send a pull request"
+            onClick={() => void openExternal(GITHUB_URL)}
+          />
+          <SupportAction
+            icon={Star}
+            tone="star"
+            title="Star the repo"
+            hint="A quick way to help others find Konsou"
+            onClick={() => void openExternal(GITHUB_URL)}
+          />
+          <SupportAction
+            icon={Share2}
+            tone="share"
+            title="Share Konsou"
+            hint="Tell a friend who's still juggling spreadsheets"
+            onClick={() => void share()}
+          />
+        </div>
+      </section>
     </SettingsSubPage>
   );
 }

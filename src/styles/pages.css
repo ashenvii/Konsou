@@ -180,8 +180,20 @@
   color: var(--color-text-secondary);
   font-size: var(--text-sm);
   font-weight: 600;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
 }
-.k-subtab--active {
+.k-subtab:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+}
+.k-subtab:active {
+  transform: scale(0.95);
+}
+.k-subtab--active,
+.k-subtab--active:hover {
   background: var(--color-accent-dim);
   color: var(--color-accent-glow);
 }
@@ -387,8 +399,10 @@
   }
 }
 @media (max-width: 640px) {
+  /* Facts are short label/value pairs; two-up keeps the section compact
+     now that it carries up to eight of them. */
   .k-releasegrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .k-availabilitygrid {
     grid-template-columns: 1fr;
@@ -442,7 +456,7 @@
 }
 .k-releasegrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: var(--space-3);
 }
 .k-releasegrid > div {
@@ -454,6 +468,14 @@
   border-radius: var(--radius-lg);
   background: var(--color-surface-2);
   border: 1px solid var(--color-border);
+}
+/* Live fact (next episode countdown): the one cell that earns the accent. */
+.k-releasegrid__hot {
+  border-color: color-mix(in oklab, var(--color-accent) 35%, var(--color-border));
+  background: color-mix(in oklab, var(--color-accent) 10%, var(--color-surface-2));
+}
+.k-releasegrid__hot strong {
+  color: var(--color-accent-glow);
 }
 .k-releasegrid span {
   font-size: var(--text-xs);
@@ -469,7 +491,7 @@
 }
 .k-seasonrow {
   display: grid;
-  grid-template-columns: 54px 1fr;
+  grid-template-columns: 22px 54px 1fr;
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-2);
@@ -480,6 +502,35 @@
 }
 .k-seasonrow:hover {
   background: var(--color-surface-3);
+}
+/* Watch-order position: the chain reads 1, 2, 3… top to bottom. */
+.k-seasonrow__num {
+  justify-self: center;
+  font-size: var(--text-sm);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+}
+.k-seasonrow--current .k-seasonrow__num {
+  color: var(--color-accent-glow);
+}
+.k-seasonrow__chips {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+/* The user's own progress on that entry: watched / 4 of 12 / planned. */
+.k-seasonrow__mystatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.k-seasonrows__loading {
+  margin-top: var(--space-2);
 }
 .k-seasonrow .k-cover {
   border-radius: var(--radius-md);
@@ -541,6 +592,20 @@
 /* Detail tabs sit tight under the list controls. */
 .k-detail__tabs {
   margin-top: var(--space-2);
+}
+/* Tab switches remount the panel; the rise-in reads as content arriving. */
+.k-detail__tabpanel {
+  animation: k-panel-in 220ms var(--ease-out) both;
+}
+@keyframes k-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Trailer thumb: 16:9, centered play affordance. */
@@ -1704,6 +1769,23 @@
   flex: 1;
   min-width: 0;
 }
+/* Per-destination icon tints: the hub reads as places, not identical rows. */
+.k-hubrow__icon--appearance {
+  background: color-mix(in oklab, var(--color-status-on_hold) 18%, transparent);
+  color: var(--color-status-on_hold);
+}
+.k-hubrow__icon--library {
+  background: color-mix(in oklab, var(--color-status-rewatching) 18%, transparent);
+  color: var(--color-status-rewatching);
+}
+.k-hubrow__icon--notifications {
+  background: color-mix(in oklab, var(--color-status-plan_to_watch) 18%, transparent);
+  color: var(--color-status-plan_to_watch);
+}
+.k-hubrow__icon--about {
+  background: var(--color-surface-3);
+  color: var(--color-text-secondary);
+}
 /* Support row: accent-tinted so the "give back" entry stands out. */
 .k-hubrow--support {
   border-color: color-mix(in oklch, var(--color-accent) 40%, transparent);
@@ -1721,11 +1803,18 @@
   align-items: center;
   text-align: center;
   gap: var(--space-3);
-  padding: var(--space-6) var(--space-5);
+  padding: var(--space-8) var(--space-5) var(--space-6);
   margin-bottom: var(--space-6);
-  border-radius: var(--radius-lg);
-  border: 1px solid color-mix(in oklch, var(--color-accent) 35%, transparent);
-  background: color-mix(in oklch, var(--color-accent) 10%, var(--color-surface-2));
+  border-radius: var(--radius-xl);
+  border: 1px solid color-mix(in oklab, var(--color-accent) 35%, transparent);
+  background:
+    radial-gradient(
+      130% 120% at 50% -20%,
+      color-mix(in oklab, var(--color-accent) 20%, transparent),
+      transparent 60%
+    ),
+    var(--color-surface-2);
+  overflow: hidden;
 }
 .k-support__heroicon {
   display: grid;
@@ -1735,9 +1824,98 @@
   border-radius: var(--radius-full);
   background: var(--color-accent);
   color: var(--color-on-accent, #fff);
+  box-shadow: 0 0 24px color-mix(in oklab, var(--color-accent) 45%, transparent);
+  animation: k-heartbeat 2.8s var(--ease-standard) infinite;
+}
+@keyframes k-heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.07);
+  }
 }
 .k-support__herotext {
   max-width: 44ch;
+}
+.k-support__heronote {
+  font-size: var(--text-2xs);
+  color: var(--color-text-tertiary);
+}
+
+/* Ways to help: whole-row targets, each with its own color identity. */
+.k-support__actions {
+  display: grid;
+  gap: var(--space-2);
+}
+@media (min-width: 768px) {
+  .k-support__actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.k-supportaction {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
+}
+.k-supportaction:hover {
+  background: var(--color-surface-3);
+  border-color: var(--color-border-strong);
+}
+.k-supportaction:active {
+  transform: scale(0.99);
+}
+.k-supportaction__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: var(--radius-md);
+}
+.k-supportaction__icon--kofi {
+  background: color-mix(in oklab, var(--color-status-dropped) 18%, transparent);
+  color: var(--color-status-dropped);
+}
+.k-supportaction__icon--code {
+  background: var(--color-surface-3);
+  color: var(--color-text-primary);
+}
+.k-supportaction__icon--star {
+  background: color-mix(in oklab, var(--color-warning) 18%, transparent);
+  color: var(--color-warning);
+}
+.k-supportaction__icon--share {
+  background: color-mix(in oklab, var(--color-info) 18%, transparent);
+  color: var(--color-info);
+}
+.k-supportaction__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.k-supportaction__arrow {
+  color: var(--color-text-tertiary);
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.k-supportaction:hover .k-supportaction__arrow {
+  transform: translate(2px, -2px);
+  color: var(--color-text-secondary);
 }
 
 /* ── Schedule ──────────────────────────────────────────────── */
@@ -1860,50 +2038,112 @@
     padding-inline: var(--content-padding-lg);
   }
 }
-.k-stats__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--space-3);
-  margin-bottom: var(--space-6);
+/* The headline fact: how much of your life this is. A single composed
+   statement with an ember glow, not a grid of identical cards. */
+.k-stats__hero {
+  position: relative;
+  margin-bottom: var(--space-4);
+  padding: var(--space-6) var(--space-5);
+  border-radius: var(--radius-xl);
+  border: 1px solid color-mix(in oklab, var(--color-accent) 22%, var(--color-border));
+  background:
+    radial-gradient(
+      120% 150% at 12% -10%,
+      color-mix(in oklab, var(--color-accent) 16%, transparent),
+      transparent 55%
+    ),
+    var(--color-surface-2);
+  overflow: hidden;
 }
-.k-statcard {
+.k-stats__time {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
-.k-statcard--accent {
-  background: color-mix(in oklch, var(--color-accent) 10%, var(--color-surface-2));
-  border-color: color-mix(in oklch, var(--color-accent) 30%, transparent);
+.k-stats__seg {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
 }
-.k-statcard__icon {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  margin-bottom: var(--space-2);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-3);
+.k-stats__segnum {
+  font-size: 46px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+.k-stats__segunit {
+  font-size: var(--text-sm);
+  font-weight: 700;
   color: var(--color-accent-glow);
 }
-.k-statcard__value {
-  font-size: var(--text-2xl);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--color-text-primary);
-  font-variant-numeric: tabular-nums;
-}
-.k-statcard__label {
+.k-stats__timetail {
   font-size: var(--text-sm);
   font-weight: 600;
   color: var(--color-text-secondary);
 }
-.k-statcard__sub {
+.k-stats__lede {
+  margin: var(--space-3) 0 0;
+  max-width: 52ch;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.k-stats__equiv {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.k-stats__equivchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-dim);
+  color: var(--color-accent-glow);
   font-size: var(--text-2xs);
+  font-weight: 700;
+}
+.k-stats__equivchip--dim {
+  background: var(--color-surface-3);
   color: var(--color-text-tertiary);
+}
+
+/* Right-now strip: one divided surface. The 1px gap over a border-colored
+   background draws the hairlines in both directions when items wrap. */
+.k-stats__pulse {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  margin-bottom: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-border);
+  overflow: hidden;
+}
+.k-stats__pulseitem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-4);
+  background: var(--color-surface-2);
+}
+.k-stats__pulsenum {
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+.k-stats__pulselabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
 }
 .k-stats__section {
   margin-bottom: var(--space-6);
@@ -1919,7 +2159,7 @@
 }
 .k-stats__barrow {
   display: grid;
-  grid-template-columns: 130px 1fr 36px;
+  grid-template-columns: 130px 1fr 56px;
   align-items: center;
   gap: var(--space-3);
 }
@@ -1940,7 +2180,14 @@
   display: block;
   height: 100%;
   border-radius: var(--radius-full);
+  transform-origin: left;
+  animation: k-grow-x 460ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
   transition: width var(--duration-normal) var(--ease-out);
+}
+@keyframes k-grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 .k-stats__barcount {
   text-align: right;
@@ -1949,29 +2196,136 @@
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
 }
-/* Score-distribution rows: the label is just a star + a digit, so give it a
-   narrow fixed column instead of the wide status-label one. */
-.k-stats__barrow--score {
-  grid-template-columns: 44px 1fr 36px;
+.k-stats__barshare {
+  display: block;
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  color: var(--color-text-tertiary);
 }
-.k-stats__barlabel--score {
+
+/* Score distribution: a real histogram. Bars grow from the axis; the peak
+   bucket carries the full accent. */
+.k-stats__hist {
+  display: flex;
+  gap: var(--space-2);
+  height: 150px;
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+}
+.k-stats__histcol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 4px;
+}
+.k-stats__histtrack {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.k-stats__histcount {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  line-height: 1;
   color: var(--color-text-secondary);
   font-variant-numeric: tabular-nums;
 }
-.k-stats__barlabel--score svg {
+.k-stats__histbar {
+  width: 100%;
+  max-width: 34px;
+  border-radius: 4px 4px 2px 2px;
+  background: color-mix(in oklab, var(--color-accent) 62%, var(--color-surface-3));
+  transform-origin: bottom;
+  animation: k-grow-y 460ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 35ms);
+}
+.k-stats__histbar--peak {
+  background: var(--color-accent);
+  box-shadow: 0 0 12px var(--color-accent-dim);
+}
+@keyframes k-grow-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+.k-stats__histlabel {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.k-stats__histmean {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: var(--space-2);
+}
+.k-stats__histmean svg {
   color: var(--color-accent);
+}
+
+/* Most-watched franchises: rank, cover, meta. */
+.k-stats__top {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.k-stats__toprow {
+  display: grid;
+  grid-template-columns: 22px 40px 1fr;
+  gap: var(--space-3);
+  align-items: center;
+  width: 100%;
+  padding: var(--space-2);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  text-align: left;
+}
+.k-stats__toprow:hover {
+  background: var(--color-surface-3);
+}
+.k-stats__toprank {
+  justify-self: center;
+  font-size: var(--text-sm);
+  font-weight: 800;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.k-stats__top li:first-child .k-stats__toprank {
+  color: var(--color-accent-glow);
+}
+.k-stats__topcover {
+  width: 40px;
+}
+.k-stats__topbody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 @media (max-width: 420px) {
   .k-stats__barrow {
-    grid-template-columns: 110px 1fr 28px;
+    grid-template-columns: 110px 1fr 44px;
     gap: var(--space-2);
-  }
-  .k-stats__barrow--score {
-    grid-template-columns: 40px 1fr 28px;
   }
   .k-stats__barlabel {
     font-size: var(--text-xs);
+  }
+  .k-stats__segnum {
+    font-size: 38px;
+  }
+  .k-stats__hist {
+    gap: var(--space-1);
   }
 }
