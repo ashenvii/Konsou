@@ -390,12 +390,16 @@
   box-shadow: 0 0 8px color-mix(in oklab, var(--card-status, var(--color-accent)) 80%, transparent);
   transition: left var(--duration-normal) var(--ease-out);
 }
-/* Current episode, riding the colour/B&W boundary (watching + rewatching). */
+/* Current episode, riding the colour/B&W boundary (watching + rewatching).
+   Anchored to the boundary line, but shifted by its own width in proportion
+   to progress: at 0% it sits fully to the right of the line, at 100% fully to
+   the left, so it never clips past either card edge. */
 .k-card__epnow {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(calc(var(--progress, 50%) * -1), -50%);
+  transition: transform var(--duration-normal) var(--ease-out);
   z-index: 3;
   display: inline-flex;
   align-items: center;
