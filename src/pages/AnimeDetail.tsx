@@ -15,13 +15,15 @@ import { AnimeCover } from "@/components/anime/AnimeCover";
 import { EditSheet } from "@/components/anime/EditSheet";
 import { EpisodeCounter } from "@/components/anime/EpisodeCounter";
 import { StatusBadge } from "@/components/anime/StatusBadge";
+import { statusMeta } from "@/components/anime/statusMeta";
 import { StatusSheet } from "@/components/anime/StatusSheet";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
-import { useAnimeDetail } from "@/hooks/useAniList";
+import { useAnimeDetail, useRelationChain } from "@/hooks/useAniList";
+import { goBack } from "@/hooks/useAppBack";
 import { useDragScroll } from "@/hooks/useDragScroll";
 import {
   airingStatusLabel,
@@ -49,9 +51,10 @@ import type {
   MediaFormat,
   MediaSeason,
   NextAiringEpisode,
+  RelationNode,
   RelationType,
 } from "@/types/anime";
-import type { ListStatus } from "@/types/list";
+import type { AnimeListEntry, ListStatus } from "@/types/list";
 
 type DetailTab = "overview" | "cast" | "related" | "similar";
 
@@ -86,6 +89,9 @@ interface SeasonRow {
   seasonYear?: number | null;
   nextAiringEpisode?: NextAiringEpisode | null;
   episodes?: number | null;
+  /** Direct relation of the viewed title; its relationType label is
+   *  meaningful. Chain nodes found deeper carry their parent's label. */
+  direct?: boolean;
 }
 
 function fuzzyToUnixSeconds(d?: FuzzyDate | null): number | null {
@@ -124,47 +130,55 @@ function externalLinkMeta(link: ExternalLink): string[] {
   return meta;
 }
 
-function getSeasonRows(media: AnimeMedia): SeasonRow[] {
-  const rows: SeasonRow[] = [
-    {
-      id: media.id,
-      title: media.title,
-      coverImage: media.coverImage,
-      relationType: "CURRENT",
-      format: media.format,
-      status: media.status,
-      startDate: media.startDate,
-      season: media.season,
-      seasonYear: media.seasonYear,
-      nextAiringEpisode: media.nextAiringEpisode,
-      episodes: media.episodes,
-    },
-  ];
+function getSeasonRows(media: AnimeMedia, chain?: RelationNode[]): SeasonRow[] {
+  const byId = new Map<number, SeasonRow>();
+  byId.set(media.id, {
+    id: media.id,
+    title: media.title,
+    coverImage: media.coverImage,
+    relationType: "CURRENT",
+    format: media.format,
+    status: media.status,
+    startDate: media.startDate,
+    season: media.season,
+    seasonYear: media.seasonYear,
+    nextAiringEpisode: media.nextAiringEpisode,
+    episodes: media.episodes,
+    direct: true,
+  });
 
-  rows.push(
-    ...(media.relations ?? [])
-      // Manga relations (ALTERNATIVE source versions etc.) aren't openable
-      // as anime; the detail query would 404. Old cached snapshots have no
-      // type field, so only exclude explicit MANGA.
-      .filter((r) => SEASON_RELATIONS.includes(r.relationType) && r.type !== "MANGA")
-      .map(
-        (r): SeasonRow => ({
-          id: r.id,
-          title: r.title,
-          coverImage: r.coverImage,
-          relationType: r.relationType,
-          format: r.format,
-          status: r.status,
-          startDate: r.startDate,
-          season: r.season,
-          seasonYear: r.seasonYear,
-          nextAiringEpisode: r.nextAiringEpisode,
-          episodes: r.episodes,
-        }),
-      ),
-  );
+  const add = (r: RelationNode, direct: boolean) => {
+    if (byId.has(r.id)) return;
+    byId.set(r.id, {
+      id: r.id,
+      title: r.title,
+      coverImage: r.coverImage,
+      relationType: r.relationType,
+      format: r.format,
+      status: r.status,
+      startDate: r.startDate,
+      season: r.season,
+      seasonYear: r.seasonYear,
+      nextAiringEpisode: r.nextAiringEpisode,
+      episodes: r.episodes,
+      direct,
+    });
+  };
 
-  return rows.sort((a, b) => {
+  // Manga relations (ALTERNATIVE source versions etc.) aren't openable
+  // as anime; the detail query would 404. Old cached snapshots have no
+  // type field, so only exclude explicit MANGA.
+  for (const r of media.relations ?? []) {
+    if (SEASON_RELATIONS.includes(r.relationType) && r.type !== "MANGA") {
+      add(r, true);
+    }
+  }
+  // The rest of the franchise, walked breadth-first (lib/franchise/chain):
+  // entries only reachable through other seasons, so season 1 still lists
+  // season 3, the movies, everything.
+  for (const r of chain ?? []) add(r, false);
+
+  return [...byId.values()].sort((a, b) => {
     const at = fuzzyToUnixSeconds(a.startDate) ?? a.seasonYear ?? 0;
     const bt = fuzzyToUnixSeconds(b.startDate) ?? b.seasonYear ?? 0;
     return at - bt;
@@ -181,12 +195,49 @@ function seasonLabel(row: SeasonRow): string {
   return bits.join(" · ");
 }
 
-function releaseMeta(media: AnimeMedia): string[] {
-  return [
-    airingStatusLabel(media.status),
-    formatFuzzyDate(media.startDate),
-    media.episodes ? `${media.episodes} eps` : null,
-  ].filter((v): v is string => Boolean(v));
+function formatCountdown(seconds: number): string {
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  if (d > 0) return `${d}d ${h}h`;
+  const m = Math.floor((seconds % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+interface ReleaseFact {
+  label: string;
+  value: string;
+  accent?: boolean;
+}
+
+function releaseFacts(media: AnimeMedia): ReleaseFact[] {
+  const source = media.source
+    ? media.source.replace(/_/g, " ").toLowerCase()
+    : null;
+  const facts = [
+    { label: "Status", value: airingStatusLabel(media.status) },
+    { label: "First aired", value: formatFuzzyDate(media.startDate) },
+    { label: "Episodes", value: media.episodes ? String(media.episodes) : null },
+    {
+      label: "Episode length",
+      value: media.duration ? `${media.duration} min` : null,
+    },
+    { label: "Season", value: seasonYearLabel(media) },
+    { label: "Studio", value: media.studio ?? null },
+    {
+      label: "Source",
+      value: source ? source.charAt(0).toUpperCase() + source.slice(1) : null,
+    },
+  ].filter((f): f is ReleaseFact => Boolean(f.value));
+  if (media.nextAiringEpisode) {
+    facts.unshift({
+      label: "Next episode",
+      value: `EP ${media.nextAiringEpisode.episode} in ${formatCountdown(
+        media.nextAiringEpisode.timeUntilAiring,
+      )}`,
+      accent: true,
+    });
+  }
+  return facts;
 }
 
 export function AnimeDetail() {
@@ -197,6 +248,9 @@ export function AnimeDetail() {
   const genreRowRef = useDragScroll<HTMLDivElement>();
 
   const entry = useListStore((s) => (animeId ? s.map[animeId] : undefined));
+  // Whole map: the Related tab shows the user's progress on every entry of
+  // the franchise, so "what's left to watch" is readable at a glance.
+  const listMap = useListStore((s) => s.map);
   const addFromSummary = useListStore((s) => s.addFromSummary);
   const updateStatus = useListStore((s) => s.updateStatus);
   const setDubStatus = useListStore((s) => s.setDubStatus);
@@ -226,7 +280,11 @@ export function AnimeDetail() {
       ].filter(Boolean)
     : [];
 
-  const seasonRows = useMemo(() => (media ? getSeasonRows(media) : []), [media]);
+  const { data: chain, isFetching: chainLoading } = useRelationChain(media);
+  const seasonRows = useMemo(
+    () => (media ? getSeasonRows(media, chain) : []),
+    [media, chain],
+  );
   // The current title is the hero of this page; don't list it again under
   // "Related Series". Only the other seasons/entries belong there.
   const relatedRows = useMemo(
@@ -248,7 +306,7 @@ export function AnimeDetail() {
       void setDubStatus(animeId, dubLinks.length > 0);
     }
   }, [animeId, entry, media, dubLinks.length, setDubStatus]);
-  const releaseBits = media ? releaseMeta(media) : [];
+  const facts = media ? releaseFacts(media) : [];
 
   const onScroll = (e: UIEvent<HTMLDivElement>) => {
     const y = e.currentTarget.scrollTop;
@@ -284,11 +342,11 @@ export function AnimeDetail() {
       `https://www.google.com/search?q=${encodeURIComponent(`${title} anime`)}`,
     );
 
-  if (isLoading) return <DetailSkeleton onBack={() => navigate(-1)} />;
+  if (isLoading) return <DetailSkeleton onBack={goBack} />;
   if (isError || !media)
     return (
       <div className="k-page">
-        <DetailTopBar solid onBack={() => navigate(-1)} onShare={share} />
+        <DetailTopBar solid onBack={goBack} onShare={share} />
         <EmptyState
           title="Couldn't load details"
           subtitle="Check your connection and try again."
@@ -308,7 +366,7 @@ export function AnimeDetail() {
       <DetailTopBar
         solid={topbarSolid}
         title={topbarSolid ? title : undefined}
-        onBack={() => navigate(-1)}
+        onBack={goBack}
         onShare={share}
       />
 
@@ -440,6 +498,9 @@ export function AnimeDetail() {
             ))}
           </div>
 
+          {/* Keyed by tab: switching remounts the panel with a short rise-in,
+              so the change reads as content arriving, not a hard swap. */}
+          <div key={tab} className="k-detail__tabpanel">
           {tab === "overview" && (
             <>
               <section className="k-detail__section">
@@ -447,18 +508,15 @@ export function AnimeDetail() {
                   Release
                 </Text>
                 <div className="k-releasegrid">
-                  <div>
-                    <span>Release status</span>
-                    <strong>{releaseBits[0] ?? "Unknown"}</strong>
-                  </div>
-                  <div>
-                    <span>First aired</span>
-                    <strong>{releaseBits[1] ?? "Unknown"}</strong>
-                  </div>
-                  <div>
-                    <span>Episodes</span>
-                    <strong>{releaseBits[2] ?? "Unknown"}</strong>
-                  </div>
+                  {facts.map((f) => (
+                    <div
+                      key={f.label}
+                      className={f.accent ? "k-releasegrid__hot" : undefined}
+                    >
+                      <span>{f.label}</span>
+                      <strong>{f.value}</strong>
+                    </div>
+                  ))}
                 </div>
               </section>
 
@@ -563,56 +621,75 @@ export function AnimeDetail() {
           {tab === "related" && relatedRows.length > 0 && (
             <Section title="Where this sits in the series">
               <div className="k-seasonrows">
-                {seasonRows.map((row) =>
-                  row.id === media.id ? (
+                {seasonRows.map((row, i) => {
+                  const rowEntry = listMap[row.id];
+                  const isCurrent = row.id === media.id;
+                  const inner = (
+                    <>
+                      <span className="k-seasonrow__num" aria-hidden>
+                        {i + 1}
+                      </span>
+                      <AnimeCover
+                        src={getCoverUrl(row.coverImage)}
+                        alt={preferredTitle(row.title)}
+                      />
+                      <div className="k-seasonrow__body">
+                        <Text size="base" weight={600} clamp={2}>
+                          {preferredTitle(row.title)}
+                        </Text>
+                        <Text size="xs" color="secondary" clamp={2}>
+                          {seasonLabel(row)}
+                        </Text>
+                        <span className="k-seasonrow__chips">
+                          {isCurrent ? (
+                            <span className="k-seasonrow__type k-seasonrow__type--current">
+                              You are here
+                            </span>
+                          ) : (
+                            row.direct && (
+                              <span className="k-seasonrow__type">
+                                {relationTypeLabel(row.relationType)}
+                              </span>
+                            )
+                          )}
+                          {rowEntry && <SeasonRowStatus entry={rowEntry} />}
+                        </span>
+                      </div>
+                    </>
+                  );
+                  return isCurrent ? (
                     // The entry being viewed: loud, unmistakable, not a link.
                     <div
                       key={row.id}
                       className="k-seasonrow k-seasonrow--current"
                       aria-current="true"
                     >
-                      <AnimeCover src={getCoverUrl(row.coverImage)} alt={preferredTitle(row.title)} />
-                      <div className="k-seasonrow__body">
-                        <Text size="base" weight={600} clamp={2}>
-                          {preferredTitle(row.title)}
-                        </Text>
-                        <Text size="xs" color="secondary" clamp={2}>
-                          {seasonLabel(row)}
-                        </Text>
-                        <span className="k-seasonrow__type k-seasonrow__type--current">
-                          You are here
-                        </span>
-                      </div>
+                      {inner}
                     </div>
                   ) : (
                     <button
                       key={row.id}
                       type="button"
                       className="k-seasonrow"
-                      onClick={() => navigate(`/anime/${row.id}`)}
+                      onClick={() => navigate(`/anime/${row.id}`, { replace: true })}
                     >
-                      <AnimeCover src={getCoverUrl(row.coverImage)} alt={preferredTitle(row.title)} />
-                      <div className="k-seasonrow__body">
-                        <Text size="base" weight={600} clamp={2}>
-                          {preferredTitle(row.title)}
-                        </Text>
-                        <Text size="xs" color="secondary" clamp={2}>
-                          {seasonLabel(row)}
-                        </Text>
-                        <span className="k-seasonrow__type">
-                          {relationTypeLabel(row.relationType)}
-                        </span>
-                      </div>
+                      {inner}
                     </button>
-                  ),
-                )}
+                  );
+                })}
               </div>
+              {chainLoading && (
+                <Text size="xs" color="tertiary" className="k-seasonrows__loading">
+                  Looking for the rest of the series…
+                </Text>
+              )}
             </Section>
           )}
 
           {tab === "similar" && (
-            <RecommendationsRow media={media} onOpen={(rid) => navigate(`/anime/${rid}`)} />
+            <RecommendationsRow media={media} onOpen={(rid) => navigate(`/anime/${rid}`, { replace: true })} />
           )}
+          </div>
         </div>
       </div>
 
@@ -631,6 +708,23 @@ export function AnimeDetail() {
         <EditSheet open={editOpen} onClose={() => setEditOpen(false)} anilistId={animeId} />
       )}
     </div>
+  );
+}
+
+/** The user's own standing on a franchise row: watched, progress, planned. */
+function SeasonRowStatus({ entry }: { entry: AnimeListEntry }) {
+  const meta = statusMeta(entry.status);
+  const label =
+    entry.status === "completed"
+      ? "Watched"
+      : entry.status === "plan_to_watch"
+        ? "Planned"
+        : `${entry.episodes_watched} / ${entry.total_episodes ?? "?"}`;
+  return (
+    <span className="k-seasonrow__mystatus" style={{ color: meta.color }}>
+      <Icon icon={meta.icon} size={11} weight="fill" />
+      {label}
+    </span>
   );
 }
 

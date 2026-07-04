@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { anilist } from "@/lib/api/anilist/client";
+import { walkRelationChain } from "@/lib/franchise/chain";
 import { indexSummaries } from "@/lib/search/localTitleIndex";
 import type { AiringStatus, BrowseSort, SearchPage } from "@/lib/api/anilist/client";
-import type { AnimeSummary, MediaSeason } from "@/types/anime";
+import type { AnimeMedia, AnimeSummary, MediaSeason } from "@/types/anime";
 
 const FIVE_MIN = 5 * 60 * 1000;
 
@@ -130,6 +131,21 @@ export function useAnimeDetail(id: number | null) {
     queryFn: () => anilist.getById(id!),
     enabled: id != null,
     staleTime: 24 * 60 * 60 * 1000,
+    networkMode: "offlineFirst",
+  });
+}
+
+/**
+ * The whole franchise chain for one title (relations-of-relations, walked
+ * breadth-first). Powers the Related tab's full watch order; while it loads
+ * the tab falls back to the one-hop relations already in the detail payload.
+ */
+export function useRelationChain(media: AnimeMedia | null | undefined) {
+  return useQuery({
+    queryKey: ["relation-chain", media?.id ?? null],
+    queryFn: () => walkRelationChain(media!),
+    enabled: !!media,
+    staleTime: 6 * 60 * 60 * 1000,
     networkMode: "offlineFirst",
   });
 }
