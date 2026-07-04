@@ -19,7 +19,7 @@ export function TopBar() {
       <button
         type="button"
         className="k-topbar__avatar"
-        onClick={() => navigate("/settings")}
+        onClick={() => navigate("/settings", { replace: true })}
         aria-label="Settings and account"
       >
         {account?.avatarUrl ? (

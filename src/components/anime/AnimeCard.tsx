@@ -59,7 +59,7 @@ function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
 
   const { increment, pending } = useEpisodeIncrement(media.id, watched, total);
 
-  const open = () => navigate(`/anime/${media.id}`);
+  const open = () => navigate(`/anime/${media.id}`, { replace: true });
   const stop = (e: MouseEvent) => e.stopPropagation();
 
   const quickAction = (e: MouseEvent) => {

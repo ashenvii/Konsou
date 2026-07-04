@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
@@ -16,7 +17,7 @@ import { SupportSettings } from "@/pages/settings/SupportSettings";
 import { AboutSettings } from "@/pages/settings/AboutSettings";
 import { Stats } from "@/pages/Stats";
 
-function Wrap({ name, children }: { name: string; children: React.ReactNode }) {
+function Wrap({ name, children }: { name: string; children: ReactNode }) {
   return <ErrorBoundary name={name}>{children}</ErrorBoundary>;
 }
 

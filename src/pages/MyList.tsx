@@ -182,7 +182,7 @@ export function MyList() {
           <div className="k-mylist-empty__actions">
             <Button
               variant="primary"
-              onClick={() => navigate("/discover", { state: { fromSearchIntent: true } })}
+              onClick={() => navigate("/discover", { replace: true, state: { fromSearchIntent: true } })}
             >
               Search for anime
             </Button>

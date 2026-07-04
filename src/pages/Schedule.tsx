@@ -162,7 +162,7 @@ export function Schedule() {
                   key={it.entry.anilist_id}
                   type="button"
                   className="k-schedrow"
-                  onClick={() => navigate(`/anime/${it.entry.anilist_id}`)}
+                  onClick={() => navigate(`/anime/${it.entry.anilist_id}`, { replace: true })}
                 >
                   <AnimeCover
                     src={it.entry.cover_url ?? undefined}
@@ -202,7 +202,7 @@ export function Schedule() {
                   key={e.anilist_id}
                   type="button"
                   className="k-schedrow k-schedrow--announced"
-                  onClick={() => navigate(`/anime/${e.anilist_id}`)}
+                  onClick={() => navigate(`/anime/${e.anilist_id}`, { replace: true })}
                 >
                   <AnimeCover
                     src={e.cover_url ?? undefined}

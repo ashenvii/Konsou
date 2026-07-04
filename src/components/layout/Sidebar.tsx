@@ -1,9 +1,12 @@
 import { useRef, useState } from "react";
+import type { FocusEvent, MouseEvent } from "react";
 import { NavLink } from "react-router-dom";
 import { Icon } from "@/components/ui/Icon";
 import { useNotificationStore } from "@/lib/store/notificationStore";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import { useNavStacks } from "@/lib/navStacks";
+import { useTabPress } from "@/hooks/useTabPress";
 import { NAV_ITEMS } from "./navConfig";
 import { APP_VERSION } from "@/lib/updater";
 
@@ -22,6 +25,8 @@ export function Sidebar() {
   const alertCount = useNotificationStore((s) => s.items.length);
   const account = useAuthStore((s) => s.account);
   const sidebarMode = useSettingsStore((s) => s.sidebarMode);
+  const currentTab = useNavStacks((s) => s.currentTab);
+  const onTabPress = useTabPress();
 
   const [hovered, setHovered] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -52,7 +57,7 @@ export function Sidebar() {
   };
 
   // Collapse early when the pointer enters the empty strip right of the labels.
-  const onMove = (e: React.MouseEvent<HTMLElement>) => {
+  const onMove = (e: MouseEvent<HTMLElement>) => {
     if (!isHoverMode || !hovered) return;
     const x = e.clientX - e.currentTarget.getBoundingClientRect().left;
     if (x > CLOSE_X) scheduleClose();
@@ -66,7 +71,7 @@ export function Sidebar() {
         onMouseLeave: closeNow,
         onMouseMove: onMove,
         onFocusCapture: open,
-        onBlurCapture: (e: React.FocusEvent<HTMLElement>) => {
+        onBlurCapture: (e: FocusEvent<HTMLElement>) => {
           if (!e.currentTarget.contains(e.relatedTarget as Node | null)) closeNow();
         },
       }
@@ -87,40 +92,44 @@ export function Sidebar() {
       </div>
 
       <nav className="k-sidebar__nav" aria-label="Primary">
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            title={item.label}
-            className={({ isActive }) =>
-              `k-sidebar__item${isActive ? " k-sidebar__item--active" : ""}`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <span className="k-sidebar__icon">
-                  <Icon
-                    icon={item.icon}
-                    size={22}
-                    weight={isActive ? "fill" : "regular"}
-                  />
-                  {item.badge && alertCount > 0 && (
-                    <span className="k-nav__badge">
-                      {alertCount > 9 ? "9+" : alertCount}
-                    </span>
-                  )}
-                </span>
-                <span className="k-sidebar__label">{item.label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          // The owning tab stays lit while its detail/settings pages are up.
+          const active = currentTab === item.to;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              title={item.label}
+              className={`k-sidebar__item${active ? " k-sidebar__item--active" : ""}`}
+              onClick={(e) => {
+                // Per-tab stack policy (lib/navStacks), not browser history.
+                e.preventDefault();
+                onTabPress(item.to);
+              }}
+            >
+              <span className="k-sidebar__icon">
+                <Icon
+                  icon={item.icon}
+                  size={22}
+                  weight={active ? "fill" : "regular"}
+                />
+                {item.badge && alertCount > 0 && (
+                  <span className="k-nav__badge">
+                    {alertCount > 9 ? "9+" : alertCount}
+                  </span>
+                )}
+              </span>
+              <span className="k-sidebar__label">{item.label}</span>
+            </NavLink>
+          );
+        })}
       </nav>
 
       <div className="k-sidebar__footer">
         <NavLink
           to="/settings"
           title="Settings, account & stats"
+          replace
           className={({ isActive }) =>
             `k-sidebar__account${isActive ? " k-sidebar__account--active" : ""}`
           }

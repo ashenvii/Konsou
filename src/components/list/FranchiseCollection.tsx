@@ -158,7 +158,7 @@ export function FranchiseCollection({
         group={activeGroup}
         open={activeGroup != null}
         onClose={() => setActiveRootId(null)}
-        onNavigate={(id) => navigate(`/anime/${id}`)}
+        onNavigate={(id) => navigate(`/anime/${id}`, { replace: true })}
       />
     </>
   );

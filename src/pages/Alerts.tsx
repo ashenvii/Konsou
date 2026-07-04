@@ -78,7 +78,7 @@ function AlertCard({ n }: { n: KonsouNotification }) {
     <div className="k-alert">
       <button
         className="k-alert__cover"
-        onClick={() => navigate(`/anime/${n.related_id}`)}
+        onClick={() => navigate(`/anime/${n.related_id}`, { replace: true })}
         aria-label={`Open ${n.related_title}`}
       >
         <AnimeCover src={n.related_cover} alt={n.related_title} decorative />
@@ -111,7 +111,7 @@ function AlertCard({ n }: { n: KonsouNotification }) {
               size="sm"
               variant="primary"
               onClick={() => {
-                navigate(`/anime/${n.related_id}`);
+                navigate(`/anime/${n.related_id}`, { replace: true });
               }}
             >
               View
