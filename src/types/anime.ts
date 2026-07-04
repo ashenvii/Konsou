@@ -102,6 +102,9 @@ export interface RelationNode {
   relationType: RelationType;
   id: number;
   idMal?: number | null;
+  /** "ANIME" | "MANGA" — relations can point at manga (e.g. ALTERNATIVE
+   *  source versions); those must not be offered as openable anime. */
+  type?: "ANIME" | "MANGA" | null;
   title: AnimeTitle;
   format?: MediaFormat | null;
   status?: AniListMediaStatus | null;
@@ -140,6 +143,8 @@ export interface AnimeMedia extends AnimeSummary {
   description?: string | null;
   duration?: number | null;
   source?: string | null;
+  /** Official trailer; site is usually "youtube" (id = video id). */
+  trailer?: { id: string; site: string; thumbnail: string | null } | null;
   startDate?: FuzzyDate | null;
   endDate?: FuzzyDate | null;
   tags?: MediaTag[];

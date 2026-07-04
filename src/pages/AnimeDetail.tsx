@@ -3,6 +3,9 @@ import type { ReactNode, UIEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ChevronLeft,
+  Copy,
+  Globe,
+  Play,
   Plus,
   Share2,
   Star,
@@ -19,6 +22,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useAnimeDetail } from "@/hooks/useAniList";
+import { useDragScroll } from "@/hooks/useDragScroll";
 import {
   airingStatusLabel,
   alternateTitles,
@@ -31,6 +35,7 @@ import {
   stripHtml,
 } from "@/lib/format";
 import { openExternal } from "@/lib/openExternal";
+import { getDisabledStatuses } from "@/lib/statusValidation";
 import { toast } from "@/lib/store/toastStore";
 import { useListStore } from "@/lib/store/listStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
@@ -47,6 +52,8 @@ import type {
   RelationType,
 } from "@/types/anime";
 import type { ListStatus } from "@/types/list";
+
+type DetailTab = "overview" | "cast" | "related" | "similar";
 
 const SEASON_RELATIONS: RelationType[] = [
   "PREQUEL",
@@ -136,7 +143,10 @@ function getSeasonRows(media: AnimeMedia): SeasonRow[] {
 
   rows.push(
     ...(media.relations ?? [])
-      .filter((r) => SEASON_RELATIONS.includes(r.relationType))
+      // Manga relations (ALTERNATIVE source versions etc.) aren't openable
+      // as anime; the detail query would 404. Old cached snapshots have no
+      // type field, so only exclude explicit MANGA.
+      .filter((r) => SEASON_RELATIONS.includes(r.relationType) && r.type !== "MANGA")
       .map(
         (r): SeasonRow => ({
           id: r.id,
@@ -184,6 +194,7 @@ export function AnimeDetail() {
   const animeId = id ? Number(id) : null;
   const navigate = useNavigate();
   const { data: media, isLoading, isError } = useAnimeDetail(animeId);
+  const genreRowRef = useDragScroll<HTMLDivElement>();
 
   const entry = useListStore((s) => (animeId ? s.map[animeId] : undefined));
   const addFromSummary = useListStore((s) => s.addFromSummary);
@@ -195,6 +206,7 @@ export function AnimeDetail() {
   const [editOpen, setEditOpen] = useState(false);
   const [synopsisOpen, setSynopsisOpen] = useState(false);
   const [topbarSolid, setTopbarSolid] = useState(false);
+  const [tab, setTab] = useState<DetailTab>("overview");
   const bannerRef = useRef<HTMLDivElement>(null);
 
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
@@ -257,6 +269,20 @@ export function AnimeDetail() {
       void openExternal(url);
     }
   };
+
+  const copyTitle = async () => {
+    try {
+      await navigator.clipboard.writeText(title);
+      toast.success("Title copied");
+    } catch {
+      toast.error("Couldn't copy the title");
+    }
+  };
+
+  const searchGoogle = () =>
+    void openExternal(
+      `https://www.google.com/search?q=${encodeURIComponent(`${title} anime`)}`,
+    );
 
   if (isLoading) return <DetailSkeleton onBack={() => navigate(-1)} />;
   if (isError || !media)
@@ -333,6 +359,16 @@ export function AnimeDetail() {
                 </Text>
               )}
             </div>
+            <div className="k-detail__titleactions">
+              <button type="button" onClick={() => void copyTitle()}>
+                <Icon icon={Copy} size={13} />
+                Copy title
+              </button>
+              <button type="button" onClick={searchGoogle}>
+                <Icon icon={Globe} size={13} />
+                Google
+              </button>
+            </div>
           </div>
         </div>
 
@@ -380,124 +416,203 @@ export function AnimeDetail() {
             </Button>
           )}
 
-          <section className="k-detail__section">
-            <Text as="h2" size="lg" weight={600} className="k-detail__sectiontitle">
-              Release
-            </Text>
-            <div className="k-releasegrid">
-              <div>
-                <span>Release status</span>
-                <strong>{releaseBits[0] ?? "Unknown"}</strong>
-              </div>
-              <div>
-                <span>First aired</span>
-                <strong>{releaseBits[1] ?? "Unknown"}</strong>
-              </div>
-              <div>
-                <span>Episodes</span>
-                <strong>{releaseBits[2] ?? "Unknown"}</strong>
-              </div>
-            </div>
-          </section>
-
-          {relatedRows.length > 0 && (
-            <Section title="Related Series">
-              <div className="k-seasonrows">
-                {relatedRows.map((row) => (
-                  <button
-                    key={row.id}
-                    type="button"
-                    className="k-seasonrow"
-                    onClick={() => navigate(`/anime/${row.id}`)}
-                  >
-                    <AnimeCover src={getCoverUrl(row.coverImage)} alt={preferredTitle(row.title)} />
-                    <div className="k-seasonrow__body">
-                      <Text size="base" weight={600} clamp={2}>
-                        {preferredTitle(row.title)}
-                      </Text>
-                      <Text size="xs" color="secondary" clamp={2}>
-                        {seasonLabel(row)}
-                      </Text>
-                      <span className="k-seasonrow__type">
-                        {relationTypeLabel(row.relationType)}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {/* Synopsis */}
-          {synopsis && (
-            <section className="k-detail__section">
-              <Text
-                size="base"
-                color="secondary"
-                clamp={synopsisOpen ? undefined : 3}
-                style={{ whiteSpace: "pre-line" }}
-              >
-                {synopsis}
-              </Text>
+          {/* Wiki-style tabs: judge the show without leaving the app. */}
+          <div className="k-subtabs k-detail__tabs" role="tablist">
+            {(
+              [
+                ["overview", "Overview"],
+                ["cast", "Cast"],
+                ...(relatedRows.length > 0 ? [["related", "Related"]] : []),
+                ...((media.recommendations?.length ?? 0) > 0
+                  ? [["similar", "Similar"]]
+                  : []),
+              ] as [DetailTab, string][]
+            ).map(([id, label]) => (
               <button
-                type="button"
-                className="k-detail__showmore"
-                onClick={() => setSynopsisOpen((o) => !o)}
+                key={id}
+                role="tab"
+                aria-selected={tab === id}
+                className={`k-subtab${tab === id ? " k-subtab--active" : ""}`}
+                onClick={() => setTab(id)}
               >
-                {synopsisOpen ? "Show less" : "Show more"}
+                {label}
               </button>
-            </section>
-          )}
+            ))}
+          </div>
 
-          {/* Genres */}
-          {media.genres && media.genres.length > 0 && (
-            <section className="k-detail__section">
-              <div className="k-chiprow k-chiprow--scroll">
-                {media.genres.map((g) => (
-                  <span key={g} className="k-genre">
-                    {g}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {streamingLinks.length > 0 && (
-            <Section title="Availability">
-              <div className="k-availabilitygrid">
-                {streamingLinks.slice(0, 8).map((l) => {
-                  const meta = externalLinkMeta(l);
-                  const dub = isDubLink(l);
-                  return (
-                    <button
-                      key={l.url}
-                      type="button"
-                      className={`k-availability${dub ? " k-availability--dub" : ""}`}
-                      onClick={() => void openExternal(l.url)}
-                    >
-                      <span className="k-availability__top">
-                        <Tv size={16} />
-                        <span>{l.site}</span>
-                      </span>
-                      <span className="k-availability__meta">
-                        {meta.length > 0 ? meta.join(" · ") : "Streaming"}
-                      </span>
-                      {dub && <span className="k-availability__dub">Dub source</span>}
-                    </button>
-                  );
-                })}
-              </div>
-              {dubLinks.length > 0 && (
-                <Text size="xs" color="tertiary">
-                  Dub source is inferred from common dub-capable streaming providers.
+          {tab === "overview" && (
+            <>
+              <section className="k-detail__section">
+                <Text as="h2" size="lg" weight={600} className="k-detail__sectiontitle">
+                  Release
                 </Text>
+                <div className="k-releasegrid">
+                  <div>
+                    <span>Release status</span>
+                    <strong>{releaseBits[0] ?? "Unknown"}</strong>
+                  </div>
+                  <div>
+                    <span>First aired</span>
+                    <strong>{releaseBits[1] ?? "Unknown"}</strong>
+                  </div>
+                  <div>
+                    <span>Episodes</span>
+                    <strong>{releaseBits[2] ?? "Unknown"}</strong>
+                  </div>
+                </div>
+              </section>
+
+              {/* Synopsis */}
+              {synopsis && (
+                <section className="k-detail__section">
+                  <Text
+                    size="base"
+                    color="secondary"
+                    clamp={synopsisOpen ? undefined : 3}
+                    style={{ whiteSpace: "pre-line" }}
+                  >
+                    {synopsis}
+                  </Text>
+                  <button
+                    type="button"
+                    className="k-detail__showmore"
+                    onClick={() => setSynopsisOpen((o) => !o)}
+                  >
+                    {synopsisOpen ? "Show less" : "Show more"}
+                  </button>
+                </section>
               )}
+
+              {/* Genres */}
+              {media.genres && media.genres.length > 0 && (
+                <section className="k-detail__section">
+                  <div ref={genreRowRef} className="k-chiprow k-chiprow--scroll">
+                    {media.genres.map((g) => (
+                      <span key={g} className="k-genre">
+                        {g}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {media.trailer?.site === "youtube" && (
+                <Section title="Trailer">
+                  <button
+                    type="button"
+                    className="k-trailer"
+                    onClick={() =>
+                      void openExternal(
+                        `https://www.youtube.com/watch?v=${media.trailer!.id}`,
+                      )
+                    }
+                  >
+                    {media.trailer.thumbnail && (
+                      <img src={media.trailer.thumbnail} alt="" loading="lazy" />
+                    )}
+                    <span className="k-trailer__play">
+                      <Icon icon={Play} size={22} weight="fill" />
+                    </span>
+                    <span className="k-trailer__label">Watch on YouTube</span>
+                  </button>
+                </Section>
+              )}
+
+              {streamingLinks.length > 0 && (
+                <Section title="Availability">
+                  <div className="k-availabilitygrid">
+                    {streamingLinks.slice(0, 8).map((l) => {
+                      const meta = externalLinkMeta(l);
+                      const dub = isDubLink(l);
+                      return (
+                        <button
+                          key={l.url}
+                          type="button"
+                          className={`k-availability${dub ? " k-availability--dub" : ""}`}
+                          onClick={() => void openExternal(l.url)}
+                        >
+                          <span className="k-availability__top">
+                            <Tv size={16} />
+                            <span>{l.site}</span>
+                          </span>
+                          <span className="k-availability__meta">
+                            {meta.length > 0 ? meta.join(" · ") : "Streaming"}
+                          </span>
+                          {dub && <span className="k-availability__dub">Dub source</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {dubLinks.length > 0 && (
+                    <Text size="xs" color="tertiary">
+                      Dub source is inferred from common dub-capable streaming providers.
+                    </Text>
+                  )}
+                </Section>
+              )}
+            </>
+          )}
+
+          {tab === "cast" && (
+            <>
+              <CharactersRow media={media} />
+              <StaffRow media={media} />
+            </>
+          )}
+
+          {tab === "related" && relatedRows.length > 0 && (
+            <Section title="Where this sits in the series">
+              <div className="k-seasonrows">
+                {seasonRows.map((row) =>
+                  row.id === media.id ? (
+                    // The entry being viewed: loud, unmistakable, not a link.
+                    <div
+                      key={row.id}
+                      className="k-seasonrow k-seasonrow--current"
+                      aria-current="true"
+                    >
+                      <AnimeCover src={getCoverUrl(row.coverImage)} alt={preferredTitle(row.title)} />
+                      <div className="k-seasonrow__body">
+                        <Text size="base" weight={600} clamp={2}>
+                          {preferredTitle(row.title)}
+                        </Text>
+                        <Text size="xs" color="secondary" clamp={2}>
+                          {seasonLabel(row)}
+                        </Text>
+                        <span className="k-seasonrow__type k-seasonrow__type--current">
+                          You are here
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      key={row.id}
+                      type="button"
+                      className="k-seasonrow"
+                      onClick={() => navigate(`/anime/${row.id}`)}
+                    >
+                      <AnimeCover src={getCoverUrl(row.coverImage)} alt={preferredTitle(row.title)} />
+                      <div className="k-seasonrow__body">
+                        <Text size="base" weight={600} clamp={2}>
+                          {preferredTitle(row.title)}
+                        </Text>
+                        <Text size="xs" color="secondary" clamp={2}>
+                          {seasonLabel(row)}
+                        </Text>
+                        <span className="k-seasonrow__type">
+                          {relationTypeLabel(row.relationType)}
+                        </span>
+                      </div>
+                    </button>
+                  ),
+                )}
+              </div>
             </Section>
           )}
 
-          <CharactersRow media={media} />
-          <StaffRow media={media} />
-          <RecommendationsRow media={media} onOpen={(rid) => navigate(`/anime/${rid}`)} />
+          {tab === "similar" && (
+            <RecommendationsRow media={media} onOpen={(rid) => navigate(`/anime/${rid}`)} />
+          )}
         </div>
       </div>
 
@@ -508,6 +623,9 @@ export function AnimeDetail() {
         current={entry?.status}
         onPick={onPickStatus}
         onRemove={inList ? () => remove(animeId!) : undefined}
+        disabledStatuses={getDisabledStatuses(
+          entry?.airing_status ?? media.status ?? null,
+        )}
       />
       {inList && animeId != null && (
         <EditSheet open={editOpen} onClose={() => setEditOpen(false)} anilistId={animeId} />

@@ -25,6 +25,7 @@ const RELATION_NODE = `
   node {
     id
     idMal
+    type
     title { romaji english native }
     format
     status
@@ -54,6 +55,7 @@ query Detail($id: Int!) {
     description(asHtml: true)
     duration
     source
+    trailer { id site thumbnail }
     startDate { year month day }
     endDate { year month day }
     isFavourite
@@ -89,10 +91,10 @@ query ByMalIds($idMal_in: [Int], $perPage: Int!) {
 }`;
 
 export const BROWSE_QUERY = `
-query Browse($page: Int!, $perPage: Int!, $sort: [MediaSort], $season: MediaSeason, $seasonYear: Int, $genre: String) {
+query Browse($page: Int!, $perPage: Int!, $sort: [MediaSort], $season: MediaSeason, $seasonYear: Int, $genre: String, $tag: String) {
   Page(page: $page, perPage: $perPage) {
     pageInfo { hasNextPage currentPage }
-    media(type: ANIME, sort: $sort, season: $season, seasonYear: $seasonYear, genre: $genre, isAdult: false) {
+    media(type: ANIME, sort: $sort, season: $season, seasonYear: $seasonYear, genre: $genre, tag: $tag, isAdult: false) {
       ${MEDIA_SUMMARY}
     }
   }

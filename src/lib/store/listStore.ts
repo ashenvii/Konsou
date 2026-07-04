@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { getDb } from "@/lib/db";
 import { getCoverUrl, preferredTitle } from "@/lib/format";
 import { resolveFranchiseChain } from "@/lib/franchise/cascade";
+import { statusBlockReason } from "@/lib/statusValidation";
 import { syncQueue } from "@/lib/sync/queue";
 import { syncManager } from "@/lib/sync/syncManager";
 import { toast } from "./toastStore";
@@ -207,6 +208,14 @@ export const useListStore = create<ListState>((set, get) => {
     getEntry: (anilistId) => get().map[anilistId],
 
     addFromSummary: async (s, status) => {
+      // Hard guard behind the UI's disabled options: an unaired show can't be
+      // watched/completed, an airing one can't be completed, no matter which
+      // surface tried to do it.
+      const blocked = statusBlockReason(s.status ?? null, status);
+      if (blocked) {
+        toast.error(blocked);
+        return;
+      }
       const now = Date.now();
       const total = s.episodes ?? null;
       const entry: AnimeListEntry = {
@@ -289,6 +298,16 @@ export const useListStore = create<ListState>((set, get) => {
     updateStatus: async (anilistId, status) => {
       const prev = get().map[anilistId];
       if (!prev) return;
+      // AniList's RELEASING can lag a finale; someone who watched the last
+      // known episode has genuinely finished, so let that complete stand.
+      const finishedByCount =
+        prev.total_episodes != null &&
+        prev.episodes_watched >= prev.total_episodes;
+      const blocked = statusBlockReason(prev.airing_status, status);
+      if (blocked && !(status === "completed" && finishedByCount)) {
+        toast.error(blocked);
+        return;
+      }
       const patch: ListEntryPatch = { status };
       if (status === "completed") {
         patch.completed_at = prev.completed_at ?? Date.now();

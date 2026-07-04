@@ -55,6 +55,7 @@ export function mapRelations(raw: any): RelationNode[] {
       relationType: e.relationType,
       id: e.node.id,
       idMal: e.node.idMal ?? null,
+      type: e.node.type ?? null,
       title: e.node.title,
       format: e.node.format ?? null,
       status: e.node.status ?? null,
@@ -106,6 +107,13 @@ export function mapDetail(raw: any): AnimeMedia {
     description: raw.description ?? null,
     duration: raw.duration ?? null,
     source: raw.source ?? null,
+    trailer: raw.trailer?.id
+      ? {
+          id: String(raw.trailer.id),
+          site: raw.trailer.site ?? "",
+          thumbnail: raw.trailer.thumbnail ?? null,
+        }
+      : null,
     startDate: raw.startDate ?? null,
     endDate: raw.endDate ?? null,
     isFavourite: raw.isFavourite ?? false,

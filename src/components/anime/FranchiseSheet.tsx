@@ -136,7 +136,13 @@ export function FranchiseSheet({
 
     for (const rels of Object.values(relMap ?? {})) {
       for (const r of rels) {
-        if (SIDE_REL_TYPES.has(r.relationType) && r.format !== "MUSIC") {
+        if (
+          SIDE_REL_TYPES.has(r.relationType) &&
+          r.format !== "MUSIC" &&
+          // Manga can't be opened or tracked as anime (old snapshots have
+          // no type field; only exclude explicit MANGA).
+          r.type !== "MANGA"
+        ) {
           addSide(r.id);
         }
       }
@@ -248,6 +254,10 @@ export function FranchiseSheet({
         featured={isFrontier}
         titleLanguage={titleLanguage}
         onAdd={() => setPendingAdd(relationToSummary(relNode))}
+        onOpen={() => {
+          onClose();
+          onNavigate(id);
+        }}
       />
     );
   };
@@ -503,11 +513,13 @@ function AddRow({
   featured,
   titleLanguage,
   onAdd,
+  onOpen,
 }: {
   rel: RelationNode;
   featured: boolean;
   titleLanguage: string;
   onAdd: () => void;
+  onOpen: () => void;
 }) {
   const title = preferredTitle(rel.title, titleLanguage as never);
   const cover = getCoverUrl(rel.coverImage);
@@ -522,14 +534,26 @@ function AddRow({
 
   return (
     <div className={`k-srow k-srow--add${featured ? " k-srow--next" : ""}`}>
-      <div className="k-srow__cover">
-        <AnimeCover src={cover} alt={title} decorative radius="var(--radius-sm)" />
-      </div>
+      <button
+        type="button"
+        className="k-srow__open"
+        onClick={onOpen}
+        aria-label={`Open ${title}`}
+      >
+        <div className="k-srow__cover">
+          <AnimeCover src={cover} alt={title} decorative radius="var(--radius-sm)" />
+          <span className="k-srow__openhint" aria-hidden>
+            <Icon icon={ChevronRight} size={18} />
+          </span>
+        </div>
+      </button>
       <div className="k-srow__main">
         {featured && <span className="k-srow__nextlabel">Up next</span>}
-        <Text size="sm" weight={600} clamp={1}>
-          {title}
-        </Text>
+        <button type="button" className="k-srow__titlebtn" onClick={onOpen}>
+          <Text size="sm" weight={600} clamp={1}>
+            {title}
+          </Text>
+        </button>
         <div className="k-srow__controls">
           {meta && <span className="k-srow__dim">{meta}</span>}
           {isSideContent && (
