@@ -153,22 +153,46 @@
   background: var(--color-surface-3);
   color: var(--color-text-primary);
 }
-/* At narrow widths: search takes its own row, controls fill the second row */
+/* Collapsed search trigger + view-cycle button (narrow screens only). */
+.k-toolbar__searchbtn,
+.k-toolbar__viewcycle {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+.k-toolbar__searchbtn:active,
+.k-toolbar__viewcycle:active {
+  background: var(--color-surface-3);
+}
+
+/* Narrow: one 44px row. Search lives behind an icon (expands over the row
+   when active, DIM-style); the filter chip keeps its label and count; the
+   view toggle collapses to a single cycle button. */
 @media (max-width: 600px) {
   .k-toolbar__searchrow {
-    flex-wrap: wrap;
     gap: var(--space-2);
-    padding-bottom: var(--space-2);
-  }
-  .k-searchbar {
-    width: 100%;
   }
   .k-toolbar__controls {
-    width: 100%;
-    justify-content: space-between;
+    flex: 1;
+    min-width: 0;
+    gap: var(--space-2);
+  }
+  .k-toolbar__filter {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+  }
+  .k-toolbar__sort {
+    flex: none;
   }
 }
-@media (max-width: 640px) {
+@media (min-width: 601px) and (max-width: 640px) {
   .k-toolbar__filter-label {
     display: none;
   }

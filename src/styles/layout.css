@@ -57,8 +57,9 @@
   box-shadow:
     0 8px 32px oklch(0% 0 0 / 40%),
     0 2px 8px oklch(0% 0 0 / 20%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  /* No backdrop-filter here: --color-surface is opaque in every theme, so a
+     blur behind it is invisible — but the WebView still re-blurs the scrolling
+     content under the pill every frame, which tanks scroll on Android. */
   width: 100%;
   max-width: 360px;
 }

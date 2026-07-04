@@ -10,16 +10,36 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
 import { groupEntries } from "@/lib/franchise/grouping";
 import { normalizeForSearch, preferredTitle } from "@/lib/format";
+import { listStatusLabel } from "@/lib/format";
 import { useListStore } from "@/lib/store/listStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import { getUiState, setUiState } from "@/lib/uiState";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
 import type {
   ListFilter,
+  ListStatus,
   SortSpec,
   TitleLanguage,
 } from "@/types/list";
 
 const LAST_FILTER_KEY = "konsou.last_filter";
+const STATUS_FILTER_KEY = "konsou.status_filter";
+
+/** Load the persisted multi-select status filter, migrating the old
+ *  single-choice value ("watching" etc.) the first time it's seen. */
+function loadStatusFilter(): ListStatus[] {
+  const raw = localStorage.getItem(STATUS_FILTER_KEY);
+  if (raw) {
+    try {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return arr as ListStatus[];
+    } catch {
+      // fall through to migration
+    }
+  }
+  const legacy = localStorage.getItem(LAST_FILTER_KEY);
+  return legacy && legacy !== "all" ? [legacy as ListStatus] : [];
+}
 
 function groupTitle(g: FranchiseGroup, pref: TitleLanguage): string {
   const root = g.entries.find((e) => e.anilist_id === g.rootId) ?? g.entries[0];
@@ -62,13 +82,19 @@ export function MyList() {
   const setDefaultView = useSettingsStore((s) => s.setDefaultView);
   const setDefaultSort = useSettingsStore((s) => s.setDefaultSort);
 
-  const [filter, setFilter] = useState<ListFilter>(
-    () => (localStorage.getItem(LAST_FILTER_KEY) as ListFilter) ?? "all",
-  );
-  const [search, setSearch] = useState("");
+  // Multi-select: empty array = no filter (everything shows). Statuses
+  // combine as OR — "watching + plan to watch" shows both groups at once.
+  const [selected, setSelected] = useState<ListStatus[]>(loadStatusFilter);
+  const [search, setSearchState] = useState(() => getUiState("mylist.search", ""));
   const [sortOpen, setSortOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 400);
+
+  // Survives navigating into an anime and back (session-scoped).
+  const setSearch = (v: string) => {
+    setSearchState(v);
+    setUiState("mylist.search", v);
+  };
 
   // Status counts operate on individual entries so the filter tabs accurately
   // reflect how many anime are tracked at each status.
@@ -88,15 +114,17 @@ export function MyList() {
 
   // Group all entries into franchise clusters first, then filter at the group
   // level so a franchise with mixed statuses (e.g. S1=watching, S2=plan_to_watch)
-  // still appears as a single card under every relevant filter tab.
+  // still appears as a single card under every relevant status selection.
   const groups = useMemo(() => {
     const allGroups = groupEntries(entries);
     const filtered =
-      filter === "all"
+      selected.length === 0
         ? allGroups
-        : allGroups.filter((g) => g.entries.some((e) => e.status === filter));
+        : allGroups.filter((g) =>
+            g.entries.some((e) => selected.includes(e.status)),
+          );
     return filtered.sort((a, b) => compareGroups(a, b, defaultSort, titleLanguage));
-  }, [entries, filter, defaultSort, titleLanguage]);
+  }, [entries, selected, defaultSort, titleLanguage]);
 
   // Search filters the list DOWN to just what matches, so a 4000-entry library
   // collapses to the handful you typed instead of making you scroll hunting for
@@ -114,10 +142,17 @@ export function MyList() {
     );
   }, [query, groups]);
 
-  const onFilter = (f: ListFilter) => {
-    setFilter(f);
-    localStorage.setItem(LAST_FILTER_KEY, f);
+  const persistStatuses = (next: ListStatus[]) => {
+    setSelected(next);
+    localStorage.setItem(STATUS_FILTER_KEY, JSON.stringify(next));
   };
+  const onToggleStatus = (s: ListStatus) =>
+    persistStatuses(
+      selected.includes(s)
+        ? selected.filter((x) => x !== s)
+        : [...selected, s],
+    );
+  const onClearStatuses = () => persistStatuses([]);
 
   if (!loaded) {
     return (
@@ -145,7 +180,10 @@ export function MyList() {
             Track what you're watching, planning, or have finished. No score required.
           </p>
           <div className="k-mylist-empty__actions">
-            <Button variant="primary" onClick={() => navigate("/search")}>
+            <Button
+              variant="primary"
+              onClick={() => navigate("/discover", { state: { fromSearchIntent: true } })}
+            >
               Search for anime
             </Button>
             <p className="k-mylist-empty__import">
@@ -166,8 +204,9 @@ export function MyList() {
       <ListToolbar
         search={search}
         onSearch={setSearch}
-        filter={filter}
-        onFilter={onFilter}
+        selected={selected}
+        onToggleStatus={onToggleStatus}
+        onClearStatuses={onClearStatuses}
         counts={counts}
         view={defaultView}
         onView={setDefaultView}
@@ -192,14 +231,19 @@ export function MyList() {
         ) : (
           <EmptyState
             title="Nothing here yet"
-            subtitle={`Add anime to your ${filter === "all" ? "" : filter.replace(/_/g, " ")} list.`}
+            subtitle={
+              selected.length === 0
+                ? "Add anime to your list."
+                : `Nothing marked ${selected.map((s) => listStatusLabel(s).toLowerCase()).join(" or ")} yet.`
+            }
           />
         )
       ) : (
         <FranchiseCollection
           groups={visibleGroups}
           view={defaultView}
-          showStatus={filter === "all"}
+          showStatus={selected.length !== 1}
+          restoreKey="mylist.scroll"
         />
       )}
 
