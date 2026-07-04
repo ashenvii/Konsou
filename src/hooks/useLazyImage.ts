@@ -22,7 +22,11 @@ export function useLazyImage(src: string | null | undefined) {
           observer.disconnect();
         }
       },
-      { rootMargin: "200px" },
+      // Generous lookahead: start fetching well before the card scrolls into
+      // view so covers are usually decoded by the time they appear. Fetching
+      // early costs a little network, not render time — unlike overscan, which
+      // costs paint work every frame.
+      { rootMargin: "600px" },
     );
     observer.observe(el);
     return () => observer.disconnect();

@@ -1,0 +1,41 @@
+/* ── perf-lite: Android WebView overrides ─────────────────────
+   Applied via a `perf-lite` class on <html> when running on Android.
+   Phone-class GPUs running the system WebView cannot sustain per-frame
+   compositor effects while scrolling: every backdrop-filter re-samples and
+   re-blurs the moving content behind it each frame, and large soft glows
+   re-rasterize with it. Native list apps (Glide/Coil + RecyclerView) bake
+   effects into the bitmap once; this is the CSS equivalent — swap live
+   effects for static, near-identical ones. Desktop keeps the full look. */
+
+/* Translucent-blur chips on cards → slightly more opaque, no blur. */
+.perf-lite .k-franchise-badge,
+.perf-lite .k-card__quick--sheet {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: oklch(0% 0 0 / 78%);
+}
+
+/* Soft glows: invisible at phone size, expensive to composite. Keep the
+   1px status ring on completed cards — that is the readable part. */
+.perf-lite .k-card--inlist {
+  box-shadow: none;
+}
+.perf-lite .k-card--status-completed.k-card--grid.k-card--inlist {
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--card-status) 55%, transparent);
+}
+.perf-lite .k-seal {
+  box-shadow: none;
+}
+.perf-lite .k-seasonbar__fill {
+  box-shadow: none;
+}
+.perf-lite .k-card__front {
+  box-shadow: none;
+}
+
+/* Sheet: the large soft shadow re-rasterizes on every frame of the
+   drag-to-close gesture. The backdrop already separates the sheet from the
+   page, so the shadow adds nothing on a phone. */
+.perf-lite .k-sheet {
+  box-shadow: none;
+}

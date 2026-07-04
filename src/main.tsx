@@ -18,6 +18,12 @@ import "./styles/anime.css";
 import "./styles/list.css";
 import "./styles/layout.css";
 import "./styles/pages.css";
+import "./styles/perf.css";
+import { isAndroidUA } from "@/lib/platform";
+
+// Android WebView can't sustain backdrop blurs / glow shadows during scroll on
+// phone-class GPUs; perf.css swaps them for static equivalents under this class.
+if (isAndroidUA()) document.documentElement.classList.add("perf-lite");
 
 const queryClient = new QueryClient({
   defaultOptions: {

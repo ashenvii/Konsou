@@ -9,6 +9,7 @@ import { statusMeta } from "./statusMeta";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
 import { useEpisodeIncrement } from "@/hooks/useEpisodeIncrement";
+import { getDisabledStatuses } from "@/lib/statusValidation";
 import { useListStore } from "@/lib/store/listStore";
 import {
   formatLabel,
@@ -80,6 +81,9 @@ function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
       current={entry?.status}
       onPick={onPick}
       onRemove={inList ? () => remove(media.id) : undefined}
+      disabledStatuses={getDisabledStatuses(
+        entry?.airing_status ?? media.status ?? null,
+      )}
     />
   );
 

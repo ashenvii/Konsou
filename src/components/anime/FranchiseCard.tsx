@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { CSSProperties } from "react";
 import {
   Bookmark,
@@ -21,11 +22,16 @@ import type { ViewMode } from "@/types/list";
 interface FranchiseCardProps {
   group: FranchiseGroup;
   view: ViewMode;
-  /** Called when the user taps the card or its action button — opens the franchise sheet. */
-  onOpen: () => void;
+  /**
+   * Called with the group's rootId when the user taps the card or its action
+   * button — opens the franchise sheet. Takes rootId (rather than being a
+   * pre-bound closure) so the parent can pass a stable function reference and
+   * memo() actually holds across the parent's per-scroll-frame re-renders.
+   */
+  onOpen: (rootId: number) => void;
 }
 
-export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
+function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
 
   const { displayEntry, entries, rootId, totalWatched, totalEpisodes, isGroup } = group;
@@ -73,7 +79,7 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
             ? { "--progress": `${progressPct}%` }
             : {}),
         } as CSSProperties}
-        onClick={onOpen}
+        onClick={() => onOpen(rootId)}
       >
         <div className="k-card__cover">
           <AnimeCover src={cover} alt={title} radius="0" />
@@ -148,7 +154,7 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
           )}
 
           <div className="k-card__footer">
-            <Text size="sm" weight={600} clamp={2} className="k-card__title">
+            <Text size="sm" weight={600} clamp={2} color="onCover" className="k-card__title">
               {title}
             </Text>
             <div className="k-card__footermeta">
@@ -173,7 +179,7 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
           <button
             type="button"
             className="k-card__quick k-card__quick--sheet"
-            onClick={(e) => { e.stopPropagation(); onOpen(); }}
+            onClick={(e) => { e.stopPropagation(); onOpen(rootId); }}
             aria-label={isGroup ? "Manage seasons" : "View details"}
           >
             <Icon icon={isGroup ? Layers : ChevronRight} size={16} />
@@ -189,7 +195,7 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
       <article
         className={`k-card k-row k-card--inlist${isGroup ? " k-card--group" : ""}`}
         style={{ "--card-status": status.color } as CSSProperties}
-        onClick={onOpen}
+        onClick={() => onOpen(rootId)}
       >
         <div className="k-row__poster">
           <AnimeCover src={cover} alt={title} decorative radius="var(--radius-sm)" />
@@ -224,7 +230,7 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
         <button
           type="button"
           className="k-row__action"
-          onClick={(e) => { e.stopPropagation(); onOpen(); }}
+          onClick={(e) => { e.stopPropagation(); onOpen(rootId); }}
           aria-label="Manage seasons"
         >
           <Icon icon={ChevronRight} size={18} />
@@ -238,7 +244,7 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
     <article
       className={`k-card k-compact k-card--inlist${isGroup ? " k-card--group" : ""}`}
       style={{ "--card-status": status.color } as CSSProperties}
-      onClick={onOpen}
+      onClick={() => onOpen(rootId)}
     >
       <AnimeCover src={cover} alt={title} decorative className="k-compact__thumb" radius="var(--radius-sm)" />
       <div className="k-compact__body">
@@ -263,3 +269,8 @@ export function FranchiseCard({ group, view, onOpen }: FranchiseCardProps) {
     </article>
   );
 }
+
+// Memoized: FranchiseCollection re-renders on every scroll frame as the virtual
+// window shifts. Without this, every visible card re-runs its store selectors
+// and hooks each frame, which is the main source of scroll jank on long lists.
+export const FranchiseCard = memo(FranchiseCardImpl);

@@ -4,6 +4,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { FranchiseCard } from "@/components/anime/FranchiseCard";
 import { FranchiseSheet } from "@/components/anime/FranchiseSheet";
 import { useBreakpoint } from "@/hooks/useMediaQuery";
+import { getUiState, setUiState } from "@/lib/uiState";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
 import type { ViewMode } from "@/types/list";
 
@@ -12,6 +13,8 @@ interface FranchiseCollectionProps {
   view: ViewMode;
   dimmedIds?: Set<number> | null;
   showStatus?: boolean;
+  /** Save/restore the scroll offset under this key across unmounts. */
+  restoreKey?: string;
 }
 
 const MIN_COL_WIDTH = 190;
@@ -21,6 +24,7 @@ export function FranchiseCollection({
   groups,
   view,
   dimmedIds,
+  restoreKey,
 }: FranchiseCollectionProps) {
   const navigate = useNavigate();
   const parentRef = useRef<HTMLDivElement>(null);
@@ -62,10 +66,23 @@ export function FranchiseCollection({
     count: rowCount,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
-    overscan: 6,
+    // Mobile keeps overscan tight: each extra row is a full column-count of
+    // painted cover cards, which phone GPUs pay for on every scroll frame.
+    overscan: isDesktop ? 6 : 2,
   });
 
   useEffect(() => { virtualizer.measure(); }, [rowHeight, columns, virtualizer]);
+
+  // Restore the last scroll offset on mount, then track it so coming back
+  // from a detail page lands where the user left off.
+  useEffect(() => {
+    const el = parentRef.current;
+    if (!el || !restoreKey) return;
+    el.scrollTop = getUiState(restoreKey, 0);
+    const onScroll = () => setUiState(restoreKey, el.scrollTop);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [restoreKey]);
 
   const activeGroup =
     activeRootId != null
@@ -76,11 +93,7 @@ export function FranchiseCollection({
     dimmedIds && !dimmedIds.has(rootId) ? 0.2 : 1;
 
   const renderGroup = (group: FranchiseGroup) => (
-    <FranchiseCard
-      group={group}
-      view={view}
-      onOpen={() => setActiveRootId(group.rootId)}
-    />
+    <FranchiseCard group={group} view={view} onOpen={setActiveRootId} />
   );
 
   const virtualRows = virtualizer.getVirtualItems();

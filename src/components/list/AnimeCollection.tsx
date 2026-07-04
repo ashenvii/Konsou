@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { AnimeCard } from "@/components/anime/AnimeCard";
 import { useBreakpoint } from "@/hooks/useMediaQuery";
+import { getUiState, setUiState } from "@/lib/uiState";
 import type { AnimeSummary } from "@/types/anime";
 import type { ViewMode } from "@/types/list";
 
@@ -13,6 +14,8 @@ interface AnimeCollectionProps {
   /** Show the user's tracking status on each card, useful for the all view. */
   showStatus?: boolean;
   onEndReached?: () => void;
+  /** Save/restore the scroll offset under this key across unmounts. */
+  restoreKey?: string;
 }
 
 const MIN_COL_WIDTH = 190;
@@ -24,6 +27,7 @@ export function AnimeCollection({
   dimmedIds,
   showStatus = false,
   onEndReached,
+  restoreKey,
 }: AnimeCollectionProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const { isDesktop } = useBreakpoint();
@@ -65,8 +69,21 @@ export function AnimeCollection({
     count: rowCount,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
-    overscan: 6,
+    // Mobile keeps overscan tight: each extra row is a full column-count of
+    // painted cover cards, which phone GPUs pay for on every scroll frame.
+    overscan: isDesktop ? 6 : 2,
   });
+
+  // Restore the last scroll offset on mount, then track it so coming back
+  // from a detail page lands where the user left off.
+  useEffect(() => {
+    const el = parentRef.current;
+    if (!el || !restoreKey) return;
+    el.scrollTop = getUiState(restoreKey, 0);
+    const onScroll = () => setUiState(restoreKey, el.scrollTop);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [restoreKey]);
 
   // Re-measure when the row height changes (width/column/view change) so cached
   // row offsets don't keep an early estimate.
