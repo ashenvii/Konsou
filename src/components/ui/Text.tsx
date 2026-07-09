@@ -46,11 +46,21 @@ export function Text({
   clamp,
   className,
   style,
+  title,
+  children,
   ...rest
 }: TextProps) {
+  // Single-line truncate needs a block box: text-overflow/overflow are ignored
+  // on the default inline span, which is why long anime titles used to clip
+  // straight out of their row instead of ending in an ellipsis.
   const clampStyle: CSSProperties =
     clamp === 1
-      ? { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
+      ? {
+          display: "block",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }
       : clamp && clamp > 1
         ? {
             display: "-webkit-box",
@@ -60,16 +70,26 @@ export function Text({
           }
         : {};
 
-  return createElement(as, {
-    className,
-    style: {
-      fontSize: `var(--text-${size})`,
-      lineHeight: `var(--leading-${size})`,
-      fontWeight: weight,
-      color: colorVar[color],
-      ...clampStyle,
-      ...style,
+  // Any truncated string title keeps its full text reachable on hover/long-press
+  // without a trip to the detail page. Explicit `title` always wins.
+  const resolvedTitle =
+    title ?? (clamp && typeof children === "string" ? children : undefined);
+
+  return createElement(
+    as,
+    {
+      className,
+      title: resolvedTitle,
+      style: {
+        fontSize: `var(--text-${size})`,
+        lineHeight: `var(--leading-${size})`,
+        fontWeight: weight,
+        color: colorVar[color],
+        ...clampStyle,
+        ...style,
+      },
+      ...rest,
     },
-    ...rest,
-  });
+    children,
+  );
 }

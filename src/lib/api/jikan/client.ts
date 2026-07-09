@@ -31,3 +31,19 @@ export async function jikanSearchMalIds(
     .map((a) => a.mal_id)
     .filter((id): id is number => typeof id === "number");
 }
+
+/** The MAL community score (0-10) for one title, or null when MAL doesn't
+ *  have one. Best-effort like everything Jikan: failures read as "no score". */
+export async function jikanAnimeScore(
+  malId: number,
+  signal?: AbortSignal,
+): Promise<number | null> {
+  try {
+    const res = await fetch(`${JIKAN_SEARCH}/${malId}`, { signal });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { data?: { score?: number | null } };
+    return typeof data.data?.score === "number" ? data.data.score : null;
+  } catch {
+    return null;
+  }
+}

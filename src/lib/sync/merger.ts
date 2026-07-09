@@ -14,11 +14,12 @@ import type {
 export const CLOCK_SKEW_TOLERANCE_MS = 30_000;
 
 const STATUS_PRIORITY: Record<ListStatus, number> = {
-  completed: 6,
-  rewatching: 5,
-  watching: 4,
-  on_hold: 3,
-  dropped: 2,
+  completed: 7,
+  rewatching: 6,
+  watching: 5,
+  on_hold: 4,
+  dropped: 3,
+  not_interested: 2,
   plan_to_watch: 1,
 };
 
@@ -68,6 +69,15 @@ export function mergeAnimeEntry(
     // Take the further-along value so a device that already scanned the new
     // status doesn't get regressed by a stale remote.
     airing_status: advanceAiringStatus(local.airing_status, remote.airing_status),
+    // Time accounting: duration is a static fact either side may know,
+    // rewatches and aired counts only ever grow. ?? guards cover payloads
+    // written by app versions that predate these fields.
+    episode_duration: local.episode_duration ?? remote.episode_duration ?? null,
+    rewatch_count: Math.max(local.rewatch_count ?? 0, remote.rewatch_count ?? 0),
+    aired_episodes: maxDefined(
+      local.aired_episodes ?? null,
+      remote.aired_episodes ?? null,
+    ),
   };
 }
 

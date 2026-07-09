@@ -3,9 +3,12 @@ import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
+import { CommandPalette } from "@/components/CommandPalette";
+import { CatchUpSheet } from "@/components/list/CatchUpSheet";
 import { Toasts } from "@/components/ui/Toasts";
 import { ReconcilePrompt } from "@/components/ReconcilePrompt";
 import { useAppBack } from "@/hooks/useAppBack";
+import { useScrollElevation } from "@/hooks/useScrollElevation";
 import { useTabPress } from "@/hooks/useTabPress";
 import { useViewportDragScroll } from "@/hooks/useViewportDragScroll";
 import { useBreakpoint } from "@/hooks/useMediaQuery";
@@ -23,6 +26,7 @@ export function AppShell() {
   const isImmersive = location.pathname.startsWith("/anime/");
   useAppBack();
   useViewportDragScroll();
+  useScrollElevation();
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
@@ -62,6 +66,8 @@ export function AppShell() {
       {!isDesktop && <BottomNav />}
       <Toasts />
       <ReconcilePrompt />
+      <CommandPalette />
+      <CatchUpSheet />
     </div>
   );
 }

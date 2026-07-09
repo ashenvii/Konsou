@@ -6,6 +6,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-09
+
+### Added
+- **Franchises stay together, even when AniList's tags are messy.** Some series
+  are only linked by loose "other" relations with no sequel tag at all, so the
+  app used to treat them as unrelated. Cyberpunk: Edgerunners and its sequel,
+  and the Mushoku Tensei seasons, now group into one card, show a Related tab,
+  and trigger sequel alerts. When two halves of a franchise drift into separate
+  cards, the app quietly re-joins them on the next launch.
+- **Related lists read in watch order, not air date.** Fate/Zero comes before
+  Fate/stay night even though it aired later, and a movie tagged as a sequel of
+  season 1 sits where you would actually watch it. Air date only decides the
+  order where the tags say nothing.
+- **A completion ledger for every franchise.** The quick menu and the Related
+  tab both show how much of a series exists and how much you have seen, and the
+  two now always agree.
+- **Catch-up sheet covers side stories.** When you add a later season, the
+  "what have you already watched" prompt now offers the OVAs and movies that
+  belong before it, not just the earlier seasons.
+- **MAL score on the detail page**, so you can judge a show without leaving it.
+- **Command palette (Ctrl+K)** to jump to any tracked title or page, with the
+  same typo-tolerant search the offline fallback uses.
+- **Tonight's Queue** on My List surfaces the next episode to continue.
+
+### Changed
+- **Alerts are calmer and actually clear.** Dismissing an alert now silences
+  that title everywhere at once and it never comes back. "Already Aired" alerts
+  you never act on fade after a month instead of piling up forever, each group
+  has a "Clear all", and airing items sort by whichever airs soonest.
+- **Status is painted onto every row and card** as a colored wash, so you can
+  read where you are at a glance. Relation kinds (sequel, side story, movie,
+  OVA, alternative) each carry their own color chip.
+- **Names show in both languages** wherever seasons are listed, matching your
+  chosen title language with the other name beneath it.
+- **Unaired entries are clearly marked** with a date and a muted cover, so you
+  no longer try to add something that has not come out yet.
+- **"Not interested" means it.** A title you opt out of leaves the franchise
+  card, and changing your mind puts it back.
+- Removing a title now cleans up its alerts and background scan instead of
+  leaving them pointing at nothing.
+- "Announced" no longer means two different things across Alerts, Schedule, and
+  Discover.
+
+### Fixed
+- Dismissing an alert now works reliably instead of leaving a duplicate behind.
+- Franchise completion percentages no longer disagree between screens.
+- Clickable titles and covers share one clear hover cue instead of an
+  underline.
+
 ## [0.6.0] - 2026-07-04
 
 ### Added

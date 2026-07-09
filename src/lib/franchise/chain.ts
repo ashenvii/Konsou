@@ -1,5 +1,8 @@
 import { anilist } from "@/lib/api/anilist/client";
-import type { AnimeMedia, RelationNode, RelationType } from "@/types/anime";
+import { isMangaNode } from "@/lib/format";
+import { isFranchiseOther } from "./relatedness";
+import type { RelationEdge } from "./watchOrder";
+import type { AnimeMedia, AnimeTitle, RelationNode, RelationType } from "@/types/anime";
 
 /**
  * Expands a title's one-hop AniList relations into the whole franchise chain.
@@ -27,21 +30,37 @@ const CHAIN_RELATIONS: RelationType[] = [
 const MAX_DEPTH = 6;
 const MAX_NODES = 40;
 
-function isChainNode(r: RelationNode): boolean {
-  return CHAIN_RELATIONS.includes(r.relationType) && r.type !== "MANGA";
+// OTHER edges join the walk only when the names on both ends claim the same
+// franchise (see relatedness.ts) — that's how Edgerunners finds Edgerunners 2.
+function isChainNode(r: RelationNode, fromTitle?: AnimeTitle): boolean {
+  if (isMangaNode(r)) return false;
+  return CHAIN_RELATIONS.includes(r.relationType) || isFranchiseOther(fromTitle, r);
+}
+
+export interface RelationChainResult {
+  nodes: RelationNode[];
+  /** Every chain-relevant relation observed during the walk, INCLUDING edges
+   *  between already-known nodes — the watch-order sort needs the full mesh,
+   *  not just the spanning tree the BFS happened to discover first. */
+  edges: RelationEdge[];
 }
 
 export async function walkRelationChain(
   media: AnimeMedia,
-): Promise<RelationNode[]> {
+): Promise<RelationChainResult> {
   const nodes = new Map<number, RelationNode>();
   const seen = new Set<number>([media.id]);
+  const titleOf = new Map<number, AnimeTitle>([[media.id, media.title]]);
+  const edges: RelationEdge[] = [];
   let frontier: number[] = [];
 
   for (const r of media.relations ?? []) {
-    if (!isChainNode(r) || seen.has(r.id)) continue;
+    if (!isChainNode(r, media.title)) continue;
+    edges.push({ from: media.id, to: r.id, type: r.relationType });
+    if (seen.has(r.id)) continue;
     seen.add(r.id);
     nodes.set(r.id, r);
+    titleOf.set(r.id, r.title);
     frontier.push(r.id);
   }
 
@@ -54,9 +73,12 @@ export async function walkRelationChain(
     const next: number[] = [];
     for (const id of frontier) {
       for (const r of relMap[id] ?? []) {
-        if (!isChainNode(r) || seen.has(r.id)) continue;
+        if (!isChainNode(r, titleOf.get(id))) continue;
+        edges.push({ from: id, to: r.id, type: r.relationType });
+        if (seen.has(r.id)) continue;
         seen.add(r.id);
         nodes.set(r.id, r);
+        titleOf.set(r.id, r.title);
         next.push(r.id);
         if (nodes.size >= MAX_NODES) break;
       }
@@ -65,5 +87,5 @@ export async function walkRelationChain(
     frontier = next;
   }
 
-  return [...nodes.values()];
+  return { nodes: [...nodes.values()], edges };
 }

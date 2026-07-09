@@ -133,6 +133,7 @@ const STATUS_LABELS: Record<ListStatus, string> = {
   on_hold: "On Hold",
   dropped: "Dropped",
   rewatching: "Rewatching",
+  not_interested: "Not Interested",
 };
 
 export function listStatusLabel(s: ListStatus): string {
@@ -153,6 +154,25 @@ export function formatLabel(f?: MediaFormat | null): string | null {
   return f ? FORMAT_LABELS[f] : null;
 }
 
+// AniList manga/light-novel formats. A relation carrying one of these (or an
+// explicit MANGA type) is source material, not a watchable season.
+const MANGA_FORMATS = new Set(["MANGA", "NOVEL", "ONE_SHOT"]);
+
+/**
+ * True when a relation node is manga/novel source material rather than anime.
+ * Guards every place relations are offered as watchable (Related, franchise
+ * chain, sequel alerts). Tests `format` as well as `type` because relation
+ * snapshots cached before the `type` field was added still carry `format`, so
+ * this catches leaks like "Cyberpunk: Edgerunners MADNESS" without a cache wipe.
+ */
+export function isMangaNode(
+  node: { type?: string | null; format?: string | null } | null | undefined,
+): boolean {
+  if (!node) return false;
+  if (node.type === "MANGA") return true;
+  return node.format != null && MANGA_FORMATS.has(node.format);
+}
+
 const AIRING_LABELS: Record<AniListMediaStatus, string> = {
   FINISHED: "Finished",
   RELEASING: "Airing",
@@ -170,9 +190,27 @@ export function episodeProgress(watched: number, total?: number | null): string 
   return `${watched} / ${total ?? "?"}`;
 }
 
+/**
+ * Best-known aired episode count for a media shape: the episode before the
+ * next airing one, or the full total once the show has FINISHED. null when
+ * the data can't say (announced shows, stale snapshots).
+ */
+export function airedEpisodes(s: {
+  status?: string | null;
+  episodes?: number | null;
+  nextAiringEpisode?: { episode: number } | null;
+}): number | null {
+  if (s.nextAiringEpisode?.episode != null) {
+    return Math.max(0, s.nextAiringEpisode.episode - 1);
+  }
+  if (s.status === "FINISHED") return s.episodes ?? null;
+  return null;
+}
+
 export function formatScore(score?: number | null): string {
   if (score == null) return "—";
-  return Number.isInteger(score) ? score.toFixed(1) : String(score);
+  // "9" and "8.5", never "9.0": the trailing zero is chip noise.
+  return String(score);
 }
 
 export function formatFuzzyDate(d?: FuzzyDate | null): string | null {

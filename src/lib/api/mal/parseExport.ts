@@ -15,6 +15,8 @@ export interface MalRawEntry {
   score: number | null;
   episodes_watched: number;
   total_episodes: number | null;
+  /** MAL's my_times_watched: completed rewatches, maps to rewatch_count. */
+  times_watched: number;
   started_at: number | null;
   finished_at: number | null;
 }
@@ -89,6 +91,7 @@ export function parseMalExport(xml: string): MalRawEntry[] {
       score: score > 0 ? score : null,
       episodes_watched: parseInt(get("my_watched_episodes"), 10) || 0,
       total_episodes: totalEp > 0 ? totalEp : null,
+      times_watched: parseInt(get("my_times_watched"), 10) || 0,
       started_at: malDate(get("my_start_date")),
       finished_at: malDate(get("my_finish_date")),
     });

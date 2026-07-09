@@ -17,6 +17,7 @@ const MEDIA_SUMMARY = `
   studios(isMain: true) { nodes { name } }
   nextAiringEpisode { airingAt episode timeUntilAiring }
   countryOfOrigin
+  duration
   externalLinks { language site type isDisabled }
 `;
 
@@ -53,7 +54,6 @@ query Detail($id: Int!) {
   Media(id: $id, type: ANIME) {
     ${MEDIA_SUMMARY}
     description(asHtml: true)
-    duration
     source
     trailer { id site thumbnail }
     startDate { year month day }
@@ -90,15 +90,72 @@ query ByMalIds($idMal_in: [Int], $perPage: Int!) {
   }
 }`;
 
-export const BROWSE_QUERY = `
-query Browse($page: Int!, $perPage: Int!, $sort: [MediaSort], $season: MediaSeason, $seasonYear: Int, $genre: String, $tag: String) {
+export interface BrowseQueryFlags {
+  withFormatIn: boolean;
+  withStatus: boolean;
+  withCountry: boolean;
+  withYear: boolean;
+}
+
+/**
+ * Build the Discover browse query. Several AniList arguments misbehave when sent
+ * as null instead of being omitted: `format_in` 500s, the `startDate_*` bounds
+ * throw "Illegal operator and value combination," and `status`/`countryOfOrigin`
+ * silently match "null" and return nothing. So each of those is stitched in only
+ * when actually set. Genre/tag/season are null-safe and stay in the base query,
+ * and `format_not_in` always carries a real value ([MUSIC]).
+ */
+export function buildBrowseQuery(opts: BrowseQueryFlags): string {
+  const parts: { var: string; arg: string }[] = [];
+  if (opts.withFormatIn)
+    parts.push({ var: "$format_in: [MediaFormat]", arg: "format_in: $format_in" });
+  if (opts.withStatus)
+    parts.push({ var: "$status: MediaStatus", arg: "status: $status" });
+  if (opts.withCountry)
+    parts.push({
+      var: "$countryOfOrigin: CountryCode",
+      arg: "countryOfOrigin: $countryOfOrigin",
+    });
+  if (opts.withYear) {
+    parts.push({
+      var: "$startDate_greater: FuzzyDateInt",
+      arg: "startDate_greater: $startDate_greater",
+    });
+    parts.push({
+      var: "$startDate_lesser: FuzzyDateInt",
+      arg: "startDate_lesser: $startDate_lesser",
+    });
+  }
+  const extraVars = parts.map((p) => `\n  ${p.var}`).join("");
+  const extraArgs = parts.map((p) => `\n      ${p.arg}`).join("");
+  return `
+query Browse(
+  $page: Int!
+  $perPage: Int!
+  $sort: [MediaSort]
+  $season: MediaSeason
+  $seasonYear: Int
+  $genre_in: [String]
+  $tag_in: [String]
+  $format_not_in: [MediaFormat]${extraVars}
+) {
   Page(page: $page, perPage: $perPage) {
     pageInfo { hasNextPage currentPage }
-    media(type: ANIME, sort: $sort, season: $season, seasonYear: $seasonYear, genre: $genre, tag: $tag, isAdult: false) {
+    media(
+      type: ANIME
+      isAdult: false
+      sort: $sort
+      season: $season
+      seasonYear: $seasonYear
+      genre_in: $genre_in
+      tag_in: $tag_in
+      format_not_in: $format_not_in${extraArgs}
+    ) {
       ${MEDIA_SUMMARY}
     }
   }
 }`;
+}
 
 export const USER_LIST_QUERY = `
 query UserList($userName: String!) {
@@ -108,6 +165,7 @@ query UserList($userName: String!) {
         score(format: POINT_10)
         status
         progress
+        repeat
         notes
         startedAt { year month day }
         completedAt { year month day }
@@ -118,6 +176,8 @@ query UserList($userName: String!) {
           coverImage { medium }
           status
           episodes
+          duration
+          nextAiringEpisode { episode }
         }
       }
     }

@@ -382,6 +382,58 @@
   align-items: center;
   gap: var(--space-2);
 }
+
+/* ── Search pill (DIM-style; lives on the Discover page) ───── */
+.k-hsearch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
+.k-hsearch:focus-within {
+  border-color: var(--color-accent);
+}
+.k-hsearch__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+}
+.k-hsearch__input::placeholder {
+  color: var(--color-text-tertiary);
+}
+.k-hsearch__input::-webkit-search-cancel-button {
+  display: none;
+}
+.k-hsearch__clear {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+}
+/* Keep the glyph small but give the finger a full 44px target. */
+.k-hsearch__clear::after {
+  content: "";
+  position: absolute;
+  inset: -11px;
+}
+.k-hsearch__clear:hover {
+  color: var(--color-text-primary);
+}
 .k-topbar__brand img {
   border-radius: var(--radius-sm);
 }

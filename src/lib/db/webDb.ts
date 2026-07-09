@@ -171,6 +171,19 @@ export class WebKonsouDb implements KonsouDb {
     write(LS.schedule, rows);
   }
 
+  async scheduleRemove(anilistId: number): Promise<void> {
+    write(
+      LS.schedule,
+      read<ScanScheduleEntry[]>(LS.schedule, []).filter(
+        (r) => r.anilist_id !== anilistId,
+      ),
+    );
+  }
+
+  async scheduleClear(): Promise<void> {
+    write(LS.schedule, []);
+  }
+
   // ── Notifications ─────────────────────────────────────────
   private loadNotifs(): KonsouNotification[] {
     return read<KonsouNotification[]>(LS.notifications, []);
@@ -189,12 +202,14 @@ export class WebKonsouDb implements KonsouDb {
     n: Omit<KonsouNotification, "id">,
   ): Promise<boolean> {
     const all = this.loadNotifs();
+    // Same rule as the SQLite backend: one alert per suggested anime (dismissed
+    // rows keep suppressing), with started_airing in its own lane.
+    const incomingAiring = n.type === "started_airing";
     if (
       all.some(
         (x) =>
-          x.source_id === n.source_id &&
           x.related_id === n.related_id &&
-          x.type === n.type,
+          (x.type === "started_airing") === incomingAiring,
       )
     ) {
       return false;
@@ -210,10 +225,25 @@ export class WebKonsouDb implements KonsouDb {
     this.saveNotifs(this.loadNotifs().map((n) => ({ ...n, seen: 1 })));
   }
 
-  async notificationDismiss(id: number): Promise<void> {
+  async notificationDismissByRelated(relatedIds: number[]): Promise<void> {
+    const ids = new Set(relatedIds);
     this.saveNotifs(
-      this.loadNotifs().map((n) => (n.id === id ? { ...n, dismissed: 1 } : n)),
+      this.loadNotifs().map((n) =>
+        ids.has(n.related_id) ? { ...n, dismissed: 1 } : n,
+      ),
     );
+  }
+
+  async notificationsPurgeForEntry(anilistId: number): Promise<void> {
+    this.saveNotifs(
+      this.loadNotifs().filter(
+        (n) => n.source_id !== anilistId && n.related_id !== anilistId,
+      ),
+    );
+  }
+
+  async notificationsClear(): Promise<void> {
+    this.saveNotifs([]);
   }
 
   async notificationRestoreDismissed(): Promise<void> {

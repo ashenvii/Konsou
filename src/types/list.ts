@@ -6,7 +6,8 @@ export type ListStatus =
   | "plan_to_watch"
   | "on_hold"
   | "dropped"
-  | "rewatching";
+  | "rewatching"
+  | "not_interested";
 
 export const LIST_STATUSES: ListStatus[] = [
   "watching",
@@ -15,6 +16,7 @@ export const LIST_STATUSES: ListStatus[] = [
   "on_hold",
   "dropped",
   "rewatching",
+  "not_interested",
 ];
 
 /** A row in the user's list. Timestamps are Unix milliseconds. */
@@ -37,6 +39,16 @@ export interface AnimeListEntry {
   completed_at: number | null;
   /** null = not yet determined (detail not visited), true = dub available, false = sub only */
   has_dub: boolean | null;
+  /** Minutes per episode from AniList. null = unknown; stats fall back to 24. */
+  episode_duration: number | null;
+  /** Completed prior watches. Incremented when a completed entry flips to
+   *  rewatching, so the finished watch keeps its time credit while
+   *  episodes_watched restarts from zero. */
+  rewatch_count: number;
+  /** Episodes actually aired, from nextAiringEpisode. null = unknown; for
+   *  FINISHED shows the total is the aired count. Keeps "episodes left"
+   *  honest for airing shows with a known planned total. */
+  aired_episodes: number | null;
   /** anilist_id of the first entry in this franchise's SEQUEL chain. null = unresolved or standalone. */
   franchise_root_id: number | null;
   /**
@@ -71,6 +83,9 @@ export type ListEntryPatch = Partial<
     | "has_dub"
     | "franchise_root_id"
     | "airing_status"
+    | "episode_duration"
+    | "rewatch_count"
+    | "aired_episodes"
   >
 >;
 

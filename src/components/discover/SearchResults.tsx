@@ -8,9 +8,13 @@ import { entryToSummary } from "@/lib/format";
 import { localFuzzySearch } from "@/lib/search/localTitleIndex";
 import { useListStore } from "@/lib/store/listStore";
 
+import type { ViewMode } from "@/types/list";
+
 interface SearchResultsProps {
   /** Debounced query. The caller only mounts this once it is >= 2 chars. */
   query: string;
+  /** Density inherited from the Discover view toggle. */
+  view?: ViewMode;
 }
 
 /**
@@ -18,7 +22,7 @@ interface SearchResultsProps {
  * offline fuzzy "did you mean" fallback. Lives under Discover's shared search
  * bar (search and browse are the same page).
  */
-export function SearchResults({ query }: SearchResultsProps) {
+export function SearchResults({ query, view = "grid" }: SearchResultsProps) {
   const { results, isLoading, isError, hasNextPage, fetchNextPage } =
     useAniListSearch(query);
 
@@ -56,7 +60,7 @@ export function SearchResults({ query }: SearchResultsProps) {
           </div>
           <AnimeCollection
             items={suggestions}
-            view="grid"
+            view={view}
             restoreKey="discover.suggest.scroll"
           />
         </div>
@@ -75,7 +79,7 @@ export function SearchResults({ query }: SearchResultsProps) {
   return (
     <AnimeCollection
       items={results}
-      view="grid"
+      view={view}
       onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
       restoreKey="discover.search.scroll"
     />

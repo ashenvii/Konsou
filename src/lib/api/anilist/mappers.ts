@@ -43,6 +43,8 @@ export function mapSummary(raw: any): AnimeSummary {
     genres: raw.genres ?? [],
     studio: raw.studios?.nodes?.[0]?.name ?? null,
     nextAiringEpisode: raw.nextAiringEpisode ?? null,
+    countryOfOrigin: raw.countryOfOrigin ?? null,
+    duration: raw.duration ?? null,
     hasDub: detectDub(raw.externalLinks),
   };
 }

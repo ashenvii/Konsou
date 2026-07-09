@@ -7,6 +7,10 @@
   aspect-ratio: 2 / 3;
   overflow: hidden;
   background: var(--color-surface-3);
+  /* Inline-size containment so the fallback initial can scale with the tile
+     (cqw units). Safe here: k-cover is sized by its parent, never by its
+     contents. */
+  container-type: inline-size;
 }
 .k-cover__placeholder {
   position: absolute;
@@ -14,6 +18,13 @@
   display: grid;
   place-items: center;
   background: var(--color-surface-3);
+}
+.k-cover__initial {
+  font-size: clamp(14px, 46cqw, 44px);
+  font-weight: 800;
+  line-height: 1;
+  color: oklch(96% 0.01 90 / 55%);
+  user-select: none;
 }
 .k-cover__img {
   width: 100%;
@@ -130,8 +141,8 @@
 .k-epcounter__btn {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-full);
   color: var(--color-text-secondary);
 }
@@ -312,6 +323,24 @@
   border-top: none;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
   box-shadow: 0 2px 6px oklch(0% 0 0 / 50%);
+}
+
+/* Not interested — a quiet muted chip, top-right. Deliberately understated:
+   a "won't watch" tag should never read louder than an actual watch state. */
+.k-notinterested {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  color: oklch(100% 0 0 / 75%);
+  background: oklch(0% 0 0 / 45%);
+  border: 1px solid oklch(100% 0 0 / 15%);
+  backdrop-filter: blur(2px);
 }
 
 /* Ribbon — diagonal corner banner stamped across the top-left (dropped). */
@@ -600,6 +629,17 @@
   color: oklch(100% 0 0 / 80%);
   font-variant-numeric: tabular-nums;
 }
+/* Which season the art follows, when it isn't the root's. Without this the
+   cover appears to change on its own as watch state moves through the run. */
+.k-card__nowshowing {
+  display: block;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  color: oklch(100% 0 0 / 70%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .k-card__quick {
   position: absolute;
@@ -607,8 +647,8 @@
   bottom: var(--space-2);
   display: grid;
   place-items: center;
-  min-width: 36px;
-  height: 36px;
+  min-width: 40px;
+  height: 40px;
   padding: 0 var(--space-2);
   border-radius: var(--radius-full);
   background: var(--color-accent);
@@ -663,6 +703,17 @@
   }
 }
 
+/* Tactile press: the card dips slightly when pressed, on touch and mouse
+   alike. Pairs with the light haptic fired on the resulting action. */
+.k-card--grid {
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+.k-card--grid:active {
+  transform: scale(0.975);
+}
+
 /* ── Card: list row (rich) ─────────────────────────────────── */
 .k-row {
   display: flex;
@@ -675,15 +726,27 @@
   border-radius: 0;
   background: transparent;
 }
+/* Status paints the row: a wash bleeding in from the left edge, fading out
+   toward the middle — readable at a glance without scanning for a chip. */
 .k-row.k-card--inlist {
   box-shadow: none;
-  background: color-mix(in oklch, var(--card-status, var(--color-accent)) 5%, transparent);
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--card-status, var(--color-accent)) 12%, transparent),
+    transparent 60%
+  );
 }
 .k-row:hover {
   background: var(--color-surface-2);
 }
 .k-row.k-card--inlist:hover {
-  background: color-mix(in oklch, var(--card-status, var(--color-accent)) 10%, var(--color-surface-2));
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in oklch, var(--card-status, var(--color-accent)) 14%, transparent),
+      transparent 60%
+    ),
+    var(--color-surface-2);
 }
 /* 2:3 poster — covers stay the hero even in the dense view. */
 .k-row__poster {
@@ -790,10 +853,20 @@
 }
 .k-compact.k-card--inlist {
   box-shadow: none;
-  background: color-mix(in oklch, var(--card-status, var(--color-accent)) 5%, transparent);
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--card-status, var(--color-accent)) 12%, transparent),
+    transparent 60%
+  );
 }
 .k-compact.k-card--inlist:hover {
-  background: color-mix(in oklch, var(--card-status, var(--color-accent)) 12%, var(--color-surface-2));
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in oklch, var(--card-status, var(--color-accent)) 14%, transparent),
+      transparent 60%
+    ),
+    var(--color-surface-2);
 }
 .k-compact__thumb {
   width: 30px;
@@ -1008,6 +1081,40 @@
 .k-chip-mini--accent {
   background: color-mix(in oklch, var(--color-accent) 20%, transparent);
   color: var(--color-accent-glow);
+}
+/* Kind chip — franchise anatomy (sequel / side story / movie / OVA / alt).
+   One hue per kind via --chip, same everywhere a series is listed. */
+.k-chip-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  color: var(--chip, var(--color-text-secondary));
+  background: color-mix(in oklab, var(--chip, var(--color-text-secondary)) 14%, transparent);
+  border: 1px solid color-mix(in oklab, var(--chip, var(--color-text-secondary)) 28%, transparent);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  white-space: nowrap;
+  flex: none;
+}
+/* Unaired marker — a date you can't watch yet, styled as a caution, not an
+   invitation. Used beside kind chips on season/related rows. */
+.k-chip-unaired {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  color: var(--color-warning);
+  background: color-mix(in oklab, var(--color-warning) 12%, transparent);
+  border: 1px dashed color-mix(in oklab, var(--color-warning) 45%, transparent);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  white-space: nowrap;
+  flex: none;
 }
 
 /* The quick-action on a franchise card opens the sheet, not +1 */

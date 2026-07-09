@@ -1,7 +1,9 @@
 import { getDb } from "@/lib/db";
 import type {
+  AniListMediaStatus,
   AnimeMedia,
   AnimeSummary,
+  MediaFormat,
   MediaSeason,
   RelationNode,
 } from "@/types/anime";
@@ -9,16 +11,21 @@ import { anilistLimiter, delay } from "../rateLimiter";
 import type { Priority } from "../rateLimiter";
 import { mapDetail, mapRelations, mapSummary } from "./mappers";
 import {
-  BROWSE_QUERY,
   BY_MAL_IDS_QUERY,
   DETAIL_QUERY,
   SEARCH_QUERY,
   USER_LIST_QUERY,
   buildAiringStatusBatchQuery,
+  buildBrowseQuery,
   buildRelationsBatchQuery,
 } from "./queries";
 import { jikanSearchMalIds } from "../jikan/client";
-import { getCoverUrl, normalizeForSearch, preferredTitle } from "@/lib/format";
+import {
+  airedEpisodes,
+  getCoverUrl,
+  normalizeForSearch,
+  preferredTitle,
+} from "@/lib/format";
 import type { MalRawEntry } from "../mal/parseExport";
 import type { AnimeListEntry, ListStatus } from "@/types/list";
 
@@ -66,6 +73,28 @@ export interface AiringStatus {
 }
 
 export type BrowseSort = "TRENDING_DESC" | "SCORE_DESC" | "POPULARITY_DESC";
+
+/** ISO-3166 alpha-2 codes AniList uses for `countryOfOrigin`. */
+export type CountryCode = "JP" | "CN" | "KR" | "TW";
+
+/** Everything the Discover browse can filter on. All optional so the three
+ *  sort tabs work with nothing set; the filter panel fills in the rest. */
+export interface BrowseParams {
+  sort: BrowseSort;
+  page?: number;
+  season?: MediaSeason;
+  seasonYear?: number;
+  /** AniList genre names, e.g. "Action"; combined with AND. */
+  genres?: string[];
+  /** AniList tag names, e.g. "Isekai"; themes are tags, not genres. */
+  themes?: string[];
+  /** Anime formats to include; MUSIC is never offered. Empty = all-but-Music. */
+  formats?: MediaFormat[];
+  status?: AniListMediaStatus | null;
+  country?: CountryCode | null;
+  yearFrom?: number | null;
+  yearTo?: number | null;
+}
 
 /** True for a fetch/request aborted via AbortSignal (superseded search, etc.). */
 function isAbortError(err: unknown): boolean {
@@ -320,25 +349,51 @@ class AniListClient {
     }
   }
 
-  async browse(params: {
-    sort: BrowseSort;
-    page?: number;
-    season?: MediaSeason;
-    seasonYear?: number;
-    genre?: string;
-    /** AniList tag name, e.g. "Isekai" — themes are tags, not genres. */
-    tag?: string;
-  }): Promise<SearchPage> {
+  async browse(params: BrowseParams): Promise<SearchPage> {
     const page = params.page ?? 1;
-    const data = await this.request<any>(BROWSE_QUERY, {
+    const genres = params.genres?.length ? params.genres : null;
+    const themes = params.themes?.length ? params.themes : null;
+    // The user never gets to pick MUSIC (anniversary clips, PVs, music videos)
+    // in the panel, so when they haven't narrowed the format at all we still
+    // exclude it. An explicit format selection takes over from the exclusion.
+    const formats = params.formats?.length ? params.formats : null;
+    const withFormatIn = Boolean(formats);
+    const withStatus = Boolean(params.status);
+    const withCountry = Boolean(params.country);
+    const withYear = Boolean(params.yearFrom || params.yearTo);
+    const variables: Record<string, unknown> = {
       page,
       perPage: PER_PAGE,
       sort: [params.sort],
       season: params.season ?? null,
       seasonYear: params.seasonYear ?? null,
-      genre: params.genre ?? null,
-      tag: params.tag ?? null,
-    });
+      genre_in: genres,
+      tag_in: themes,
+      // Always a real value; MUSIC (anniversary clips, PVs) is never wanted.
+      format_not_in: ["MUSIC"],
+    };
+    // These only ride along when set: AniList either errors (format_in, dates)
+    // or silently matches "null" and returns nothing (status, country).
+    if (withFormatIn) variables.format_in = formats;
+    if (withStatus) variables.status = params.status;
+    if (withCountry) variables.countryOfOrigin = params.country;
+    // FuzzyDateInt is YYYYMMDD; widen to whole calendar years, with a wide
+    // sentinel on the open side so a one-sided range stays valid. Both AniList
+    // comparators are strict, so nudge each bound past the year edge: -1 keeps
+    // year-only dates (YYYY0000) in range, (yearTo+1)*10000 keeps Dec 31
+    // premieres in range.
+    if (withYear) {
+      variables.startDate_greater = params.yearFrom
+        ? params.yearFrom * 10000 - 1
+        : 10000101;
+      variables.startDate_lesser = params.yearTo
+        ? (params.yearTo + 1) * 10000
+        : 30001231;
+    }
+    const data = await this.request<any>(
+      buildBrowseQuery({ withFormatIn, withStatus, withCountry, withYear }),
+      variables,
+    );
     return {
       results: (data.Page.media ?? []).map(mapSummary),
       hasNextPage: data.Page.pageInfo?.hasNextPage ?? false,
@@ -371,10 +426,21 @@ class AniListClient {
       }
     }
 
+    let sawNetworkFailure = false;
     for (let i = 0; i < stale.length; i += RELATIONS_BATCH_SIZE) {
       const chunk = stale.slice(i, i + RELATIONS_BATCH_SIZE);
-      await this.resolveRelationChunk(chunk, priority, result);
+      if (await this.resolveRelationChunk(chunk, priority, result)) {
+        sawNetworkFailure = true;
+      }
       if (i + RELATIONS_BATCH_SIZE < stale.length) await delay(BATCH_SPACING_MS);
+    }
+
+    // Cached snapshots and per-id recoveries count as data; only a total
+    // blank caused by network failure becomes an error. Without this, callers
+    // read {} as "these anime have no relations": the franchise ledger claims
+    // a full set offline, and the cascade stamps wrong standalone roots.
+    if (ids.length > 0 && sawNetworkFailure && Object.keys(result).length === 0) {
+      throw new Error("AniList relations request failed");
     }
 
     return result;
@@ -396,8 +462,8 @@ class AniListClient {
     chunk: number[],
     priority: Priority,
     result: RelationMap,
-  ): Promise<void> {
-    if (chunk.length === 0) return;
+  ): Promise<boolean> {
+    if (chunk.length === 0) return false;
 
     let data: Record<string, unknown>;
     try {
@@ -408,9 +474,10 @@ class AniListClient {
       );
     } catch (e) {
       // Network/server failure (not a per-id 404) — leave the whole chunk
-      // unresolved and uncached so the next scan retries it.
+      // unresolved and uncached so the next scan retries it. Reported back so
+      // the caller can tell "nothing resolved because offline" from "no data".
       console.warn("[anilist] relations chunk request failed, skipping:", e);
-      return;
+      return true;
     }
 
     const missing: number[] = [];
@@ -427,7 +494,7 @@ class AniListClient {
       }
     }
 
-    if (missing.length === 0) return;
+    if (missing.length === 0) return false;
 
     if (missing.length === 1) {
       // A lone id that resolves to null is genuinely not-found — record empty
@@ -437,16 +504,25 @@ class AniListClient {
       void safeCache(() =>
         getDb().then((db) => db.setRelationSnapshot(id, [])),
       );
-      return;
+      return false;
     }
 
     // ≥1 not-found id nulled the batch — split to isolate it and recover the
     // valid ids that came along for the ride.
     const mid = Math.ceil(missing.length / 2);
     await delay(BATCH_SPACING_MS);
-    await this.resolveRelationChunk(missing.slice(0, mid), priority, result);
+    const failedLeft = await this.resolveRelationChunk(
+      missing.slice(0, mid),
+      priority,
+      result,
+    );
     await delay(BATCH_SPACING_MS);
-    await this.resolveRelationChunk(missing.slice(mid), priority, result);
+    const failedRight = await this.resolveRelationChunk(
+      missing.slice(mid),
+      priority,
+      result,
+    );
+    return failedLeft || failedRight;
   }
 
   /**
@@ -502,6 +578,11 @@ class AniListClient {
           has_dub: null,
           franchise_root_id: null,
           airing_status: (e.media.status as string) ?? null,
+          episode_duration: (e.media.duration as number) ?? null,
+          // AniList's `repeat` is exactly Konsou's rewatch_count: completed
+          // prior watches.
+          rewatch_count: (e.repeat as number) ?? 0,
+          aired_episodes: airedEpisodes(e.media),
           added_at: now,
           updated_at: now,
           started_at: toMs(e.startedAt),
@@ -583,6 +664,9 @@ class AniListClient {
         has_dub: null,
         franchise_root_id: null,
         airing_status: m.status ?? null,
+        episode_duration: m.duration ?? null,
+        rewatch_count: r.times_watched,
+        aired_episodes: airedEpisodes(m),
         added_at: now,
         updated_at: now,
         started_at: r.started_at,
@@ -603,6 +687,7 @@ class AniListClient {
     priority: Priority = "low",
   ): Promise<Map<number, AiringStatus>> {
     const result = new Map<number, AiringStatus>();
+    let lastError: unknown = null;
 
     for (let i = 0; i < ids.length; i += RELATIONS_BATCH_SIZE) {
       const chunk = ids.slice(i, i + RELATIONS_BATCH_SIZE);
@@ -622,11 +707,18 @@ class AniListClient {
             nextEpisode: m.nextAiringEpisode?.episode ?? null,
           });
         }
-      } catch {
+      } catch (err) {
         /* partial failure — skip the chunk, caller will retry next cycle */
+        lastError = err;
       }
       if (i + RELATIONS_BATCH_SIZE < ids.length) await delay(BATCH_SPACING_MS);
     }
+
+    // Partial results are still a success, but when every chunk died and
+    // nothing came back the network is down; returning an empty map here
+    // would make Schedule say "nothing airing" when the truth is "couldn't
+    // check".
+    if (result.size === 0 && ids.length > 0 && lastError) throw lastError;
 
     return result;
   }

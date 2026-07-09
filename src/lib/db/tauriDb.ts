@@ -24,6 +24,9 @@ const UPDATABLE_COLUMNS: (keyof ListEntryPatch | "updated_at")[] = [
   "has_dub",
   "franchise_root_id",
   "airing_status",
+  "episode_duration",
+  "rewatch_count",
+  "aired_episodes",
   "updated_at",
 ];
 
@@ -68,8 +71,8 @@ export class TauriKonsouDb implements KonsouDb {
          anilist_id, mal_id, title_romaji, title_english, title_native, cover_url,
          total_episodes, status, episodes_watched, score, notes,
          added_at, updated_at, started_at, completed_at, has_dub, franchise_root_id,
-         airing_status
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+         airing_status, episode_duration, rewatch_count, aired_episodes
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
        ON CONFLICT(anilist_id) DO UPDATE SET
          mal_id           = excluded.mal_id,
          title_romaji     = excluded.title_romaji,
@@ -85,12 +88,16 @@ export class TauriKonsouDb implements KonsouDb {
          started_at       = excluded.started_at,
          completed_at     = excluded.completed_at,
          franchise_root_id = excluded.franchise_root_id,
-         airing_status    = excluded.airing_status`,
+         airing_status    = excluded.airing_status,
+         episode_duration = excluded.episode_duration,
+         rewatch_count    = excluded.rewatch_count,
+         aired_episodes   = excluded.aired_episodes`,
       [
         e.anilist_id, e.mal_id, e.title_romaji, e.title_english, e.title_native, e.cover_url,
         e.total_episodes, e.status, e.episodes_watched, e.score, e.notes,
         e.added_at, e.updated_at, e.started_at, e.completed_at, hasDub,
         e.franchise_root_id ?? null, e.airing_status ?? null,
+        e.episode_duration ?? null, e.rewatch_count ?? 0, e.aired_episodes ?? null,
       ],
     );
   }
@@ -249,6 +256,16 @@ export class TauriKonsouDb implements KonsouDb {
     );
   }
 
+  async scheduleRemove(anilistId: number): Promise<void> {
+    await this.db.execute("DELETE FROM scan_schedule WHERE anilist_id = $1", [
+      anilistId,
+    ]);
+  }
+
+  async scheduleClear(): Promise<void> {
+    await this.db.execute("DELETE FROM scan_schedule");
+  }
+
   // ── Notifications ─────────────────────────────────────────
   async notificationsActive(): Promise<KonsouNotification[]> {
     return this.db.select<KonsouNotification[]>(
@@ -259,6 +276,21 @@ export class TauriKonsouDb implements KonsouDb {
   async notificationInsertIfNew(
     n: Omit<KonsouNotification, "id">,
   ): Promise<boolean> {
+    // One anime = one alert, no matter how many seeds discover it. A row for
+    // the same suggestion (dismissed or still active) blocks re-insertion, so
+    // dismissing actually sticks. started_airing lives in its own lane: a
+    // dismissed sequel suggestion must not swallow the later "it started
+    // airing" alert once the title is on the list.
+    const family =
+      n.type === "started_airing"
+        ? "type = 'started_airing'"
+        : "type != 'started_airing'";
+    const existing = await this.db.select<{ id: number }[]>(
+      `SELECT id FROM notifications WHERE related_id = $1 AND ${family} LIMIT 1`,
+      [n.related_id],
+    );
+    if (existing.length > 0) return false;
+
     const res = await this.db.execute(
       `INSERT OR IGNORE INTO notifications
          (source_id, related_id, type, related_title, related_cover, related_status, airing_at, seen, dismissed, created_at)
@@ -275,10 +307,26 @@ export class TauriKonsouDb implements KonsouDb {
     await this.db.execute("UPDATE notifications SET seen = 1 WHERE seen = 0");
   }
 
-  async notificationDismiss(id: number): Promise<void> {
-    await this.db.execute("UPDATE notifications SET dismissed = 1 WHERE id = $1", [
-      id,
-    ]);
+  async notificationDismissByRelated(relatedIds: number[]): Promise<void> {
+    for (let i = 0; i < relatedIds.length; i += 100) {
+      const chunk = relatedIds.slice(i, i + 100);
+      const marks = chunk.map((_, j) => `$${j + 1}`).join(",");
+      await this.db.execute(
+        `UPDATE notifications SET dismissed = 1 WHERE related_id IN (${marks})`,
+        chunk,
+      );
+    }
+  }
+
+  async notificationsPurgeForEntry(anilistId: number): Promise<void> {
+    await this.db.execute(
+      "DELETE FROM notifications WHERE source_id = $1 OR related_id = $1",
+      [anilistId],
+    );
+  }
+
+  async notificationsClear(): Promise<void> {
+    await this.db.execute("DELETE FROM notifications");
   }
 
   async notificationRestoreDismissed(): Promise<void> {

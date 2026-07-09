@@ -1,10 +1,11 @@
 import { useEffect, useRef } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { anilist } from "@/lib/api/anilist/client";
+import { jikanAnimeScore } from "@/lib/api/jikan/client";
 import { walkRelationChain } from "@/lib/franchise/chain";
 import { indexSummaries } from "@/lib/search/localTitleIndex";
-import type { AiringStatus, BrowseSort, SearchPage } from "@/lib/api/anilist/client";
-import type { AnimeMedia, AnimeSummary, MediaSeason } from "@/types/anime";
+import type { AiringStatus, BrowseParams, SearchPage } from "@/lib/api/anilist/client";
+import type { AnimeMedia, AnimeSummary } from "@/types/anime";
 
 const FIVE_MIN = 5 * 60 * 1000;
 
@@ -39,6 +40,9 @@ export function useAniListSearch(query: string) {
     enabled,
     staleTime: FIVE_MIN,
     networkMode: "offlineFirst",
+    // One retry, not three: a dead connection should show the error state in
+    // seconds, not leave skeletons up for the full backoff ladder.
+    retry: 1,
   });
 
   // Feed results into the local title index so the offline "did you mean"
@@ -60,14 +64,7 @@ export function useAniListSearch(query: string) {
   };
 }
 
-export interface DiscoverParams {
-  sort: BrowseSort;
-  season?: MediaSeason;
-  seasonYear?: number;
-  genre?: string;
-  /** AniList tag name (themes like "Isekai" are tags, not genres). */
-  tag?: string;
-}
+export type DiscoverParams = Omit<BrowseParams, "page">;
 
 export function useDiscover(params: DiscoverParams) {
   const q = useInfiniteQuery({
@@ -76,14 +73,22 @@ export function useDiscover(params: DiscoverParams) {
       params.sort,
       params.season ?? null,
       params.seasonYear ?? null,
-      params.genre ?? null,
-      params.tag ?? null,
+      // Arrays/scalars flattened into a stable key so each filter combo caches
+      // on its own; sorted so selection order never spawns a duplicate query.
+      [...(params.genres ?? [])].sort().join(","),
+      [...(params.themes ?? [])].sort().join(","),
+      [...(params.formats ?? [])].sort().join(","),
+      params.status ?? null,
+      params.country ?? null,
+      params.yearFrom ?? null,
+      params.yearTo ?? null,
     ],
     queryFn: ({ pageParam }) => anilist.browse({ ...params, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasNextPage ? last.page + 1 : undefined),
     staleTime: FIVE_MIN,
     networkMode: "offlineFirst",
+    retry: 1,
   });
 
   // Browsing also seeds the offline "did you mean" corpus.
@@ -122,6 +127,7 @@ export function useAiringSchedule(ids: number[], enabled = true) {
     enabled: enabled && ids.length > 0,
     staleTime: 30 * 60 * 1000,
     networkMode: "offlineFirst",
+    retry: 1,
   });
 }
 
@@ -132,6 +138,7 @@ export function useAnimeDetail(id: number | null) {
     enabled: id != null,
     staleTime: 24 * 60 * 60 * 1000,
     networkMode: "offlineFirst",
+    retry: 1,
   });
 }
 
@@ -147,6 +154,7 @@ export function useRelationChain(media: AnimeMedia | null | undefined) {
     enabled: !!media,
     staleTime: 6 * 60 * 60 * 1000,
     networkMode: "offlineFirst",
+    retry: 1,
   });
 }
 
@@ -155,6 +163,19 @@ export function useRelationChain(media: AnimeMedia | null | undefined) {
  * Used by FranchiseSheet so untracked sequels/movies that are only direct
  * relations of S2+ (not of S1) still surface in the "Related" section.
  */
+/** MAL community score for the detail page's facts grid. A day of staleness
+ *  is fine for an aggregate that moves by hundredths. */
+export function useMalScore(malId?: number | null) {
+  return useQuery({
+    queryKey: ["mal-score", malId],
+    queryFn: ({ signal }) => jikanAnimeScore(malId!, signal),
+    enabled: malId != null,
+    staleTime: 24 * 60 * 60 * 1000,
+    networkMode: "offlineFirst",
+    retry: 1,
+  });
+}
+
 export function useFranchiseRelations(ids: number[], enabled: boolean) {
   const key = [...ids].sort().join(",");
   return useQuery({
@@ -163,5 +184,6 @@ export function useFranchiseRelations(ids: number[], enabled: boolean) {
     enabled: enabled && ids.length > 0,
     staleTime: 6 * 60 * 60 * 1000,
     networkMode: "offlineFirst",
+    retry: 1,
   });
 }

@@ -1,12 +1,13 @@
 import { create } from "zustand";
 import { getDb } from "@/lib/db";
 import { isEnabled } from "@/lib/features";
-import { detectSequels } from "@/lib/sequel/detector";
+import { alertBucket, detectSequels } from "@/lib/sequel/detector";
 import { computeNextCheck, selectDueSeeds } from "@/lib/sequel/schedule";
 import { scanPlanToWatchAirings } from "@/lib/sequel/airingScan";
 import { toast } from "./toastStore";
 import { useSettingsStore } from "./settingsStore";
 import type { ScanScheduleEntry } from "@/lib/db/contract";
+import type { AnimeTitle } from "@/types/anime";
 import type { AnimeListEntry } from "@/types/list";
 import type { Priority } from "@/lib/api/rateLimiter";
 import type { KonsouNotification } from "@/types/notification";
@@ -16,6 +17,23 @@ const LAST_CHECK_KEY = "last_sequel_check";
 const SCAN_BUDGET = 20;
 /** Seeds per detection pass — bounds progress granularity and franchise overlap. */
 const GROUP_SIZE = 4;
+/** "Already Aired" alerts the user never acted on stop shouting after this long.
+ *  They can always be brought back from Settings → restore dismissed. */
+const ALREADY_AIRED_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** One alert per suggested anime for display: the same title can exist as
+ *  several rows when different seeds discovered it (rows are unique per
+ *  source, not per suggestion). Keeps the newest row of each. */
+function dedupeByRelated(items: KonsouNotification[]): KonsouNotification[] {
+  const seen = new Set<number>();
+  const out: KonsouNotification[] = [];
+  for (const n of items) {
+    if (seen.has(n.related_id)) continue;
+    seen.add(n.related_id);
+    out.push(n);
+  }
+  return out;
+}
 
 interface ScanProgress {
   done: number;
@@ -27,6 +45,8 @@ interface NotificationState {
   checking: boolean;
   /** Set during a scan so the UI can show "Scanning N/M…". */
   progress: ScanProgress | null;
+  /** When the radar last finished a sweep (ms), so Alerts can say "checked 2h ago". */
+  lastCheckedAt: number | null;
   items: KonsouNotification[];
   unread: number;
 
@@ -38,7 +58,10 @@ interface NotificationState {
   /** Immediately check one freshly completed/dropped seed. */
   scanSeed: (entries: AnimeListEntry[], seedId: number) => Promise<void>;
   markAllSeen: () => Promise<void>;
-  dismiss: (id: number) => Promise<void>;
+  /** Dismiss every alert suggesting these anime (all duplicate rows at once). */
+  dismissRelated: (relatedIds: number[]) => Promise<void>;
+  /** Forget alerts and scan schedule tied to entries that left the list. */
+  entriesRemoved: (anilistIds: number[]) => Promise<void>;
   restoreDismissed: () => Promise<void>;
 }
 
@@ -46,6 +69,21 @@ function seedIdsOf(entries: AnimeListEntry[]): number[] {
   return entries
     .filter((e) => e.status === "completed" || e.status === "dropped")
     .map((e) => e.anilist_id);
+}
+
+/** Tracked titles by id — the detector uses these to judge OTHER relation
+ *  edges (followed only when the names claim the same franchise). */
+function titleMapOf(entries: AnimeListEntry[]): Map<number, AnimeTitle> {
+  return new Map(
+    entries.map((e) => [
+      e.anilist_id,
+      {
+        romaji: e.title_romaji,
+        english: e.title_english,
+        native: e.title_native,
+      },
+    ]),
+  );
 }
 
 export const useNotificationStore = create<NotificationState>((set, get) => {
@@ -60,6 +98,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
     inList: Set<number>,
     priority: Priority,
     schedule: Record<number, ScanScheduleEntry>,
+    knownTitles: Map<number, AnimeTitle>,
   ): Promise<number> => {
     const db = await getDb();
     let inserted = 0;
@@ -71,6 +110,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         group,
         inList,
         priority,
+        knownTitles,
       );
       for (const n of notifications) {
         if (await db.notificationInsertIfNew(n)) inserted++;
@@ -98,14 +138,37 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
     loaded: false,
     checking: false,
     progress: null,
+    lastCheckedAt: null,
     items: [],
     unread: 0,
 
     load: async () => {
       const db = await getDb();
-      const items = await db.notificationsActive();
+      let items = await db.notificationsActive();
+
+      // Decay: an "Already Aired" alert the user ignored for a month has had
+      // its chance — quietly retire it instead of letting the bucket grow
+      // forever. Airing/announced alerts stay; they still have a date coming.
+      const cutoff = Date.now() - ALREADY_AIRED_TTL_MS;
+      const expired = items.filter(
+        (n) => alertBucket(n) === "already_aired" && n.created_at < cutoff,
+      );
+      if (expired.length > 0) {
+        await db.notificationDismissByRelated(expired.map((n) => n.related_id));
+        const gone = new Set(expired.map((n) => n.related_id));
+        items = items.filter((n) => !gone.has(n.related_id));
+      }
+
+      items = dedupeByRelated(items);
       const unread = await db.unreadCount();
-      set({ items, unread, loaded: true });
+      const settings = await db.settingsGetAll();
+      const lastRaw = Number(settings[LAST_CHECK_KEY]);
+      set({
+        items,
+        unread,
+        loaded: true,
+        lastCheckedAt: Number.isFinite(lastRaw) && lastRaw > 0 ? lastRaw : null,
+      });
     },
 
     runScheduledScan: async (entries) => {
@@ -137,8 +200,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
       set({ checking: true });
       try {
         const inList = new Set(entries.map((e) => e.anilist_id));
-        const inserted = await scanSeeds(due, inList, "low", schedule);
-        await db.settingsSet(LAST_CHECK_KEY, String(Date.now()));
+        const inserted = await scanSeeds(due, inList, "low", schedule, titleMapOf(entries));
+        const finishedAt = Date.now();
+        await db.settingsSet(LAST_CHECK_KEY, String(finishedAt));
+        set({ lastCheckedAt: finishedAt });
         if (inserted > 0) await get().load();
       } catch (err) {
         console.error("[alerts] scheduled scan failed:", err);
@@ -160,8 +225,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
       try {
         const schedule = await db.scheduleGetAll();
         const inList = new Set(entries.map((e) => e.anilist_id));
-        const inserted = await scanSeeds(seeds, inList, "high", schedule);
-        await db.settingsSet(LAST_CHECK_KEY, String(Date.now()));
+        const inserted = await scanSeeds(seeds, inList, "high", schedule, titleMapOf(entries));
+        const finishedAt = Date.now();
+        await db.settingsSet(LAST_CHECK_KEY, String(finishedAt));
+        set({ lastCheckedAt: finishedAt });
         await get().load();
         toast.show(
           inserted > 0
@@ -195,7 +262,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
       try {
         const schedule = await db.scheduleGetAll();
         const inList = new Set(entries.map((e) => e.anilist_id));
-        const inserted = await scanSeeds([seedId], inList, "high", schedule);
+        const inserted = await scanSeeds([seedId], inList, "high", schedule, titleMapOf(entries));
         if (inserted > 0) await get().load();
       } catch (err) {
         console.error("[alerts] single-seed scan failed:", err);
@@ -213,10 +280,22 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
       }));
     },
 
-    dismiss: async (id) => {
+    dismissRelated: async (relatedIds) => {
+      if (relatedIds.length === 0) return;
       const db = await getDb();
-      await db.notificationDismiss(id);
-      set((s) => ({ items: s.items.filter((n) => n.id !== id) }));
+      await db.notificationDismissByRelated(relatedIds);
+      const gone = new Set(relatedIds);
+      set((s) => ({ items: s.items.filter((n) => !gone.has(n.related_id)) }));
+    },
+
+    entriesRemoved: async (anilistIds) => {
+      if (anilistIds.length === 0) return;
+      const db = await getDb();
+      for (const id of anilistIds) {
+        await db.notificationsPurgeForEntry(id);
+        await db.scheduleRemove(id);
+      }
+      if (get().loaded) await get().load();
     },
 
     restoreDismissed: async () => {

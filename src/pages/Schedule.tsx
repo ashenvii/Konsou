@@ -1,17 +1,18 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarClock, Clock } from "lucide-react";
 import { AnimeCover } from "@/components/anime/AnimeCover";
+import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useAiringSchedule } from "@/hooks/useAniList";
-import { preferredTitle, timeUntil } from "@/lib/format";
+import { airedEpisodes, preferredTitle, timeUntil } from "@/lib/format";
 import { useListStore } from "@/lib/store/listStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
-import type { AnimeListEntry } from "@/types/list";
+import type { AnimeListEntry, ListEntryPatch } from "@/types/list";
 
 const DAY_MS = 86_400_000;
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -59,7 +60,35 @@ export function Schedule() {
   );
   const ids = useMemo(() => candidates.map((e) => e.anilist_id), [candidates]);
 
-  const { data: airing, isLoading, isError } = useAiringSchedule(ids);
+  const { data: airing, isLoading, isError, refetch } = useAiringSchedule(ids);
+  const patchEntry = useListStore((s) => s.patch);
+
+  // Persist what the airing lookup just learned: fresh aired counts keep
+  // "episodes left" honest, totals backfill data gaps, and airing_status
+  // stays current for the status-picker guards. Value-guarded, so the write
+  // storm settles after one pass.
+  useEffect(() => {
+    if (!airing) return;
+    for (const e of candidates) {
+      const info = airing[e.anilist_id];
+      if (!info) continue;
+      const p: ListEntryPatch = {};
+      const aired = airedEpisodes({
+        status: info.status,
+        episodes: info.episodes,
+        nextAiringEpisode:
+          info.nextEpisode != null ? { episode: info.nextEpisode } : null,
+      });
+      if (aired != null && e.aired_episodes !== aired) p.aired_episodes = aired;
+      if (e.total_episodes == null && info.episodes != null) {
+        p.total_episodes = info.episodes;
+      }
+      if (info.status && e.airing_status !== info.status) {
+        p.airing_status = info.status;
+      }
+      if (Object.keys(p).length > 0) void patchEntry(e.anilist_id, p);
+    }
+  }, [airing, candidates, patchEntry]);
 
   const { days, announced } = useMemo(() => {
     const buckets = new Map<string, DayBucket>();
@@ -144,11 +173,27 @@ export function Schedule() {
       />
 
       {!hasContent ? (
-        <EmptyState
-          icon={CalendarClock}
-          title="Nothing on the calendar"
-          subtitle="When something you're watching or plan to watch is airing, its next episodes show up here."
-        />
+        // "Couldn't check" and "nothing airing" are different facts; with no
+        // cached airing data and a failed fetch, claiming an empty calendar
+        // would be a lie.
+        isError ? (
+          <EmptyState
+            icon={CalendarClock}
+            title="Couldn't check the schedule"
+            subtitle="Konsou can't reach AniList right now."
+            action={
+              <Button size="sm" variant="primary" onClick={() => void refetch()}>
+                Try again
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={CalendarClock}
+            title="Nothing on the calendar"
+            subtitle="When something you're watching or plan to watch is airing, its next episodes show up here."
+          />
+        )
       ) : (
         <div className="k-sched konsou-scroll">
           {days.map((bucket) => (

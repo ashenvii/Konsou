@@ -9,6 +9,49 @@
   position: relative;
 }
 
+/* ── Header scroll elevation ─────────────────────────────────
+   useScrollElevation toggles data-scrolled on the owning .k-page when its
+   scroll container moves. The top chrome then gains a hairline + soft shadow
+   so content reads as tucking under it. Height never changes (no reflow), so
+   the virtualized lists and scroll restore are untouched. z-index lifts the
+   bar so its shadow paints over the scrolling content. Detail opts out — it
+   runs its own immersive top bar. */
+.k-toolbar,
+.k-pageheader,
+.k-search__bar {
+  position: relative;
+  z-index: 3;
+  background: var(--color-base);
+  transition: box-shadow var(--duration-normal) var(--ease-out);
+}
+/* The Tonight strip is the real boundary on My List (the grid tucks under it),
+   so it carries the shadow. z-index lifts it over the scrolling grid; the
+   toolbar above only needs the hairline. */
+.k-tonight {
+  position: relative;
+  z-index: 2;
+  transition: box-shadow var(--duration-normal) var(--ease-out);
+}
+.k-page[data-scrolled="true"]:not(.k-detail) > .k-toolbar {
+  box-shadow: 0 1px 0 var(--color-border);
+}
+.k-page[data-scrolled="true"]:not(.k-detail) > .k-tonight,
+.k-page[data-scrolled="true"]:not(.k-detail) > .k-pageheader,
+.k-page[data-scrolled="true"]:not(.k-detail) > .k-search__bar {
+  box-shadow:
+    0 1px 0 var(--color-border),
+    0 10px 22px -14px oklch(0% 0 0 / 65%);
+}
+/* When Tonight is hidden (short viewport), the toolbar becomes the boundary
+   and takes the full shadow itself. */
+@media (max-height: 680px) {
+  .k-page[data-scrolled="true"]:not(.k-detail) > .k-toolbar {
+    box-shadow:
+      0 1px 0 var(--color-border),
+      0 10px 22px -14px oklch(0% 0 0 / 65%);
+  }
+}
+
 /* ── Skeleton grid ─────────────────────────────────────────── */
 .k-skelgrid {
   flex: 1;
@@ -45,6 +88,7 @@
   min-width: 0;
 }
 .k-pageheader__back {
+  position: relative;
   display: grid;
   place-items: center;
   width: 36px;
@@ -57,6 +101,12 @@
   cursor: pointer;
   transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out),
     transform 100ms var(--ease-out);
+}
+/* Small glyph, full 44px tap target. */
+.k-pageheader__back::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
 }
 .k-pageheader__back:hover {
   background: var(--color-surface-2);
@@ -79,8 +129,9 @@
 .k-icon-btn {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  /* 44px: Apple HIG minimum tappable area / WCAG target size. */
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-md);
   color: var(--color-text-secondary);
 }
@@ -123,12 +174,26 @@
 /* ── Search ────────────────────────────────────────────────── */
 .k-search__bar {
   flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   padding: var(--space-3) var(--content-padding-sm);
 }
 @media (min-width: 1024px) {
   .k-search__bar {
     padding-inline: var(--content-padding-lg);
   }
+}
+.k-search__cancel {
+  flex: none;
+  padding: 0 var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-accent-glow);
+  white-space: nowrap;
+}
+.k-search__cancel:hover {
+  color: var(--color-text-primary);
 }
 .k-search__suggest {
   flex: 1;
@@ -221,6 +286,164 @@
   }
 }
 
+/* Discover browse toolbar: Filters (left), season nav (center), view (right). */
+.k-discover__toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--content-padding-sm) var(--space-3);
+}
+@media (min-width: 1024px) {
+  .k-discover__toolbar {
+    padding-inline: var(--content-padding-lg);
+  }
+}
+.k-discover__toolbar .k-season-nav {
+  flex: 1;
+  padding: 0;
+}
+.k-discover__toolbar .k-season-nav__label {
+  min-width: 0;
+}
+.k-discover__filterbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+.k-discover__filterbtn:hover {
+  background: var(--color-surface-3);
+  color: var(--color-text-primary);
+}
+.k-discover__filterbtn--on {
+  background: var(--color-accent-dim);
+  border-color: transparent;
+  color: var(--color-accent-glow);
+}
+.k-discover__filtercount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+.k-discover__viewbtn {
+  margin-left: auto;
+  flex: none;
+}
+.k-discover__clearall {
+  align-self: center;
+  padding: 0 var(--space-2);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.k-discover__clearall:hover {
+  color: var(--color-text-primary);
+}
+
+/* ── Discover filter sheet ─────────────────────────────────── */
+.k-filters {
+  display: flex;
+  flex-direction: column;
+}
+.k-filsec {
+  border-bottom: 1px solid var(--color-border);
+}
+.k-filsec__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-4) var(--space-1);
+  color: var(--color-text-primary);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+.k-filsec__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.k-filsec__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-dim);
+  color: var(--color-accent-glow);
+  font-size: 12px;
+  font-weight: 700;
+}
+.k-filsec__chev {
+  color: var(--color-text-tertiary);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+.k-filsec--open .k-filsec__chev {
+  transform: rotate(180deg);
+}
+.k-filsec__body {
+  padding: 0 var(--space-1) var(--space-4);
+}
+.k-chipwrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.k-filyear {
+  display: flex;
+  gap: var(--space-4);
+}
+.k-filyear__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.k-filyear__field select {
+  height: 40px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: var(--text-base);
+}
+.k-filters__footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4) 0 var(--space-2);
+  margin-top: var(--space-2);
+  background: var(--color-surface);
+}
+
 /* ── Alerts ────────────────────────────────────────────────── */
 .k-alerts {
   flex: 1;
@@ -240,9 +463,28 @@
 .k-alertgroup__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-2);
   width: 100%;
+}
+.k-alertgroup__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
   padding: var(--space-3) var(--space-1);
+}
+.k-alertgroup__clear {
+  flex: none;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.k-alertgroup__clear:hover {
+  color: var(--color-accent);
 }
 .k-alertgroup__chevron {
   color: var(--color-text-tertiary);
@@ -263,6 +505,26 @@
   flex: none;
   border-radius: var(--radius-md);
   overflow: hidden;
+  cursor: pointer;
+}
+.k-alert__cover .k-cover__img {
+  transition: transform 200ms var(--ease-out);
+}
+/* Cover and title lead to the same page, so they hover as one: title takes
+   the accent shade, art leans in — from either target. */
+.k-alert__titlebtn {
+  text-align: left;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: color 150ms var(--ease-out);
+}
+.k-alert__titlebtn:hover,
+.k-alert:has(.k-alert__cover:hover) .k-alert__titlebtn {
+  color: var(--color-accent-glow);
+}
+.k-alert__cover:hover .k-cover__img,
+.k-alert:has(.k-alert__titlebtn:hover) .k-cover__img {
+  transform: scale(1.05);
 }
 .k-alert__body {
   flex: 1;
@@ -286,6 +548,26 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+}
+.k-detail__loading {
+  position: absolute;
+  top: calc(var(--topbar-height) + env(safe-area-inset-top, 0px) + var(--space-3));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  background: oklch(0% 0 0 / 55%);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  pointer-events: none;
+}
+.k-detail__spinner {
+  animation: konsou-spin 0.8s linear infinite;
 }
 .k-detail__topbar {
   position: absolute;
@@ -496,12 +778,38 @@
   align-items: center;
   padding: var(--space-2);
   border-radius: var(--radius-lg);
-  background: var(--color-surface-2);
+  /* Tracked rows carry their list status as a left-edge wash (via
+     --card-status); untracked rows resolve to the plain surface. */
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--card-status, transparent) 14%, transparent),
+      transparent 55%
+    ),
+    var(--color-surface-2);
   border: 1px solid var(--color-border);
   text-align: left;
 }
+.k-seasonrow {
+  transition: background-color 150ms var(--ease-out), border-color 150ms var(--ease-out);
+}
 .k-seasonrow:hover {
-  background: var(--color-surface-3);
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--card-status, transparent) 14%, transparent),
+      transparent 55%
+    ),
+    var(--color-surface-3);
+  border-color: var(--color-border-strong);
+}
+/* The whole row is one link; the title answers in the accent shade so the
+   click target reads as clickable, not decorated. */
+.k-seasonrow__title {
+  transition: color 150ms var(--ease-out);
+}
+button.k-seasonrow:hover .k-seasonrow__title {
+  color: var(--color-accent-glow);
 }
 /* Watch-order position: the chain reads 1, 2, 3… top to bottom. */
 .k-seasonrow__num {
@@ -532,6 +840,56 @@
 .k-seasonrows__loading {
   margin-top: var(--space-2);
 }
+.k-seasonrows__regroup {
+  margin-top: var(--space-3);
+}
+/* Completion ledger above the season rows on the Related tab. */
+.k-seasonrows__ledger {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.k-seasonrows__ledger--full {
+  font-weight: 600;
+  color: var(--color-accent-glow);
+}
+
+/* ── Detail: offline fallback for tracked titles ───────────── */
+.k-offdetail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  /* The detail top bar is an overlay; clear it or it swallows the title row. */
+  padding: calc(var(--topbar-height) + env(safe-area-inset-top, 0px) + var(--space-4))
+    var(--content-padding-sm) var(--space-6);
+  max-width: 560px;
+}
+@media (min-width: 1024px) {
+  .k-offdetail {
+    padding-inline: var(--content-padding-lg);
+  }
+}
+.k-offdetail__card {
+  display: flex;
+  gap: var(--space-4);
+  width: 100%;
+}
+.k-offdetail__cover {
+  flex: none;
+  width: 110px;
+}
+.k-offdetail__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.k-offdetail__note {
+  max-width: 44ch;
+}
 .k-seasonrow .k-cover {
   border-radius: var(--radius-md);
 }
@@ -550,6 +908,11 @@
   font-size: var(--text-2xs);
   font-weight: 700;
   text-transform: capitalize;
+}
+/* Not aired yet: browsable but visibly parked — art desaturated so nobody
+   mistakes it for something they can start watching today. */
+.k-seasonrow--unaired .k-cover__img {
+  filter: saturate(0.55) brightness(0.85);
 }
 /* The entry currently being viewed: unmistakable in the chain. */
 .k-seasonrow--current {
@@ -1407,26 +1770,15 @@
   font-weight: 700;
   color: var(--color-accent-glow);
 }
-.k-fhead__bar {
-  display: flex;
-  gap: 3px;
-  height: 5px;
-  margin-top: 2px;
+/* Franchise-wide completion line in the sheet head. */
+.k-fhead__ledger {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
 }
-.k-fhead__seg {
-  position: relative;
-  flex: 1;
-  border-radius: var(--radius-full);
-  background: oklch(100% 0 0 / 14%);
-  overflow: hidden;
-}
-.k-fhead__seg > span {
-  position: absolute;
-  inset: 0 auto 0 0;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--seg, var(--color-accent));
-  box-shadow: 0 0 6px color-mix(in oklab, var(--seg, var(--color-accent)) 55%, transparent);
+.k-fhead__ledger--full {
+  font-weight: 600;
+  color: var(--color-accent-glow);
 }
 .k-fsheet-heading {
   font-size: var(--text-xs);
@@ -1442,7 +1794,9 @@
   gap: var(--space-2);
   margin-bottom: var(--space-2);
 }
-/* One season = one card. Status colour rides in via --card-status. */
+/* One season = one card. Status colour rides in via --card-status and paints
+   the row itself: a wash bleeding in from the left edge, fading into the
+   surface. The paint IS the state indicator here — no separate line. */
 .k-srow {
   position: relative;
   display: flex;
@@ -1450,7 +1804,13 @@
   gap: var(--space-3);
   padding: var(--space-2);
   border-radius: var(--radius-lg);
-  background: var(--color-surface-2);
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--card-status, transparent) 16%, transparent),
+      transparent 58%
+    ),
+    var(--color-surface-2);
   border: 1px solid var(--color-border);
   transition: border-color 150ms var(--ease-out), background-color 150ms var(--ease-out);
 }
@@ -1458,6 +1818,20 @@
    whole item is live, while each control below carries its own affordance. */
 .k-srow:hover {
   border-color: var(--color-border-strong);
+}
+/* Not aired yet: the art reads parked, the dashed chip carries the date. */
+.k-srow--unaired .k-srow__cover .k-cover__img {
+  filter: saturate(0.55) brightness(0.85);
+}
+/* A member the user opted out of: present for honesty, visually parked. */
+.k-srow--dimmed {
+  opacity: 0.55;
+}
+.k-srow--dimmed:hover {
+  opacity: 0.85;
+}
+.k-srow--dimmed .k-srow__cover .k-cover__img {
+  filter: grayscale(0.7);
 }
 .k-srow__open {
   flex: none;
@@ -1520,21 +1894,28 @@
   flex-direction: column;
   gap: 5px;
 }
-/* Title behaves like a link: colour shift + underline on hover. */
+/* Title and cover are one destination (the detail page), so they share one
+   affordance: hovering either shifts the title to the accent shade and lights
+   the cover's open hint. No underline — accent colour is the link language. */
 .k-srow__titlebtn {
+  display: block;
+  width: 100%;
   text-align: left;
   min-width: 0;
   max-width: 100%;
   color: var(--color-text-primary);
   cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  text-underline-offset: 3px;
-  transition: color 150ms var(--ease-out), text-decoration-color 150ms var(--ease-out);
+  transition: color 150ms var(--ease-out);
 }
-.k-srow__titlebtn:hover {
+.k-srow__titlebtn:hover,
+.k-srow:has(.k-srow__open:hover) .k-srow__titlebtn {
   color: var(--color-accent-glow);
-  text-decoration-color: currentColor;
+}
+.k-srow:has(.k-srow__titlebtn:hover) .k-srow__openhint {
+  opacity: 1;
+}
+.k-srow:has(.k-srow__titlebtn:hover) .k-cover__img {
+  transform: scale(1.08);
 }
 .k-srow__controls {
   display: flex;
@@ -1606,24 +1987,10 @@
   font-variant-numeric: tabular-nums;
   color: var(--color-text-secondary);
 }
-.k-srow__bar {
-  position: relative;
-  height: 3px;
-  border-radius: var(--radius-full);
-  background: oklch(100% 0 0 / 10%);
-  overflow: hidden;
-}
-.k-srow__bar > span {
-  position: absolute;
-  inset: 0 auto 0 0;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--card-status, var(--color-accent));
-}
 .k-srow__remove {
   flex: none;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
   border-radius: var(--radius-md);
@@ -1660,8 +2027,8 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 36px;
-  padding: 0 10px;
+  height: 40px;
+  padding: 0 12px;
   border-radius: var(--radius-md);
   background: var(--color-surface-3);
   color: var(--color-text-secondary);
@@ -2151,6 +2518,156 @@
 .k-stats__heading {
   letter-spacing: 0.07em;
   margin-bottom: var(--space-3);
+}
+/* Wrapped entry banner: the one accent-forward row on the page. */
+.k-stats__wrappedbtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-accent-dim);
+  color: var(--color-text-primary);
+  text-align: left;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+.k-stats__wrappedbtn:hover {
+  background: color-mix(in oklab, var(--color-accent-dim) 80%, var(--color-accent));
+}
+.k-stats__wrappedicon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: #fff;
+}
+.k-stats__wrappedtext {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.k-stats__wrappedtext strong {
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+.k-stats__wrappedtext span {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+/* ── Wrapped sheet ─────────────────────────────────────────── */
+.k-wrapped__years {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.k-wrapped {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.k-wrapped__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-4);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(
+      130% 130% at 50% -30%,
+      color-mix(in oklab, var(--color-accent) 26%, transparent),
+      transparent 60%
+    ),
+    var(--color-surface-2);
+}
+.k-wrapped__hours {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-accent-glow);
+}
+.k-wrapped__hourslabel {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.k-wrapped__line {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+.k-wrapped__line--dim {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
+}
+.k-wrapped__heading {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.k-wrapped__top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+}
+.k-wrapped__toprow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.k-wrapped__topcover {
+  flex: none;
+  width: 30px;
+}
+.k-wrapped__topscore {
+  margin-left: auto;
+  flex: none;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-accent-glow);
+}
+.k-wrapped__share {
+  margin-top: var(--space-3);
+}
+
+.k-stats__trivia {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+}
+.k-stats__triviaglyph {
+  flex: none;
+  font-size: var(--text-lg);
+  line-height: 1.4;
+  color: var(--color-accent-glow);
+}
+.k-stats__triviatext {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+.k-stats__trivialabel {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: 2px;
 }
 .k-stats__bars {
   display: flex;

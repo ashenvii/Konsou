@@ -36,6 +36,8 @@ const DISPLAY_PRIORITY: Record<ListStatus, number> = {
   on_hold: 3,
   completed: 2,
   dropped: 1,
+  // A "won't watch" member never speaks for the whole franchise card.
+  not_interested: 0,
 };
 
 /**
@@ -70,11 +72,21 @@ function pickDisplayEntry(
 /**
  * Collapse a flat entry list into franchise groups. Entries without a
  * franchise_root_id are treated as standalone (group of 1). Pure — no I/O.
+ *
+ * "Not interested" entries never ride inside a franchise card: telling the app
+ * you don't want a season and then finding it seated between the ones you're
+ * watching is a mixed signal. They keep their franchise_root_id (so changing
+ * your mind rejoins the group instantly) but group as standalone cards.
  */
 export function groupEntries(entries: AnimeListEntry[]): FranchiseGroup[] {
   const byRoot = new Map<number, AnimeListEntry[]>();
+  const notInterested: AnimeListEntry[] = [];
 
   for (const e of entries) {
+    if (e.status === "not_interested") {
+      notInterested.push(e);
+      continue;
+    }
     const key = e.franchise_root_id ?? e.anilist_id;
     const bucket = byRoot.get(key);
     if (bucket) bucket.push(e);
@@ -82,6 +94,22 @@ export function groupEntries(entries: AnimeListEntry[]): FranchiseGroup[] {
   }
 
   const groups: FranchiseGroup[] = [];
+
+  for (const e of notInterested) {
+    groups.push({
+      // A not-interested entry that IS another group's root would collide on
+      // rootId (consumers use it as the card identity), so it gets the
+      // negated id — a token, never dereferenced as an AniList id directly.
+      rootId: byRoot.has(e.anilist_id) ? -e.anilist_id : e.anilist_id,
+      entries: [e],
+      displayEntry: e,
+      isGroup: false,
+      totalWatched: e.episodes_watched,
+      totalEpisodes: e.total_episodes,
+      sortUpdated: e.updated_at,
+      sortAdded: e.added_at,
+    });
+  }
 
   for (const [rootId, members] of byRoot) {
     const sorted = [...members].sort((a, b) => a.added_at - b.added_at);

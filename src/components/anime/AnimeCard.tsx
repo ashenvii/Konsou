@@ -90,6 +90,17 @@ function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
   const progressPct =
     inList && total ? Math.min(100, (watched / total) * 100) : 0;
 
+  // The +1 quick action only does anything while watching/rewatching
+  // (incrementEpisodes no-ops otherwise); untracked cards use it to add.
+  // Showing a dead button on completed/planned/dropped cards just invites
+  // taps that go nowhere.
+  const showQuick = !inList || progressive;
+
+  // A completed entry with no known episode count would caption "0 / ?"
+  // beside a full bar; the completed marker already says everything.
+  const hideEpCaption =
+    entry?.status === "completed" && total == null && watched === 0;
+
   // ── Grid ─────────────────────────────────────────────────
   if (view === "grid") {
     return (
@@ -178,7 +189,9 @@ function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
                 </span>
               )}
               <div className="k-card__footermeta">
-                {inList && !(progressive && total != null) && (
+                {/* The EP marker only renders over an actual cover, so a broken
+                    cover keeps the caption as the progress fallback. */}
+                {inList && !(progressive && total != null && cover) && !hideEpCaption && (
                   <span className="k-card__epcaption">
                     {watched}/{total ?? "?"}
                   </span>
@@ -199,22 +212,24 @@ function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
                 <SeasonBar entries={[entry]} size="grid" className="k-card__seasonbar" />
               )}
             </div>
-            <button
-              type="button"
-              className="k-card__quick"
-              onClick={quickAction}
-              aria-label={inList ? "Add one episode" : "Add to list"}
-            >
-              {inList ? (
-                pending > 0 ? (
-                  <span className="k-card__quick-pending">+{pending}</span>
+            {showQuick && (
+              <button
+                type="button"
+                className="k-card__quick"
+                onClick={quickAction}
+                aria-label={inList ? "Add one episode" : "Add to list"}
+              >
+                {inList ? (
+                  pending > 0 ? (
+                    <span className="k-card__quick-pending">+{pending}</span>
+                  ) : (
+                    "+1"
+                  )
                 ) : (
-                  "+1"
-                )
-              ) : (
-                <Icon icon={Plus} size={18} />
-              )}
-            </button>
+                  <Icon icon={Plus} size={18} />
+                )}
+              </button>
+            )}
           </div>
         </article>
         {sheet}
@@ -262,19 +277,23 @@ function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
             )}
           </div>
           <div className="k-row__metacol">
-            <span className="k-row__ep">{inList ? `${watched} / ${total ?? "?"}` : ""}</span>
+            <span className="k-row__ep">
+              {inList && !hideEpCaption ? `${watched} / ${total ?? "?"}` : ""}
+            </span>
             {entry?.score != null && (
               <span className="k-row__scoreval">★ {formatScore(entry.score)}</span>
             )}
           </div>
-          <button
-            type="button"
-            className="k-row__action"
-            onClick={quickAction}
-            aria-label={inList ? "Add one episode" : "Add to list"}
-          >
-            {inList ? (pending > 0 ? `+${pending}` : "+1") : <Icon icon={Plus} size={18} />}
-          </button>
+          {showQuick && (
+            <button
+              type="button"
+              className="k-row__action"
+              onClick={quickAction}
+              aria-label={inList ? "Add one episode" : "Add to list"}
+            >
+              {inList ? (pending > 0 ? `+${pending}` : "+1") : <Icon icon={Plus} size={18} />}
+            </button>
+          )}
         </article>
         {sheet}
       </>
@@ -300,7 +319,7 @@ function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
             </span>
           )}
         </div>
-        {inList && (
+        {inList && !hideEpCaption && (
           <span className="k-compact__ep">
             {watched}/{total ?? "?"}
           </span>

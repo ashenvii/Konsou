@@ -1,7 +1,13 @@
 import { anilist } from "@/lib/api/anilist/client";
 import type { Priority } from "@/lib/api/rateLimiter";
-import { getCoverUrl, preferredTitle } from "@/lib/format";
-import type { AniListMediaStatus, FuzzyDate, RelationNode } from "@/types/anime";
+import { getCoverUrl, isMangaNode, preferredTitle } from "@/lib/format";
+import { isFranchiseOther } from "@/lib/franchise/relatedness";
+import type {
+  AnimeTitle,
+  AniListMediaStatus,
+  FuzzyDate,
+  RelationNode,
+} from "@/types/anime";
 import type { AlertType, KonsouNotification } from "@/types/notification";
 
 /**
@@ -57,6 +63,9 @@ export async function detectSequels(
   seeds: number[],
   inList: Set<number>,
   priority: Priority = "low",
+  /** Titles of tracked entries (seed ids at minimum) — lets the walker judge
+   *  OTHER edges, which only count when the names claim the same franchise. */
+  knownTitles?: Map<number, AnimeTitle>,
 ): Promise<DetectResult> {
   const volatileSeeds = new Set<number>();
   if (seeds.length === 0) return { notifications: [], volatileSeeds };
@@ -64,6 +73,7 @@ export async function detectSequels(
   const visited = new Set<number>();
   const originOf = new Map<number, number>(); // node id → originating seed id
   seeds.forEach((id) => originOf.set(id, id));
+  const titleOf = new Map<number, AnimeTitle>(knownTitles ?? []);
 
   const found = new Map<number, Omit<KonsouNotification, "id">>(); // keyed by related_id
   let level = [...new Set(seeds)];
@@ -79,12 +89,18 @@ export async function detectSequels(
       const origin = originOf.get(id) ?? id;
 
       for (const rel of relationMap[id] ?? []) {
+        // Never surface manga/novel source material as a continuation.
+        if (isMangaNode(rel)) continue;
+        if (!titleOf.has(rel.id)) titleOf.set(rel.id, rel.title);
         const isDirectChild = depth === 0;
+        // OTHER rides along when the names claim the same franchise — some
+        // continuations (Edgerunners 2) have no SEQUEL edge at all.
         const shouldWalk =
           rel.relationType === "SEQUEL" ||
           (isDirectChild &&
             (rel.relationType === "SIDE_STORY" ||
-              rel.relationType === "SPIN_OFF"));
+              rel.relationType === "SPIN_OFF")) ||
+          isFranchiseOther(titleOf.get(id), rel);
         if (!shouldWalk) continue;
 
         if (!originOf.has(rel.id)) originOf.set(rel.id, origin);

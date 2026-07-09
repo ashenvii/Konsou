@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode, UIEvent } from "react";
+import type { CSSProperties, ReactNode, UIEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ChevronLeft,
   Copy,
   Globe,
+  Loader2,
   Play,
   Plus,
   Share2,
@@ -14,6 +15,7 @@ import {
 import { AnimeCover } from "@/components/anime/AnimeCover";
 import { EditSheet } from "@/components/anime/EditSheet";
 import { EpisodeCounter } from "@/components/anime/EpisodeCounter";
+import { formatChipMeta, relationChipMeta } from "@/components/anime/relationMeta";
 import { StatusBadge } from "@/components/anime/StatusBadge";
 import { statusMeta } from "@/components/anime/statusMeta";
 import { StatusSheet } from "@/components/anime/StatusSheet";
@@ -22,18 +24,26 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
-import { useAnimeDetail, useRelationChain } from "@/hooks/useAniList";
+import { useAnimeDetail, useMalScore, useRelationChain } from "@/hooks/useAniList";
+import { computeFranchiseLedger, ledgerEpisodeLabel } from "@/lib/franchise/ledger";
+import { isFranchiseOther } from "@/lib/franchise/relatedness";
+import { orderForWatching } from "@/lib/franchise/watchOrder";
+import type { RelationEdge } from "@/lib/franchise/watchOrder";
+import type { RelationChainResult } from "@/lib/franchise/chain";
 import { goBack } from "@/hooks/useAppBack";
 import { useDragScroll } from "@/hooks/useDragScroll";
 import {
+  airedEpisodes,
   airingStatusLabel,
   alternateTitles,
   formatFuzzyDate,
   formatLabel,
   formatScore,
   getCoverUrl,
+  isMangaNode,
   preferredTitle,
   seasonYearLabel,
+  secondaryTitle,
   stripHtml,
 } from "@/lib/format";
 import { openExternal } from "@/lib/openExternal";
@@ -54,7 +64,7 @@ import type {
   RelationNode,
   RelationType,
 } from "@/types/anime";
-import type { AnimeListEntry, ListStatus } from "@/types/list";
+import type { AnimeListEntry, ListEntryPatch, ListStatus } from "@/types/list";
 
 type DetailTab = "overview" | "cast" | "related" | "similar";
 
@@ -94,16 +104,6 @@ interface SeasonRow {
   direct?: boolean;
 }
 
-function fuzzyToUnixSeconds(d?: FuzzyDate | null): number | null {
-  if (!d?.year) return null;
-  return Math.floor(Date.UTC(d.year, (d.month ?? 1) - 1, d.day ?? 1) / 1000);
-}
-
-function relationTypeLabel(type?: RelationType | "CURRENT" | null): string {
-  if (!type || type === "CURRENT") return "Current";
-  return type.replace(/_/g, " ").toLowerCase();
-}
-
 function externalTypeLabel(type?: string | null): string | null {
   if (!type) return null;
   return type.replace(/_/g, " ").toLowerCase();
@@ -130,7 +130,10 @@ function externalLinkMeta(link: ExternalLink): string[] {
   return meta;
 }
 
-function getSeasonRows(media: AnimeMedia, chain?: RelationNode[]): SeasonRow[] {
+function getSeasonRows(
+  media: AnimeMedia,
+  chain?: RelationChainResult,
+): SeasonRow[] {
   const byId = new Map<number, SeasonRow>();
   byId.set(media.id, {
     id: media.id,
@@ -165,24 +168,42 @@ function getSeasonRows(media: AnimeMedia, chain?: RelationNode[]): SeasonRow[] {
     });
   };
 
-  // Manga relations (ALTERNATIVE source versions etc.) aren't openable
-  // as anime; the detail query would 404. Old cached snapshots have no
-  // type field, so only exclude explicit MANGA.
+  // Manga/novel relations (ALTERNATIVE source versions etc.) aren't openable
+  // as anime; the detail query would 404. isMangaNode also catches pre-`type`
+  // cached snapshots via their format ("Edgerunners MADNESS").
+  // OTHER edges count too when the names claim the same franchise — some
+  // direct continuations (Edgerunners 2) are linked ONLY that way.
   for (const r of media.relations ?? []) {
-    if (SEASON_RELATIONS.includes(r.relationType) && r.type !== "MANGA") {
+    if (isMangaNode(r)) continue;
+    if (
+      SEASON_RELATIONS.includes(r.relationType) ||
+      isFranchiseOther(media.title, r)
+    ) {
       add(r, true);
     }
   }
   // The rest of the franchise, walked breadth-first (lib/franchise/chain):
   // entries only reachable through other seasons, so season 1 still lists
   // season 3, the movies, everything.
-  for (const r of chain ?? []) add(r, false);
+  for (const r of chain?.nodes ?? []) add(r, false);
 
-  return [...byId.values()].sort((a, b) => {
-    const at = fuzzyToUnixSeconds(a.startDate) ?? a.seasonYear ?? 0;
-    const bt = fuzzyToUnixSeconds(b.startDate) ?? b.seasonYear ?? 0;
-    return at - bt;
-  });
+  // Watch order comes from the relation graph, not the calendar — Fate/Zero
+  // aired after Fate/stay night but is its prequel; Demon Slayer's Mugen
+  // Train movie sits between S1 and S2. Air dates only break ties or place
+  // entries the tags say nothing about. While the deep walk is still
+  // loading, the one-hop edges from the detail payload order what's visible.
+  const edges: RelationEdge[] =
+    chain?.edges ??
+    (media.relations ?? [])
+      .filter((r) => !isMangaNode(r))
+      .map((r) => ({ from: media.id, to: r.id, type: r.relationType }));
+  const position = new Map(
+    orderForWatching([...byId.values()], edges).map((id, i) => [id, i]),
+  );
+
+  return [...byId.values()].sort(
+    (a, b) => (position.get(a.id) ?? 0) - (position.get(b.id) ?? 0),
+  );
 }
 
 function seasonLabel(row: SeasonRow): string {
@@ -209,12 +230,21 @@ interface ReleaseFact {
   accent?: boolean;
 }
 
-function releaseFacts(media: AnimeMedia): ReleaseFact[] {
+function releaseFacts(
+  media: AnimeMedia,
+  malScore?: number | null,
+): ReleaseFact[] {
   const source = media.source
     ? media.source.replace(/_/g, " ").toLowerCase()
     : null;
   const facts = [
     { label: "Status", value: airingStatusLabel(media.status) },
+    // The MAL community score answers "is this any good" without leaving the
+    // page. Jikan-sourced; silently absent when MAL doesn't know the title.
+    {
+      label: "MAL score",
+      value: malScore != null ? malScore.toFixed(2) : null,
+    },
     { label: "First aired", value: formatFuzzyDate(media.startDate) },
     { label: "Episodes", value: media.episodes ? String(media.episodes) : null },
     {
@@ -244,7 +274,7 @@ export function AnimeDetail() {
   const { id } = useParams();
   const animeId = id ? Number(id) : null;
   const navigate = useNavigate();
-  const { data: media, isLoading, isError } = useAnimeDetail(animeId);
+  const { data: media, isLoading, isError, refetch } = useAnimeDetail(animeId);
   const genreRowRef = useDragScroll<HTMLDivElement>();
 
   const entry = useListStore((s) => (animeId ? s.map[animeId] : undefined));
@@ -252,8 +282,11 @@ export function AnimeDetail() {
   // the franchise, so "what's left to watch" is readable at a glance.
   const listMap = useListStore((s) => s.map);
   const addFromSummary = useListStore((s) => s.addFromSummary);
+  const regroupFranchise = useListStore((s) => s.regroupFranchise);
   const updateStatus = useListStore((s) => s.updateStatus);
   const setDubStatus = useListStore((s) => s.setDubStatus);
+  const incrementEpisodes = useListStore((s) => s.incrementEpisodes);
+  const patchEntry = useListStore((s) => s.patch);
   const remove = useListStore((s) => s.remove);
 
   const [statusOpen, setStatusOpen] = useState(false);
@@ -281,6 +314,7 @@ export function AnimeDetail() {
     : [];
 
   const { data: chain, isFetching: chainLoading } = useRelationChain(media);
+  const { data: malScore } = useMalScore(media?.idMal);
   const seasonRows = useMemo(
     () => (media ? getSeasonRows(media, chain) : []),
     [media, chain],
@@ -290,6 +324,20 @@ export function AnimeDetail() {
   const relatedRows = useMemo(
     () => seasonRows.filter((r) => r.id !== media?.id),
     [seasonRows, media],
+  );
+  // Completion ledger over everything the chain walker found, current title
+  // included: how much of this series exists vs how much has been seen.
+  // ALTERNATIVE tellings stay visible in the Related list but sit outside the
+  // completion math — the quick menu's ledger never counts them, and both
+  // surfaces must report the same percentage for the same franchise.
+  const seriesLedger = useMemo(
+    () =>
+      computeFranchiseLedger(
+        seasonRows
+          .filter((r) => r.relationType !== "ALTERNATIVE")
+          .map((r) => ({ episodes: r.episodes, entry: listMap[r.id] })),
+      ),
+    [seasonRows, listMap],
   );
   const streamingLinks = useMemo(
     () => (media?.externalLinks ?? []).filter(isStreamingLink),
@@ -306,7 +354,34 @@ export function AnimeDetail() {
       void setDubStatus(animeId, dubLinks.length > 0);
     }
   }, [animeId, entry, media, dubLinks.length, setDubStatus]);
-  const facts = media ? releaseFacts(media) : [];
+
+  // Backfill time accounting from the fresh detail payload: per-episode
+  // duration, missing totals (crediting completed entries that predate the
+  // number), and the aired count. Value-guarded so it settles in one pass.
+  useEffect(() => {
+    if (animeId == null || !entry || !media) return;
+    const p: ListEntryPatch = {};
+    if (media.duration != null && entry.episode_duration !== media.duration) {
+      p.episode_duration = media.duration;
+    }
+    if (entry.total_episodes == null && media.episodes != null) {
+      p.total_episodes = media.episodes;
+      // A completed entry with no known total was credited zero episodes;
+      // completion means the whole run was seen.
+      if (
+        entry.status === "completed" &&
+        entry.episodes_watched < media.episodes
+      ) {
+        p.episodes_watched = media.episodes;
+      }
+    }
+    const aired = airedEpisodes(media);
+    if (aired != null && entry.aired_episodes !== aired) {
+      p.aired_episodes = aired;
+    }
+    if (Object.keys(p).length > 0) void patchEntry(animeId, p);
+  }, [animeId, entry, media, patchEntry]);
+  const facts = media ? releaseFacts(media, malScore) : [];
 
   const onScroll = (e: UIEvent<HTMLDivElement>) => {
     const y = e.currentTarget.scrollTop;
@@ -343,16 +418,79 @@ export function AnimeDetail() {
     );
 
   if (isLoading) return <DetailSkeleton onBack={goBack} />;
-  if (isError || !media)
+  if (isError || !media) {
+    // Offline-first: a tracked title never dead-ends. Everything the list
+    // entry knows (cover, title, status, progress, score) renders from local
+    // data; only the AniList-enriched sections need the network.
+    if (entry) {
+      const savedTitle = preferredTitle(
+        {
+          romaji: entry.title_romaji,
+          english: entry.title_english,
+          native: entry.title_native,
+        },
+        titleLanguage,
+      );
+      const meta = statusMeta(entry.status);
+      const canIncrement =
+        entry.status === "watching" || entry.status === "rewatching";
+      return (
+        <div className="k-page">
+          <DetailTopBar solid title={savedTitle} onBack={goBack} onShare={share} />
+          <div className="k-offdetail konsou-scroll">
+            <div className="k-offdetail__card">
+              <div className="k-offdetail__cover">
+                <AnimeCover src={entry.cover_url ?? undefined} alt={savedTitle} />
+              </div>
+              <div className="k-offdetail__body">
+                <Text as="h1" size="lg" weight={700} clamp={2}>
+                  {savedTitle}
+                </Text>
+                <span className="k-pill" style={{ color: meta.color }}>
+                  <Icon icon={meta.icon} size={12} weight="fill" />
+                  {meta.label}
+                </span>
+                <Text size="sm" color="secondary">
+                  {entry.episodes_watched} / {entry.total_episodes ?? "?"} episodes
+                  {entry.score != null ? ` · ★ ${formatScore(entry.score)}` : ""}
+                </Text>
+                {canIncrement && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void incrementEpisodes(entry.anilist_id, 1)}
+                  >
+                    +1 episode
+                  </Button>
+                )}
+              </div>
+            </div>
+            <Text size="sm" color="tertiary" className="k-offdetail__note">
+              Konsou can't reach AniList right now, so this is your saved copy.
+              Progress changes still work and sync later.
+            </Text>
+            <Button variant="primary" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="k-page">
         <DetailTopBar solid onBack={goBack} onShare={share} />
         <EmptyState
           title="Couldn't load details"
-          subtitle="Check your connection and try again."
+          subtitle="Konsou can't reach AniList right now."
+          action={
+            <Button size="sm" variant="primary" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          }
         />
       </div>
     );
+  }
 
   const onPickStatus = (status: ListStatus) => {
     if (inList) void updateStatus(animeId!, status);
@@ -438,20 +576,13 @@ export function AnimeDetail() {
                 status={entry.status}
                 onClick={() => setStatusOpen(true)}
               />
+              {/* The reached-finale "Mark complete" prompt now lives in the
+                  store (listStore.setEpisodes), so it fires from every
+                  increment surface, not just here. */}
               <EpisodeCounter
                 anilistId={animeId!}
                 watched={entry.episodes_watched}
                 total={entry.total_episodes}
-                onReachedTotal={() => {
-                  if (entry.status !== "completed") {
-                    toast.action({
-                      message: "Reached the final episode",
-                      actionLabel: "Mark complete",
-                      duration: 5000,
-                      onAction: () => void updateStatus(animeId!, "completed"),
-                    });
-                  }
-                }}
               />
               <button
                 type="button"
@@ -620,10 +751,33 @@ export function AnimeDetail() {
 
           {tab === "related" && relatedRows.length > 0 && (
             <Section title="Where this sits in the series">
+              {/* The completionist's ledger: only meaningful once something
+                  here is tracked, and only while the chain isn't mid-load
+                  (a partial chain would understate what exists). */}
+              {seriesLedger.trackedCount > 0 &&
+                seriesLedger.memberCount >= 2 &&
+                !chainLoading && (
+                  <p
+                    className={`k-seasonrows__ledger${seriesLedger.fullSet ? " k-seasonrows__ledger--full" : ""}`}
+                  >
+                    {seriesLedger.fullSet
+                      ? `All ${seriesLedger.memberCount} entries on your list · ${ledgerEpisodeLabel(seriesLedger)}`
+                      : `${ledgerEpisodeLabel(seriesLedger)} across ${seriesLedger.memberCount} entries · ${seriesLedger.untrackedCount} not on your list`}
+                  </p>
+                )}
               <div className="k-seasonrows">
                 {seasonRows.map((row, i) => {
                   const rowEntry = listMap[row.id];
                   const isCurrent = row.id === media.id;
+                  const alt = secondaryTitle(row.title, titleLanguage);
+                  const relChip = row.direct
+                    ? relationChipMeta(row.relationType)
+                    : null;
+                  const fmtChip = formatChipMeta(row.format);
+                  const unaired = row.status === "NOT_YET_RELEASED";
+                  const unairedDate = unaired
+                    ? formatFuzzyDate(row.startDate)
+                    : null;
                   const inner = (
                     <>
                       <span className="k-seasonrow__num" aria-hidden>
@@ -631,26 +785,53 @@ export function AnimeDetail() {
                       </span>
                       <AnimeCover
                         src={getCoverUrl(row.coverImage)}
-                        alt={preferredTitle(row.title)}
+                        alt={preferredTitle(row.title, titleLanguage)}
                       />
                       <div className="k-seasonrow__body">
-                        <Text size="base" weight={600} clamp={2}>
-                          {preferredTitle(row.title)}
+                        <Text
+                          size="base"
+                          weight={600}
+                          clamp={2}
+                          className="k-seasonrow__title"
+                        >
+                          {preferredTitle(row.title, titleLanguage)}
                         </Text>
+                        {alt && (
+                          <Text size="xs" color="tertiary" clamp={1}>
+                            {alt}
+                          </Text>
+                        )}
                         <Text size="xs" color="secondary" clamp={2}>
                           {seasonLabel(row)}
                         </Text>
                         <span className="k-seasonrow__chips">
-                          {isCurrent ? (
+                          {isCurrent && (
                             <span className="k-seasonrow__type k-seasonrow__type--current">
                               You are here
                             </span>
-                          ) : (
-                            row.direct && (
-                              <span className="k-seasonrow__type">
-                                {relationTypeLabel(row.relationType)}
-                              </span>
-                            )
+                          )}
+                          {!isCurrent && relChip && (
+                            <span
+                              className="k-chip-kind"
+                              style={{ "--chip": relChip.color } as CSSProperties}
+                            >
+                              {relChip.label}
+                            </span>
+                          )}
+                          {fmtChip && (
+                            <span
+                              className="k-chip-kind"
+                              style={{ "--chip": fmtChip.color } as CSSProperties}
+                            >
+                              {fmtChip.label}
+                            </span>
+                          )}
+                          {unaired && (
+                            <span className="k-chip-unaired">
+                              {unairedDate
+                                ? `Not aired yet · ${unairedDate}`
+                                : "Not aired yet · TBA"}
+                            </span>
                           )}
                           {rowEntry && <SeasonRowStatus entry={rowEntry} />}
                         </span>
@@ -670,7 +851,16 @@ export function AnimeDetail() {
                     <button
                       key={row.id}
                       type="button"
-                      className="k-seasonrow"
+                      className={`k-seasonrow${unaired ? " k-seasonrow--unaired" : ""}`}
+                      // Tracked rows wear their status as a wash from the left
+                      // edge — same paint language as the quick menu.
+                      style={
+                        rowEntry
+                          ? ({
+                              "--card-status": statusMeta(rowEntry.status).color,
+                            } as CSSProperties)
+                          : undefined
+                      }
                       onClick={() => navigate(`/anime/${row.id}`, { replace: true })}
                     >
                       {inner}
@@ -682,6 +872,18 @@ export function AnimeDetail() {
                 <Text size="xs" color="tertiary" className="k-seasonrows__loading">
                   Looking for the rest of the series…
                 </Text>
+              )}
+              {/* Self-heal for a franchise the background pass split into
+                  separate cards: re-resolve and share one root. Only worth
+                  offering when 2+ of these seasons are actually tracked. */}
+              {relatedRows.filter((r) => listMap[r.id]).length >= 1 && inList && (
+                <button
+                  type="button"
+                  className="k-btn k-btn--sm k-btn--ghost k-seasonrows__regroup"
+                  onClick={() => animeId != null && regroupFranchise(animeId)}
+                >
+                  Group these on My List
+                </button>
               )}
             </Section>
           )}
@@ -848,6 +1050,13 @@ function DetailSkeleton({ onBack }: { onBack: () => void }) {
   return (
     <div className="k-page k-detail">
       <DetailTopBar solid={false} onBack={onBack} />
+      {/* An explicit "we're fetching" beat over the shimmer: bare placeholder
+          shadows read as a broken/empty page while a slow request is in
+          flight, so say what's happening. */}
+      <div className="k-detail__loading" role="status" aria-live="polite">
+        <Icon icon={Loader2} size={16} className="k-detail__spinner" />
+        <span>Loading details…</span>
+      </div>
       <div className="k-detail__scroll konsou-scroll">
         <Skeleton height={240} radius="0" />
         <div className="k-detail__headrow">

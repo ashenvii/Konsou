@@ -134,6 +134,12 @@ export interface AnimeSummary {
   genres?: string[];
   studio?: string | null;
   nextAiringEpisode?: NextAiringEpisode | null;
+  /** ISO-3166 alpha-2, e.g. "JP", "CN", "KR". Lets the UI label donghua/aeni
+   *  instead of hiding them, and drives the Discover Country filter. */
+  countryOfOrigin?: string | null;
+  /** Minutes per episode. On summaries so list entries can store it at add
+   *  time and Stats can count real time instead of a flat 24-minute guess. */
+  duration?: number | null;
   /** Derived from externalLinks at query time. null = no streaming links found. */
   hasDub?: boolean | null;
 }
@@ -141,7 +147,6 @@ export interface AnimeSummary {
 /** The full media object used by the detail page (cached 24h). */
 export interface AnimeMedia extends AnimeSummary {
   description?: string | null;
-  duration?: number | null;
   source?: string | null;
   /** Official trailer; site is usually "youtube" (id = video id). */
   trailer?: { id: string; site: string; thumbnail: string | null } | null;

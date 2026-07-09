@@ -72,13 +72,23 @@ export interface KonsouDb {
   /** Every scheduled seed, keyed by anilist_id. Seeds with no row are "due now". */
   scheduleGetAll(): Promise<Record<number, ScanScheduleEntry>>;
   scheduleSet(entry: ScanScheduleEntry): Promise<void>;
+  /** Forget a seed's schedule when its entry leaves the list. */
+  scheduleRemove(anilistId: number): Promise<void>;
+  scheduleClear(): Promise<void>;
 
   // ── Notifications (sequel radar) ───────────────────────────
   notificationsActive(): Promise<KonsouNotification[]>;
   /** Returns true if it was newly inserted (false if the pair already existed). */
   notificationInsertIfNew(n: Omit<KonsouNotification, "id">): Promise<boolean>;
   notificationMarkAllSeen(): Promise<void>;
-  notificationDismiss(id: number): Promise<void>;
+  /** Dismiss every row suggesting any of these anime, regardless of which seed
+   *  produced it — one anime can be discovered via several sources. */
+  notificationDismissByRelated(relatedIds: number[]): Promise<void>;
+  /** Hard-delete every row that references this entry, as the seed that produced
+   *  the alert or as the suggestion itself. Used when the entry leaves the list,
+   *  so alerts never point at nothing and re-adding starts clean. */
+  notificationsPurgeForEntry(anilistId: number): Promise<void>;
+  notificationsClear(): Promise<void>;
   notificationRestoreDismissed(): Promise<void>;
   unreadCount(): Promise<number>;
 

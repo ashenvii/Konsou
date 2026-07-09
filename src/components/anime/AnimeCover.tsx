@@ -11,7 +11,18 @@ interface AnimeCoverProps {
   radius?: string;
 }
 
-/** Lazy, placeholder-backed cover image. Always 2:3 unless overridden by parent. */
+/** Deterministic hue from the title so every fallback tile gets its own color
+ *  instead of a uniform grey hole in a wall of art. */
+function hueFromTitle(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+  return h;
+}
+
+/** Lazy, placeholder-backed cover image. Always 2:3 unless overridden by parent.
+ *  While loading (and when the image never arrives) the tile shows the title's
+ *  first letter on a hue derived from the title, so covers-as-hero survives
+ *  missing art. */
 export function AnimeCover({
   src,
   alt,
@@ -21,6 +32,9 @@ export function AnimeCover({
 }: AnimeCoverProps) {
   const { ref, visibleSrc, loaded, onLoad } = useLazyImage(src);
 
+  const initial = alt?.trim().charAt(0).toUpperCase() ?? "";
+  const hue = initial ? hueFromTitle(alt.trim()) : 0;
+
   return (
     <div
       ref={ref}
@@ -28,8 +42,23 @@ export function AnimeCover({
       style={{ borderRadius: radius }}
     >
       {!loaded && (
-        <div className="k-cover__placeholder">
-          <Icon icon={Image} size={20} color="var(--color-text-tertiary)" />
+        <div
+          className="k-cover__placeholder"
+          style={
+            initial
+              ? {
+                  background: `linear-gradient(155deg, oklch(34% 0.055 ${hue}), oklch(21% 0.04 ${(hue + 50) % 360}))`,
+                }
+              : undefined
+          }
+        >
+          {initial ? (
+            <span className="k-cover__initial" aria-hidden>
+              {initial}
+            </span>
+          ) : (
+            <Icon icon={Image} size={20} color="var(--color-text-tertiary)" />
+          )}
         </div>
       )}
       {visibleSrc && (

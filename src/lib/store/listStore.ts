@@ -1,12 +1,16 @@
 import { create } from "zustand";
+import { anilist } from "@/lib/api/anilist/client";
 import { getDb } from "@/lib/db";
-import { getCoverUrl, preferredTitle } from "@/lib/format";
+import { airedEpisodes, getCoverUrl, isMangaNode, preferredTitle } from "@/lib/format";
+import { haptic } from "@/lib/haptics";
 import { resolveFranchiseChain } from "@/lib/franchise/cascade";
+import { isFranchiseOther } from "@/lib/franchise/relatedness";
 import { statusBlockReason } from "@/lib/statusValidation";
 import { syncQueue } from "@/lib/sync/queue";
 import { syncManager } from "@/lib/sync/syncManager";
+import { useCatchUpStore } from "./catchUpStore";
 import { toast } from "./toastStore";
-import type { AnimeSummary } from "@/types/anime";
+import type { AnimeSummary, AnimeTitle, RelationNode } from "@/types/anime";
 import type {
   AnimeListEntry,
   ListEntryPatch,
@@ -23,6 +27,9 @@ interface ListState {
   getEntry: (anilistId: number) => AnimeListEntry | undefined;
 
   addFromSummary: (summary: AnimeSummary, status: ListStatus) => Promise<void>;
+  /** Mark the given prior franchise entries as completed, in response to the
+   *  catch-up prompt. Ties them to the shared franchise root. */
+  addWatchedPrior: (rootId: number, nodes: RelationNode[]) => Promise<void>;
   importEntries: (toImport: AnimeListEntry[]) => Promise<number>;
   setDubStatus: (anilistId: number, hasDub: boolean) => Promise<void>;
   updateStatus: (anilistId: number, status: ListStatus) => Promise<void>;
@@ -30,6 +37,10 @@ interface ListState {
   incrementEpisodes: (anilistId: number, delta: number) => Promise<void>;
   setScore: (anilistId: number, score: number | null) => Promise<void>;
   patch: (anilistId: number, patch: ListEntryPatch) => Promise<void>;
+  /** Force re-resolve a franchise so its tracked members share one root card.
+   *  Lets the user fix a grouping the background pass missed (e.g. a sequel
+   *  added after the earlier season was already resolved as standalone). */
+  regroupFranchise: (anilistId: number) => Promise<void>;
   remove: (anilistId: number) => void;
   removeMany: (anilistIds: number[]) => void;
   clearAll: (opts?: { propagateToDrive?: boolean }) => Promise<void>;
@@ -42,8 +53,52 @@ function indexBy(entries: AnimeListEntry[]): Record<number, AnimeListEntry> {
   return m;
 }
 
+/** Build a completed list entry for a franchise relation the user confirms
+ *  they've already watched. */
+function completedRelEntry(
+  rel: RelationNode,
+  rootId: number,
+  now: number,
+): AnimeListEntry {
+  const total = rel.episodes ?? null;
+  return {
+    anilist_id: rel.id,
+    mal_id: rel.idMal ?? null,
+    title_romaji: rel.title.romaji,
+    title_english: rel.title.english ?? null,
+    title_native: rel.title.native ?? null,
+    cover_url: getCoverUrl(rel.coverImage) || null,
+    total_episodes: total,
+    status: "completed",
+    episodes_watched: total ?? 0,
+    score: null,
+    notes: null,
+    has_dub: null,
+    franchise_root_id: rootId,
+    airing_status: rel.status ?? null,
+    // Relation nodes don't carry duration; the detail visit backfills it.
+    episode_duration: null,
+    rewatch_count: 0,
+    aired_episodes: airedEpisodes(rel),
+    added_at: now,
+    updated_at: now,
+    started_at: null,
+    completed_at: now,
+  };
+}
+
 function queueSync(): void {
   syncQueue.scheduleWrite(() => syncManager.pushNow());
+}
+
+/** The chain walker needs the start entry's title to judge OTHER relation
+ *  edges (followed only when the names claim the same franchise). */
+function entryTitle(e: AnimeListEntry): AnimeTitle {
+  return {
+    romaji: e.title_romaji,
+    english: e.title_english,
+    native: e.title_native,
+  };
 }
 
 export const useListStore = create<ListState>((set, get) => {
@@ -70,15 +125,29 @@ export const useListStore = create<ListState>((set, get) => {
   };
 
   /**
-   * Walk the PREQUEL chain for `primaryId`, add missing ancestors as completed,
-   * and stamp franchise_root_id on the primary entry and any existing ancestors.
-   * Runs entirely in the background — errors are swallowed so they never block
-   * the original add.
+   * Walk the PREQUEL chain for `primaryId`, stamp franchise_root_id on the
+   * primary entry and any already-tracked ancestors, and — when earlier
+   * entries aren't tracked yet — raise the catch-up prompt so the user says
+   * what they actually watched (instead of everything auto-completing). Runs
+   * in the background; errors are swallowed so they never block the add.
+   *
+   * `promptCatchUp` is off for dropped/not-interested entries: they still get
+   * their franchise root (so grouping and later status flips work), but
+   * neither status implies having watched what came before.
    */
-  const runFranchiseCascade = async (primaryId: number): Promise<void> => {
+  const runFranchiseCascade = async (
+    primaryId: number,
+    promptCatchUp = true,
+  ): Promise<void> => {
     try {
       const inList = new Set(get().entries.map((e) => e.anilist_id));
-      const { rootId, toAdd, toUpdate } = await resolveFranchiseChain(primaryId, inList);
+      const primaryEntry = get().map[primaryId];
+      const { rootId, toAdd, toUpdate } = await resolveFranchiseChain(
+        primaryId,
+        inList,
+        "high",
+        primaryEntry ? entryTitle(primaryEntry) : undefined,
+      );
 
       // Give the newly added entry its franchise root.
       await patchEntry(primaryId, { franchise_root_id: rootId });
@@ -88,49 +157,21 @@ export const useListStore = create<ListState>((set, get) => {
         await patchEntry(id, { franchise_root_id: rootId });
       }
 
-      if (toAdd.length === 0) return;
+      if (toAdd.length === 0 || !promptCatchUp) return;
 
-      const db = await getDb();
-      const now = Date.now();
-
-      for (const rel of toAdd) {
-        const total = rel.episodes ?? null;
-        const entry: AnimeListEntry = {
-          anilist_id: rel.id,
-          mal_id: rel.idMal ?? null,
-          title_romaji: rel.title.romaji,
-          title_english: rel.title.english ?? null,
-          title_native: rel.title.native ?? null,
-          cover_url: getCoverUrl(rel.coverImage) || null,
-          total_episodes: total,
-          status: "completed",
-          episodes_watched: total ?? 0,
-          score: null,
-          notes: null,
-          has_dub: null,
-          franchise_root_id: rootId,
-          airing_status: rel.status ?? null,
-          added_at: now,
-          updated_at: now,
-          started_at: null,
-          completed_at: now,
-        };
-        applyEntry(entry);
-        try {
-          await db.listUpsert(entry);
-          await db.tombstoneRemove(rel.id);
-        } catch {
-          removeFromState(rel.id);
-        }
-      }
-
-      queueSync();
-
-      const msg =
-        toAdd.length === 1
-          ? `Also added "${preferredTitle(toAdd[0].title)}" as completed`
-          : `Also added ${toAdd.length} prior entries as completed`;
-      toast.success(msg);
+      // Don't silently mark the earlier seasons/movies/OVAs as watched — that
+      // was burying entries the user may never watch under "completed" and
+      // dragging whole franchise cards into the wrong state. Ask what they
+      // actually finished; the catch-up sheet calls addWatchedPrior to write.
+      const primary = get().map[primaryId];
+      const primaryTitle = primary
+        ? preferredTitle({
+            romaji: primary.title_romaji,
+            english: primary.title_english,
+            native: primary.title_native,
+          })
+        : "";
+      useCatchUpStore.getState().open({ rootId, primaryTitle, candidates: toAdd });
     } catch (err) {
       console.warn("[cascade] franchise chain resolve failed:", err);
       // Non-fatal: the primary entry is already in the list, just ungrouped until
@@ -175,6 +216,7 @@ export const useListStore = create<ListState>((set, get) => {
           entry.anilist_id,
           inList,
           "low",
+          entryTitle(entry),
         );
 
         await patchEntry(entry.anilist_id, { franchise_root_id: rootId });
@@ -192,6 +234,72 @@ export const useListStore = create<ListState>((set, get) => {
     }
   };
 
+  /**
+   * Heal franchises that split into two cards because their halves resolved
+   * different roots (S1 added long ago rooted itself; S2 added later resolved
+   * its own root before S1 was reachable). A true franchise root has no
+   * PREQUEL — so any current root that does have one is living under the
+   * wrong id. Re-resolve just those and fold their members into the real
+   * root. One batched relations read for all roots (relation snapshots make
+   * repeat runs free); the full chain walk only runs for divergent roots.
+   */
+  const reconcileSplitRoots = async (): Promise<void> => {
+    const roots = new Set<number>();
+    for (const e of get().entries) {
+      roots.add(e.franchise_root_id ?? e.anilist_id);
+    }
+    if (roots.size === 0) return;
+
+    try {
+      const relMap = await anilist.getRelationsBatch([...roots], "low");
+
+      for (const rootId of roots) {
+        const rootEntry = get().map[rootId];
+        const rootTitle = rootEntry ? entryTitle(rootEntry) : undefined;
+        // Two reasons this "root" may not be the real one: it has an earlier
+        // season (PREQUEL), or it's OTHER-linked to a same-named anime —
+        // continuations like Edgerunners 2 carry no SEQUEL edge, so the two
+        // sides each become their own root without this check.
+        const suspect = (relMap[rootId] ?? []).some(
+          (r) =>
+            (r.relationType === "PREQUEL" && !isMangaNode(r)) ||
+            isFranchiseOther(rootTitle, r),
+        );
+        if (!suspect) continue;
+
+        try {
+          const inList = new Set(get().entries.map((e) => e.anilist_id));
+          const { rootId: trueRoot, toUpdate } = await resolveFranchiseChain(
+            rootId,
+            inList,
+            "low",
+            rootTitle,
+          );
+          if (trueRoot === rootId) continue;
+
+          const members = new Set(toUpdate);
+          members.add(rootId);
+          if (get().map[trueRoot]) members.add(trueRoot);
+          for (const e of get().entries) {
+            const current = e.franchise_root_id ?? e.anilist_id;
+            const belongs = current === rootId || members.has(e.anilist_id);
+            if (belongs && e.franchise_root_id !== trueRoot) {
+              await patchEntry(e.anilist_id, { franchise_root_id: trueRoot });
+            }
+          }
+        } catch {
+          // Skip this root; the next launch retries.
+        }
+      }
+    } catch {
+      // Offline or rate-limited — nothing lost, next launch retries.
+    }
+  };
+
+  /** Once per app session: backfills + split-root healing are idempotent but
+   *  not free, and load() re-runs after airing scans update entries. */
+  let groomingStarted = false;
+
   return {
     loaded: false,
     entries: [],
@@ -199,9 +307,21 @@ export const useListStore = create<ListState>((set, get) => {
 
     load: async () => {
       const db = await getDb();
-      const entries = await db.listAll();
+      const raw = await db.listAll();
+      // Rows written before migration 9 (and old web-shim JSON) lack the time
+      // accounting fields; normalize so the rest of the app never sees
+      // undefined where the type promises a value.
+      const entries = raw.map((e) => ({
+        ...e,
+        episode_duration: e.episode_duration ?? null,
+        rewatch_count: e.rewatch_count ?? 0,
+        aired_episodes: e.aired_episodes ?? null,
+      }));
       set({ entries, map: indexBy(entries), loaded: true });
-      void resolveOrphanRoots();
+      if (!groomingStarted) {
+        groomingStarted = true;
+        void resolveOrphanRoots().then(() => reconcileSplitRoots());
+      }
     },
 
     isInList: (anilistId) => !!get().map[anilistId],
@@ -233,6 +353,9 @@ export const useListStore = create<ListState>((set, get) => {
         has_dub: null,
         franchise_root_id: null,
         airing_status: s.status ?? null,
+        episode_duration: s.duration ?? null,
+        rewatch_count: 0,
+        aired_episodes: airedEpisodes(s),
         added_at: now,
         updated_at: now,
         started_at:
@@ -246,22 +369,50 @@ export const useListStore = create<ListState>((set, get) => {
         // Re-adding supersedes any prior deletion of this title.
         await db.tombstoneRemove(s.id);
         queueSync();
+        haptic("light");
         // Immediately scan this one new seed for sequels when added as
         // completed/dropped (foreground priority — the user is right here).
         if (status === "completed" || status === "dropped") {
           const { useNotificationStore } = await import("./notificationStore");
           void useNotificationStore.getState().scanSeed(get().entries, s.id);
         }
-        // Walk the PREQUEL chain, add missing ancestors as completed, and tag
-        // all franchise members with franchise_root_id. Skipped if dropped —
-        // a dropped series doesn't imply the user watched everything before it.
-        if (status !== "dropped") {
-          void runFranchiseCascade(s.id);
-        }
+        // Walk the PREQUEL chain, tag franchise members with a shared root, and
+        // (if earlier entries are missing) raise the catch-up prompt. Dropped
+        // and not-interested still get grouped — they just skip the prompt,
+        // since neither implies watching what came before.
+        void runFranchiseCascade(
+          s.id,
+          status !== "dropped" && status !== "not_interested",
+        );
       } catch {
         removeFromState(s.id);
         toast.error("Couldn't add to your list");
       }
+    },
+
+    addWatchedPrior: async (rootId, nodes) => {
+      if (nodes.length === 0) return;
+      const db = await getDb();
+      const now = Date.now();
+      for (const rel of nodes) {
+        // A candidate the user picked up in the meantime shouldn't be clobbered.
+        if (get().map[rel.id]) continue;
+        const entry = completedRelEntry(rel, rootId, now);
+        applyEntry(entry);
+        try {
+          await db.listUpsert(entry);
+          await db.tombstoneRemove(rel.id);
+        } catch {
+          removeFromState(rel.id);
+        }
+      }
+      queueSync();
+      haptic("light");
+      toast.success(
+        nodes.length === 1
+          ? `Marked "${preferredTitle(nodes[0].title)}" complete`
+          : `Marked ${nodes.length} earlier entries complete`,
+      );
     },
 
     importEntries: async (toImport) => {
@@ -315,6 +466,12 @@ export const useListStore = create<ListState>((set, get) => {
           patch.episodes_watched = prev.total_episodes;
         }
       }
+      // Completed -> rewatching: the finished watch becomes a counted prior
+      // watch (so its hours survive in Stats) and episode progress restarts.
+      if (status === "rewatching" && prev.status === "completed") {
+        patch.rewatch_count = (prev.rewatch_count ?? 0) + 1;
+        patch.episodes_watched = 0;
+      }
       if (
         (status === "watching" || status === "rewatching") &&
         prev.started_at == null
@@ -322,10 +479,19 @@ export const useListStore = create<ListState>((set, get) => {
         patch.started_at = Date.now();
       }
       await patchEntry(anilistId, patch);
+      haptic(status === "completed" ? "success" : "light");
       // Scan just this seed immediately when marked completed/dropped.
       if (status === "completed" || status === "dropped") {
         const { useNotificationStore } = await import("./notificationStore");
         void useNotificationStore.getState().scanSeed(get().entries, anilistId);
+      }
+      // An entry that never got a franchise root (added as dropped or
+      // not-interested before grouping existed, or a failed cascade) picks it
+      // up the moment it rejoins the living statuses — so changing your mind
+      // from "not interested" to "plan to watch" puts it back under its
+      // franchise card instead of leaving it standalone forever.
+      if (prev.franchise_root_id == null && status !== "not_interested") {
+        void runFranchiseCascade(anilistId, status !== "dropped");
       }
     },
 
@@ -335,6 +501,27 @@ export const useListStore = create<ListState>((set, get) => {
       const max = prev.total_episodes ?? Number.MAX_SAFE_INTEGER;
       const clamped = Math.max(0, Math.min(episodes, max));
       await patchEntry(anilistId, { episodes_watched: clamped });
+      if (clamped > prev.episodes_watched) haptic("light");
+
+      // Reaching the final episode from below — while still marked as actively
+      // watching/rewatching — offers to close the entry out. Centralized here
+      // so it fires no matter which surface did the increment (detail counter,
+      // card quick-add, offline +1), which is what other trackers do. Only when
+      // a real total is known and the run wasn't already finished.
+      const reachedFinale =
+        prev.total_episodes != null &&
+        clamped >= prev.total_episodes &&
+        prev.episodes_watched < prev.total_episodes &&
+        (prev.status === "watching" || prev.status === "rewatching");
+      if (reachedFinale) {
+        const rewatch = prev.status === "rewatching";
+        toast.action({
+          message: rewatch ? "Rewatch complete" : "Reached the final episode",
+          actionLabel: rewatch ? "Mark finished" : "Mark complete",
+          duration: 5000,
+          onAction: () => void get().updateStatus(anilistId, "completed"),
+        });
+      }
     },
 
     incrementEpisodes: async (anilistId, delta) => {
@@ -353,10 +540,37 @@ export const useListStore = create<ListState>((set, get) => {
       await patchEntry(anilistId, p);
     },
 
+    regroupFranchise: async (anilistId) => {
+      const entry = get().map[anilistId];
+      if (!entry) return;
+      try {
+        const inList = new Set(get().entries.map((e) => e.anilist_id));
+        // Force a fresh walk (ignores any cached root) and stamp the resolved
+        // root onto this entry plus every tracked franchise member.
+        const { rootId, toUpdate } = await resolveFranchiseChain(
+          anilistId,
+          inList,
+          "high",
+          entryTitle(entry),
+        );
+        await patchEntry(anilistId, { franchise_root_id: rootId });
+        for (const id of toUpdate) {
+          await patchEntry(id, { franchise_root_id: rootId });
+        }
+        const grouped = 1 + toUpdate.length;
+        toast.success(
+          grouped > 1 ? `Grouped ${grouped} entries` : "Nothing else to group here",
+        );
+      } catch {
+        toast.error("Couldn't regroup right now");
+      }
+    },
+
     remove: (anilistId) => {
       const entry = get().map[anilistId];
       if (!entry) return;
       removeFromState(anilistId); // optimistic
+      haptic("medium");
       let undone = false;
       toast.action({
         message: `Removed ${preferredTitle({
@@ -380,6 +594,10 @@ export const useListStore = create<ListState>((set, get) => {
           // of being resurrected by the next merge.
           await db.tombstoneUpsert({ anilist_id: anilistId, deleted_at: Date.now() });
           queueSync();
+          // Alerts this entry seeded (and its scan schedule) go with it —
+          // otherwise they'd keep pointing at a title that's no longer tracked.
+          const { useNotificationStore } = await import("./notificationStore");
+          void useNotificationStore.getState().entriesRemoved([anilistId]);
         } catch {
           applyEntry(entry);
           toast.error("Couldn't remove that entry");
@@ -420,6 +638,10 @@ export const useListStore = create<ListState>((set, get) => {
             await db.tombstoneUpsert({ anilist_id: e.anilist_id, deleted_at: now });
           }
           queueSync();
+          const { useNotificationStore } = await import("./notificationStore");
+          void useNotificationStore
+            .getState()
+            .entriesRemoved(removed.map((e) => e.anilist_id));
         } catch {
           for (const e of removed) applyEntry(e);
           toast.error("Couldn't remove those entries");
@@ -435,6 +657,14 @@ export const useListStore = create<ListState>((set, get) => {
       try {
         const db = await getDb();
         await db.listReplaceAll([]);
+        // Nothing tracked means nothing to alert on or scan — wipe both, and
+        // let the notification store see the now-empty tables.
+        await db.notificationsClear();
+        await db.scheduleClear();
+        const { useNotificationStore } = await import("./notificationStore");
+        if (useNotificationStore.getState().loaded) {
+          void useNotificationStore.getState().load();
+        }
         if (propagateToDrive) {
           // Tombstone every cleared id so the empty state wins the next merge
           // on other devices instead of being resurrected.

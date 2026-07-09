@@ -4,6 +4,7 @@ import {
   Bookmark,
   Check,
   ChevronRight,
+  EyeOff,
   Layers,
   Pause,
   Play,
@@ -51,6 +52,21 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
 
   const cover = getCoverUrl({ medium: displayEntry.cover_url ?? undefined });
 
+  // The card's art follows where the user is in the franchise, which can be a
+  // different season than the (root) title above it. Say so, or the cover
+  // looks like it changed on its own.
+  const displayTitle =
+    displayEntry.anilist_id !== rootEntry.anilist_id
+      ? preferredTitle(
+          {
+            romaji: displayEntry.title_romaji,
+            english: displayEntry.title_english,
+            native: displayEntry.title_native,
+          },
+          titleLanguage,
+        )
+      : null;
+
   // Progressive reveal uses the display entry's individual episode progress —
   // it shows how far you are in the current season, not the franchise total.
   const displayTotal = displayEntry.total_episodes;
@@ -65,6 +81,13 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
   const seasonCount = entries.length;
   const doneSeasons = entries.filter((e) => e.status === "completed").length;
   const epLabel = `${totalWatched} / ${totalEpisodes != null ? totalEpisodes : "?"}`;
+  // A completed single with no known episode count would read "0 / ?" beside
+  // a full season bar; the completed marker already says everything.
+  const hideEpLabel =
+    !isGroup &&
+    displayEntry.status === "completed" &&
+    totalEpisodes == null &&
+    totalWatched === 0;
   const seasonLabel = `${seasonCount} seasons`;
   const seasonSummary = `${doneSeasons} done`;
 
@@ -152,19 +175,32 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
               <span className="k-hold__label">On hold</span>
             </span>
           )}
+          {displayEntry.status === "not_interested" && (
+            <span className="k-notinterested" aria-label={status.label} title={status.label}>
+              <Icon icon={EyeOff} size={12} />
+            </span>
+          )}
 
           <div className="k-card__footer">
             <Text size="sm" weight={600} clamp={2} color="onCover" className="k-card__title">
               {title}
             </Text>
+            {displayTitle && (
+              <span className="k-card__nowshowing" title={`Cover: ${displayTitle}`}>
+                {displayTitle}
+              </span>
+            )}
             <div className="k-card__footermeta">
               {/* For groups the footer carries the franchise total (distinct from
                   the per-season "EP" marker). For a single it's hidden only when the
                   EP marker is actually shown (progressive + known total), otherwise
                   the count would simply repeat. */}
-              {(isGroup || !(progressive && displayTotal != null)) && (
-                <span className="k-card__epcaption">{epLabel}</span>
-              )}
+              {/* The EP marker only renders over an actual cover, so a broken
+                  cover keeps the caption as the progress fallback. */}
+              {(isGroup || !(progressive && displayTotal != null && cover)) &&
+                !hideEpLabel && (
+                  <span className="k-card__epcaption">{epLabel}</span>
+                )}
               {displayEntry.score != null && (
                 <span className="k-card__scorechip">
                   {formatScore(displayEntry.score)}
@@ -222,7 +258,7 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
           <SeasonBar entries={entries} size="row" className="k-row__seasonbar" />
         </div>
         <div className="k-row__metacol">
-          <span className="k-row__ep">{epLabel}</span>
+          <span className="k-row__ep">{hideEpLabel ? "" : epLabel}</span>
           {displayEntry.score != null && (
             <span className="k-row__scoreval">★ {formatScore(displayEntry.score)}</span>
           )}
@@ -258,7 +294,7 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
           </span>
         )}
       </div>
-      <span className="k-compact__ep">{epLabel}</span>
+      <span className="k-compact__ep">{hideEpLabel ? "" : epLabel}</span>
       <span className="k-compact__statusicon" style={{ color: status.color }} title={status.label}>
         <Icon icon={status.icon} size={14} weight="fill" />
       </span>

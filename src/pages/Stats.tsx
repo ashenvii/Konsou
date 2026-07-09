@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Film, Star, Tv } from "lucide-react";
+import { ChevronRight, Film, Sparkles, Star, Tv } from "lucide-react";
 import type { CSSProperties } from "react";
 import { AnimeCover } from "@/components/anime/AnimeCover";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -8,7 +8,10 @@ import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Text } from "@/components/ui/Text";
 import { statusMeta } from "@/components/anime/statusMeta";
+import { WrappedSheet } from "@/components/stats/WrappedSheet";
 import { groupEntries } from "@/lib/franchise/grouping";
+import { dailyFact } from "@/lib/trivia";
+import { wrappedYears } from "@/lib/wrapped";
 import { getCoverUrl, listStatusLabel, preferredTitle } from "@/lib/format";
 import { useListStore } from "@/lib/store/listStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
@@ -56,38 +59,63 @@ export function Stats() {
   const entries = useListStore((s) => s.entries);
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
   const navigate = useNavigate();
+  const [wrappedOpen, setWrappedOpen] = useState(false);
+  const latestWrappedYear = useMemo(() => wrappedYears(entries)[0] ?? null, [entries]);
 
   const s = useMemo(() => {
     const byStatus = {} as Record<ListStatus, number>;
     for (const st of LIST_STATUSES) byStatus[st] = 0;
     // scoreDist[n] = how many entries scored n (1..10).
     const scoreDist = new Array(11).fill(0) as number[];
+
+    // Episodes seen including completed rewatches, and real minutes: each
+    // rewatch replays the full run, each episode counts at the show's own
+    // length where known (movies stop being 24-minute fictions).
+    const effectiveEpisodes = (e: (typeof entries)[number]) =>
+      e.episodes_watched + (e.rewatch_count ?? 0) * (e.total_episodes ?? 0);
+    const entryMinutes = (e: (typeof entries)[number]) =>
+      effectiveEpisodes(e) * (e.episode_duration ?? MINUTES_PER_EP);
+
     let episodes = 0;
+    let minutes = 0;
+    let hasRealDurations = false;
     let scoreSum = 0;
     let rated = 0;
     let episodesLeft = 0;
     for (const e of entries) {
       byStatus[e.status]++;
-      episodes += e.episodes_watched;
+      episodes += effectiveEpisodes(e);
+      minutes += entryMinutes(e);
+      if (e.episode_duration != null) hasRealDurations = true;
       if (e.score != null) {
         scoreSum += e.score;
         rated++;
         const bucket = Math.min(10, Math.max(1, Math.round(e.score)));
         scoreDist[bucket]++;
       }
-      if (
-        (e.status === "watching" || e.status === "rewatching") &&
-        e.total_episodes != null
-      ) {
-        episodesLeft += Math.max(0, e.total_episodes - e.episodes_watched);
+      if (e.status === "watching" || e.status === "rewatching") {
+        // Count against what can actually be watched: the aired count where
+        // known (capped by the planned total), else the planned total.
+        const target =
+          e.aired_episodes != null
+            ? e.total_episodes != null
+              ? Math.min(e.aired_episodes, e.total_episodes)
+              : e.aired_episodes
+            : e.total_episodes;
+        if (target != null) {
+          episodesLeft += Math.max(0, target - e.episodes_watched);
+        }
       }
     }
     const groups = groupEntries(entries);
     const topFranchises = [...groups]
-      .filter((g) => g.totalWatched > 0)
-      .sort((a, b) => b.totalWatched - a.totalWatched)
+      .map((g) => ({
+        group: g,
+        minutes: g.entries.reduce((m, e) => m + entryMinutes(e), 0),
+      }))
+      .filter((x) => x.minutes > 0)
+      .sort((a, b) => b.minutes - a.minutes)
       .slice(0, 3);
-    const minutes = episodes * MINUTES_PER_EP;
     const finishedOrDropped = byStatus.completed + byStatus.dropped;
     return {
       total: entries.length,
@@ -100,6 +128,7 @@ export function Stats() {
       watchingNow: byStatus.watching + byStatus.rewatching,
       episodesLeft,
       minutes,
+      hasRealDurations,
       hours: Math.round(minutes / 60),
       movies: Math.round(minutes / 120),
       finishRate:
@@ -117,8 +146,9 @@ export function Stats() {
         <PageHeader title="Stats" />
         <EmptyState
           icon={Tv}
-          title="No stats yet"
-          subtitle="Track a few anime and your watching history shows up here."
+          title="Nothing to crunch yet"
+          subtitle="Add a few shows and your watch history takes shape here."
+          showTip
         />
       </div>
     );
@@ -127,6 +157,7 @@ export function Stats() {
   const maxStatus = Math.max(...LIST_STATUSES.map((st) => s.byStatus[st]), 1);
   const maxScore = Math.max(...s.scoreDist.slice(1), 1);
   const segments = timeSegments(s.minutes);
+  const fact = dailyFact();
 
   return (
     <div className="k-page">
@@ -144,8 +175,9 @@ export function Stats() {
             <span className="k-stats__timetail">of your life in anime</span>
           </div>
           <p className="k-stats__lede">
-            {s.episodes.toLocaleString()} episodes across {s.total} anime in{" "}
-            {s.series} series, roughly {s.hours.toLocaleString()} hours.
+            {s.episodes.toLocaleString()} episodes across {s.series.toLocaleString()} anime
+            {s.total > s.series ? ` (${s.total.toLocaleString()} seasons)` : ""}, roughly{" "}
+            {s.hours.toLocaleString()} hours.
           </p>
           <div className="k-stats__equiv">
             <span className="k-stats__equivchip">
@@ -153,7 +185,9 @@ export function Stats() {
               like {s.movies.toLocaleString()} movies back to back
             </span>
             <span className="k-stats__equivchip k-stats__equivchip--dim">
-              at ~{MINUTES_PER_EP} min per episode
+              {s.hasRealDurations
+                ? `real episode lengths, ~${MINUTES_PER_EP} min where unknown`
+                : `at ~${MINUTES_PER_EP} min per episode`}
             </span>
           </div>
         </section>
@@ -168,7 +202,9 @@ export function Stats() {
             <span className="k-stats__pulsenum">
               {s.episodesLeft.toLocaleString()}
             </span>
-            <span className="k-stats__pulselabel">Episodes to catch up</span>
+            {/* "Left", not "catch up": the count runs to each show's planned
+                end, so it can include episodes that haven't aired yet. */}
+            <span className="k-stats__pulselabel">Episodes left</span>
           </div>
           {s.finishRate != null && (
             <div className="k-stats__pulseitem">
@@ -231,7 +267,7 @@ export function Stats() {
             <div
               className="k-stats__hist"
               role="img"
-              aria-label={`Score distribution for ${s.rated} rated anime, mean score ${s.meanScore.toFixed(1)}`}
+              aria-label={`Score distribution for ${s.rated} rated titles, mean score ${s.meanScore.toFixed(1)}`}
             >
               {Array.from({ length: 10 }, (_, i) => i + 1).map((n, i) => {
                 const count = s.scoreDist[n];
@@ -270,7 +306,7 @@ export function Stats() {
               MOST WATCHED
             </Text>
             <ol className="k-stats__top">
-              {s.topFranchises.map((g, i) => {
+              {s.topFranchises.map(({ group: g, minutes }, i) => {
                 const e = g.displayEntry;
                 const title = preferredTitle(
                   {
@@ -280,7 +316,7 @@ export function Stats() {
                   },
                   titleLanguage,
                 );
-                const hours = Math.round((g.totalWatched * MINUTES_PER_EP) / 60);
+                const hours = Math.round(minutes / 60);
                 const metaBits = [
                   `${g.totalWatched.toLocaleString()} eps`,
                   `${hours.toLocaleString()}h`,
@@ -319,7 +355,40 @@ export function Stats() {
             </ol>
           </section>
         )}
+
+        {latestWrappedYear != null && (
+          <button
+            type="button"
+            className="k-stats__wrappedbtn"
+            onClick={() => setWrappedOpen(true)}
+          >
+            <span className="k-stats__wrappedicon">
+              <Icon icon={Sparkles} size={16} />
+            </span>
+            <span className="k-stats__wrappedtext">
+              <strong>Your {latestWrappedYear}, wrapped</strong>
+              <span>The year in finishes, as a shareable card</span>
+            </span>
+            <Icon icon={ChevronRight} size={16} />
+          </button>
+        )}
+
+        <footer className="k-stats__trivia">
+          <span className="k-stats__triviaglyph" aria-hidden>
+            {fact.glyph ?? "✧"}
+          </span>
+          <p className="k-stats__triviatext">
+            <span className="k-stats__trivialabel">Did you know</span>
+            {fact.text}
+          </p>
+        </footer>
       </div>
+
+      <WrappedSheet
+        open={wrappedOpen}
+        onClose={() => setWrappedOpen(false)}
+        entries={entries}
+      />
     </div>
   );
 }

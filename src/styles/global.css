@@ -210,4 +210,20 @@ body.is-grab-scrolling * {
   .crossfade {
     transition-duration: 150ms !important;
   }
+  /* The Support hero heartbeat is a 7% scale pulse over 2.8s, gentle enough
+     to keep. Windows reports reduce whenever "Animation effects" is off in
+     Accessibility settings, which is common on desktops; without this
+     exception the icon just sits still. */
+  .k-support__heroicon {
+    animation-duration: 2.8s !important;
+    animation-iteration-count: infinite !important;
+  }
+  /* Loading spinners must keep spinning or they read as a frozen page — a
+     stalled "still" spinner is worse than none. Windows reports reduce when
+     "Animation effects" is off (common on desktop), so keep these turning. */
+  .k-detail__spinner,
+  .k-icon-btn--spin svg {
+    animation-duration: 0.8s !important;
+    animation-iteration-count: infinite !important;
+  }
 }

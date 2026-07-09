@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FranchiseCollection } from "@/components/list/FranchiseCollection";
 import { ListToolbar } from "@/components/list/ListToolbar";
 import { SortSheet } from "@/components/list/SortSheet";
+import { TonightQueue } from "@/components/list/TonightQueue";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ImportSheet } from "@/components/ui/ImportSheet";
@@ -107,6 +108,7 @@ export function MyList() {
       on_hold: 0,
       dropped: 0,
       rewatching: 0,
+      not_interested: 0,
     };
     for (const e of entries) c[e.status]++;
     return c;
@@ -214,6 +216,11 @@ export function MyList() {
         onOpenSort={() => setSortOpen(true)}
       />
 
+      {/* Tonight's plan, composed locally. Only on the unfiltered view: a
+          status filter or search means the user is already hunting for
+          something specific. */}
+      {!searching && selected.length === 0 && <TonightQueue entries={entries} />}
+
       {searching && visibleGroups.length > 0 && (
         <p className="k-list-results">
           {visibleGroups.length}{" "}
@@ -230,12 +237,13 @@ export function MyList() {
           />
         ) : (
           <EmptyState
-            title="Nothing here yet"
+            title="Your list is a blank page"
             subtitle={
               selected.length === 0
-                ? "Add anime to your list."
+                ? "Find something on Discover and it lands here."
                 : `Nothing marked ${selected.map((s) => listStatusLabel(s).toLowerCase()).join(" or ")} yet.`
             }
+            showTip={selected.length === 0}
           />
         )
       ) : (

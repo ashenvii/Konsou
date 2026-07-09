@@ -16,10 +16,16 @@ import { LIST_STATUSES } from "@/types/list";
 import { statusMeta } from "@/components/anime/statusMeta";
 import type { ListFilter, ListStatus, SortSpec, ViewMode } from "@/types/list";
 
-const VIEW_ICONS: Record<ViewMode, typeof LayoutGrid> = {
+export const VIEW_ICONS: Record<ViewMode, typeof LayoutGrid> = {
   grid: LayoutGrid,
   list: Rows3,
   compact: List,
+};
+
+export const VIEW_LABELS: Record<ViewMode, string> = {
+  grid: "Grid",
+  list: "List",
+  compact: "Compact",
 };
 
 const SORT_LABELS: Record<SortSpec["key"], string> = {
@@ -32,7 +38,7 @@ const SORT_LABELS: Record<SortSpec["key"], string> = {
 
 // Narrow screens cycle view modes through one button instead of a 3-wide
 // toggle (DIM-style compact header: chrome earns its row or leaves it).
-const VIEW_CYCLE: Record<ViewMode, ViewMode> = {
+export const VIEW_CYCLE: Record<ViewMode, ViewMode> = {
   grid: "list",
   list: "compact",
   compact: "grid",

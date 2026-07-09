@@ -4,6 +4,7 @@ import {
   CirclePause,
   CirclePlay,
   CircleX,
+  EyeOff,
   RotateCw,
 } from "lucide-react";
 import type { IconComponent } from "@/components/ui/Icon";
@@ -24,6 +25,7 @@ const ICONS: Record<ListStatus, IconComponent> = {
   on_hold: CirclePause,
   dropped: CircleX,
   rewatching: RotateCw,
+  not_interested: EyeOff,
 };
 
 export function statusMeta(status: ListStatus): StatusMeta {

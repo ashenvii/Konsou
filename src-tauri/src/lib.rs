@@ -240,6 +240,16 @@ CREATE INDEX IF NOT EXISTS idx_notifications_active ON notifications(dismissed, 
 "#,
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 9,
+            description: "time accounting: per-episode duration, rewatch count, aired episodes",
+            sql: r#"
+ALTER TABLE anime_list ADD COLUMN episode_duration INTEGER;
+ALTER TABLE anime_list ADD COLUMN rewatch_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE anime_list ADD COLUMN aired_episodes INTEGER;
+"#,
+            kind: MigrationKind::Up,
+        },
     ];
 
     let builder = tauri::Builder::default()
