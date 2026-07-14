@@ -4,6 +4,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { Onboarding } from "@/components/Onboarding";
 import { MyList } from "@/pages/MyList";
+import { StatusRoom } from "@/pages/StatusRoom";
 import { Discover } from "@/pages/Discover";
 import { Airing } from "@/pages/Airing";
 import { AnimeDetail } from "@/pages/AnimeDetail";
@@ -27,6 +28,8 @@ export function App() {
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<Wrap name="My List"><MyList /></Wrap>} />
+          {/* Dedicated status rooms, pushed onto the My List tab's back stack. */}
+          <Route path="list/:status" element={<Wrap name="List"><StatusRoom /></Wrap>} />
           {/* Search merged into Discover; keep the path alive for old links. */}
           <Route path="search" element={<Navigate to="/discover" replace />} />
           <Route path="discover" element={<Wrap name="Discover"><Discover /></Wrap>} />

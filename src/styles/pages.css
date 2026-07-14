@@ -9,6 +9,41 @@
   position: relative;
 }
 
+/* ── Status room header ──────────────────────────────────────
+   A non-scrolling bar; the collection below owns the scroll. */
+.k-roomhead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--content-padding-sm) var(--content-padding-sm) var(--space-3);
+  flex: none;
+}
+.k-roomhead__back {
+  width: 36px;
+  height: 36px;
+  margin-left: -6px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+}
+.k-roomhead__back:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+}
+.k-roomhead__title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.k-roomhead__count {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Header scroll elevation ─────────────────────────────────
    useScrollElevation toggles data-scrolled on the owning .k-page when its
    scroll container moves. The top chrome then gains a hairline + soft shadow
