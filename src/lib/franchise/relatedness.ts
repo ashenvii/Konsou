@@ -61,3 +61,24 @@ export function isFranchiseOther(
   if (!fromTitle) return false;
   return titlesShareFranchise(fromTitle, rel.title);
 }
+
+/**
+ * Should this PARENT edge be climbed back to the main series?
+ *
+ * A special/OVA's only link to its franchise is often a single PARENT edge
+ * (the Mushoku Tensei Eris special is typed exactly this way). A walk that
+ * starts AT such a node and never follows PARENT can't reach the backbone,
+ * resolves itself as a one-member root, and splits the franchise into two
+ * cards. The same name-gate as OTHER keeps this from swallowing branded
+ * spin-offs (Prisma Illya's PARENT edge to Fate/stay night fails the name
+ * test, so it stays its own franchise — which is what viewers expect).
+ */
+export function isFranchiseParent(
+  fromTitle: AnimeTitle | undefined,
+  rel: RelationNode,
+): boolean {
+  if (rel.relationType !== "PARENT") return false;
+  if (isMangaNode(rel) || rel.format === "MUSIC") return false;
+  if (!fromTitle) return false;
+  return titlesShareFranchise(fromTitle, rel.title);
+}

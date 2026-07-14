@@ -78,6 +78,9 @@ function mapCharacters(raw: any): CharacterEdge[] {
     image: e.node?.image?.medium ?? null,
     voiceActor: e.voiceActors?.[0]?.name?.full ?? null,
     voiceActorId: e.voiceActors?.[0]?.id ?? null,
+    // English dub cast, aliased in the query. Null on titles without a dub
+    // and on cached payloads fetched before the field existed.
+    dubActor: e.dubActors?.[0]?.name?.full ?? null,
   }));
 }
 

@@ -2,11 +2,13 @@ import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
-import { TopBar } from "./TopBar";
+import { Header } from "./Header";
 import { CommandPalette } from "@/components/CommandPalette";
 import { CatchUpSheet } from "@/components/list/CatchUpSheet";
 import { Toasts } from "@/components/ui/Toasts";
+import { StorageBanner } from "@/components/ui/StorageBanner";
 import { ReconcilePrompt } from "@/components/ReconcilePrompt";
+import { WhatsNew } from "@/components/WhatsNew";
 import { useAppBack } from "@/hooks/useAppBack";
 import { useScrollElevation } from "@/hooks/useScrollElevation";
 import { useTabPress } from "@/hooks/useTabPress";
@@ -24,6 +26,10 @@ export function AppShell() {
   // The detail page owns the whole viewport (immersive banner + its own back
   // bar), so the mobile top bar stands down there.
   const isImmersive = location.pathname.startsWith("/anime/");
+  // Settings is backstage: all primary nav chrome (sidebar, top bar, bottom
+  // nav) stands down so it reads as a distinct mode, not another page. The
+  // pages' own back arrow (and hardware back) is the way out.
+  const isBackstage = location.pathname.startsWith("/settings");
   useAppBack();
   useViewportDragScroll();
   useScrollElevation();
@@ -33,6 +39,18 @@ export function AppShell() {
     void registerLifecycleHandlers().then((fn) => (cleanup = fn));
     return () => cleanup?.();
   }, []);
+
+  // Landing on a new page always starts with full chrome; the folded state is a
+  // property of the reading session, not of the app. Reset the header offset and
+  // elevation so a fresh page never inherits the last one's shift or shadow.
+  useEffect(() => {
+    const root = document.documentElement;
+    delete root.dataset.chromeHidden;
+    delete root.dataset.pageScrolled;
+    // The scroll-away offset lives inline on the header (see useScrollElevation);
+    // clear it so a fresh page starts with the header fully shown.
+    document.querySelector<HTMLElement>(".k-header")?.style.removeProperty("margin-top");
+  }, [location.pathname]);
 
   // Desktop: keys 1–5 jump to each tab (ignored while typing in a field).
   useEffect(() => {
@@ -55,17 +73,19 @@ export function AppShell() {
 
   return (
     <div
-      className={`k-shell${isDesktop ? " k-shell--desktop" : ""}`}
+      className={`k-shell${isDesktop ? " k-shell--desktop" : ""}${isBackstage ? " k-shell--backstage" : ""}`}
       data-sidebar={isDesktop ? sidebarMode : undefined}
     >
-      {isDesktop && <Sidebar />}
-      {!isDesktop && !isImmersive && <TopBar />}
+      {isDesktop && !isBackstage && <Sidebar />}
       <main className="k-shell__content">
+        {!isImmersive && !isBackstage && <Header />}
         <Outlet />
       </main>
-      {!isDesktop && <BottomNav />}
+      {!isDesktop && !isBackstage && <BottomNav />}
+      <StorageBanner />
       <Toasts />
       <ReconcilePrompt />
+      <WhatsNew />
       <CommandPalette />
       <CatchUpSheet />
     </div>

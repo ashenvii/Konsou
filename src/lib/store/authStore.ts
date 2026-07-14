@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import {
+  cancelGoogleOAuth,
   signOutGoogle,
   startGoogleOAuth,
   restoreGoogleAccount,
@@ -16,6 +17,8 @@ interface AuthState {
   /** Call once on app boot to reload a previously signed-in account. */
   restore: () => void;
   connect: () => Promise<void>;
+  /** Abort an in-flight sign-in (the Connect button's Cancel state). */
+  cancelConnect: () => void;
   disconnect: () => Promise<void>;
 }
 
@@ -44,6 +47,12 @@ export const useAuthStore = create<AuthState>((set) => ({
         await useListStore.getState().load();
       }
     } catch (e) {
+      // A user-abandoned sign-in (backed out of the browser, or tapped
+      // Cancel) is not a failure — reset quietly.
+      if (e instanceof Error && e.name === "AuthCancelled") {
+        toast.show("Sign-in cancelled");
+        return;
+      }
       // Native (Tauri) rejections come back as plain strings, not Error
       // objects, so surface the real reason instead of a generic fallback.
       console.error("Google sign-in failed:", e);
@@ -53,6 +62,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     } finally {
       set({ connecting: false });
     }
+  },
+
+  cancelConnect: () => {
+    cancelGoogleOAuth();
   },
 
   disconnect: async () => {

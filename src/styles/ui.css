@@ -322,6 +322,9 @@
 .k-sheet__body {
   padding: 0 var(--space-5) var(--space-6);
   overflow-y: auto;
+  /* Keep an over-pull from chaining to the page behind; the pull past the top
+     is claimed by the sheet's own pull-to-close instead. */
+  overscroll-behavior: contain;
 }
 
 @media (min-width: 1024px) {

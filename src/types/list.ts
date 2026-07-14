@@ -19,6 +19,19 @@ export const LIST_STATUSES: ListStatus[] = [
   "not_interested",
 ];
 
+/**
+ * The real watch statuses — everything except the `not_interested` mute flag.
+ * not_interested is not a place in your list; it's a per-entry "don't surface
+ * this one" marker. It never forms a card, so it never appears in the My List
+ * status filter or the Stats status breakdown. Anything that enumerates
+ * statuses *for display of the list itself* uses this; the status PICKER still
+ * offers not_interested (from LIST_STATUSES) because choosing it is how you
+ * mute an entry.
+ */
+export const WATCH_STATUSES: ListStatus[] = LIST_STATUSES.filter(
+  (s) => s !== "not_interested",
+);
+
 /** A row in the user's list. Timestamps are Unix milliseconds. */
 export interface AnimeListEntry {
   id?: number;

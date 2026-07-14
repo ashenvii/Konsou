@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Film, Sparkles, Star, Tv } from "lucide-react";
+import { ChevronRight, Film, Flame, Hourglass, Sparkles, Star, Tv } from "lucide-react";
 import type { CSSProperties } from "react";
 import { AnimeCover } from "@/components/anime/AnimeCover";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -15,10 +15,60 @@ import { wrappedYears } from "@/lib/wrapped";
 import { getCoverUrl, listStatusLabel, preferredTitle } from "@/lib/format";
 import { useListStore } from "@/lib/store/listStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
-import { LIST_STATUSES } from "@/types/list";
-import type { ListStatus } from "@/types/list";
+import { LIST_STATUSES, WATCH_STATUSES } from "@/types/list";
+import type { AnimeListEntry, ListStatus } from "@/types/list";
 
 const MINUTES_PER_EP = 24;
+/** A timeline longer than this gets clamped to its most recent years so the
+ *  axis stays legible on a phone. */
+const MAX_ACTIVITY_YEARS = 12;
+
+interface YearBucket {
+  year: number;
+  count: number;
+}
+
+interface Activity {
+  /** finished = real completion dates; added = fallback when finishes are too
+   *  sparse to tell a story. Drives the heading and the highlight copy. */
+  mode: "finished" | "added";
+  buckets: YearBucket[];
+  busiest: YearBucket;
+}
+
+/** Turn a list of years into a gap-filled, range-clamped bar series. Returns
+ *  null when there isn't enough spread to be a timeline (nothing to show beats
+ *  a lone bar). */
+function buildActivity(mode: Activity["mode"], years: number[]): Activity | null {
+  if (years.length < 3) return null;
+  const counts = new Map<number, number>();
+  for (const y of years) counts.set(y, (counts.get(y) ?? 0) + 1);
+  const max = Math.max(...counts.keys());
+  let min = Math.min(...counts.keys());
+  if (min === max) return null; // one year is not a timeline
+  if (max - min + 1 > MAX_ACTIVITY_YEARS) min = max - (MAX_ACTIVITY_YEARS - 1);
+  const buckets: YearBucket[] = [];
+  for (let y = min; y <= max; y++) buckets.push({ year: y, count: counts.get(y) ?? 0 });
+  let busiest = buckets[0];
+  for (const b of buckets) if (b.count > busiest.count) busiest = b;
+  return { mode, buckets, busiest };
+}
+
+/** Watch history as a per-year bar series. Prefers real finish dates; when a
+ *  library is too new for those to span years, falls back to when titles were
+ *  added so the module still says something true. Muted entries never count. */
+function activityByYear(entries: AnimeListEntry[]): Activity | null {
+  const finishYears: number[] = [];
+  const addedYears: number[] = [];
+  for (const e of entries) {
+    if (e.status === "not_interested") continue;
+    addedYears.push(new Date(e.added_at).getFullYear());
+    if (e.status === "completed" && e.completed_at != null) {
+      finishYears.push(new Date(e.completed_at).getFullYear());
+    }
+  }
+  return buildActivity("finished", finishYears) ?? buildActivity("added", addedYears);
+}
 
 interface TimeSegment {
   value: string;
@@ -71,8 +121,15 @@ export function Stats() {
     // Episodes seen including completed rewatches, and real minutes: each
     // rewatch replays the full run, each episode counts at the show's own
     // length where known (movies stop being 24-minute fictions).
+    // Not-interested entries contribute NOTHING here — "won't watch" means
+    // any leftover progress from before the mark stops counting as time
+    // spent, and a muted entry isn't list membership. byStatus still tallies
+    // them but the By Status view renders only WATCH_STATUSES, so they never
+    // appear as a status bar.
     const effectiveEpisodes = (e: (typeof entries)[number]) =>
-      e.episodes_watched + (e.rewatch_count ?? 0) * (e.total_episodes ?? 0);
+      e.status === "not_interested"
+        ? 0
+        : e.episodes_watched + (e.rewatch_count ?? 0) * (e.total_episodes ?? 0);
     const entryMinutes = (e: (typeof entries)[number]) =>
       effectiveEpisodes(e) * (e.episode_duration ?? MINUTES_PER_EP);
 
@@ -82,8 +139,12 @@ export function Stats() {
     let scoreSum = 0;
     let rated = 0;
     let episodesLeft = 0;
+    let backlogMinutes = 0; // planned runtime sitting in plan-to-watch
+    let listed = 0; // entries that actually count as list membership (not muted)
     for (const e of entries) {
       byStatus[e.status]++;
+      if (e.status === "not_interested") continue;
+      listed++;
       episodes += effectiveEpisodes(e);
       minutes += entryMinutes(e);
       if (e.episode_duration != null) hasRealDurations = true;
@@ -106,6 +167,11 @@ export function Stats() {
           episodesLeft += Math.max(0, target - e.episodes_watched);
         }
       }
+      if (e.status === "plan_to_watch") {
+        // Full planned run: none of it is watched yet. Unknown length counts as
+        // a title but adds no hours, so the figure reads as a floor.
+        backlogMinutes += (e.total_episodes ?? 0) * (e.episode_duration ?? MINUTES_PER_EP);
+      }
     }
     const groups = groupEntries(entries);
     const topFranchises = [...groups]
@@ -118,7 +184,9 @@ export function Stats() {
       .slice(0, 3);
     const finishedOrDropped = byStatus.completed + byStatus.dropped;
     return {
-      total: entries.length,
+      // Muted (not-interested) entries aren't list membership, so they don't
+      // count toward the total, the "seasons" tally, or status shares.
+      total: listed,
       byStatus,
       episodes,
       rated,
@@ -137,6 +205,9 @@ export function Stats() {
           : null,
       scoreDist,
       topFranchises,
+      activity: activityByYear(entries),
+      backlogCount: byStatus.plan_to_watch,
+      backlogHours: Math.round(backlogMinutes / 60),
     };
   }, [entries]);
 
@@ -154,8 +225,11 @@ export function Stats() {
     );
   }
 
-  const maxStatus = Math.max(...LIST_STATUSES.map((st) => s.byStatus[st]), 1);
+  const maxStatus = Math.max(...WATCH_STATUSES.map((st) => s.byStatus[st]), 1);
   const maxScore = Math.max(...s.scoreDist.slice(1), 1);
+  const maxActivity = s.activity
+    ? Math.max(...s.activity.buckets.map((b) => b.count), 1)
+    : 1;
   const segments = timeSegments(s.minutes);
   const fact = dailyFact();
 
@@ -222,12 +296,15 @@ export function Stats() {
           </div>
         </div>
 
+        {/* Analytical pair: composition (by status) beside quality (scores).
+            Side by side on a roomy pane, stacked on a phone. */}
+        <div className="k-stats__pair">
         <section className="k-stats__section">
           <Text as="h2" size="xs" weight={700} color="tertiary" className="k-stats__heading">
             BY STATUS
           </Text>
           <ul className="k-stats__bars">
-            {LIST_STATUSES.map((st, i) => {
+            {WATCH_STATUSES.map((st, i) => {
               const meta = statusMeta(st);
               const count = s.byStatus[st];
               const share = s.total > 0 ? Math.round((count / s.total) * 100) : 0;
@@ -299,6 +376,59 @@ export function Stats() {
             </Text>
           </section>
         )}
+        </div>
+
+        {/* Watch history over time — the shape of a life in anime, not just its
+            total. Real finish dates where they exist, else when titles landed. */}
+        {s.activity && (
+          <section className="k-stats__section">
+            <Text as="h2" size="xs" weight={700} color="tertiary" className="k-stats__heading">
+              {s.activity.mode === "finished" ? "FINISHES BY YEAR" : "ADDED BY YEAR"}
+            </Text>
+            <div
+              className="k-stats__hist k-stats__hist--activity"
+              role="img"
+              aria-label={
+                s.activity.mode === "finished"
+                  ? `Finishes per year, busiest ${s.activity.busiest.year} with ${s.activity.busiest.count}`
+                  : `Titles added per year, most in ${s.activity.busiest.year} with ${s.activity.busiest.count}`
+              }
+            >
+              {s.activity.buckets.map((b, i) => {
+                const peak = b.count === maxActivity && b.count > 0;
+                const label =
+                  s.activity!.buckets.length > 8
+                    ? `'${String(b.year).slice(2)}`
+                    : String(b.year);
+                return (
+                  <div key={b.year} className="k-stats__histcol">
+                    <span className="k-stats__histtrack">
+                      <span className="k-stats__histcount">
+                        {b.count > 0 ? b.count : ""}
+                      </span>
+                      <span
+                        className={`k-stats__histbar${peak ? " k-stats__histbar--peak" : ""}`}
+                        style={
+                          {
+                            height: `${Math.max((b.count / maxActivity) * 100, 2)}%`,
+                            "--i": i,
+                          } as CSSProperties
+                        }
+                      />
+                    </span>
+                    <span className="k-stats__histlabel">{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <Text size="xs" color="tertiary" className="k-stats__histmean">
+              <Icon icon={Flame} size={11} />{" "}
+              {s.activity.mode === "finished"
+                ? `busiest year ${s.activity.busiest.year} · ${s.activity.busiest.count} finished`
+                : `most added ${s.activity.busiest.year} · ${s.activity.busiest.count} titles`}
+            </Text>
+          </section>
+        )}
 
         {s.topFranchises.length > 0 && (
           <section className="k-stats__section">
@@ -356,6 +486,34 @@ export function Stats() {
           </section>
         )}
 
+        {/* Backlog weight: turns a dead plan-to-watch count into the hours it
+            actually represents. A slim insight line, not a card. */}
+        {s.backlogCount > 0 && (
+          <div className="k-stats__backlog">
+            <span className="k-stats__backlogicon" aria-hidden>
+              <Icon icon={Hourglass} size={18} />
+            </span>
+            <p className="k-stats__backlogtext">
+              {s.backlogHours > 0 ? (
+                <>
+                  <strong>{s.backlogHours.toLocaleString()} hours</strong> waiting in
+                  your backlog, across {s.backlogCount.toLocaleString()}{" "}
+                  {s.backlogCount === 1 ? "title" : "titles"}
+                </>
+              ) : (
+                <>
+                  <strong>
+                    {s.backlogCount.toLocaleString()}{" "}
+                    {s.backlogCount === 1 ? "title" : "titles"}
+                  </strong>{" "}
+                  waiting in your backlog
+                </>
+              )}
+            </p>
+          </div>
+        )}
+
+        <div className="k-stats__footer">
         {latestWrappedYear != null && (
           <button
             type="button"
@@ -382,6 +540,7 @@ export function Stats() {
             {fact.text}
           </p>
         </footer>
+        </div>
       </div>
 
       <WrappedSheet

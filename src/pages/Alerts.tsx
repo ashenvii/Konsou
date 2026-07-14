@@ -1,38 +1,89 @@
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, ChevronDown, RotateCw } from "lucide-react";
+import {
+  Bell,
+  BookmarkPlus,
+  ChevronDown,
+  EyeOff,
+  MoreHorizontal,
+  Play,
+  X,
+} from "lucide-react";
 import { AnimeCover } from "@/components/anime/AnimeCover";
-import { Button } from "@/components/ui/Button";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { Text } from "@/components/ui/Text";
 import { toast } from "@/lib/store/toastStore";
 import { alertBucket } from "@/lib/sequel/detector";
-import { formatFuzzyDate, preferredTitle, relativeTime, timeUntil } from "@/lib/format";
+import { formatFuzzyDate, preferredTitle, timeUntil } from "@/lib/format";
 import { useListStore } from "@/lib/store/listStore";
 import { useNotificationStore } from "@/lib/store/notificationStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import type { AlertBucket, KonsouNotification } from "@/types/notification";
 
-// "Upcoming", not "Announced": Schedule already uses Announced for tracked
-// titles waiting on a date. This bucket is untracked suggestions that haven't
-// aired yet — a different thing deserves a different word.
-const BUCKET_ORDER: { id: AlertBucket; label: string }[] = [
-  { id: "airing_now", label: "Airing Now" },
-  { id: "announced", label: "Upcoming" },
-  { id: "already_aired", label: "Already Aired" },
+// "Upcoming", not "Announced": the Episodes segment already uses Announced for
+// tracked titles waiting on a date. This bucket is untracked suggestions that
+// haven't aired yet — a different thing deserves a different word.
+//
+// tone is the CSS var the bucket paints its countdown and header dot with.
+// Airing = live blue, Upcoming = future amber, Already Aired = quiet grey.
+const BUCKET_ORDER: { id: AlertBucket; label: string; tone: string }[] = [
+  { id: "airing_now", label: "Airing Now", tone: "var(--color-status-watching)" },
+  { id: "announced", label: "Upcoming", tone: "var(--color-status-plan_to_watch)" },
+  { id: "already_aired", label: "Already Aired", tone: "var(--color-text-tertiary)" },
 ];
 
-function statusLine(n: KonsouNotification): string {
-  if (n.type === "started_airing") {
-    return n.airing_at
-      ? `Now airing · estimated finish ${timeUntil(n.airing_at)}`
-      : "Now airing";
+const REL_LABEL: Record<string, string> = {
+  sequel: "Sequel",
+  side_story: "Side story",
+  spin_off: "Spin-off",
+  movie: "Movie",
+};
+
+/** Minute-granular ticker: countdowns re-read the clock once a minute so
+ *  "next ep in 2h 14m" stays honest without a per-second render storm. */
+function useMinuteTick(): void {
+  const [, force] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => force((n) => n + 1), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+}
+
+/** Strip the leading "in " so timeUntil reads as a compact pill body. */
+function compactUntil(airingAtSeconds: number): string {
+  return timeUntil(airingAtSeconds).replace(/^in /, "");
+}
+
+interface AirLine {
+  /** True only while a show is actively airing — drives the live pulse dot. */
+  live: boolean;
+  /** Small context word on the hero's countdown rail ("next ep" / "airing"). */
+  label: string;
+  /** The big token on the hero rail ("44m", "2h 13m", "now"). */
+  value: string;
+  /** The full phrase used by the compact pill ("airs in 4d 23h", "date TBA"). */
+  pill: string;
+}
+
+function airLine(n: KonsouNotification, bucket: AlertBucket): AirLine {
+  const now = Math.floor(Date.now() / 1000);
+
+  if (bucket === "airing_now") {
+    if (n.airing_at && n.airing_at > now) {
+      const v = compactUntil(n.airing_at);
+      return { live: true, label: "next ep", value: v, pill: `next ep ${v}` };
+    }
+    return { live: true, label: "airing", value: "now", pill: "airing now" };
   }
-  if (n.related_status === "RELEASING")
-    return n.airing_at ? `Airing now · next ${timeUntil(n.airing_at)}` : "Airing now";
-  if (n.related_status === "NOT_YET_RELEASED") {
+
+  if (bucket === "announced") {
+    if (n.airing_at && n.airing_at > now) {
+      const v = compactUntil(n.airing_at);
+      return { live: false, label: "airs in", value: v, pill: `airs in ${v}` };
+    }
     const d = n.airing_at
       ? formatFuzzyDate({
           year: new Date(n.airing_at * 1000).getFullYear(),
@@ -40,31 +91,35 @@ function statusLine(n: KonsouNotification): string {
           day: new Date(n.airing_at * 1000).getDate(),
         })
       : null;
-    return d ? `Not aired yet · airs ${d}` : "Not aired yet · date TBD";
+    return d
+      ? { live: false, label: "airs", value: d, pill: `airs ${d}` }
+      : { live: false, label: "premiere", value: "TBA", pill: "date TBA" };
   }
-  return "Already aired, you may have missed it";
+
+  // already_aired — quiet, past tense.
+  return { live: false, label: "", value: "aired", pill: "already aired" };
 }
 
-/** Soonest upcoming air time first, then most recently aired, then no-date. */
-function byUrgency(a: KonsouNotification, b: KonsouNotification): number {
-  const now = Math.floor(Date.now() / 1000);
-  const rank = (n: KonsouNotification): [number, number] => {
-    if (n.airing_at == null) return [2, 0];
-    return n.airing_at >= now
-      ? [0, n.airing_at - now]
-      : [1, now - n.airing_at];
-  };
-  const [ga, va] = rank(a);
-  const [gb, vb] = rank(b);
-  return ga !== gb ? ga - gb : va - vb;
+/** The secondary line: how this suggestion connects to what you finished. */
+function relationLine(n: KonsouNotification, sourceTitle: string): string {
+  const kind = REL_LABEL[n.type] ?? "Related";
+  return `${kind} of ${sourceTitle}`;
 }
 
-function AlertCard({ n }: { n: KonsouNotification }) {
+interface AlertCardProps {
+  n: KonsouNotification;
+  bucket: AlertBucket;
+  tone: string;
+  variant: "hero" | "compact";
+}
+
+function AlertCard({ n, bucket, tone, variant }: AlertCardProps) {
   const navigate = useNavigate();
   const sourceEntry = useListStore((s) => s.map[n.source_id]);
   const addFromSummary = useListStore((s) => s.addFromSummary);
   const dismissRelated = useNotificationStore((s) => s.dismissRelated);
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const sourceTitle = sourceEntry
     ? preferredTitle(
@@ -76,6 +131,8 @@ function AlertCard({ n }: { n: KonsouNotification }) {
         titleLanguage,
       )
     : "a completed anime";
+
+  const open = () => navigate(`/anime/${n.related_id}`, { replace: true });
 
   const add = (status: "watching" | "plan_to_watch") => {
     addFromSummary(
@@ -108,86 +165,152 @@ function AlertCard({ n }: { n: KonsouNotification }) {
     toast.success("Won't suggest this again");
   };
 
+  const dismiss = () => void dismissRelated([n.related_id]);
+
+  const air = airLine(n, bucket);
+  const rel = relationLine(n, sourceTitle);
+
+  // Primary action is context-aware: you can't "watch" what hasn't aired, so
+  // Upcoming leads with Plan; everything airing or aired leads with Watching.
+  const primaryStatus: "watching" | "plan_to_watch" =
+    bucket === "announced" ? "plan_to_watch" : "watching";
+  const altStatus: "watching" | "plan_to_watch" =
+    primaryStatus === "watching" ? "plan_to_watch" : "watching";
+  const primaryLabel = primaryStatus === "watching" ? "Watching" : "Plan to watch";
+  const PrimaryIcon = primaryStatus === "watching" ? Play : BookmarkPlus;
+
   return (
-    <div className="k-alert">
+    <article
+      className={`k-alert k-alert--${variant}`}
+      style={{ "--alert-tone": tone } as CSSProperties}
+    >
       <button
         className="k-alert__cover"
-        onClick={() => navigate(`/anime/${n.related_id}`, { replace: true })}
+        onClick={open}
         aria-label={`Open ${n.related_title}`}
       >
-        <AnimeCover src={n.related_cover} alt={n.related_title} decorative />
+        <AnimeCover src={n.related_cover} alt={n.related_title} decorative radius="var(--radius-md)" />
       </button>
+
       <div className="k-alert__body">
-        <button
-          type="button"
-          className="k-alert__titlebtn"
-          onClick={() => navigate(`/anime/${n.related_id}`, { replace: true })}
-        >
-          <Text size="base" weight={600} clamp={2}>
+        <button type="button" className="k-alert__titlebtn" onClick={open}>
+          <Text size={variant === "hero" ? "lg" : "base"} weight={700} clamp={2}>
             {n.related_title}
           </Text>
         </button>
+
         <Text size="xs" color="secondary" clamp={1}>
-          {n.type === "started_airing"
-            ? "In your plan-to-watch"
-            : `${n.type.replace(/_/g, " ")} of ${sourceTitle}`}
+          {rel}
         </Text>
-        <Text size="xs" color="tertiary">
-          {statusLine(n)}
-        </Text>
+
         <div className="k-alert__actions">
-          {n.type !== "started_airing" && (
-            <>
-              <Button size="sm" variant="primary" onClick={() => add("watching")}>
-                Watching
-              </Button>
-              <Button size="sm" variant="secondary" onClick={() => add("plan_to_watch")}>
-                Plan
-              </Button>
-              <Button size="sm" variant="ghost" onClick={markNotInterested}>
-                Not interested
-              </Button>
-            </>
-          )}
-          {n.type === "started_airing" && (
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={() => {
-                navigate(`/anime/${n.related_id}`, { replace: true });
-              }}
-            >
-              View
-            </Button>
-          )}
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => void dismissRelated([n.related_id])}
+          <button
+            type="button"
+            className="k-alert__primary"
+            onClick={() => add(primaryStatus)}
           >
-            Dismiss
-          </Button>
+            <Icon icon={PrimaryIcon} size={15} strokeWidth={2.4} fill={PrimaryIcon === Play} />
+            {primaryLabel}
+          </button>
+          <button
+            type="button"
+            className="k-alert__more"
+            onClick={() => setMenuOpen(true)}
+            aria-label={`More actions for ${n.related_title}`}
+          >
+            <Icon icon={MoreHorizontal} size={18} />
+          </button>
         </div>
       </div>
-    </div>
+
+      {variant === "hero" ? (
+        <div className="k-alert__countdown" aria-label={air.pill}>
+          <span className="k-alert__countdown-label">
+            {air.live && <span className="k-alert__pulse" aria-hidden />}
+            {air.label}
+          </span>
+          <span className="k-alert__countdown-value">{air.value}</span>
+        </div>
+      ) : (
+        <div className="k-alert__pillrail">
+          <span className={`k-alert__pill${air.live ? " k-alert__pill--live" : ""}`}>
+            {air.live && <span className="k-alert__pulse" aria-hidden />}
+            {air.pill}
+          </span>
+        </div>
+      )}
+
+      <BottomSheet open={menuOpen} onClose={() => setMenuOpen(false)} title={n.related_title}>
+        <div className="k-alertmenu">
+          <button
+            type="button"
+            className="k-alertmenu__row"
+            onClick={() => {
+              add(altStatus);
+              setMenuOpen(false);
+            }}
+          >
+            <Icon
+              icon={altStatus === "watching" ? Play : BookmarkPlus}
+              size={20}
+              color="var(--color-text-secondary)"
+              fill={altStatus === "watching"}
+            />
+            {altStatus === "watching" ? "Add to Watching" : "Add to Plan to watch"}
+          </button>
+          <button
+            type="button"
+            className="k-alertmenu__row"
+            onClick={() => {
+              markNotInterested();
+              setMenuOpen(false);
+            }}
+          >
+            <Icon icon={EyeOff} size={20} color="var(--color-text-secondary)" />
+            Not interested
+          </button>
+          <button
+            type="button"
+            className="k-alertmenu__row k-alertmenu__row--muted"
+            onClick={() => {
+              dismiss();
+              setMenuOpen(false);
+            }}
+          >
+            <Icon icon={X} size={20} color="var(--color-text-tertiary)" />
+            Dismiss
+          </button>
+        </div>
+      </BottomSheet>
+    </article>
   );
 }
 
-export function Alerts() {
+/** Soonest upcoming air time first, then most recently aired, then no-date. */
+function byUrgency(a: KonsouNotification, b: KonsouNotification): number {
+  const now = Math.floor(Date.now() / 1000);
+  const rank = (n: KonsouNotification): [number, number] => {
+    if (n.airing_at == null) return [2, 0];
+    return n.airing_at >= now ? [0, n.airing_at - now] : [1, now - n.airing_at];
+  };
+  const [ga, va] = rank(a);
+  const [gb, vb] = rank(b);
+  return ga !== gb ? ga - gb : va - vb;
+}
+
+/**
+ * The New sequels segment of the Airing tab: continuations the radar found for
+ * shows you finished, grouped by release state and sorted by urgency. The
+ * Airing shell owns the page header, the scan refresh, and marking these seen,
+ * so this renders content only.
+ */
+export function SequelsPanel() {
   const items = useNotificationStore((s) => s.items);
-  const checking = useNotificationStore((s) => s.checking);
-  const progress = useNotificationStore((s) => s.progress);
-  const lastCheckedAt = useNotificationStore((s) => s.lastCheckedAt);
-  const markAllSeen = useNotificationStore((s) => s.markAllSeen);
-  const refreshAll = useNotificationStore((s) => s.refreshAll);
   const dismissRelated = useNotificationStore((s) => s.dismissRelated);
-  const entries = useListStore((s) => s.entries);
   const listMap = useListStore((s) => s.map);
   const [collapsed, setCollapsed] = useState<Set<AlertBucket>>(new Set());
 
-  useEffect(() => {
-    void markAllSeen();
-  }, [markAllSeen]);
+  useMinuteTick();
 
   // A title the user tagged "not interested" should never be recommended
   // again — hide any alert pointing at one, even if it was inserted earlier.
@@ -219,97 +342,77 @@ export function Alerts() {
       return next;
     });
 
-  // "checked 3h ago" / "checked just now" / "checked Oct 6": a radar you
-  // trust says when it last swept. relativeTime falls back to a locale date
-  // for old stamps, where "ago" would read wrong.
-  let checkedLabel: string | null = null;
-  if (lastCheckedAt != null) {
-    const rel = relativeTime(lastCheckedAt);
-    checkedLabel =
-      rel === "just now"
-        ? "checked just now"
-        : /^\d+[mhdw]$/.test(rel)
-          ? `checked ${rel} ago`
-          : `checked ${rel}`;
+  if (visible.length === 0) {
+    return (
+      <EmptyState
+        icon={Bell}
+        title="You're all caught up"
+        subtitle="Finish a show and the radar watches for its sequels, so you hear it here first."
+        showTip
+      />
+    );
   }
 
   return (
-    <div className="k-page">
-      <PageHeader
-        title="Alerts"
-        subtitle={
-          checking
-            ? progress && progress.total > 0
-              ? `Scanning ${progress.done}/${progress.total}…`
-              : "Scanning…"
-            : checkedLabel
-              ? `Sequel radar · ${checkedLabel}`
-              : "Sequel radar"
-        }
-        right={
-          <button
-            type="button"
-            className={`k-icon-btn${checking ? " k-icon-btn--spin" : ""}`}
-            onClick={() => void refreshAll(entries)}
-            aria-label="Check for new sequels"
-            disabled={checking}
-          >
-            <Icon icon={RotateCw} size={18} />
-          </button>
-        }
-      />
-
-      {visible.length === 0 ? (
-        <EmptyState
-          icon={Bell}
-          title="You're all caught up"
-          subtitle="Finish a show and the radar watches for its sequels, so you hear it here first."
-          showTip
-        />
-      ) : (
-        <div className="k-alerts konsou-scroll">
-          {BUCKET_ORDER.map(({ id, label }) => {
-            const list = groups[id];
-            if (list.length === 0) return null;
-            const isCollapsed = collapsed.has(id);
-            return (
-              <section key={id} className="k-alertgroup">
-                <div className="k-alertgroup__header">
-                  <button
-                    className="k-alertgroup__toggle"
-                    onClick={() => toggle(id)}
-                    aria-expanded={!isCollapsed}
-                  >
-                    <Text size="sm" weight={600} color="secondary">
-                      {label} · {list.length}
-                    </Text>
-                    <span
-                      className="k-alertgroup__chevron"
-                      style={{ transform: isCollapsed ? "rotate(-90deg)" : "none" }}
-                    >
-                      <Icon icon={ChevronDown} size={16} />
-                    </span>
-                  </button>
-                  <button
-                    className="k-alertgroup__clear"
-                    onClick={() => {
-                      void dismissRelated(list.map((n) => n.related_id));
-                      toast.show(
-                        `Cleared ${list.length} alert${list.length === 1 ? "" : "s"}`,
-                      );
-                    }}
-                    aria-label={`Clear all ${label} alerts`}
-                  >
-                    Clear all
-                  </button>
-                </div>
-                {!isCollapsed &&
-                  list.map((n) => <AlertCard key={n.related_id} n={n} />)}
-              </section>
-            );
-          })}
-        </div>
-      )}
+    <div className="k-alerts konsou-scroll">
+      {BUCKET_ORDER.map(({ id, label, tone }) => {
+        const list = groups[id];
+        if (list.length === 0) return null;
+        const isCollapsed = collapsed.has(id);
+        const variant = id === "airing_now" ? "hero" : "compact";
+        return (
+          <section key={id} className="k-alertgroup">
+            <div className="k-alertgroup__header">
+              <button
+                className="k-alertgroup__toggle"
+                onClick={() => toggle(id)}
+                aria-expanded={!isCollapsed}
+              >
+                <span className="k-alertgroup__label">
+                  <span
+                    className="k-alertgroup__dot"
+                    style={{ background: tone }}
+                    aria-hidden
+                  />
+                  {label}
+                  <span className="k-alertgroup__count">{list.length}</span>
+                </span>
+                <span
+                  className="k-alertgroup__chevron"
+                  style={{ transform: isCollapsed ? "rotate(-90deg)" : "none" }}
+                >
+                  <Icon icon={ChevronDown} size={16} />
+                </span>
+              </button>
+              <button
+                className="k-alertgroup__clear"
+                onClick={() => {
+                  void dismissRelated(list.map((n) => n.related_id));
+                  toast.show(
+                    `Cleared ${list.length} alert${list.length === 1 ? "" : "s"}`,
+                  );
+                }}
+                aria-label={`Clear all ${label} alerts`}
+              >
+                Clear all
+              </button>
+            </div>
+            {!isCollapsed && (
+              <div className={`k-alertlist k-alertlist--${variant}`}>
+                {list.map((n) => (
+                  <AlertCard
+                    key={n.related_id}
+                    n={n}
+                    bucket={id}
+                    tone={tone}
+                    variant={variant}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }

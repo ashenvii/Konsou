@@ -32,6 +32,15 @@
 .k-shell--desktop[data-sidebar="expanded"] .k-shell__content {
   margin-left: var(--sidebar-width);
 }
+/* Backstage (settings): no sidebar is rendered, so no offset. The whole
+   surface becomes one centered, focused column instead of a page hugging the
+   left edge where the sidebar used to be. 768px = the 720px settings column
+   plus its 24px content padding per side. */
+.k-shell--desktop.k-shell--backstage .k-shell__content {
+  margin-left: 0;
+  max-width: 768px;
+  margin-inline: auto;
+}
 
 /* ── Bottom navigation (mobile) — floating pill ─────────────── */
 .k-bottomnav {
@@ -366,18 +375,42 @@
     opacity 120ms 80ms var(--ease-out);
 }
 
-/* ── Top bar (mobile) — brand + account avatar ──────────────── */
-.k-topbar {
+/* ── Header — the app's single persistent top bar ────────────
+   Identity (logo + wordmark) on the left, account avatar on the right. Present
+   on every primary page; on desktop it spans the content column to the right of
+   the sidebar. Height uses --topbar-height plus the safe-area strip. */
+.k-header {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: calc(52px + env(safe-area-inset-top, 0px));
+  height: calc(var(--topbar-height) + env(safe-area-inset-top, 0px));
   padding: env(safe-area-inset-top, 0px) var(--space-4) 0;
   background: var(--color-base);
   border-bottom: 1px solid var(--color-border);
+  position: relative;
+  z-index: 5;
+  /* Scroll-away offset. useScrollElevation writes margin-top INLINE on this
+     element (0 → -56px) as you scroll, so the header reclaims its space on the
+     way down and returns on the way up. It's set on the header alone — never a
+     root custom property, which would recompute the whole document every frame.
+     No transition on margin-top: the value already tracks scroll frame-by-frame,
+     which stays smooth even under reduced motion. Only the shadow eases. */
+  transition: box-shadow var(--duration-normal) var(--ease-out);
 }
-.k-topbar__brand {
+@media (min-width: 1024px) {
+  .k-header {
+    padding-inline: var(--content-padding-lg);
+  }
+}
+/* Content tucks under it: a hairline + soft shadow once the page scrolls. */
+html[data-page-scrolled="true"] .k-header {
+  box-shadow:
+    0 1px 0 var(--color-border),
+    0 10px 22px -14px oklch(0% 0 0 / 65%);
+}
+
+.k-header__brand {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -434,16 +467,16 @@
 .k-hsearch__clear:hover {
   color: var(--color-text-primary);
 }
-.k-topbar__brand img {
+.k-header__logo {
   border-radius: var(--radius-sm);
 }
-.k-topbar__word {
+.k-header__word {
   font-size: var(--text-lg);
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--color-text-primary);
 }
-.k-topbar__avatar {
+.k-header__avatar {
   display: grid;
   place-items: center;
   width: 34px;
@@ -459,14 +492,14 @@
   cursor: pointer;
   transition: border-color 150ms var(--ease-out), transform 100ms var(--ease-out);
 }
-.k-topbar__avatar img {
+.k-header__avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-.k-topbar__avatar:hover {
+.k-header__avatar:hover {
   border-color: var(--color-accent);
 }
-.k-topbar__avatar:active {
+.k-header__avatar:active {
   transform: scale(0.92);
 }

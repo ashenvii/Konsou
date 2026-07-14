@@ -5,8 +5,7 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { Onboarding } from "@/components/Onboarding";
 import { MyList } from "@/pages/MyList";
 import { Discover } from "@/pages/Discover";
-import { Schedule } from "@/pages/Schedule";
-import { Alerts } from "@/pages/Alerts";
+import { Airing } from "@/pages/Airing";
 import { AnimeDetail } from "@/pages/AnimeDetail";
 import { SettingsHub } from "@/pages/settings/SettingsHub";
 import { AccountSettings } from "@/pages/settings/AccountSettings";
@@ -31,8 +30,10 @@ export function App() {
           {/* Search merged into Discover; keep the path alive for old links. */}
           <Route path="search" element={<Navigate to="/discover" replace />} />
           <Route path="discover" element={<Wrap name="Discover"><Discover /></Wrap>} />
-          <Route path="schedule" element={<Wrap name="Schedule"><Schedule /></Wrap>} />
-          <Route path="alerts" element={<Wrap name="Alerts"><Alerts /></Wrap>} />
+          <Route path="airing" element={<Wrap name="Airing"><Airing /></Wrap>} />
+          {/* Schedule + Alerts merged into Airing; keep old paths alive for links. */}
+          <Route path="schedule" element={<Navigate to="/airing" replace />} />
+          <Route path="alerts" element={<Navigate to="/airing" replace />} />
           <Route path="settings">
             <Route index element={<Wrap name="Settings"><SettingsHub /></Wrap>} />
             <Route path="account" element={<Wrap name="Account"><AccountSettings /></Wrap>} />

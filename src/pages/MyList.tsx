@@ -33,13 +33,20 @@ function loadStatusFilter(): ListStatus[] {
   if (raw) {
     try {
       const arr = JSON.parse(raw);
-      if (Array.isArray(arr)) return arr as ListStatus[];
+      if (Array.isArray(arr)) {
+        // not_interested is no longer a filterable status (muted entries never
+        // appear as cards). Drop any stale value so a persisted selection
+        // can't leave the list filtered to an empty, un-clearable set.
+        return (arr as ListStatus[]).filter((s) => s !== "not_interested");
+      }
     } catch {
       // fall through to migration
     }
   }
   const legacy = localStorage.getItem(LAST_FILTER_KEY);
-  return legacy && legacy !== "all" ? [legacy as ListStatus] : [];
+  return legacy && legacy !== "all" && legacy !== "not_interested"
+    ? [legacy as ListStatus]
+    : [];
 }
 
 function groupTitle(g: FranchiseGroup, pref: TitleLanguage): string {
@@ -101,7 +108,7 @@ export function MyList() {
   // reflect how many anime are tracked at each status.
   const counts = useMemo(() => {
     const c: Record<ListFilter, number> = {
-      all: entries.length,
+      all: 0,
       watching: 0,
       completed: 0,
       plan_to_watch: 0,
@@ -110,39 +117,62 @@ export function MyList() {
       rewatching: 0,
       not_interested: 0,
     };
-    for (const e of entries) c[e.status]++;
+    // Muted (not-interested) entries aren't shown, so they don't count toward
+    // "All entries" either — the badge matches what's on screen.
+    for (const e of entries) {
+      c[e.status]++;
+      if (e.status !== "not_interested") c.all++;
+    }
     return c;
   }, [entries]);
 
-  // Group all entries into franchise clusters first, then filter at the group
-  // level so a franchise with mixed statuses (e.g. S1=watching, S2=plan_to_watch)
-  // still appears as a single card under every relevant status selection.
+  // Franchise grouping is the one O(n) pass over the whole library, so it runs
+  // ONLY when the entries themselves change. Filtering and sorting below are
+  // cheap passes over the already-built groups: toggling a status, changing
+  // the sort, or switching title language no longer re-groups thousands of
+  // entries (it did before, because all four lived in one memo).
+  const allGroups = useMemo(() => groupEntries(entries), [entries]);
+
+  // Search haystack, built once per grouping instead of once per keystroke.
+  // Each group's member titles are normalized into a single string now, so a
+  // debounced keystroke is one substring test per group rather than
+  // re-normalizing every title in the library each time the query changes.
+  const searchHays = useMemo(() => {
+    const m = new Map<FranchiseGroup, string>();
+    for (const g of allGroups) {
+      let s = "";
+      for (const e of g.entries) {
+        s += `${e.title_romaji} ${e.title_english ?? ""} ${e.title_native ?? ""} `;
+      }
+      m.set(g, normalizeForSearch(s));
+    }
+    return m;
+  }, [allGroups]);
+
+  // Filter at the group level so a franchise with mixed statuses (e.g.
+  // S1=watching, S2=plan_to_watch) still appears as a single card under every
+  // relevant status selection.
   const groups = useMemo(() => {
-    const allGroups = groupEntries(entries);
     const filtered =
       selected.length === 0
         ? allGroups
         : allGroups.filter((g) =>
             g.entries.some((e) => selected.includes(e.status)),
           );
-    return filtered.sort((a, b) => compareGroups(a, b, defaultSort, titleLanguage));
-  }, [entries, selected, defaultSort, titleLanguage]);
+    return [...filtered].sort((a, b) =>
+      compareGroups(a, b, defaultSort, titleLanguage),
+    );
+  }, [allGroups, selected, defaultSort, titleLanguage]);
 
-  // Search filters the list DOWN to just what matches, so a 4000-entry library
+  // Search filters the list DOWN to just what matches, so a huge library
   // collapses to the handful you typed instead of making you scroll hunting for
   // a dimmed-but-still-present card.
   const query = normalizeForSearch(debouncedSearch);
   const searching = query.length > 0;
   const visibleGroups = useMemo(() => {
     if (!query) return groups;
-    return groups.filter((group) =>
-      group.entries.some((e) =>
-        normalizeForSearch(
-          `${e.title_romaji} ${e.title_english ?? ""} ${e.title_native ?? ""}`,
-        ).includes(query),
-      ),
-    );
-  }, [query, groups]);
+    return groups.filter((g) => (searchHays.get(g) ?? "").includes(query));
+  }, [query, groups, searchHays]);
 
   const persistStatuses = (next: ListStatus[]) => {
     setSelected(next);
@@ -189,7 +219,7 @@ export function MyList() {
               Search for anime
             </Button>
             <p className="k-mylist-empty__import">
-              Already on AniList?{" "}
+              Coming from AniList or MyAnimeList?{" "}
               <button type="button" onClick={() => setImportOpen(true)}>
                 Import your list
               </button>

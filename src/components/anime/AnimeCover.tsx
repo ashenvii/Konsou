@@ -12,8 +12,9 @@ interface AnimeCoverProps {
 }
 
 /** Deterministic hue from the title so every fallback tile gets its own color
- *  instead of a uniform grey hole in a wall of art. */
-function hueFromTitle(s: string): number {
+ *  instead of a uniform grey hole in a wall of art. Exported for the detail
+ *  banner's no-art fallback, which uses the same identity color. */
+export function hueFromTitle(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
   return h;

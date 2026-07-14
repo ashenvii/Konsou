@@ -12,6 +12,11 @@ import type { ListStatus } from "@/types/list";
  *   (AniList's status can lag a finale by a little; the tradeoff is accepted —
  *   accidental completes of airing shows were a real reported problem.)
  *
+ * not_interested is deliberately NOT locked here. It's a mute flag, and the
+ * user can switch it straight to a real status (that un-mutes the entry into
+ * that status). Re-picking not_interested itself unselects the mute — handled
+ * in listStore.updateStatus, not here.
+ *
  * FINISHED, HIATUS, CANCELLED, or unknown allow every status.
  */
 export function getDisabledStatuses(

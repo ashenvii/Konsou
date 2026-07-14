@@ -7,6 +7,8 @@ import { useAuthStore } from "@/lib/store/authStore";
 import { useListStore } from "@/lib/store/listStore";
 import { useNotificationStore } from "@/lib/store/notificationStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import { useStorageStore } from "@/lib/store/storageStore";
+import { openExternal } from "@/lib/openExternal";
 import { syncManager } from "@/lib/sync/syncManager";
 import { autoCheckAndDownload } from "@/lib/updater";
 import { toast } from "@/lib/store/toastStore";
@@ -19,11 +21,12 @@ import "./styles/list.css";
 import "./styles/layout.css";
 import "./styles/pages.css";
 import "./styles/perf.css";
-import { isAndroidUA } from "@/lib/platform";
 
-// Android WebView can't sustain backdrop blurs / glow shadows during scroll on
-// phone-class GPUs; perf.css swaps them for static equivalents under this class.
-if (isAndroidUA()) document.documentElement.classList.add("perf-lite");
+// Backdrop blurs and glow shadows re-rasterize every scroll frame; that paint
+// cost stole frames from the scroll on desktop WebViews too, not just phone
+// GPUs. perf.css swaps them for static, near-identical equivalents under this
+// class — applied everywhere now, since the win outweighs the flourish.
+document.documentElement.classList.add("perf-lite");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,13 +41,29 @@ const queryClient = new QueryClient({
 
 /** Initialize storage, hydrate stores, then kick off sequel detection. */
 async function bootstrap(): Promise<void> {
+  // Auth lives in localStorage, not the DB. Restore it first and on its own so a
+  // storage failure can never masquerade as a signed-out account.
+  try {
+    useAuthStore.getState().restore();
+  } catch (err) {
+    console.error("Konsou auth restore failed:", err);
+  }
+
+  // Open the database. If this throws (real SQLite only runs in a packaged
+  // build), record it so the UI can show the actual reason, and stop here —
+  // the DB-backed stores below would only throw the same error again.
   try {
     await getDb();
+  } catch (err) {
+    console.error("Konsou storage init failed:", err);
+    useStorageStore.getState().reportFailure(err);
+    return;
+  }
+
+  try {
     await useSettingsStore.getState().load();
     await useListStore.getState().load();
     await useNotificationStore.getState().load();
-    // Restore previously signed-in Google account from localStorage.
-    useAuthStore.getState().restore();
     // Pull from Drive if signed in (non-blocking — failures are logged).
     // Refresh the list store if the pull merged anything, otherwise the merged
     // entries sit in the DB but never reach the already-hydrated UI store.
@@ -62,14 +81,25 @@ async function bootstrap(): Promise<void> {
         .runScheduledScan(useListStore.getState().entries);
     scheduledScan();
     setInterval(scheduledScan, 15 * 60 * 1000);
-    // Check for app updates silently; download in background; notify when ready to install.
+    // Check for app updates silently. Desktop downloads in the background and
+    // offers the install; Android can only be told (no updater plugin there),
+    // so it links to the release instead.
     void autoCheckAndDownload((update) => {
-      toast.action({
-        message: `Konsou v${update.version} downloaded, ready to install`,
-        actionLabel: "Update Now",
-        duration: 0, // persist until dismissed
-        onAction: () => void update.install(),
-      });
+      if (update.kind === "install") {
+        toast.action({
+          message: `Konsou v${update.version} downloaded, ready to install`,
+          actionLabel: "Update Now",
+          duration: 0, // persist until dismissed
+          onAction: () => void update.install(),
+        });
+      } else {
+        toast.action({
+          message: `Konsou v${update.version} is available`,
+          actionLabel: "View",
+          duration: 0,
+          onAction: () => void openExternal(update.releaseUrl),
+        });
+      }
     });
   } catch (err) {
     console.error("Konsou bootstrap failed:", err);

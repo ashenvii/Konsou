@@ -1,7 +1,8 @@
 import { anilist } from "@/lib/api/anilist/client";
 import type { Priority } from "@/lib/api/rateLimiter";
 import { getCoverUrl, isMangaNode, preferredTitle } from "@/lib/format";
-import { isFranchiseOther } from "@/lib/franchise/relatedness";
+import { useSettingsStore } from "@/lib/store/settingsStore";
+import { isFranchiseOther, isFranchiseParent } from "@/lib/franchise/relatedness";
 import type {
   AnimeTitle,
   AniListMediaStatus,
@@ -94,12 +95,15 @@ export async function detectSequels(
         if (!titleOf.has(rel.id)) titleOf.set(rel.id, rel.title);
         const isDirectChild = depth === 0;
         // OTHER rides along when the names claim the same franchise — some
-        // continuations (Edgerunners 2) have no SEQUEL edge at all.
+        // continuations (Edgerunners 2) have no SEQUEL edge at all. PARENT
+        // (same gate) lets a special/OVA seed climb to its series so its
+        // franchise's sequels are still discovered.
         const shouldWalk =
           rel.relationType === "SEQUEL" ||
           (isDirectChild &&
             (rel.relationType === "SIDE_STORY" ||
               rel.relationType === "SPIN_OFF")) ||
+          isFranchiseParent(titleOf.get(id), rel) ||
           isFranchiseOther(titleOf.get(id), rel);
         if (!shouldWalk) continue;
 
@@ -122,7 +126,12 @@ export async function detectSequels(
             source_id: origin,
             related_id: rel.id,
             type: alertTypeFor(rel),
-            related_title: preferredTitle(rel.title),
+            // Alert titles are snapshots taken at scan time; honor the user's
+            // title-language preference like every other surface.
+            related_title: preferredTitle(
+              rel.title,
+              useSettingsStore.getState().titleLanguage,
+            ),
             related_cover: getCoverUrl(rel.coverImage) || null,
             related_status: rel.status,
             airing_at:

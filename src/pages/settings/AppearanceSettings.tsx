@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { Section, Row, SettingsSubPage } from "@/components/settings/parts";
 import { Text } from "@/components/ui/Text";
+import { useBreakpoint } from "@/hooks/useMediaQuery";
 import { TITLE_LANGUAGE_OPTIONS } from "@/lib/format";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import type { AccentName, ColorTheme, SidebarMode, ViewMode } from "@/types/list";
@@ -34,6 +35,7 @@ const SIDEBAR_MODES: { id: SidebarMode; label: string; hint: string }[] = [
 
 export function AppearanceSettings() {
   const settings = useSettingsStore();
+  const { isDesktop } = useBreakpoint();
 
   return (
     <SettingsSubPage title="Appearance">
@@ -58,7 +60,7 @@ export function AppearanceSettings() {
             ))}
           </div>
         </div>
-        <Row label="Accent" hint="Override the theme's paired color">
+        <Row label="Accent" hint="Override the theme's paired color" stack>
           <div className="k-swatches">
             {ACCENTS.map((a) => (
               <button
@@ -80,6 +82,7 @@ export function AppearanceSettings() {
           hint={`Example: ${
             TITLE_LANGUAGE_OPTIONS.find((o) => o.id === settings.titleLanguage)?.example ?? ""
           }`}
+          stack
         >
           <div className="k-segmented">
             {TITLE_LANGUAGE_OPTIONS.map((o) => (
@@ -93,7 +96,7 @@ export function AppearanceSettings() {
             ))}
           </div>
         </Row>
-        <Row label="Default view">
+        <Row label="Default view" stack>
           <div className="k-segmented">
             {VIEWS.map((v) => (
               <button
@@ -106,23 +109,27 @@ export function AppearanceSettings() {
             ))}
           </div>
         </Row>
-        <Row
-          label="Sidebar"
-          hint={SIDEBAR_MODES.find((m) => m.id === settings.sidebarMode)?.hint ?? "Desktop navigation"}
-        >
-          <div className="k-segmented">
-            {SIDEBAR_MODES.map((m) => (
-              <button
-                key={m.id}
-                className={`k-segmented__btn${settings.sidebarMode === m.id ? " k-segmented__btn--active" : ""}`}
-                onClick={() => settings.setSidebarMode(m.id)}
-                title={m.hint}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
-        </Row>
+        {/* The sidebar only exists on desktop; offering its setting on a phone
+            is dead weight. */}
+        {isDesktop && (
+          <Row
+            label="Sidebar"
+            hint={SIDEBAR_MODES.find((m) => m.id === settings.sidebarMode)?.hint ?? "Desktop navigation"}
+          >
+            <div className="k-segmented">
+              {SIDEBAR_MODES.map((m) => (
+                <button
+                  key={m.id}
+                  className={`k-segmented__btn${settings.sidebarMode === m.id ? " k-segmented__btn--active" : ""}`}
+                  onClick={() => settings.setSidebarMode(m.id)}
+                  title={m.hint}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </Row>
+        )}
       </Section>
     </SettingsSubPage>
   );

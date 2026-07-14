@@ -9,6 +9,7 @@ import {
   Zap,
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { HoldButton } from "@/components/ui/HoldButton";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { AnimeCover } from "./AnimeCover";
 import { formatChipMeta, relationChipMeta } from "./relationMeta";
@@ -17,11 +18,10 @@ import { statusMeta } from "./statusMeta";
 import { seasonSegment } from "./SeasonBar";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
-import { useFranchiseRelations } from "@/hooks/useAniList";
+import { useFranchiseWalk } from "@/hooks/useAniList";
 import { computeFranchiseLedger, ledgerEpisodeLabel } from "@/lib/franchise/ledger";
-import { isFranchiseOther } from "@/lib/franchise/relatedness";
+import { mainStoryIds, placementLabel } from "@/lib/franchise/storySplit";
 import { orderForWatching } from "@/lib/franchise/watchOrder";
-import type { RelationEdge } from "@/lib/franchise/watchOrder";
 import {
   formatFuzzyDate,
   formatLabel,
@@ -29,7 +29,6 @@ import {
   getCoverUrl,
   isMangaNode,
   preferredTitle,
-  secondaryTitle,
 } from "@/lib/format";
 import { getDisabledStatuses } from "@/lib/statusValidation";
 import { useListStore } from "@/lib/store/listStore";
@@ -39,8 +38,18 @@ import type { FranchiseGroup } from "@/lib/franchise/grouping";
 import type { AnimeSummary, RelationNode } from "@/types/anime";
 import type { AnimeListEntry, ListStatus } from "@/types/list";
 
-// Relation types that go into the "Also in this franchise" side section.
+// Relation types that mark side content (OVAs, movies, spin-offs).
 const SIDE_REL_TYPES = new Set(["SIDE_STORY", "SPIN_OFF", "PARENT", "SUMMARY"]);
+
+/** The chip that says what a non-season member IS (OVA, Movie, Side story…). */
+function kindChipFor(rel: RelationNode | undefined) {
+  if (!rel) return null;
+  if (SIDE_REL_TYPES.has(rel.relationType)) {
+    const m = relationChipMeta(rel.relationType);
+    if (m) return m;
+  }
+  return formatChipMeta(rel.format);
+}
 
 function relationToSummary(r: RelationNode): AnimeSummary {
   return {
@@ -65,6 +74,12 @@ interface FranchiseSheetProps {
   onNavigate: (anilistId: number) => void;
 }
 
+/**
+ * The quick menu for one franchise. One list, in watch order, one truth:
+ * every member of the franchise appears exactly once, seasons numbered,
+ * side content chip-labeled, and whether each is on YOUR list is the
+ * loudest visual signal (solid tracked rows vs hollow add rows).
+ */
 export function FranchiseSheet({
   group,
   open,
@@ -81,126 +96,99 @@ export function FranchiseSheet({
   const [pendingAdd, setPendingAdd] = useState<AnimeSummary | null>(null);
   const [pendingStatusId, setPendingStatusId] = useState<number | null>(null);
 
-  // Tracked ids plus the franchise root. The root anchors the season walk, so
-  // it must be fetched even when its own entry was removed from the list —
-  // otherwise deleting S1 makes every remaining season fall out of the main
-  // chain. Negative rootIds are card-identity tokens, not AniList ids.
-  const relationIdList = useMemo(() => {
-    if (!group) return [];
-    const ids = group.entries.map((e) => e.anilist_id);
-    if (group.rootId > 0 && !ids.includes(group.rootId)) ids.unshift(group.rootId);
-    return ids;
-  }, [group]);
-
-  const { data: relMap, isLoading: relLoading } = useFranchiseRelations(
-    relationIdList,
-    open,
-  );
-
   const trackedMap = useMemo(
     () => new Map(group?.entries.map((e) => [e.anilist_id, e]) ?? []),
     [group],
   );
 
+  // THE shared franchise walk — the exact function behind the Related tab,
+  // same cache entry and all. The sheet stopped running its own weaker copy;
+  // the two surfaces now cannot disagree about what the franchise contains.
+  // Negative rootIds are card-identity tokens, not AniList ids.
+  const anchorId =
+    group == null ? null : group.rootId > 0 ? group.rootId : group.entries[0].anilist_id;
+  const anchorEntry =
+    group?.entries.find((e) => e.anilist_id === anchorId) ?? group?.entries[0] ?? null;
+  const anchorTitle = anchorEntry
+    ? {
+        romaji: anchorEntry.title_romaji,
+        english: anchorEntry.title_english,
+        native: anchorEntry.title_native,
+      }
+    : null;
+  const { data: walk, isLoading: relLoading } = useFranchiseWalk(
+    anchorId,
+    anchorTitle,
+    open,
+  );
+
   const allRelNodes = useMemo(() => {
     const m = new Map<number, RelationNode>();
-    for (const rels of Object.values(relMap ?? {})) {
-      for (const r of rels) m.set(r.id, r);
-    }
+    for (const n of walk?.nodes ?? []) m.set(n.id, n);
     return m;
-  }, [relMap]);
+  }, [walk]);
 
-  const { mainChainIds, sideIds } = useMemo(() => {
-    if (!group) return { mainChainIds: [], sideIds: [] };
+  /**
+   * One ordered member list: everything the walk discovered, the anchor, and
+   * any tracked strays the graph missed, interleaved by orderForWatching into
+   * the order you'd actually watch (the aniwave #1..#N presentation).
+   */
+  const orderedIds = useMemo(() => {
+    if (!group || anchorId == null) return [] as number[];
 
-    const anchor =
-      group.rootId > 0 ? group.rootId : group.entries[0].anilist_id;
-    const mainChainIds: number[] = [anchor];
-    const inMain = new Set<number>([anchor]);
-
-    let current = anchor;
-    for (let i = 0; i < 30; i++) {
-      const rels = relMap?.[current] ?? [];
-      const sequel = rels.find((r) => r.relationType === "SEQUEL");
-      if (!sequel || inMain.has(sequel.id)) break;
-      inMain.add(sequel.id);
-      mainChainIds.push(sequel.id);
-      current = sequel.id;
+    const members = new Set<number>([anchorId]);
+    for (const n of walk?.nodes ?? []) {
+      if (n.format === "MUSIC" || isMangaNode(n)) continue;
+      members.add(n.id);
     }
+    for (const id of trackedMap.keys()) members.add(id);
 
-    const sideIds: number[] = [];
-    const inSide = new Set<number>();
-
-    const addSide = (id: number) => {
-      if (!inMain.has(id) && !inSide.has(id)) {
-        sideIds.push(id);
-        inSide.add(id);
-      }
-    };
-
-    for (const [idStr, rels] of Object.entries(relMap ?? {})) {
-      const fromId = Number(idStr);
-      const fromEntry = trackedMap.get(fromId);
-      const fromTitle = fromEntry
-        ? {
-            romaji: fromEntry.title_romaji,
-            english: fromEntry.title_english,
-            native: fromEntry.title_native,
-          }
-        : allRelNodes.get(fromId)?.title;
-      for (const r of rels) {
-        // Manga/novel source can't be opened or tracked as anime; isMangaNode
-        // also catches pre-`type` snapshots via their format. OTHER edges
-        // join when the names claim the same franchise (Edgerunners 2).
-        if (r.format === "MUSIC" || isMangaNode(r)) continue;
-        if (
-          SIDE_REL_TYPES.has(r.relationType) ||
-          isFranchiseOther(fromTitle, r)
-        ) {
-          addSide(r.id);
-        }
-      }
-    }
-
-    for (const id of trackedMap.keys()) addSide(id);
-
-    // Side entries follow the graph's watch order (a movie tagged SEQUEL of
-    // S1 sorts after S1), falling back to air date where tags are silent.
-    const edges: RelationEdge[] = [];
-    for (const [idStr, rels] of Object.entries(relMap ?? {})) {
-      const fromId = Number(idStr);
-      for (const r of rels) {
-        if (isMangaNode(r) || r.format === "MUSIC") continue;
-        edges.push({ from: fromId, to: r.id, type: r.relationType });
-      }
-    }
-    const orderable = [...new Set([...inMain, ...inSide])].map((id) => {
+    const orderable = [...members].map((id) => {
       const n = allRelNodes.get(id);
       return { id, startDate: n?.startDate, seasonYear: n?.seasonYear };
     });
-    const pos = new Map(
-      orderForWatching(orderable, edges).map((id, i) => [id, i]),
-    );
-    sideIds.sort((a, b) => (pos.get(a) ?? 0) - (pos.get(b) ?? 0));
+    return orderForWatching(orderable, walk?.edges ?? []);
+  }, [group, anchorId, walk, trackedMap, allRelNodes]);
 
-    return { mainChainIds, sideIds };
-  }, [group, relMap, trackedMap, allRelNodes]);
+  // Main story vs extras: the same structural split the Related tab uses,
+  // derived from the same walk, so the two surfaces cannot disagree.
+  const storyMembers = useMemo(
+    () =>
+      orderedIds.map((id) => {
+        // The anchor isn't in the walk's node list (a walk never returns its
+        // own seed), but a later season's edge back to it carries full node
+        // data — without it the anchor has no air date and extras mis-place
+        // around "#1".
+        const n =
+          allRelNodes.get(id) ??
+          (id === anchorId ? walk?.seedNode ?? undefined : undefined);
+        return { id, format: n?.format ?? null, startDate: n?.startDate ?? null };
+      }),
+    [orderedIds, allRelNodes, anchorId, walk],
+  );
+  const mainSet = useMemo(
+    () => mainStoryIds(storyMembers, walk?.edges ?? []),
+    [storyMembers, walk],
+  );
+  const mainStory = useMemo(
+    () => storyMembers.filter((m) => mainSet.has(m.id)),
+    [storyMembers, mainSet],
+  );
 
   // Franchise-wide completion: how much of this series exists (tracked or
-  // not) vs how much is watched. Gated on relMap so an offline sheet, which
+  // not) vs how much is watched. Gated on the walk so an offline sheet, which
   // only knows the tracked entries, never wrongly reports a full set.
   const ledger = useMemo(() => {
-    if (!relMap) return null;
-    const ids = [...mainChainIds, ...sideIds];
+    if (!walk) return null;
     return computeFranchiseLedger(
-      ids.map((id) => ({
+      orderedIds.map((id) => ({
         episodes: allRelNodes.get(id)?.episodes,
         // Fall back to the full list: a not-interested member is still ON the
         // list, it just doesn't ride this card's entries.
         entry: trackedMap.get(id) ?? listMap[id],
       })),
     );
-  }, [relMap, mainChainIds, sideIds, allRelNodes, trackedMap, listMap]);
+  }, [walk, orderedIds, allRelNodes, trackedMap, listMap]);
 
   if (!group) return null;
 
@@ -216,7 +204,6 @@ export function FranchiseSheet({
     titleLanguage,
   );
 
-  const seasonCount = group.entries.length;
   const overallPct =
     group.totalEpisodes != null && group.totalEpisodes > 0
       ? Math.round((group.totalWatched / group.totalEpisodes) * 100)
@@ -261,73 +248,72 @@ export function FranchiseSheet({
     onClose();
   };
 
-  // The first genuinely untracked entry in the main chain is the "up next"
-  // frontier — a not-interested member is a decision, not a gap.
-  const frontierId = mainChainIds.find(
-    (id) => !trackedMap.has(id) && !listMap[id],
-  );
+  // The first genuinely untracked member in watch order is the "up next"
+  // frontier — a not-interested member is a decision, not a gap. The main
+  // story is asked first: the next season beats a side OVA every time, and
+  // extras only become "up next" once the story itself is fully accounted for.
+  const untrackedHere = (id: number) =>
+    !trackedMap.has(id) && !listMap[id] && allRelNodes.has(id);
+  const frontierId =
+    orderedIds.find((id) => mainSet.has(id) && untrackedHere(id)) ??
+    orderedIds.find(untrackedHere);
 
-  const renderTracked = (id: number, seasonNo: number | null) => {
+  // Rows: main-story members carry their watch-order position (#1..#N, same
+  // numbering as the Related tab); extras carry a placement chip ("after #2")
+  // instead. Format and relation kind stay as chips, year in the meta.
+  const rowFor = (id: number, posNo: number | null, where: string | null) => {
+    const node = allRelNodes.get(id);
+    const kind = kindChipFor(node);
+    const year = node?.seasonYear ?? node?.startDate?.year ?? null;
     const tracked = trackedMap.get(id);
-    if (!tracked) return null;
-    return (
-      <SeasonRow
-        key={id}
-        entry={tracked}
-        seasonNo={seasonNo}
-        titleLanguage={titleLanguage}
-        onOpen={(entryId) => {
-          onClose();
-          onNavigate(entryId);
-        }}
-        onStatusTap={(entryId) => setPendingStatusId(entryId)}
-        onRemove={(entryId) => {
-          remove(entryId);
-          if (group.entries.length <= 1) onClose();
-        }}
-      />
-    );
-  };
-
-  // A member the user marked not-interested: it no longer rides the card, but
-  // pretending it's untracked (with an Add button) would be worse. Show it
-  // muted, status tappable, so changing your mind is one tap away.
-  const renderNotInterested = (id: number) => {
-    const entry = listMap[id];
-    if (!entry) return null;
-    return (
-      <SeasonRow
-        key={id}
-        entry={entry}
-        seasonNo={null}
-        dimmed
-        titleLanguage={titleLanguage}
-        onOpen={(entryId) => {
-          onClose();
-          onNavigate(entryId);
-        }}
-        onStatusTap={(entryId) => setPendingStatusId(entryId)}
-        onRemove={(entryId) => remove(entryId)}
-      />
-    );
-  };
-
-  const rowFor = (id: number, seasonNo: number | null, isFrontier: boolean) => {
-    if (trackedMap.has(id)) return renderTracked(id, seasonNo);
-    if (listMap[id]?.status === "not_interested") return renderNotInterested(id);
-    return renderUntracked(id, isFrontier);
-  };
-
-  const renderUntracked = (id: number, isFrontier: boolean) => {
-    const relNode = allRelNodes.get(id);
-    if (!relNode) return null;
+    if (tracked) {
+      return (
+        <SeasonRow
+          key={id}
+          entry={tracked}
+          posNo={posNo}
+          kind={kind}
+          where={where}
+          year={year}
+          titleLanguage={titleLanguage}
+          onOpen={(entryId) => {
+            onClose();
+            onNavigate(entryId);
+          }}
+          onStatusTap={(entryId) => setPendingStatusId(entryId)}
+        />
+      );
+    }
+    const notInterested = listMap[id];
+    if (notInterested?.status === "not_interested") {
+      return (
+        <SeasonRow
+          key={id}
+          entry={notInterested}
+          posNo={posNo}
+          kind={kind}
+          where={where}
+          year={year}
+          dimmed
+          titleLanguage={titleLanguage}
+          onOpen={(entryId) => {
+            onClose();
+            onNavigate(entryId);
+          }}
+          onStatusTap={(entryId) => setPendingStatusId(entryId)}
+        />
+      );
+    }
+    if (!node) return null;
     return (
       <AddRow
         key={id}
-        rel={relNode}
-        featured={isFrontier}
+        rel={node}
+        posNo={posNo}
+        where={where}
+        featured={id === frontierId}
         titleLanguage={titleLanguage}
-        onAdd={() => setPendingAdd(relationToSummary(relNode))}
+        onAdd={() => setPendingAdd(relationToSummary(node))}
         onOpen={() => {
           onClose();
           onNavigate(id);
@@ -335,6 +321,8 @@ export function FranchiseSheet({
       />
     );
   };
+
+  const onListCount = ledger ? ledger.memberCount - ledger.untrackedCount : null;
 
   return (
     <>
@@ -357,17 +345,17 @@ export function FranchiseSheet({
                 {franchiseTitle}
               </Text>
               <div className="k-fhead__stats">
-                {group.isGroup && <span>{seasonCount} seasons</span>}
                 <span>{epSummary}</span>
                 {overallPct != null && <span className="k-fhead__pct">{overallPct}%</span>}
               </div>
-              {ledger && (ledger.untrackedCount > 0 || ledger.fullSet) && (
+              {/* Ownership is the headline question this sheet answers. */}
+              {ledger && (
                 <div
                   className={`k-fhead__ledger${ledger.fullSet ? " k-fhead__ledger--full" : ""}`}
                 >
                   {ledger.fullSet
                     ? `Full set: all ${ledger.memberCount} entries are on your list`
-                    : `${ledgerEpisodeLabel(ledger)} in this franchise · ${ledger.untrackedCount} not on your list`}
+                    : `${onListCount} of ${ledger.memberCount} on your list · ${ledgerEpisodeLabel(ledger)} in this franchise`}
                 </div>
               )}
             </div>
@@ -383,31 +371,46 @@ export function FranchiseSheet({
             )}
           </div>
         ) : (
-          <>
-            <p className="k-fsheet-heading">
-              {group.isGroup ? "Seasons" : "Tracked"}
-            </p>
-            <div className="k-seasonlist">
-              {mainChainIds.map((id, i) =>
-                rowFor(id, group.isGroup ? i + 1 : null, id === frontierId),
-              )}
-            </div>
-
-            {sideIds.length > 0 && (
+          (() => {
+            // Pre-filter to renderable ids so position numbers stay
+            // contiguous even when a member has no usable data.
+            const renderable = orderedIds.filter(
+              (id) =>
+                trackedMap.has(id) || listMap[id] != null || allRelNodes.has(id),
+            );
+            const mainList = renderable.filter((id) => mainSet.has(id));
+            const extraList = renderable.filter((id) => !mainSet.has(id));
+            const whereOf = (id: number) => {
+              const m = storyMembers.find((s) => s.id === id);
+              return m ? placementLabel(m, mainStory) : null;
+            };
+            return (
               <>
-                <p className="k-fsheet-heading">Also in this franchise</p>
+                <p className="k-fsheet-heading">Main story</p>
                 <div className="k-seasonlist">
-                  {sideIds.map((id) => rowFor(id, null, false))}
+                  {mainList.map((id, i) => rowFor(id, i + 1, null))}
                 </div>
+                {extraList.length > 0 && (
+                  <>
+                    <p className="k-fsheet-heading">Extras & side stories</p>
+                    <div className="k-seasonlist">
+                      {extraList.map((id) => rowFor(id, null, whereOf(id)))}
+                    </div>
+                  </>
+                )}
               </>
-            )}
-          </>
+            );
+          })()
         )}
 
-        <button type="button" className="k-fsheet-remove" onClick={removeFranchise}>
-          <Icon icon={Trash2} size={16} />
-          {group.isGroup ? "Remove whole franchise" : "Remove from list"}
-        </button>
+        {/* Destructive and franchise-wide: deliberate hold, not a stray tap. */}
+        <HoldButton
+          onConfirm={removeFranchise}
+          className="k-holdbtn--danger k-fsheet-removehold"
+        >
+          <Icon icon={Trash2} size={15} />
+          {group.isGroup ? "Hold to remove whole franchise" : "Hold to remove from list"}
+        </HoldButton>
       </BottomSheet>
 
       {/* Add an untracked entry */}
@@ -425,7 +428,7 @@ export function FranchiseSheet({
         }
       />
 
-      {/* Change status of a tracked entry */}
+      {/* Change status of a tracked entry (Remove lives here too) */}
       <StatusSheet
         open={pendingStatusId != null}
         onClose={() => setPendingStatusId(null)}
@@ -456,21 +459,31 @@ export function FranchiseSheet({
 
 // ── Rows ──────────────────────────────────────────────────────────────────────
 
+interface KindChip {
+  label: string;
+}
+
 function SeasonRow({
   entry,
-  seasonNo,
+  posNo,
+  kind,
+  where,
+  year,
   titleLanguage,
   onOpen,
   onStatusTap,
-  onRemove,
   dimmed = false,
 }: {
   entry: AnimeListEntry;
-  seasonNo: number | null;
+  /** Watch-order number for main-story rows; null for extras. */
+  posNo: number | null;
+  kind: KindChip | null;
+  /** Where an extra falls in the story ("after #2"); null for main rows. */
+  where?: string | null;
+  year: number | null;
   titleLanguage: string;
   onOpen: (id: number) => void;
   onStatusTap: (id: number) => void;
-  onRemove: (id: number) => void;
   dimmed?: boolean;
 }) {
   const incrementEpisodes = useListStore((s) => s.incrementEpisodes);
@@ -483,7 +496,6 @@ function SeasonRow({
     native: entry.title_native,
   };
   const title = preferredTitle(titleParts, titleLanguage as never);
-  const alt = secondaryTitle(titleParts, titleLanguage as never);
 
   const isActive = entry.status === "watching" || entry.status === "rewatching";
   const epText = `${entry.episodes_watched} / ${entry.total_episodes ?? "?"}`;
@@ -495,7 +507,7 @@ function SeasonRow({
 
   return (
     <div
-      className={`k-srow${dimmed ? " k-srow--dimmed" : ""}`}
+      className={`k-srow k-srow--mine${dimmed ? " k-srow--dimmed" : ""}`}
       style={{ "--card-status": color } as CSSProperties}
     >
       <button
@@ -506,7 +518,7 @@ function SeasonRow({
       >
         <div className="k-srow__cover">
           <AnimeCover src={entry.cover_url ?? undefined} alt={title} decorative radius="var(--radius-sm)" />
-          {seasonNo != null && <span className="k-srow__num">S{seasonNo}</span>}
+          {posNo != null && <span className="k-srow__num">#{posNo}</span>}
           <span className="k-srow__openhint" aria-hidden>
             <Icon icon={ChevronRight} size={18} />
           </span>
@@ -518,24 +530,23 @@ function SeasonRow({
           <Text size="sm" weight={600} clamp={1}>
             {title}
           </Text>
-          {alt && (
-            <Text size="xs" color="tertiary" clamp={1}>
-              {alt}
-            </Text>
-          )}
         </button>
         <div className="k-srow__controls">
           <button
             type="button"
             className="k-pill k-srow__statusbtn"
-            style={{ color: meta.color }}
             onClick={() => onStatusTap(entry.anilist_id)}
             aria-label={`Change status (currently ${meta.label})`}
           >
-            <Icon icon={meta.icon} size={12} weight="fill" />
+            <span className="k-pill__icon" style={{ color: meta.color }}>
+              <Icon icon={meta.icon} size={12} weight="fill" />
+            </span>
             {meta.label}
             <Icon icon={ChevronDown} size={12} className="k-srow__caret" />
           </button>
+          {kind && <span className="k-chip-kind">{kind.label}</span>}
+          {where && <span className="k-chip-kind k-chip-kind--where">{where}</span>}
+          {year != null && <span className="k-srow__dim">{year}</span>}
           {isActive ? (
             <div className="k-srow__stepper">
               <button
@@ -564,47 +575,40 @@ function SeasonRow({
           )}
         </div>
       </div>
-
-      <button
-        type="button"
-        className="k-srow__remove"
-        onClick={() => onRemove(entry.anilist_id)}
-        aria-label={`Remove ${title}`}
-      >
-        <Icon icon={Trash2} size={16} />
-      </button>
     </div>
   );
 }
 
 function AddRow({
   rel,
+  posNo,
+  where,
   featured,
   titleLanguage,
   onAdd,
   onOpen,
 }: {
   rel: RelationNode;
+  /** Watch-order number for main-story rows; null for extras. */
+  posNo: number | null;
+  /** Where an extra falls in the story ("after #2"); null for main rows. */
+  where?: string | null;
   featured: boolean;
   titleLanguage: string;
   onAdd: () => void;
   onOpen: () => void;
 }) {
   const title = preferredTitle(rel.title, titleLanguage as never);
-  const alt = secondaryTitle(rel.title, titleLanguage as never);
   const cover = getCoverUrl(rel.coverImage);
 
   const isUpcoming = rel.status === "NOT_YET_RELEASED";
   const isAiring = rel.status === "RELEASING";
-  const relChip = SIDE_REL_TYPES.has(rel.relationType)
-    ? relationChipMeta(rel.relationType)
-    : null;
-  const fmtChip = formatChipMeta(rel.format);
+  const kind = kindChipFor(rel);
   const upcomingDate = isUpcoming ? formatFuzzyDate(rel.startDate) : null;
 
   // The format moves into its colored chip when it has one; the dim meta text
   // keeps whatever's left (plain TV formats, the year).
-  const meta = [fmtChip ? null : formatLabel(rel.format), rel.seasonYear?.toString()]
+  const meta = [kind ? null : formatLabel(rel.format), rel.seasonYear?.toString()]
     .filter(Boolean)
     .join(" · ");
 
@@ -620,6 +624,7 @@ function AddRow({
       >
         <div className="k-srow__cover">
           <AnimeCover src={cover} alt={title} decorative radius="var(--radius-sm)" />
+          {posNo != null && <span className="k-srow__num">#{posNo}</span>}
           <span className="k-srow__openhint" aria-hidden>
             <Icon icon={ChevronRight} size={18} />
           </span>
@@ -631,30 +636,12 @@ function AddRow({
           <Text size="sm" weight={600} clamp={1}>
             {title}
           </Text>
-          {alt && (
-            <Text size="xs" color="tertiary" clamp={1}>
-              {alt}
-            </Text>
-          )}
         </button>
         <div className="k-srow__controls">
+          <span className="k-srow__notin">Not on your list</span>
           {meta && <span className="k-srow__dim">{meta}</span>}
-          {relChip && (
-            <span
-              className="k-chip-kind"
-              style={{ "--chip": relChip.color } as CSSProperties}
-            >
-              {relChip.label}
-            </span>
-          )}
-          {fmtChip && (
-            <span
-              className="k-chip-kind"
-              style={{ "--chip": fmtChip.color } as CSSProperties}
-            >
-              {fmtChip.label}
-            </span>
-          )}
+          {kind && <span className="k-chip-kind">{kind.label}</span>}
+          {where && <span className="k-chip-kind k-chip-kind--where">{where}</span>}
           {isAiring && (
             <span className="k-chip-mini k-chip-mini--accent">
               <Icon icon={Zap} size={10} weight="fill" />

@@ -107,10 +107,13 @@ export function Onboarding() {
         <div className="k-onboarding__actions">
           <Button
             variant="primary"
-            onClick={() => void connectAndDismiss()}
-            disabled={connecting}
+            onClick={() =>
+              connecting
+                ? useAuthStore.getState().cancelConnect()
+                : void connectAndDismiss()
+            }
           >
-            {connecting ? "Connecting…" : "Connect Google & get started"}
+            {connecting ? "Cancel sign-in" : "Connect Google & get started"}
           </Button>
           <Button variant="ghost" onClick={dismiss}>
             Skip for now

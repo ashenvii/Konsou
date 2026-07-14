@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
 import { useEpisodeIncrement } from "@/hooks/useEpisodeIncrement";
@@ -27,6 +27,12 @@ export function EpisodeCounter({
     total,
   );
 
+  // Direct entry: tapping the number turns it into a numeric field, because
+  // incrementing your way to episode 700 of a long-runner is not a plan.
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const editRef = useRef<HTMLInputElement>(null);
+
   const prevWatched = useRef(watched);
   useEffect(() => {
     if (
@@ -40,11 +46,31 @@ export function EpisodeCounter({
     prevWatched.current = watched;
   }, [watched, total, onReachedTotal]);
 
+  useEffect(() => {
+    if (editing) editRef.current?.select();
+  }, [editing]);
+
   const atMax = total != null && displayEp >= total;
   const atMin = displayEp <= 0;
 
   const onMinus = () => {
     const target = Math.max(0, displayEp - 1);
+    cancel();
+    void setEpisodes(anilistId, target);
+  };
+
+  const beginEdit = () => {
+    setDraft(String(displayEp));
+    setEditing(true);
+  };
+
+  const commitEdit = () => {
+    setEditing(false);
+    const n = parseInt(draft, 10);
+    if (!Number.isFinite(n)) return;
+    // Clamp to what exists; an unknown total only bounds at zero.
+    const target = Math.max(0, total != null ? Math.min(n, total) : n);
+    if (target === displayEp) return;
     cancel();
     void setEpisodes(anilistId, target);
   };
@@ -62,14 +88,35 @@ export function EpisodeCounter({
       </button>
 
       <span className="k-epcounter__value">
-        <span
-          className="k-epcounter__num"
-          style={isPending ? { color: "var(--color-accent)" } : undefined}
-        >
-          {displayEp}
-        </span>
+        {editing ? (
+          <input
+            ref={editRef}
+            className="k-epcounter__edit"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value.replace(/\D/g, ""))}
+            onBlur={commitEdit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitEdit();
+              if (e.key === "Escape") setEditing(false);
+            }}
+            aria-label="Set episode number"
+          />
+        ) : (
+          <button
+            type="button"
+            className="k-epcounter__num"
+            style={isPending ? { color: "var(--color-accent)" } : undefined}
+            onClick={beginEdit}
+            aria-label={`Watched ${displayEp} episodes. Tap to type a number`}
+          >
+            {displayEp}
+          </button>
+        )}
         <span className="k-epcounter__total"> / {total ?? "?"}</span>
-        {isPending && (
+        {isPending && !editing && (
           <button
             type="button"
             className="k-epcounter__cancel"

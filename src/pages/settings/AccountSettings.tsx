@@ -23,8 +23,17 @@ export function AccountSettings() {
               Sign out
             </Button>
           ) : (
-            <Button variant="secondary" onClick={() => void connect()} disabled={connecting}>
-              {connecting ? "Connecting…" : "Connect Google"}
+            // While waiting on the browser the button flips to Cancel, so an
+            // abandoned sign-in never strands the page on a dead spinner.
+            <Button
+              variant="secondary"
+              onClick={() =>
+                connecting
+                  ? useAuthStore.getState().cancelConnect()
+                  : void connect()
+              }
+            >
+              {connecting ? "Cancel" : "Connect Google"}
             </Button>
           )}
         </Row>

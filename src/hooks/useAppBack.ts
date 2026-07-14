@@ -95,23 +95,15 @@ export function useAppBack() {
     };
   }, []);
 
-  // Android hardware back / predictive edge swipe (Trap 1 on Tauri 2.9.x).
+  // Android hardware back / predictive edge swipe. The native side
+  // (MainActivity.kt) disables Tauri's default back handling — which would just
+  // exit the app since our history is pinned to one entry — and calls this
+  // global on every back press so the one JS policy above runs instead.
   useEffect(() => {
-    if (!isTauri()) return;
-
-    let unlisten: (() => void) | undefined;
-    let active = true;
-
-    (async () => {
-      if (!active) return;
-      const appWindow = getCurrentWindow();
-      const stop = await appWindow.listen("tauri://back", () => goBack());
-      unlisten = stop;
-    })();
-
+    const w = window as unknown as { __konsouBack?: () => void };
+    w.__konsouBack = goBack;
     return () => {
-      active = false;
-      unlisten?.();
+      if (w.__konsouBack === goBack) delete w.__konsouBack;
     };
   }, []);
 }

@@ -5,7 +5,6 @@ import { AnimeCover } from "@/components/anime/AnimeCover";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useAiringSchedule } from "@/hooks/useAniList";
@@ -39,7 +38,12 @@ interface DayBucket {
   items: ScheduledItem[];
 }
 
-export function Schedule() {
+/**
+ * The Episodes segment of the Airing tab: a weekly calendar of the next
+ * episodes for shows you already track. The Airing shell owns the page header
+ * and the segment switcher, so this renders content only.
+ */
+export function EpisodesPanel() {
   const navigate = useNavigate();
   const loaded = useListStore((s) => s.loaded);
   const entries = useListStore((s) => s.entries);
@@ -148,55 +152,48 @@ export function Schedule() {
 
   if (!loaded || (isLoading && ids.length > 0)) {
     return (
-      <div className="k-page">
-        <PageHeader title="Schedule" subtitle="What's airing from your list" />
-        <div className="k-sched konsou-scroll">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} height={72} radius="var(--radius-lg)" style={{ marginBottom: 8 }} />
-          ))}
-        </div>
+      <div className="k-sched konsou-scroll">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} height={72} radius="var(--radius-lg)" style={{ marginBottom: 8 }} />
+        ))}
       </div>
     );
   }
 
   const hasContent = days.length > 0 || announced.length > 0;
 
-  return (
-    <div className="k-page">
-      <PageHeader
-        title="Schedule"
-        subtitle={
-          isError
-            ? "Showing what we last knew"
-            : "What's airing from your list"
+  if (!hasContent) {
+    // "Couldn't check" and "nothing airing" are different facts; with no
+    // cached airing data and a failed fetch, claiming an empty calendar
+    // would be a lie.
+    return isError ? (
+      <EmptyState
+        icon={CalendarClock}
+        title="Couldn't check the schedule"
+        subtitle="Konsou can't reach AniList right now."
+        action={
+          <Button size="sm" variant="primary" onClick={() => void refetch()}>
+            Try again
+          </Button>
         }
       />
+    ) : (
+      <EmptyState
+        icon={CalendarClock}
+        title="Nothing on the calendar"
+        subtitle="When something you're watching or plan to watch is airing, its next episodes show up here."
+      />
+    );
+  }
 
-      {!hasContent ? (
-        // "Couldn't check" and "nothing airing" are different facts; with no
-        // cached airing data and a failed fetch, claiming an empty calendar
-        // would be a lie.
-        isError ? (
-          <EmptyState
-            icon={CalendarClock}
-            title="Couldn't check the schedule"
-            subtitle="Konsou can't reach AniList right now."
-            action={
-              <Button size="sm" variant="primary" onClick={() => void refetch()}>
-                Try again
-              </Button>
-            }
-          />
-        ) : (
-          <EmptyState
-            icon={CalendarClock}
-            title="Nothing on the calendar"
-            subtitle="When something you're watching or plan to watch is airing, its next episodes show up here."
-          />
-        )
-      ) : (
-        <div className="k-sched konsou-scroll">
-          {days.map((bucket) => (
+  return (
+    <div className="k-sched konsou-scroll">
+      {isError && (
+        // We have cached days but the latest refetch failed — say so instead of
+        // passing stale times off as current.
+        <p className="k-airing__note">Showing what we last knew · offline</p>
+      )}
+      {days.map((bucket) => (
             <section key={bucket.key} className="k-sched__day">
               <header className="k-sched__dayhead">
                 <span>{bucket.label}</span>
@@ -217,7 +214,7 @@ export function Schedule() {
                     className="k-schedrow__cover"
                   />
                   <div className="k-schedrow__main">
-                    <Text size="base" weight={600} clamp={1}>
+                    <Text size="base" weight={600} clamp={2}>
                       {title(it.entry)}
                     </Text>
                     <span className="k-schedrow__ep">
@@ -257,7 +254,7 @@ export function Schedule() {
                     className="k-schedrow__cover"
                   />
                   <div className="k-schedrow__main">
-                    <Text size="base" weight={600} clamp={1}>
+                    <Text size="base" weight={600} clamp={2}>
                       {title(e)}
                     </Text>
                     <span className="k-schedrow__ep">Release date to be announced</span>
@@ -265,8 +262,6 @@ export function Schedule() {
                 </button>
               ))}
             </section>
-          )}
-        </div>
       )}
     </div>
   );

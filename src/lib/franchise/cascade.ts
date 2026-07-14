@@ -1,6 +1,6 @@
 import { anilist } from "@/lib/api/anilist/client";
 import { isMangaNode } from "@/lib/format";
-import { isFranchiseOther } from "./relatedness";
+import { isFranchiseOther, isFranchiseParent } from "./relatedness";
 import type { AnimeTitle, RelationNode, RelationType } from "@/types/anime";
 import type { Priority } from "@/lib/api/rateLimiter";
 
@@ -71,6 +71,10 @@ async function bfsMainChain(
         if (!titleOf.has(rel.id)) titleOf.set(rel.id, rel.title);
         const follow =
           MAIN_CHAIN.has(rel.relationType) ||
+          // Climb from a special/OVA back to its parent series — without this
+          // a walk STARTING at a side entry can't reach the backbone and
+          // strands as its own one-member root (the Jobless split).
+          isFranchiseParent(titleOf.get(id), rel) ||
           isFranchiseOther(titleOf.get(id), rel);
         if (follow && !visited.has(rel.id)) {
           visited.set(rel.id, []); // placeholder to mark as discovered
@@ -96,7 +100,7 @@ function findRootId(
   startId: number,
   { chainMap, nodeOf }: ChainWalk,
 ): number {
-  const heads = [...chainMap.keys()].filter((id) => {
+  let heads = [...chainMap.keys()].filter((id) => {
     const rels = chainMap.get(id) ?? [];
     return !rels.some(
       (r) =>
@@ -104,6 +108,17 @@ function findRootId(
     );
   });
   if (heads.length === 0) return startId; // pure cycle — arbitrary but stable per walk
+
+  // A special reached via PARENT has no prequel, so it qualifies as a "head"
+  // alongside S1. The franchise identity belongs to the story backbone: when
+  // any head actually starts a SEQUEL chain, only those heads may be root.
+  // This keeps a pre-season-1 OVA from out-dating S1 into the root slot.
+  const backbone = heads.filter((id) =>
+    (chainMap.get(id) ?? []).some(
+      (r) => r.relationType === "SEQUEL" && !isMangaNode(r) && chainMap.has(r.id),
+    ),
+  );
+  if (backbone.length > 0) heads = backbone;
   if (heads.length === 1) return heads[0];
 
   const key = (id: number): number => {
@@ -183,26 +198,40 @@ function startMs(r: RelationNode): number {
 }
 
 /**
- * Finished side entries (OVAs, movies, spin-offs) attached to the part of the
- * chain the user has presumably watched: the prequel chain plus the entry they
- * just added. Side stories of later, unwatched seasons don't qualify — nobody
- * should be asked whether they've seen the S5 OVA when they just added S3.
+ * Finished side entries (OVAs, movies, spin-offs) the user has plausibly
+ * already watched, given what they just added. "Prior" means BOTH:
+ *
+ *  - attached to the prequel chain, never to the added entry itself — adding
+ *    S1 of a series must never ask about S1's own OVA (it comes after S1;
+ *    the user is only starting the show), and
+ *  - aired before the added entry started, when both dates are known — a side
+ *    story released after the season you're adding isn't catch-up material.
+ *
+ * Consequence: adding a franchise's first season asks nothing at all — the
+ * chain is empty, so there is no "before" to catch up on.
  */
 function priorSideEntries(
   startId: number,
   chain: RelationNode[],
-  chainMap: Map<number, RelationNode[]>,
+  { chainMap, nodeOf }: ChainWalk,
 ): RelationNode[] {
-  const priorIds = new Set<number>([startId, ...chain.map((r) => r.id)]);
+  if (chain.length === 0) return [];
+
+  const chainIds = new Set<number>(chain.map((r) => r.id));
+  // The added entry's own start date, when some member's edge carries it.
+  const startNode = nodeOf.get(startId);
+  const addedMs = startNode ? startMs(startNode) : Number.MAX_SAFE_INTEGER;
   const out = new Map<number, RelationNode>();
 
-  for (const id of priorIds) {
+  for (const id of chainIds) {
     for (const rel of chainMap.get(id) ?? []) {
       if (!SIDE_ENTRY.has(rel.relationType)) continue;
       if (isMangaNode(rel)) continue;
-      if (chainMap.has(rel.id) || priorIds.has(rel.id)) continue;
+      if (chainMap.has(rel.id) || chainIds.has(rel.id) || rel.id === startId) continue;
       // Only things that finished airing can already have been watched.
       if (rel.status !== "FINISHED") continue;
+      // And only things that existed before the entry being added.
+      if (startMs(rel) >= addedMs) continue;
       if (!out.has(rel.id)) out.set(rel.id, rel);
     }
   }
@@ -221,7 +250,7 @@ export async function resolveFranchiseChain(
   const rootId = findRootId(startId, walk);
   const chain = buildPrequelChain(startId, chainMap);
   const allIds = buildFranchiseIds(chainMap);
-  const sides = priorSideEntries(startId, chain, chainMap);
+  const sides = priorSideEntries(startId, chain, walk);
 
   return {
     rootId,

@@ -16,7 +16,6 @@ import {
   formatScore,
   getCoverUrl,
   preferredTitle,
-  secondaryTitle,
 } from "@/lib/format";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import type { AnimeSummary } from "@/types/anime";
@@ -46,8 +45,9 @@ function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
     hasDub === false ? "SUB" :
     null;
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
+  // One name per card. The other-language handles live behind the info
+  // toggle on the detail page, where there's room to read them.
   const title = preferredTitle(media.title, titleLanguage);
-  const subtitle = secondaryTitle(media.title, titleLanguage);
   const cover = getCoverUrl(media.coverImage);
   const total = entry?.total_episodes ?? media.episodes ?? null;
   const watched = entry?.episodes_watched ?? 0;
@@ -183,11 +183,6 @@ function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
               <Text size="sm" weight={600} clamp={2} color="onCover" className="k-card__title">
                 {title}
               </Text>
-              {subtitle && (
-                <span className="k-card__subtitle" title={subtitle}>
-                  {subtitle}
-                </span>
-              )}
               <div className="k-card__footermeta">
                 {/* The EP marker only renders over an actual cover, so a broken
                     cover keeps the caption as the progress fallback. */}
@@ -258,19 +253,16 @@ function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
             </Text>
             <div className="k-row__sub">
               {status ? (
-                <span className="k-pill" style={{ color: status.color }}>
-                  <Icon icon={status.icon} size={12} weight="fill" />
+                <span className="k-pill">
+                  <span className="k-pill__icon" style={{ color: status.color }}>
+                    <Icon icon={status.icon} size={12} weight="fill" />
+                  </span>
                   {status.label}
                 </span>
               ) : (
                 meta && <span className="k-row__dim">{meta}</span>
               )}
-              {dubLabel && (
-                <span className={`k-chip-mini${dubLabel === "DUB+SUB" ? " k-chip-mini--accent" : ""}`}>
-                  {dubLabel}
-                </span>
-              )}
-              {subtitle && <span className="k-row__dim k-row__secondary">{subtitle}</span>}
+              {dubLabel && <span className="k-chip-mini">{dubLabel}</span>}
             </div>
             {inList && entry && (
               <SeasonBar entries={[entry]} size="row" className="k-row__seasonbar" />

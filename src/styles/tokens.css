@@ -42,23 +42,6 @@
      never louder than a real watch state on a card. */
   --color-status-not_interested: oklch(58% 0.015 280);
 
-  /* Relation kinds — franchise anatomy, readable at a glance wherever a
-     series is listed (Related tab, quick menu, catch-up, alerts).
-       sequel/prequel → blue   (the main line)
-       side story     → violet (off the main line)
-       spin-off       → magenta
-       movie          → gold   (an event, not a season)
-       OVA/ONA/special→ teal   (short extras)
-       alternative    → orange (another telling of the same story)
-       parent/summary → grey   (structural, low-priority) */
-  --color-rel-main:   oklch(68% 0.14 250);
-  --color-rel-side:   oklch(68% 0.15 300);
-  --color-rel-spin:   oklch(68% 0.17 340);
-  --color-rel-movie:  oklch(78% 0.14 85);
-  --color-rel-extra:  oklch(73% 0.12 195);
-  --color-rel-alt:    oklch(72% 0.15 55);
-  --color-rel-struct: oklch(64% 0.02 280);
-
   /* ── Semantic ─────────────────────────────────────────────── */
   --color-success: oklch(72% 0.12 165);
   --color-warning: oklch(72% 0.16 60);

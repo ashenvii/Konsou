@@ -250,6 +250,51 @@ ALTER TABLE anime_list ADD COLUMN aired_episodes INTEGER;
 "#,
             kind: MigrationKind::Up,
         },
+        // The v1 CHECK froze the status vocabulary at the original six, so
+        // every INSERT/UPDATE with `not_interested` (added in 0.7.0) failed on
+        // real devices with "Couldn't add to your list" — while the browser
+        // dev shim, which has no constraints, accepted it. Statuses are
+        // validated app-side (statusValidation.ts); the DB doesn't get a vote
+        // that has to be re-migrated every time the vocabulary grows. Rebuild
+        // drops ONLY the status CHECK; column order matches v1 + the ALTERs
+        // from v2/4/6/7/9 so `SELECT *` copies straight across.
+        Migration {
+            version: 10,
+            description: "drop frozen status CHECK (not_interested inserts failed)",
+            sql: r#"
+CREATE TABLE IF NOT EXISTS anime_list_new (
+  id                INTEGER PRIMARY KEY AUTOINCREMENT,
+  anilist_id        INTEGER NOT NULL UNIQUE,
+  mal_id            INTEGER,
+  title_romaji      TEXT NOT NULL,
+  title_english     TEXT,
+  cover_url         TEXT,
+  total_episodes    INTEGER,
+  status            TEXT NOT NULL,
+  episodes_watched  INTEGER NOT NULL DEFAULT 0,
+  score             REAL CHECK(score IS NULL OR (score >= 1 AND score <= 10)),
+  notes             TEXT,
+  added_at          INTEGER NOT NULL,
+  updated_at        INTEGER NOT NULL,
+  started_at        INTEGER,
+  completed_at      INTEGER,
+  has_dub           INTEGER,
+  title_native      TEXT,
+  franchise_root_id INTEGER,
+  airing_status     TEXT,
+  episode_duration  INTEGER,
+  rewatch_count     INTEGER NOT NULL DEFAULT 0,
+  aired_episodes    INTEGER
+);
+INSERT OR IGNORE INTO anime_list_new SELECT * FROM anime_list;
+DROP TABLE anime_list;
+ALTER TABLE anime_list_new RENAME TO anime_list;
+CREATE INDEX IF NOT EXISTS idx_list_status    ON anime_list(status);
+CREATE INDEX IF NOT EXISTS idx_list_updated   ON anime_list(updated_at);
+CREATE INDEX IF NOT EXISTS idx_list_franchise ON anime_list(franchise_root_id);
+"#,
+            kind: MigrationKind::Up,
+        },
     ];
 
     let builder = tauri::Builder::default()

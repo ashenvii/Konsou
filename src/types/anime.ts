@@ -80,8 +80,11 @@ export interface CharacterEdge {
   role: string; // MAIN | SUPPORTING | BACKGROUND
   name: string;
   image?: string | null;
+  /** Japanese (sub) voice actor. */
   voiceActor?: string | null;
   voiceActorId?: number | null;
+  /** English (dub) voice actor, when a dub exists. */
+  dubActor?: string | null;
 }
 
 export interface StaffEdge {

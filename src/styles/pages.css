@@ -32,6 +32,16 @@
   z-index: 2;
   transition: box-shadow var(--duration-normal) var(--ease-out);
 }
+/* Merge the scroll-reactive collapse transitions (see list.css) with the
+   elevation shadow — a lone transition:box-shadow here would cancel them. */
+@media (max-width: 1023px) {
+  .k-tonight {
+    transition:
+      box-shadow var(--duration-normal) var(--ease-out),
+      max-height 240ms var(--ease-out),
+      opacity 160ms var(--ease-out);
+  }
+}
 .k-page[data-scrolled="true"]:not(.k-detail) > .k-toolbar {
   box-shadow: 0 1px 0 var(--color-border);
 }
@@ -362,6 +372,537 @@
   color: var(--color-text-primary);
 }
 
+/* Filter entry folded into the search bar (replaces the old browse button). */
+.k-discover__filterbtn-ico {
+  flex: none;
+  color: var(--color-text-secondary);
+}
+.k-discover__filterbtn-ico--on {
+  color: var(--color-accent-glow);
+  background: var(--color-accent-dim);
+}
+
+/* ═══ All-anime filtered browse ══════════════════════════════
+   Inline single-select controls over a landing-grade grid. */
+.k-browse {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.k-browse__bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0 var(--content-padding-sm) var(--space-3);
+}
+@media (min-width: 1024px) {
+  .k-browse__bar {
+    padding-inline: var(--content-padding-lg);
+  }
+}
+.k-browse__back {
+  flex: none;
+}
+/* The control row scrolls horizontally so no facet is ever unreachable on a
+   narrow window (wheel + drag via useDragScroll, touch natively). */
+.k-fpills {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.k-fpills::-webkit-scrollbar {
+  display: none;
+}
+@media (hover: hover) {
+  .k-fpills {
+    cursor: grab;
+  }
+  .k-fpills:active {
+    cursor: grabbing;
+  }
+}
+.k-fpill {
+  flex: none;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 34px;
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.k-fpill:hover {
+  background: var(--color-surface-3);
+  color: var(--color-text-primary);
+}
+.k-fpill--on {
+  background: var(--color-accent-dim);
+  border-color: transparent;
+  color: var(--color-accent-glow);
+}
+.k-fpill__label,
+.k-fpill__chev {
+  pointer-events: none;
+}
+.k-fpill__chev {
+  opacity: 0.7;
+}
+/* The native select fills the pill invisibly: the whole pill is the hit target
+   and the platform picker opens, while the styled label shows the current pick. */
+.k-fpill__select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+}
+.k-browse__clear {
+  flex: none;
+  align-self: center;
+  padding: 0 var(--space-2);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.k-browse__clear:hover {
+  color: var(--color-text-primary);
+}
+
+/* ═══ Discover landing ═══════════════════════════════════════
+   The default view: a spotlight over a stack of editorial lanes. Rows bleed to
+   the viewport edges so covers keep scrolling past the margin; headers and the
+   spotlight keep the page's inline padding. */
+.k-dl {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.k-dl__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-block: var(--space-4) var(--space-12);
+}
+@media (min-width: 1024px) {
+  .k-dl__inner {
+    gap: var(--space-8);
+    padding-top: var(--space-5);
+  }
+}
+
+/* ── Spotlight ───────────────────────────────────────────────
+   One featured title. The cover floats sharp over a darkened banner, so the
+   art (the hero, per the brand) reads even against a busy banner. */
+.k-spotlight {
+  position: relative;
+  display: flex;
+  min-height: 216px;
+  margin-inline: var(--content-padding-sm);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  isolation: isolate;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+}
+@media (min-width: 1024px) {
+  .k-spotlight {
+    min-height: 300px;
+    margin-inline: var(--content-padding-lg);
+  }
+}
+.k-spotlight__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center 18%;
+  transition: transform var(--duration-hero) var(--ease-out);
+}
+.k-spotlight:hover .k-spotlight__bg:not(.k-spotlight__bg--cover) {
+  transform: scale(1.03);
+}
+/* No banner: blow up the cover, blur and darken it into a bed for the poster. */
+.k-spotlight__bg--cover {
+  transform: scale(1.2);
+  filter: blur(30px) brightness(0.62) saturate(1.1);
+}
+.k-spotlight__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(
+      180deg,
+      oklch(0% 0 0 / 8%) 0%,
+      oklch(0% 0 0 / 52%) 55%,
+      oklch(0% 0 0 / 88%) 100%
+    ),
+    linear-gradient(90deg, oklch(0% 0 0 / 45%) 0%, transparent 62%);
+}
+.k-spotlight__body {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+.k-spotlight__poster {
+  flex: none;
+  width: 84px;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 6px 22px oklch(0% 0 0 / 55%);
+}
+@media (min-width: 1024px) {
+  .k-spotlight__poster {
+    width: 116px;
+  }
+}
+.k-spotlight__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.k-spotlight__title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: oklch(100% 0 0 / 97%);
+  text-wrap: balance;
+  text-shadow: 0 1px 14px oklch(0% 0 0 / 55%);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+@media (min-width: 1024px) {
+  .k-spotlight__title {
+    font-size: var(--text-3xl);
+  }
+}
+.k-spotlight__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: oklch(100% 0 0 / 82%);
+}
+.k-spotlight__score {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 700;
+  color: var(--color-warning);
+}
+.k-spotlight__meta > * + .k-spotlight__dot::before {
+  content: "·";
+  margin-right: var(--space-2);
+  color: oklch(100% 0 0 / 45%);
+}
+.k-spotlight__genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.k-spotlight__genre {
+  padding: 2px 9px;
+  border-radius: var(--radius-full);
+  background: oklch(100% 0 0 / 12%);
+  backdrop-filter: blur(4px);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  color: oklch(100% 0 0 / 86%);
+}
+.k-spotlight__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+.k-spotlight__add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 38px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  box-shadow: 0 2px 12px
+    oklch(var(--color-accent-l) var(--color-accent-c) var(--color-accent-h) / 32%);
+  transition:
+    transform var(--duration-instant) var(--ease-out),
+    filter var(--duration-fast) var(--ease-out);
+}
+.k-spotlight__add:hover {
+  filter: brightness(1.08);
+}
+.k-spotlight__add:active {
+  transform: scale(0.96);
+}
+/* In-list: drop the accent fill and carry the status hue at hairline weight —
+   colour signals state, so an already-tracked title stops shouting "add me". */
+.k-spotlight__add--in {
+  background: color-mix(in oklab, var(--card-status, var(--color-accent)) 20%, oklch(0% 0 0 / 55%));
+  color: oklch(100% 0 0 / 95%);
+  box-shadow: none;
+  border: 1px solid oklch(100% 0 0 / 18%);
+}
+.k-spotlight__details {
+  height: 38px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  background: oklch(100% 0 0 / 10%);
+  backdrop-filter: blur(6px);
+  border: 1px solid oklch(100% 0 0 / 14%);
+  color: oklch(100% 0 0 / 92%);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+.k-spotlight__details:hover {
+  background: oklch(100% 0 0 / 18%);
+}
+
+/* Spotlight loading placeholder */
+.k-spotlight--skel {
+  cursor: default;
+  background: var(--color-surface);
+}
+.k-spotlight__skelline {
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-3);
+}
+.k-spotlight__skelline--title {
+  width: 62%;
+  height: 22px;
+}
+.k-spotlight__skelline--meta {
+  width: 42%;
+}
+.k-spotlight__skelline--btn {
+  width: 124px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  margin-top: var(--space-2);
+}
+
+/* ── Lanes ───────────────────────────────────────────────────
+   A horizontal strip of covers under a quiet header. */
+.k-lane {
+  display: flex;
+  flex-direction: column;
+}
+.k-lane__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--content-padding-sm) var(--space-3);
+}
+@media (min-width: 1024px) {
+  .k-lane__head {
+    padding-inline: var(--content-padding-lg);
+  }
+}
+.k-lane__title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+.k-lane__seeall {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.k-lane__seeall:hover {
+  color: var(--color-accent-glow);
+}
+.k-lane__seeall svg {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+.k-lane__seeall:hover svg {
+  transform: translateX(2px);
+}
+.k-lane__scroller {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--content-padding-sm);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  /* Snap must rest at the padded edge, or `snap-align: start` scrolls the
+     first card flush to the viewport and eats the inset the rest of the page
+     keeps. Keeps the rail's left aligned with the spotlight and headers. */
+  scroll-padding-inline: var(--content-padding-sm);
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.k-lane__scroller::-webkit-scrollbar {
+  display: none;
+}
+.k-lane__item {
+  flex: 0 0 auto;
+  width: clamp(116px, 30vw, 148px);
+  scroll-snap-align: start;
+}
+@media (min-width: 1024px) {
+  .k-lane__scroller {
+    gap: var(--space-4);
+    padding-inline: var(--content-padding-lg);
+    scroll-padding-inline: var(--content-padding-lg);
+  }
+  .k-lane__item {
+    width: 160px;
+  }
+}
+/* Shared shimmer for the lane + spotlight-poster placeholders. */
+.k-lane__skel {
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    110deg,
+    var(--color-surface-2) 30%,
+    var(--color-surface-3) 50%,
+    var(--color-surface-2) 70%
+  );
+  background-size: 220% 100%;
+  animation: k-lane-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes k-lane-shimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+.k-lane__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-inline: var(--content-padding-sm);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+@media (min-width: 1024px) {
+  .k-lane__error {
+    margin-inline: var(--content-padding-lg);
+  }
+}
+.k-lane__retry {
+  flex: none;
+  color: var(--color-accent-glow);
+  font-weight: 600;
+}
+.k-lane__retry:disabled {
+  color: var(--color-text-tertiary);
+}
+
+/* ── Browse-all crumb (grid mode) ────────────────────────────
+   Back to the landing + the sort control on one row. */
+.k-discover__crumb {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0 var(--content-padding-sm) var(--space-3);
+}
+@media (min-width: 1024px) {
+  .k-discover__crumb {
+    padding-inline: var(--content-padding-lg);
+  }
+}
+.k-discover__back {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  height: 36px;
+  padding: 0 var(--space-3) 0 var(--space-1);
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.k-discover__back:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+}
+.k-subtabs--inline {
+  flex: 1;
+  min-width: 0;
+  flex-wrap: nowrap;
+  padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.k-subtabs--inline::-webkit-scrollbar {
+  display: none;
+}
+.k-subtabs--inline .k-subtab {
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .k-lane__skel {
+    animation: none;
+  }
+  .k-spotlight__bg {
+    transition: none;
+  }
+  .k-spotlight:hover .k-spotlight__bg:not(.k-spotlight__bg--cover) {
+    transform: none;
+  }
+}
+
 /* ── Discover filter sheet ─────────────────────────────────── */
 .k-filters {
   display: flex;
@@ -444,6 +985,83 @@
   background: var(--color-surface);
 }
 
+/* ── Airing (Episodes + New sequels segments) ──────────────── */
+.k-airing__seg {
+  position: relative;
+  display: flex;
+  margin: var(--space-1) var(--content-padding-sm) var(--space-3);
+  padding: 4px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  flex: none;
+}
+@media (min-width: 1024px) {
+  .k-airing__seg {
+    margin-inline: var(--content-padding-lg);
+    max-width: 340px;
+  }
+}
+/* Sliding thumb sits behind the labels; each segment is exactly half the inner
+   width, so translateX(100%) lands the thumb dead-on the second one. */
+.k-airing__seg-thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-3);
+  box-shadow: var(--shadow-card);
+  transition: transform var(--duration-normal) var(--ease-standard);
+}
+.k-airing__seg-btn {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.k-airing__seg-btn--active {
+  color: var(--color-text-primary);
+}
+.k-airing__seg-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: #fff;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  line-height: 1;
+}
+/* Cached calendar shown after a failed refetch — a quiet honesty note. */
+.k-airing__note {
+  margin: 0 var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--color-warning) 12%, transparent);
+  color: var(--color-warning);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-airing__seg-thumb {
+    transition: none;
+  }
+}
+
 /* ── Alerts ────────────────────────────────────────────────── */
 .k-alerts {
   flex: 1;
@@ -458,7 +1076,7 @@
   }
 }
 .k-alertgroup {
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 .k-alertgroup__header {
   display: flex;
@@ -473,6 +1091,33 @@
   flex: 1;
   min-width: 0;
   padding: var(--space-3) var(--space-1);
+}
+.k-alertgroup__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+.k-alertgroup__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  flex: none;
+}
+.k-alertgroup__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-3);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  color: var(--color-text-secondary);
 }
 .k-alertgroup__clear {
   flex: none;
@@ -491,6 +1136,13 @@
   transition: transform var(--duration-normal) var(--ease-out);
   display: inline-flex;
 }
+.k-alertlist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── Alert card ────────────────────────────────────────────── */
 .k-alert {
   display: flex;
   gap: var(--space-3);
@@ -498,18 +1150,161 @@
   background: var(--color-surface-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  margin-bottom: var(--space-3);
+}
+/* Airing Now leads the page: bigger art, a faint wash of its live hue, and a
+   hairline in that hue so the whole bucket reads as the radar's pulse. The
+   tint is a full-card wash, never an edge stripe. */
+.k-alert--hero {
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  border-color: color-mix(in oklab, var(--alert-tone) 26%, var(--color-border));
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in oklab, var(--alert-tone) 9%, var(--color-surface-2)),
+      var(--color-surface-2) 62%
+    );
 }
 .k-alert__cover {
-  width: 64px;
+  width: 56px;
   flex: none;
+  align-self: flex-start;
+  aspect-ratio: 2 / 3;
   border-radius: var(--radius-md);
   overflow: hidden;
   cursor: pointer;
+  box-shadow: var(--shadow-card);
+}
+.k-alert--hero .k-alert__cover {
+  width: 84px;
+}
+@media (min-width: 1024px) {
+  .k-alert--hero .k-alert__cover {
+    width: 96px;
+  }
+}
+.k-alert__cover .k-cover {
+  height: 100%;
 }
 .k-alert__cover .k-cover__img {
   transition: transform 200ms var(--ease-out);
 }
+.k-alert__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Right rail: the countdown is the anchor, so it lives on its own edge of the
+   card. Big on the hero bucket (the radar's live pulse), a quiet pill elsewhere.
+   Keeping it here also fills the horizontal space a left-packed card wastes. */
+.k-alert__countdown {
+  flex: none;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding-left: var(--space-3);
+  text-align: right;
+}
+.k-alert__countdown-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--alert-tone) 65%, var(--color-text-tertiary));
+}
+.k-alert__countdown-value {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  /* Mix toward the theme's ink (white on dark, near-black on light) so the hue
+     stays legible whichever way the surface flips. */
+  color: color-mix(in oklab, var(--alert-tone) 78%, var(--color-text-primary));
+  font-variant-numeric: tabular-nums;
+}
+.k-alert__pillrail {
+  flex: none;
+  align-self: center;
+  padding-left: var(--space-3);
+}
+
+/* Narrow phones: the time rail ("1h 34m", "airs in 19d 23h") on the right steals
+   room from the title and clips it mid-word. Drop it to its own full-width line
+   below so the title always gets the whole column — same pattern for both card
+   sizes, so the two buckets read consistently on mobile. */
+@media (max-width: 600px) {
+  .k-alert {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+  }
+  .k-alert--hero .k-alert__countdown {
+    flex-basis: 100%;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    padding-left: 0;
+  }
+  .k-alert__pillrail {
+    flex-basis: 100%;
+    align-self: auto;
+    display: flex;
+    justify-content: flex-end;
+    padding-left: 0;
+  }
+}
+
+/* Countdown pill — the compact buckets' version of the rail: the same fact,
+   sized down, still wearing the bucket's hue. */
+.k-alert__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--alert-tone) 15%, transparent);
+  color: color-mix(in oklab, var(--alert-tone) 70%, var(--color-text-primary));
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.k-alert--hero .k-alert__pill {
+  height: 25px;
+  padding: 0 11px;
+  font-size: var(--text-xs);
+  background: color-mix(in oklab, var(--alert-tone) 20%, transparent);
+}
+.k-alert__pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--alert-tone);
+  box-shadow: 0 0 0 0 color-mix(in oklab, var(--alert-tone) 70%, transparent);
+  animation: konsou-alert-pulse 2s var(--ease-out) infinite;
+}
+@keyframes konsou-alert-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--alert-tone) 60%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
 /* Cover and title lead to the same page, so they hover as one: title takes
    the accent shade, art leans in — from either target. */
 .k-alert__titlebtn {
@@ -526,18 +1321,87 @@
 .k-alert:has(.k-alert__titlebtn:hover) .k-cover__img {
   transform: scale(1.05);
 }
-.k-alert__body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
 .k-alert__actions {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
-  margin-top: var(--space-2);
+  margin-top: var(--space-3);
+}
+.k-alert__primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-accent-glow);
+  background: color-mix(in oklab, var(--color-accent) 14%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-accent) 32%, transparent);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
+}
+.k-alert__primary:hover {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: transparent;
+}
+.k-alert__primary:active {
+  transform: scale(0.97);
+}
+.k-alert__more {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text-tertiary);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.k-alert__more:hover {
+  background: var(--color-surface-3);
+  color: var(--color-text-primary);
+}
+
+/* Overflow action sheet — the quiet secondary actions live here so the card
+   stays a single decisive button. */
+.k-alertmenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: var(--space-2);
+}
+.k-alertmenu__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: left;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+.k-alertmenu__row:hover {
+  background: var(--color-surface-3);
+}
+.k-alertmenu__row--muted {
+  color: var(--color-text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .k-alert__pulse {
+    animation: none;
+  }
 }
 
 /* ── Anime Detail ──────────────────────────────────────────── */
@@ -621,6 +1485,16 @@
   height: 100%;
   object-fit: cover;
 }
+/* Cover-as-banner fallback: blown up and blurred into ambience. The scale
+   keeps the blur's soft edges outside the crop. */
+.k-detail__banner-blur {
+  filter: blur(26px) saturate(1.15) brightness(0.85);
+  transform: scale(1.35);
+}
+.k-detail__banner-tint {
+  position: absolute;
+  inset: 0;
+}
 .k-detail__heroscrim {
   position: absolute;
   inset: 0;
@@ -658,6 +1532,60 @@
   flex-direction: column;
   gap: var(--space-1);
   padding-top: 52px;
+}
+/* One title on screen; the other-language names sit behind the small info
+   toggle beside it (hover peeks them as a native tooltip, tap expands the
+   list). Kills the romaji/english/synonyms three-decker the header used
+   to stack. */
+.k-detail__titlerow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.k-detail__titlerow h1 {
+  min-width: 0;
+}
+.k-detail__namesbtn {
+  position: relative;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  color: var(--color-text-tertiary);
+  background: transparent;
+  border: 1px solid var(--color-border-strong);
+  transform: translateY(2px);
+}
+/* Small glyph, full-size finger target. */
+.k-detail__namesbtn::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+}
+.k-detail__namesbtn:hover,
+.k-detail__namesbtn[aria-expanded="true"] {
+  color: var(--color-text-primary);
+  background: var(--color-surface-3);
+}
+.k-detail__names {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
+.k-detail__names li {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
 }
 .k-detail__meta {
   margin-top: var(--space-1);
@@ -707,11 +1635,7 @@
   letter-spacing: 0.04em;
   flex: none;
 }
-.k-langbadge--dub {
-  background: color-mix(in oklch, var(--color-accent) 22%, transparent);
-  color: var(--color-accent-glow);
-  border: 1px solid color-mix(in oklch, var(--color-accent) 40%, transparent);
-}
+.k-langbadge--dub,
 .k-langbadge--sub {
   background: var(--color-surface-2);
   color: var(--color-text-tertiary);
@@ -771,6 +1695,24 @@
   display: grid;
   gap: var(--space-2);
 }
+.k-seasonrows--extras {
+  margin-top: var(--space-4);
+}
+/* Main story / Extras section labels — same quiet uppercase voice as the
+   Tonight header, so the split reads as structure, not decoration. */
+.k-seasonrows__subhead {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+/* Where an extra falls in the story ("after #2") — slightly brighter than a
+   kind chip so the placement answer stands out from the taxonomy. */
+.k-chip-kind--where {
+  color: var(--color-text-primary);
+}
 .k-seasonrow {
   display: grid;
   grid-template-columns: 22px 54px 1fr;
@@ -778,15 +1720,10 @@
   align-items: center;
   padding: var(--space-2);
   border-radius: var(--radius-lg);
-  /* Tracked rows carry their list status as a left-edge wash (via
-     --card-status); untracked rows resolve to the plain surface. */
-  background:
-    linear-gradient(
-      90deg,
-      color-mix(in oklab, var(--card-status, transparent) 14%, transparent),
-      transparent 55%
-    ),
-    var(--color-surface-2);
+  /* Tracked rows carry their list status as a thin left-edge bar (via
+     --card-status); untracked rows fall back to no bar. */
+  background: var(--color-surface-2);
+  box-shadow: inset 3px 0 0 var(--card-status, transparent);
   border: 1px solid var(--color-border);
   text-align: left;
 }
@@ -794,14 +1731,16 @@
   transition: background-color 150ms var(--ease-out), border-color 150ms var(--ease-out);
 }
 .k-seasonrow:hover {
-  background:
-    linear-gradient(
-      90deg,
-      color-mix(in oklab, var(--card-status, transparent) 14%, transparent),
-      transparent 55%
-    ),
-    var(--color-surface-3);
+  background: var(--color-surface-3);
   border-color: var(--color-border-strong);
+}
+/* Not-interested member: parked, same visual language as the quick menu's
+   dimmed rows, so the two surfaces read identically. */
+.k-seasonrow--dimmed {
+  opacity: 0.55;
+}
+.k-seasonrow--dimmed:hover {
+  opacity: 0.85;
 }
 /* The whole row is one link; the title answers in the accent shade so the
    click target reads as clickable, not decorated. */
@@ -932,24 +1871,34 @@ button.k-seasonrow:hover .k-seasonrow__title {
 /* Copy title / Google chips under the detail header. */
 .k-detail__titleactions {
   display: flex;
+  /* Narrow hero column: buttons drop to the next line whole, never squeeze. */
+  flex-wrap: wrap;
   gap: var(--space-2);
   margin-top: var(--space-2);
 }
+/* Utility chips, deliberately quiet: these are conveniences, not actions the
+   hero should be selling. Same pill language as the SUB/DUB badge beside them. */
 .k-detail__titleactions button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  flex: none;
+  white-space: nowrap;
   height: 28px;
   padding: 0 10px;
   border-radius: var(--radius-full);
-  background: var(--color-surface-2);
+  background: transparent;
   border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
   font-size: var(--text-xs);
   font-weight: 600;
 }
+.k-detail__titleactions button:hover {
+  color: var(--color-text-secondary);
+}
 .k-detail__titleactions button:active {
   background: var(--color-surface-3);
+  color: var(--color-text-primary);
 }
 
 /* Detail tabs sit tight under the list controls. */
@@ -1116,12 +2065,43 @@ button.k-seasonrow:hover .k-seasonrow__title {
 }
 .k-charcard {
   flex: none;
-  width: 84px;
+  width: 92px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-1);
   text-align: center;
+  /* Long romanized names can't be allowed to escape the card: without a
+     break rule an unbreakable word paints straight over the neighbor. */
+  overflow: hidden;
+}
+.k-charcard > * {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.k-charcard__va {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  max-width: 100%;
+  font-size: var(--text-2xs);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+.k-charcard__vaname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-charcard__lang {
+  flex: none;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0 3px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-tertiary);
 }
 .k-charcard__img {
   width: 64px;
@@ -1385,6 +2365,52 @@ button.k-seasonrow:hover .k-seasonrow__title {
   box-shadow: 0 0 0 2px var(--color-base) inset;
 }
 
+/* On phones, wide controls can't share a line with their label without
+   crushing both. Stacked rows put the label on top and give the control the
+   full card width, with touch targets sized for thumbs. Desktop keeps the
+   side-by-side layout, which reads fine at that width. */
+@media (max-width: 1023px) {
+  .k-settings__row--stack {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+  .k-settings__row--stack .k-segmented {
+    display: flex;
+    width: 100%;
+  }
+  .k-settings__row--stack .k-segmented__btn {
+    flex: 1;
+    min-height: 42px;
+    text-align: center;
+  }
+  .k-settings__row--stack .k-swatches {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .k-settings__row--stack .k-swatch {
+    width: 38px;
+    height: 38px;
+  }
+  /* Theme cards: one even 4-up grid instead of a cramped wrap, with previews
+     that grow to the column. */
+  .k-colorthemes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-3);
+  }
+  .k-colortheme {
+    width: 100%;
+    gap: var(--space-2);
+  }
+  .k-colortheme__preview {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    height: auto;
+  }
+}
+
 /* ── Toggle switch ─────────────────────────────────────────── */
 .k-toggle {
   width: 44px;
@@ -1430,6 +2456,181 @@ button.k-seasonrow:hover .k-seasonrow__title {
   font-size: var(--text-sm);
   color: var(--color-text-tertiary);
   max-width: 320px;
+}
+
+/* ── Changelog (What's New popup + About history) ──────────── */
+.k-changelog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.k-changelog__entry {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.k-changelog__entry:last-of-type {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.k-changelog__version {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.k-changelog__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.k-changelog__kind {
+  align-self: flex-start;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--color-accent) 16%, transparent);
+  color: var(--color-accent);
+}
+.k-changelog__kind--added {
+  background: color-mix(in oklab, var(--color-success) 16%, transparent);
+  color: var(--color-success);
+}
+.k-changelog__kind--fixed {
+  background: color-mix(in oklab, var(--color-warning) 16%, transparent);
+  color: var(--color-warning);
+}
+.k-changelog__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-left: var(--space-4);
+  margin: 0;
+}
+.k-changelog__items li {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-secondary);
+}
+.k-changelog__items li::marker {
+  color: var(--color-text-tertiary);
+}
+.k-changelog__items strong {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+/* ── What's New popup ──────────────────────────────────────── */
+.k-whatsnew {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.k-whatsnew__lede {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.k-whatsnew__confirm {
+  margin-top: var(--space-2);
+}
+
+/* ── Hold-to-confirm button ────────────────────────────────── */
+.k-holdbtn {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-3);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.k-holdbtn__fill {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: color-mix(in oklab, var(--color-accent) 38%, transparent);
+}
+.k-holdbtn--holding .k-holdbtn__fill {
+  /* Linear sweep matched to the JS hold timer, so the visual and the commit
+     land together. Runs under reduced-motion too: it IS the affordance. */
+  transition: transform var(--hold-ms, 650ms) linear;
+  transform: scaleX(1);
+}
+.k-holdbtn__label {
+  position: relative;
+}
+
+/* ── Fatal storage banner ──────────────────────────────────── */
+.k-storage-banner {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-4);
+  transform: translateX(-50%);
+  z-index: 400;
+  width: min(560px, calc(100vw - var(--space-6)));
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-3);
+  border: 1px solid color-mix(in oklab, var(--color-error) 55%, transparent);
+  box-shadow: 0 10px 30px oklch(0% 0 0 / 45%);
+}
+.k-storage-banner__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.k-storage-banner__title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-error);
+}
+.k-storage-banner__detail {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-secondary);
+}
+.k-storage-banner__error {
+  display: block;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: var(--text-xs);
+  color: var(--color-text-primary);
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  max-height: 96px;
+  overflow: auto;
+  word-break: break-word;
+}
+.k-storage-banner__copy {
+  flex-shrink: 0;
+  align-self: center;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
 }
 
 /* ── Onboarding overlay ────────────────────────────────────── */
@@ -1794,9 +2995,9 @@ button.k-seasonrow:hover .k-seasonrow__title {
   gap: var(--space-2);
   margin-bottom: var(--space-2);
 }
-/* One season = one card. Status colour rides in via --card-status and paints
-   the row itself: a wash bleeding in from the left edge, fading into the
-   surface. The paint IS the state indicator here — no separate line. */
+/* One season = one card. Status colour rides in via --card-status as a thin
+   left-edge bar; the surface itself stays neutral so a ten-season franchise
+   doesn't read as ten differently-tinted stripes. */
 .k-srow {
   position: relative;
   display: flex;
@@ -1804,13 +3005,8 @@ button.k-seasonrow:hover .k-seasonrow__title {
   gap: var(--space-3);
   padding: var(--space-2);
   border-radius: var(--radius-lg);
-  background:
-    linear-gradient(
-      90deg,
-      color-mix(in oklab, var(--card-status, transparent) 16%, transparent),
-      transparent 58%
-    ),
-    var(--color-surface-2);
+  background: var(--color-surface-2);
+  box-shadow: inset 3px 0 0 var(--card-status, transparent);
   border: 1px solid var(--color-border);
   transition: border-color 150ms var(--ease-out), background-color 150ms var(--ease-out);
 }
@@ -1953,7 +3149,7 @@ button.k-seasonrow:hover .k-seasonrow__title {
 .k-srow__score {
   font-size: var(--text-xs);
   font-weight: 700;
-  color: var(--color-warning);
+  color: var(--color-text-secondary);
 }
 .k-srow__stepper {
   display: flex;
@@ -1987,29 +3183,24 @@ button.k-seasonrow:hover .k-seasonrow__title {
   font-variant-numeric: tabular-nums;
   color: var(--color-text-secondary);
 }
-.k-srow__remove {
-  flex: none;
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-md);
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out), transform 100ms var(--ease-out);
-}
-.k-srow__remove:hover {
-  background: color-mix(in oklch, var(--color-error) 14%, transparent);
-  color: var(--color-error);
-}
-.k-srow__remove:active {
-  transform: scale(0.9);
-}
-
-/* Add rows: untracked seasons and side content. */
+/* Ownership is the sheet's loudest signal: tracked rows (k-srow--mine) keep
+   the solid surface + status edge bar of the base row; untracked rows are
+   hollow — transparent with a dashed border — so "on my list vs not" reads
+   before any text does. */
 .k-srow--add {
-  background: var(--color-surface);
+  background: transparent;
   border-style: dashed;
+  border-color: color-mix(in oklab, var(--color-border-strong) 80%, transparent);
+}
+.k-srow--add .k-srow__titlebtn {
+  color: var(--color-text-secondary);
+}
+.k-srow__notin {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
 }
 .k-srow--next {
   background: color-mix(in oklch, var(--color-accent) 10%, var(--color-surface-2));
@@ -2054,27 +3245,24 @@ button.k-seasonrow:hover .k-seasonrow__title {
   filter: brightness(1.08);
 }
 
-/* Franchise-level remove (foot of the sheet). */
-.k-fsheet-remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
+/* Franchise-level remove (foot of the sheet): hold-to-confirm, styled as the
+   danger variant of the shared HoldButton. */
+.k-fsheet-removehold {
   width: 100%;
-  height: 44px;
   margin-top: var(--space-3);
-  border-radius: var(--radius-md);
+}
+.k-holdbtn--danger {
   color: var(--color-error);
-  font-weight: 600;
-  font-size: var(--text-sm);
-  cursor: pointer;
-  transition: background-color 150ms var(--ease-out), transform 100ms var(--ease-out);
+  border-color: color-mix(in oklab, var(--color-error) 35%, transparent);
+  background: transparent;
 }
-.k-fsheet-remove:hover {
-  background: color-mix(in oklch, var(--color-error) 12%, transparent);
+.k-holdbtn--danger .k-holdbtn__fill {
+  background: color-mix(in oklab, var(--color-error) 30%, transparent);
 }
-.k-fsheet-remove:active {
-  transform: scale(0.99);
+.k-holdbtn--danger .k-holdbtn__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 /* ── Dev log ───────────────────────────────────────────────── */
@@ -2295,6 +3483,11 @@ button.k-seasonrow:hover .k-seasonrow__title {
   .k-sched {
     padding-inline: var(--content-padding-lg);
   }
+  /* Same 720px reading column as the New sequels segment, so switching tabs
+     never jumps the content width. */
+  .k-sched > * {
+    max-width: 720px;
+  }
 }
 .k-sched__day {
   margin-bottom: var(--space-5);
@@ -2399,10 +3592,16 @@ button.k-seasonrow:hover .k-seasonrow__title {
   flex: 1;
   min-height: 0;
   padding: var(--space-2) var(--content-padding-sm) var(--space-8);
+  /* Pairs below respond to the pane's real width, not the viewport, so they
+     stay honest whether the sidebar is open, collapsed, or absent on Android. */
+  container-type: inline-size;
 }
 @media (min-width: 1024px) {
   .k-stats {
     padding-inline: var(--content-padding-lg);
+    /* Left-aligned cap (matches Detail/Settings): the dashboard reads as a
+       column instead of stretching bars and charts across an ultrawide. */
+    max-width: 1040px;
   }
 }
 /* The headline fact: how much of your life this is. A single composed
@@ -2485,13 +3684,20 @@ button.k-seasonrow:hover .k-seasonrow__title {
    background draws the hairlines in both directions when items wrap. */
 .k-stats__pulse {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  /* Snap between 2-up and 4-up so the four metrics never wrap to a lopsided
+     3 + 1. auto-fit would strand the last one on its own row mid-range. */
+  grid-template-columns: repeat(2, 1fr);
   gap: 1px;
   margin-bottom: var(--space-6);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-border);
   overflow: hidden;
+}
+@container (min-width: 560px) {
+  .k-stats__pulse {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 .k-stats__pulseitem {
   display: flex;
@@ -2518,6 +3724,36 @@ button.k-seasonrow:hover .k-seasonrow__title {
 .k-stats__heading {
   letter-spacing: 0.07em;
   margin-bottom: var(--space-3);
+}
+
+/* Two analytical modules share a row on a wide pane and stack on a narrow one.
+   auto-fit means a lone child (e.g. no scores yet, so no histogram) fills the
+   width instead of hugging the left. The pair owns the bottom rhythm; its
+   sections don't add their own. */
+.k-stats__pair {
+  display: grid;
+  /* 320 floor, not 260: below this each column can't hold the status label +
+     a readable bar, so it stays one column rather than compressing. */
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-4) var(--space-6);
+  align-items: start;
+  margin-bottom: var(--space-6);
+}
+.k-stats__pair > .k-stats__section {
+  margin-bottom: 0;
+}
+
+/* Footer row: the Wrapped call-to-action beside the quieter trivia note. Same
+   collapse behaviour — if there's no Wrapped year, trivia takes the full row. */
+.k-stats__footer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-3);
+  align-items: stretch;
+}
+.k-stats__footer > .k-stats__wrappedbtn,
+.k-stats__footer > .k-stats__trivia {
+  margin-top: 0;
 }
 /* Wrapped entry banner: the one accent-forward row on the page. */
 .k-stats__wrappedbtn {
@@ -2638,6 +3874,46 @@ button.k-seasonrow:hover .k-seasonrow__title {
 }
 .k-wrapped__share {
   margin-top: var(--space-3);
+}
+
+/* Backlog weight: a single insight line. Warm edge glow ties it to the hero's
+   language without shouting; the hours carry the weight, the rest recedes. */
+.k-stats__backlog {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in oklab, var(--color-accent) 20%, var(--color-border));
+  background:
+    radial-gradient(
+      140% 200% at 0% 50%,
+      color-mix(in oklab, var(--color-accent) 11%, transparent),
+      transparent 60%
+    ),
+    var(--color-surface-2);
+}
+.k-stats__backlogicon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-dim);
+  color: var(--color-accent-glow);
+}
+.k-stats__backlogtext {
+  min-width: 0;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.k-stats__backlogtext strong {
+  font-weight: 700;
+  color: var(--color-text-primary);
 }
 
 .k-stats__trivia {
@@ -2767,6 +4043,14 @@ button.k-seasonrow:hover .k-seasonrow__title {
 .k-stats__histbar--peak {
   background: var(--color-accent);
   box-shadow: 0 0 12px var(--color-accent-dim);
+}
+/* The year chart spans the full column, so on a wide pane a handful of bars
+   would drift into islands. Cap the plot and let each bar keep some body. */
+.k-stats__hist--activity {
+  max-width: 660px;
+}
+.k-stats__hist--activity .k-stats__histbar {
+  max-width: 54px;
 }
 @keyframes k-grow-y {
   from { transform: scaleY(0); }

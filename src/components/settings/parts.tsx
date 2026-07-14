@@ -40,14 +40,18 @@ export function Section({ title, children }: { title?: string; children: ReactNo
 export function Row({
   label,
   hint,
+  stack,
   children,
 }: {
   label: string;
   hint?: string;
+  /** Wide control (segmented, swatches): stack it under the label on mobile
+   *  instead of crushing both into one side-by-side line. No-op on desktop. */
+  stack?: boolean;
   children?: ReactNode;
 }) {
   return (
-    <div className="k-settings__row">
+    <div className={`k-settings__row${stack ? " k-settings__row--stack" : ""}`}>
       <div className="k-settings__rowlabel">
         <Text size="base" weight={500}>
           {label}

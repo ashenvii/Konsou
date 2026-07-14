@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import type { CSSProperties } from "react";
 import { Check } from "lucide-react";
 import { AnimeCover } from "@/components/anime/AnimeCover";
 import { formatChipMeta, relationChipMeta } from "@/components/anime/relationMeta";
@@ -7,7 +6,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
-import { formatLabel, getCoverUrl, preferredTitle, secondaryTitle } from "@/lib/format";
+import { formatLabel, getCoverUrl, preferredTitle } from "@/lib/format";
 import { useCatchUpStore } from "@/lib/store/catchUpStore";
 import { useListStore } from "@/lib/store/listStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
@@ -70,7 +69,6 @@ export function CatchUpSheet() {
         <div className="k-catchup__list konsou-scroll">
           {candidates.map((c) => {
             const on = checked.has(c.id);
-            const alt = secondaryTitle(c.title, titleLanguage);
             // Side entries (OVAs, movies, spin-offs) wear their kind so the
             // list reads at a glance; plain prequel seasons stay chipless.
             const relChip =
@@ -103,27 +101,12 @@ export function CatchUpSheet() {
                   <Text size="sm" weight={600} clamp={2}>
                     {preferredTitle(c.title, titleLanguage)}
                   </Text>
-                  {alt && (
-                    <Text size="xs" color="tertiary" clamp={1}>
-                      {alt}
-                    </Text>
-                  )}
                   <span className="k-catchup__chips">
                     {relChip && (
-                      <span
-                        className="k-chip-kind"
-                        style={{ "--chip": relChip.color } as CSSProperties}
-                      >
-                        {relChip.label}
-                      </span>
+                      <span className="k-chip-kind">{relChip.label}</span>
                     )}
                     {fmtChip && (
-                      <span
-                        className="k-chip-kind"
-                        style={{ "--chip": fmtChip.color } as CSSProperties}
-                      >
-                        {fmtChip.label}
-                      </span>
+                      <span className="k-chip-kind">{fmtChip.label}</span>
                     )}
                     {meta && (
                       <Text size="xs" color="tertiary">

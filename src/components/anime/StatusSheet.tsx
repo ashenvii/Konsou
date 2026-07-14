@@ -33,6 +33,11 @@ export function StatusSheet({
           const meta = statusMeta(s);
           const active = s === current;
           const disabled = disabledStatuses?.has(s) ?? false;
+          const hint = disabled
+            ? "Not available — hasn't aired yet"
+            : active && s === "not_interested"
+              ? "Tap to unselect and bring it back"
+              : undefined;
           return (
             <button
               key={s}
@@ -41,7 +46,7 @@ export function StatusSheet({
               style={active ? { borderColor: meta.color } : undefined}
               disabled={disabled}
               aria-disabled={disabled}
-              title={disabled ? "Not available — hasn't aired yet" : undefined}
+              title={hint}
               onClick={() => {
                 if (disabled) return;
                 onPick(s);
@@ -59,6 +64,12 @@ export function StatusSheet({
           );
         })}
       </div>
+      {current === "not_interested" && (
+        <p className="k-status-lockhint">
+          Muted — it won't show on your list or in schedules and alerts. Pick a
+          status to bring it back, or tap Not Interested again to un-mute.
+        </p>
+      )}
       {onRemove && (
         <button
           type="button"

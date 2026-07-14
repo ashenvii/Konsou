@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { anilist } from "@/lib/api/anilist/client";
 import { jikanAnimeScore } from "@/lib/api/jikan/client";
-import { walkRelationChain } from "@/lib/franchise/chain";
+import { walkFranchise, walkRelationChain } from "@/lib/franchise/chain";
+import type { AnimeTitle } from "@/types/anime";
 import { indexSummaries } from "@/lib/search/localTitleIndex";
 import type { AiringStatus, BrowseParams, SearchPage } from "@/lib/api/anilist/client";
 import type { AnimeMedia, AnimeSummary } from "@/types/anime";
@@ -71,6 +72,7 @@ export function useDiscover(params: DiscoverParams) {
     queryKey: [
       "discover",
       params.sort,
+      params.search?.trim() || null,
       params.season ?? null,
       params.seasonYear ?? null,
       // Arrays/scalars flattened into a stable key so each filter combo caches
@@ -134,7 +136,7 @@ export function useAiringSchedule(ids: number[], enabled = true) {
 export function useAnimeDetail(id: number | null) {
   return useQuery({
     queryKey: ["detail", id],
-    queryFn: () => anilist.getById(id!),
+    queryFn: ({ signal }) => anilist.getById(id!, signal),
     enabled: id != null,
     staleTime: 24 * 60 * 60 * 1000,
     networkMode: "offlineFirst",
@@ -152,6 +154,27 @@ export function useRelationChain(media: AnimeMedia | null | undefined) {
     queryKey: ["relation-chain", media?.id ?? null],
     queryFn: () => walkRelationChain(media!),
     enabled: !!media,
+    staleTime: 6 * 60 * 60 * 1000,
+    networkMode: "offlineFirst",
+    retry: 1,
+  });
+}
+
+/**
+ * Same walk, seeded by id + title instead of a detail payload — the quick
+ * menu's version. Shares the cache key with useRelationChain, so opening a
+ * franchise sheet and a detail page for the same title costs one walk, and
+ * the two surfaces literally cannot disagree about what the franchise holds.
+ */
+export function useFranchiseWalk(
+  rootId: number | null,
+  rootTitle: AnimeTitle | null,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ["relation-chain", rootId],
+    queryFn: () => walkFranchise({ id: rootId!, title: rootTitle! }),
+    enabled: enabled && rootId != null && rootTitle != null,
     staleTime: 6 * 60 * 60 * 1000,
     networkMode: "offlineFirst",
     retry: 1,
@@ -180,7 +203,8 @@ export function useFranchiseRelations(ids: number[], enabled: boolean) {
   const key = [...ids].sort().join(",");
   return useQuery({
     queryKey: ["franchise-relations", key],
-    queryFn: () => anilist.getRelationsBatch(ids, "high"),
+    // Presentation surface: serve any stored snapshot instantly, refresh quietly.
+    queryFn: () => anilist.getRelationsBatch(ids, "high", { staleOk: true }),
     enabled: enabled && ids.length > 0,
     staleTime: 6 * 60 * 60 * 1000,
     networkMode: "offlineFirst",

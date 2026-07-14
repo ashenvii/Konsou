@@ -73,20 +73,19 @@ function pickDisplayEntry(
  * Collapse a flat entry list into franchise groups. Entries without a
  * franchise_root_id are treated as standalone (group of 1). Pure — no I/O.
  *
- * "Not interested" entries never ride inside a franchise card: telling the app
- * you don't want a season and then finding it seated between the ones you're
- * watching is a mixed signal. They keep their franchise_root_id (so changing
- * your mind rejoins the group instantly) but group as standalone cards.
+ * "Not interested" is a mute flag, not a card. Such entries are dropped here
+ * entirely: they never appear on My List, never form a standalone card, and
+ * never join a franchise group (so marking one member not-interested can't
+ * change how the rest of the franchise's card looks). The row still lives in
+ * the store map, so franchise views (quick menu, Related tab) can render it
+ * dimmed and the surfacing filters (schedule, alerts, radar, catch-up) can
+ * skip it — it just isn't a thing on the main list.
  */
 export function groupEntries(entries: AnimeListEntry[]): FranchiseGroup[] {
   const byRoot = new Map<number, AnimeListEntry[]>();
-  const notInterested: AnimeListEntry[] = [];
 
   for (const e of entries) {
-    if (e.status === "not_interested") {
-      notInterested.push(e);
-      continue;
-    }
+    if (e.status === "not_interested") continue;
     const key = e.franchise_root_id ?? e.anilist_id;
     const bucket = byRoot.get(key);
     if (bucket) bucket.push(e);
@@ -94,22 +93,6 @@ export function groupEntries(entries: AnimeListEntry[]): FranchiseGroup[] {
   }
 
   const groups: FranchiseGroup[] = [];
-
-  for (const e of notInterested) {
-    groups.push({
-      // A not-interested entry that IS another group's root would collide on
-      // rootId (consumers use it as the card identity), so it gets the
-      // negated id — a token, never dereferenced as an AniList id directly.
-      rootId: byRoot.has(e.anilist_id) ? -e.anilist_id : e.anilist_id,
-      entries: [e],
-      displayEntry: e,
-      isGroup: false,
-      totalWatched: e.episodes_watched,
-      totalEpisodes: e.total_episodes,
-      sortUpdated: e.updated_at,
-      sortAdded: e.added_at,
-    });
-  }
 
   for (const [rootId, members] of byRoot) {
     const sorted = [...members].sort((a, b) => a.added_at - b.added_at);

@@ -1,15 +1,14 @@
-/* ── perf-lite: Android WebView overrides ─────────────────────
-   Applied via a `perf-lite` class on <html> when running on Android.
-   Phone-class GPUs running the system WebView cannot sustain per-frame
-   compositor effects while scrolling: every backdrop-filter re-samples and
-   re-blurs the moving content behind it each frame, and large soft glows
-   re-rasterize with it. Native list apps (Glide/Coil + RecyclerView) bake
-   effects into the bitmap once; this is the CSS equivalent — swap live
-   effects for static, near-identical ones. Desktop keeps the full look. */
+/* ── perf-lite: scroll paint relief ───────────────────────────
+   Applied via a `perf-lite` class on <html> on every platform (see main.tsx).
+   WebViews cannot sustain per-frame compositor effects while scrolling: every
+   backdrop-filter re-samples and re-blurs the moving content behind it each
+   frame, and large soft glows re-rasterize with it. It's worst on phone-class
+   GPUs, but measured heavy on desktop WebViews too. Native list apps (Glide/Coil
+   + RecyclerView) bake effects into the bitmap once; this is the CSS equivalent
+   — swap live effects for static, near-identical ones. */
 
 /* Translucent-blur chips on cards → slightly more opaque, no blur. */
-.perf-lite .k-franchise-badge,
-.perf-lite .k-card__quick--sheet {
+.perf-lite .k-franchise-badge {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   background: oklch(0% 0 0 / 78%);
@@ -38,4 +37,26 @@
    page, so the shadow adds nothing on a phone. */
 .perf-lite .k-sheet {
   box-shadow: none;
+}
+
+/* Cover-as-banner fallback: a 26px blur is a heavy one-time raster on a
+   phone GPU, and the banner layer moves with the parallax scroll. Swap it
+   for a plain dimmed cover — the hero scrim on top does the separation. */
+.perf-lite .k-detail__banner-blur {
+  filter: brightness(0.55) saturate(1.1);
+  transform: scale(1.05);
+}
+
+/* Ambient card animations (the pulsing "current episode" line, the breathing
+   on-hold circle, the spinning rewatch glyph) loop forever on every visible
+   card of that status. A screenful of watching cards therefore keeps the
+   compositor busy every frame at rest, stealing frames from the fling. They
+   are decorative, not information — the marker still reads perfectly static —
+   so on phone GPUs they hold their end state instead of looping. Desktop
+   keeps the motion. */
+.perf-lite .k-card--status-watching .k-card__front,
+.perf-lite .k-card--status-rewatching .k-card__front,
+.perf-lite .k-card--status-on_hold .k-hold__circle,
+.perf-lite .k-mark--spin .k-mark__icon {
+  animation: none !important;
 }

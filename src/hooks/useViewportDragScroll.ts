@@ -37,6 +37,17 @@ export function useViewportDragScroll() {
     let startTop = 0;
     let dragging = false; // pressed on a scrollable surface
     let moved = false; // passed the threshold: panning + click suppression
+    let pendingTop = 0; // latest target, applied once per frame
+    let rafId = 0;
+
+    // Coalesce scrollTop writes to one per animation frame. A high-Hz mouse
+    // fires several pointermove events per frame, and each imperative scrollTop
+    // write forces a scroll event + layout; batching to the display cadence is
+    // what makes the pan feel smooth instead of stuttery.
+    const flush = () => {
+      rafId = 0;
+      if (scroller) scroller.scrollTop = pendingTop;
+    };
 
     const onPointerDown = (e: PointerEvent) => {
       if (e.pointerType !== "mouse" || e.button !== 0) return;
@@ -71,10 +82,18 @@ export function useViewportDragScroll() {
         document.body.classList.add("is-grab-scrolling");
         window.getSelection()?.removeAllRanges();
       }
-      scroller.scrollTop = startTop - dy;
+      pendingTop = startTop - dy;
+      if (!rafId) rafId = requestAnimationFrame(flush);
     };
 
     const endDrag = () => {
+      // Land on the final position before tearing down, in case a frame was
+      // still pending.
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+      if (scroller && moved) scroller.scrollTop = pendingTop;
       dragging = false;
       scroller = null;
       document.body.classList.remove("is-grab-scrolling");

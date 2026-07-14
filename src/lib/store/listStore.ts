@@ -4,11 +4,12 @@ import { getDb } from "@/lib/db";
 import { airedEpisodes, getCoverUrl, isMangaNode, preferredTitle } from "@/lib/format";
 import { haptic } from "@/lib/haptics";
 import { resolveFranchiseChain } from "@/lib/franchise/cascade";
-import { isFranchiseOther } from "@/lib/franchise/relatedness";
+import { isFranchiseOther, isFranchiseParent } from "@/lib/franchise/relatedness";
 import { statusBlockReason } from "@/lib/statusValidation";
 import { syncQueue } from "@/lib/sync/queue";
 import { syncManager } from "@/lib/sync/syncManager";
 import { useCatchUpStore } from "./catchUpStore";
+import { useSettingsStore } from "./settingsStore";
 import { toast } from "./toastStore";
 import type { AnimeSummary, AnimeTitle, RelationNode } from "@/types/anime";
 import type {
@@ -51,6 +52,11 @@ function indexBy(entries: AnimeListEntry[]): Record<number, AnimeListEntry> {
   const m: Record<number, AnimeListEntry> = {};
   for (const e of entries) m[e.anilist_id] = e;
   return m;
+}
+
+/** Toast copy honors the title-language preference like every rendered surface. */
+function prefTitle(title: AnimeTitle): string {
+  return preferredTitle(title, useSettingsStore.getState().titleLanguage);
 }
 
 /** Build a completed list entry for a franchise relation the user confirms
@@ -203,7 +209,14 @@ export const useListStore = create<ListState>((set, get) => {
    * subsequent iterations.
    */
   const resolveOrphanRoots = async (): Promise<void> => {
-    const unresolved = get().entries.filter((e) => e.franchise_root_id == null);
+    // Cap per launch. Each entry is a network chain walk; grooming a freshly
+    // imported list of hundreds in one go would be a long background burst.
+    // Low priority already yields to the user, and the leftovers resolve on the
+    // next launch, so a bounded slice keeps startup light.
+    const ORPHAN_BUDGET = 25;
+    const unresolved = get()
+      .entries.filter((e) => e.franchise_root_id == null)
+      .slice(0, ORPHAN_BUDGET);
     if (unresolved.length === 0) return;
 
     for (const entry of unresolved) {
@@ -256,14 +269,16 @@ export const useListStore = create<ListState>((set, get) => {
       for (const rootId of roots) {
         const rootEntry = get().map[rootId];
         const rootTitle = rootEntry ? entryTitle(rootEntry) : undefined;
-        // Two reasons this "root" may not be the real one: it has an earlier
-        // season (PREQUEL), or it's OTHER-linked to a same-named anime —
-        // continuations like Edgerunners 2 carry no SEQUEL edge, so the two
-        // sides each become their own root without this check.
+        // Three reasons this "root" may not be the real one: it has an earlier
+        // season (PREQUEL), it's OTHER-linked to a same-named anime
+        // (continuations like Edgerunners 2 carry no SEQUEL edge), or it's a
+        // special/OVA whose only tie to the series is a same-named PARENT edge
+        // (the stranded Eris-special shape that split Jobless Reincarnation).
         const suspect = (relMap[rootId] ?? []).some(
           (r) =>
             (r.relationType === "PREQUEL" && !isMangaNode(r)) ||
-            isFranchiseOther(rootTitle, r),
+            isFranchiseOther(rootTitle, r) ||
+            isFranchiseParent(rootTitle, r),
         );
         if (!suspect) continue;
 
@@ -378,12 +393,13 @@ export const useListStore = create<ListState>((set, get) => {
         }
         // Walk the PREQUEL chain, tag franchise members with a shared root, and
         // (if earlier entries are missing) raise the catch-up prompt. Dropped
-        // and not-interested still get grouped — they just skip the prompt,
-        // since neither implies watching what came before.
-        void runFranchiseCascade(
-          s.id,
-          status !== "dropped" && status !== "not_interested",
-        );
+        // skips the prompt (it doesn't imply watching what came before).
+        // not_interested skips the cascade ENTIRELY: it's a mute on this one
+        // entry and must never reach out to tag or regroup the rest of the
+        // series. It also never forms a card, so it has nothing to group.
+        if (status !== "not_interested") {
+          void runFranchiseCascade(s.id, status !== "dropped");
+        }
       } catch {
         removeFromState(s.id);
         toast.error("Couldn't add to your list");
@@ -410,7 +426,7 @@ export const useListStore = create<ListState>((set, get) => {
       haptic("light");
       toast.success(
         nodes.length === 1
-          ? `Marked "${preferredTitle(nodes[0].title)}" complete`
+          ? `Marked "${prefTitle(nodes[0].title)}" complete`
           : `Marked ${nodes.length} earlier entries complete`,
       );
     },
@@ -449,6 +465,16 @@ export const useListStore = create<ListState>((set, get) => {
     updateStatus: async (anilistId, status) => {
       const prev = get().map[anilistId];
       if (!prev) return;
+      // Not Interested is a toggle: picking it again unselects the mute and
+      // returns the title to untracked (the "bring it back" path). remove()
+      // shows an Undo toast, so a mis-tap is one tap to reverse. Picking any
+      // OTHER status while not-interested is a deliberate un-mute into that
+      // status and is allowed to fall straight through — the user asked to be
+      // able to change it to something else.
+      if (status === "not_interested" && prev.status === "not_interested") {
+        get().remove(anilistId);
+        return;
+      }
       // AniList's RELEASING can lag a finale; someone who watched the last
       // known episode has genuinely finished, so let that complete stand.
       const finishedByCount =
@@ -573,9 +599,10 @@ export const useListStore = create<ListState>((set, get) => {
       haptic("medium");
       let undone = false;
       toast.action({
-        message: `Removed ${preferredTitle({
+        message: `Removed ${prefTitle({
           romaji: entry.title_romaji,
           english: entry.title_english,
+          native: entry.title_native,
         })}`,
         actionLabel: "Undo",
         duration: 4000,
@@ -616,9 +643,10 @@ export const useListStore = create<ListState>((set, get) => {
       toast.action({
         message:
           removed.length === 1
-            ? `Removed ${preferredTitle({
+            ? `Removed ${prefTitle({
                 romaji: removed[0].title_romaji,
                 english: removed[0].title_english,
+                native: removed[0].title_native,
               })}`
             : `Removed ${removed.length} seasons`,
         actionLabel: "Undo",

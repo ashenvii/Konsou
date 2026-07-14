@@ -67,6 +67,7 @@ query Detail($id: Int!) {
         role
         node { name { full } image { medium } }
         voiceActors(language: JAPANESE) { id name { full } }
+        dubActors: voiceActors(language: ENGLISH) { id name { full } }
       }
     }
     staff(perPage: 4) {
@@ -133,6 +134,7 @@ query Browse(
   $page: Int!
   $perPage: Int!
   $sort: [MediaSort]
+  $search: String
   $season: MediaSeason
   $seasonYear: Int
   $genre_in: [String]
@@ -145,6 +147,7 @@ query Browse(
       type: ANIME
       isAdult: false
       sort: $sort
+      search: $search
       season: $season
       seasonYear: $seasonYear
       genre_in: $genre_in

@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   Copy,
   Globe,
+  Info,
   Loader2,
   Play,
   Plus,
@@ -12,7 +13,7 @@ import {
   Star,
   Tv,
 } from "lucide-react";
-import { AnimeCover } from "@/components/anime/AnimeCover";
+import { AnimeCover, hueFromTitle } from "@/components/anime/AnimeCover";
 import { EditSheet } from "@/components/anime/EditSheet";
 import { EpisodeCounter } from "@/components/anime/EpisodeCounter";
 import { formatChipMeta, relationChipMeta } from "@/components/anime/relationMeta";
@@ -27,6 +28,7 @@ import { Text } from "@/components/ui/Text";
 import { useAnimeDetail, useMalScore, useRelationChain } from "@/hooks/useAniList";
 import { computeFranchiseLedger, ledgerEpisodeLabel } from "@/lib/franchise/ledger";
 import { isFranchiseOther } from "@/lib/franchise/relatedness";
+import { isPromoNode, mainStoryIds, placementLabel } from "@/lib/franchise/storySplit";
 import { orderForWatching } from "@/lib/franchise/watchOrder";
 import type { RelationEdge } from "@/lib/franchise/watchOrder";
 import type { RelationChainResult } from "@/lib/franchise/chain";
@@ -43,7 +45,6 @@ import {
   isMangaNode,
   preferredTitle,
   seasonYearLabel,
-  secondaryTitle,
   stripHtml,
 } from "@/lib/format";
 import { openExternal } from "@/lib/openExternal";
@@ -64,7 +65,7 @@ import type {
   RelationNode,
   RelationType,
 } from "@/types/anime";
-import type { AnimeListEntry, ListEntryPatch, ListStatus } from "@/types/list";
+import type { AnimeListEntry, ListEntryPatch, ListStatus, TitleLanguage } from "@/types/list";
 
 type DetailTab = "overview" | "cast" | "related" | "similar";
 
@@ -130,10 +131,17 @@ function externalLinkMeta(link: ExternalLink): string[] {
   return meta;
 }
 
+interface SeasonRowsResult {
+  rows: SeasonRow[];
+  /** Ids on the SEQUEL/PREQUEL backbone — the numbered "main story" section.
+   *  Everything else renders under Extras with a placement label. */
+  mainIds: Set<number>;
+}
+
 function getSeasonRows(
   media: AnimeMedia,
   chain?: RelationChainResult,
-): SeasonRow[] {
+): SeasonRowsResult {
   const byId = new Map<number, SeasonRow>();
   byId.set(media.id, {
     id: media.id,
@@ -175,6 +183,10 @@ function getSeasonRows(
   // direct continuations (Edgerunners 2) are linked ONLY that way.
   for (const r of media.relations ?? []) {
     if (isMangaNode(r)) continue;
+    // Same junk gate as the deep walk: music videos and promo shorts are
+    // advertising, not members — without this, direct relations leak them
+    // in even though the walk refuses them.
+    if (r.format === "MUSIC" || isPromoNode(r)) continue;
     if (
       SEASON_RELATIONS.includes(r.relationType) ||
       isFranchiseOther(media.title, r)
@@ -201,9 +213,10 @@ function getSeasonRows(
     orderForWatching([...byId.values()], edges).map((id, i) => [id, i]),
   );
 
-  return [...byId.values()].sort(
+  const rows = [...byId.values()].sort(
     (a, b) => (position.get(a.id) ?? 0) - (position.get(b.id) ?? 0),
   );
+  return { rows, mainIds: mainStoryIds(rows, edges) };
 }
 
 function seasonLabel(row: SeasonRow): string {
@@ -230,6 +243,9 @@ interface ReleaseFact {
   accent?: boolean;
 }
 
+/** Facts the header does NOT already state. Status, episode count, season,
+ *  and studio all live in the hero (meta line + status row); repeating them
+ *  down here just pushed the rest of the page further away. */
 function releaseFacts(
   media: AnimeMedia,
   malScore?: number | null,
@@ -238,7 +254,6 @@ function releaseFacts(
     ? media.source.replace(/_/g, " ").toLowerCase()
     : null;
   const facts = [
-    { label: "Status", value: airingStatusLabel(media.status) },
     // The MAL community score answers "is this any good" without leaving the
     // page. Jikan-sourced; silently absent when MAL doesn't know the title.
     {
@@ -246,13 +261,10 @@ function releaseFacts(
       value: malScore != null ? malScore.toFixed(2) : null,
     },
     { label: "First aired", value: formatFuzzyDate(media.startDate) },
-    { label: "Episodes", value: media.episodes ? String(media.episodes) : null },
     {
       label: "Episode length",
       value: media.duration ? `${media.duration} min` : null,
     },
-    { label: "Season", value: seasonYearLabel(media) },
-    { label: "Studio", value: media.studio ?? null },
     {
       label: "Source",
       value: source ? source.charAt(0).toUpperCase() + source.slice(1) : null,
@@ -291,17 +303,36 @@ export function AnimeDetail() {
 
   const [statusOpen, setStatusOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [namesOpen, setNamesOpen] = useState(false);
   const [synopsisOpen, setSynopsisOpen] = useState(false);
+
+  // Navigating within the detail page (Related row -> another season) keeps
+  // this component mounted; an open names panel would leak onto the next
+  // title's header.
+  useEffect(() => {
+    setNamesOpen(false);
+  }, [animeId]);
   const [topbarSolid, setTopbarSolid] = useState(false);
   const [tab, setTab] = useState<DetailTab>("overview");
   const bannerRef = useRef<HTMLDivElement>(null);
 
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
   const title = media ? preferredTitle(media.title, titleLanguage) : "";
-  // Always surface the other-language title(s) inline so the reader can check
-  // the alternate name without changing their Settings preference.
+  // One name on screen; every other handle (other-language titles + AniList
+  // synonyms) lives behind the small info toggle next to the title.
   const alternates = media ? alternateTitles(media.title, titleLanguage) : [];
   const synonyms = media?.synonyms?.filter((s) => s.trim()) ?? [];
+  const otherNames: string[] = [];
+  {
+    const seen = new Set<string>([title]);
+    for (const n of [...alternates, ...synonyms]) {
+      const v = n.trim();
+      if (v && !seen.has(v)) {
+        seen.add(v);
+        otherNames.push(v);
+      }
+    }
+  }
   const inList = !!entry;
 
   const metaBits = media
@@ -315,9 +346,21 @@ export function AnimeDetail() {
 
   const { data: chain, isFetching: chainLoading } = useRelationChain(media);
   const { data: malScore } = useMalScore(media?.idMal);
-  const seasonRows = useMemo(
-    () => (media ? getSeasonRows(media, chain) : []),
+  const { rows: seasonRows, mainIds } = useMemo(
+    () =>
+      media
+        ? getSeasonRows(media, chain)
+        : { rows: [] as SeasonRow[], mainIds: new Set<number>() },
     [media, chain],
+  );
+  // The story backbone, numbered; everything else is an extra placed by date.
+  const mainRows = useMemo(
+    () => seasonRows.filter((r) => mainIds.has(r.id)),
+    [seasonRows, mainIds],
+  );
+  const extraRows = useMemo(
+    () => seasonRows.filter((r) => !mainIds.has(r.id)),
+    [seasonRows, mainIds],
   );
   // The current title is the hero of this page; don't list it again under
   // "Related Series". Only the other seasons/entries belong there.
@@ -446,8 +489,10 @@ export function AnimeDetail() {
                 <Text as="h1" size="lg" weight={700} clamp={2}>
                   {savedTitle}
                 </Text>
-                <span className="k-pill" style={{ color: meta.color }}>
-                  <Icon icon={meta.icon} size={12} weight="fill" />
+                <span className="k-pill">
+                  <span className="k-pill__icon" style={{ color: meta.color }}>
+                    <Icon icon={meta.icon} size={12} weight="fill" />
+                  </span>
                   {meta.label}
                 </span>
                 <Text size="sm" color="secondary">
@@ -511,8 +556,25 @@ export function AnimeDetail() {
       <div className="k-detail__scroll konsou-scroll" onScroll={onScroll}>
         <div className="k-detail__hero">
           <div className="k-detail__banner" ref={bannerRef}>
-            {media.bannerImage && (
+            {/* Many titles have no banner art. Fall back to the cover, blurred
+                into an ambient backdrop; with no art at all, the title's own
+                identity hue (same one the cover tile uses) fills the hero. */}
+            {media.bannerImage ? (
               <img src={media.bannerImage} alt="" role="presentation" />
+            ) : getCoverUrl(media.coverImage) ? (
+              <img
+                src={getCoverUrl(media.coverImage)}
+                alt=""
+                role="presentation"
+                className="k-detail__banner-blur"
+              />
+            ) : (
+              <div
+                className="k-detail__banner-tint"
+                style={{
+                  background: `linear-gradient(160deg, oklch(30% 0.06 ${hueFromTitle(title)}), oklch(14% 0.03 ${(hueFromTitle(title) + 50) % 360}))`,
+                }}
+              />
             )}
           </div>
           <div className="k-detail__heroscrim" />
@@ -523,18 +585,29 @@ export function AnimeDetail() {
             <AnimeCover src={getCoverUrl(media.coverImage)} alt={title} />
           </div>
           <div className="k-detail__headinfo">
-            <Text as="h1" size="2xl" weight={700} clamp={3}>
-              {title}
-            </Text>
-            {alternates.map((alt) => (
-              <Text key={alt} size="sm" color="secondary" clamp={1}>
-                {alt}
+            <div className="k-detail__titlerow">
+              <Text as="h1" size="2xl" weight={700} clamp={3}>
+                {title}
               </Text>
-            ))}
-            {synonyms.length > 0 && (
-              <Text size="xs" color="tertiary" clamp={1} title={synonyms.join(" · ")}>
-                Also known as: {synonyms.slice(0, 3).join(" · ")}
-              </Text>
+              {otherNames.length > 0 && (
+                <button
+                  type="button"
+                  className="k-detail__namesbtn"
+                  onClick={() => setNamesOpen((v) => !v)}
+                  aria-expanded={namesOpen}
+                  aria-label={`Other names (${otherNames.length})`}
+                  title={otherNames.join("\n")}
+                >
+                  <Icon icon={Info} size={14} />
+                </button>
+              )}
+            </div>
+            {namesOpen && otherNames.length > 0 && (
+              <ul className="k-detail__names">
+                {otherNames.map((n) => (
+                  <li key={n}>{n}</li>
+                ))}
+              </ul>
             )}
             <Text size="sm" color="secondary" className="k-detail__meta">
               {metaBits.join(" · ")}
@@ -634,22 +707,21 @@ export function AnimeDetail() {
           <div key={tab} className="k-detail__tabpanel">
           {tab === "overview" && (
             <>
-              <section className="k-detail__section">
-                <Text as="h2" size="lg" weight={600} className="k-detail__sectiontitle">
-                  Release
-                </Text>
-                <div className="k-releasegrid">
-                  {facts.map((f) => (
-                    <div
-                      key={f.label}
-                      className={f.accent ? "k-releasegrid__hot" : undefined}
-                    >
-                      <span>{f.label}</span>
-                      <strong>{f.value}</strong>
-                    </div>
-                  ))}
-                </div>
-              </section>
+              {/* Wiki order: identity first (genres), then what it is
+                  (synopsis), then secondary facts, then where to watch.
+                  The facts grid used to open the page and pushed everything
+                  the reader actually came for below the fold. */}
+              {media.genres && media.genres.length > 0 && (
+                <section className="k-detail__section">
+                  <div ref={genreRowRef} className="k-chiprow k-chiprow--scroll">
+                    {media.genres.map((g) => (
+                      <span key={g} className="k-genre">
+                        {g}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               {/* Synopsis */}
               {synopsis && (
@@ -672,39 +744,23 @@ export function AnimeDetail() {
                 </section>
               )}
 
-              {/* Genres */}
-              {media.genres && media.genres.length > 0 && (
+              {facts.length > 0 && (
                 <section className="k-detail__section">
-                  <div ref={genreRowRef} className="k-chiprow k-chiprow--scroll">
-                    {media.genres.map((g) => (
-                      <span key={g} className="k-genre">
-                        {g}
-                      </span>
+                  <Text as="h2" size="lg" weight={600} className="k-detail__sectiontitle">
+                    Details
+                  </Text>
+                  <div className="k-releasegrid">
+                    {facts.map((f) => (
+                      <div
+                        key={f.label}
+                        className={f.accent ? "k-releasegrid__hot" : undefined}
+                      >
+                        <span>{f.label}</span>
+                        <strong>{f.value}</strong>
+                      </div>
                     ))}
                   </div>
                 </section>
-              )}
-
-              {media.trailer?.site === "youtube" && (
-                <Section title="Trailer">
-                  <button
-                    type="button"
-                    className="k-trailer"
-                    onClick={() =>
-                      void openExternal(
-                        `https://www.youtube.com/watch?v=${media.trailer!.id}`,
-                      )
-                    }
-                  >
-                    {media.trailer.thumbnail && (
-                      <img src={media.trailer.thumbnail} alt="" loading="lazy" />
-                    )}
-                    <span className="k-trailer__play">
-                      <Icon icon={Play} size={22} weight="fill" />
-                    </span>
-                    <span className="k-trailer__label">Watch on YouTube</span>
-                  </button>
-                </Section>
               )}
 
               {streamingLinks.length > 0 && (
@@ -739,6 +795,28 @@ export function AnimeDetail() {
                   )}
                 </Section>
               )}
+
+              {media.trailer?.site === "youtube" && (
+                <Section title="Trailer">
+                  <button
+                    type="button"
+                    className="k-trailer"
+                    onClick={() =>
+                      void openExternal(
+                        `https://www.youtube.com/watch?v=${media.trailer!.id}`,
+                      )
+                    }
+                  >
+                    {media.trailer.thumbnail && (
+                      <img src={media.trailer.thumbnail} alt="" loading="lazy" />
+                    )}
+                    <span className="k-trailer__play">
+                      <Icon icon={Play} size={22} weight="fill" />
+                    </span>
+                    <span className="k-trailer__label">Watch on YouTube</span>
+                  </button>
+                </Section>
+              )}
             </>
           )}
 
@@ -765,11 +843,17 @@ export function AnimeDetail() {
                       : `${ledgerEpisodeLabel(seriesLedger)} across ${seriesLedger.memberCount} entries · ${seriesLedger.untrackedCount} not on your list`}
                   </p>
                 )}
-              <div className="k-seasonrows">
-                {seasonRows.map((row, i) => {
+              {(() => {
+                // One renderer for both sections: main-story rows get their
+                // watch-order number; extras get a dot and a "where it falls"
+                // placement chip derived from air dates.
+                const renderSeasonRow = (
+                  row: SeasonRow,
+                  num: number | null,
+                  where: string | null,
+                ) => {
                   const rowEntry = listMap[row.id];
                   const isCurrent = row.id === media.id;
-                  const alt = secondaryTitle(row.title, titleLanguage);
                   const relChip = row.direct
                     ? relationChipMeta(row.relationType)
                     : null;
@@ -781,7 +865,7 @@ export function AnimeDetail() {
                   const inner = (
                     <>
                       <span className="k-seasonrow__num" aria-hidden>
-                        {i + 1}
+                        {num ?? "·"}
                       </span>
                       <AnimeCover
                         src={getCoverUrl(row.coverImage)}
@@ -796,11 +880,6 @@ export function AnimeDetail() {
                         >
                           {preferredTitle(row.title, titleLanguage)}
                         </Text>
-                        {alt && (
-                          <Text size="xs" color="tertiary" clamp={1}>
-                            {alt}
-                          </Text>
-                        )}
                         <Text size="xs" color="secondary" clamp={2}>
                           {seasonLabel(row)}
                         </Text>
@@ -811,19 +890,14 @@ export function AnimeDetail() {
                             </span>
                           )}
                           {!isCurrent && relChip && (
-                            <span
-                              className="k-chip-kind"
-                              style={{ "--chip": relChip.color } as CSSProperties}
-                            >
-                              {relChip.label}
-                            </span>
+                            <span className="k-chip-kind">{relChip.label}</span>
                           )}
                           {fmtChip && (
-                            <span
-                              className="k-chip-kind"
-                              style={{ "--chip": fmtChip.color } as CSSProperties}
-                            >
-                              {fmtChip.label}
+                            <span className="k-chip-kind">{fmtChip.label}</span>
+                          )}
+                          {where && (
+                            <span className="k-chip-kind k-chip-kind--where">
+                              {where}
                             </span>
                           )}
                           {unaired && (
@@ -851,9 +925,9 @@ export function AnimeDetail() {
                     <button
                       key={row.id}
                       type="button"
-                      className={`k-seasonrow${unaired ? " k-seasonrow--unaired" : ""}`}
-                      // Tracked rows wear their status as a wash from the left
-                      // edge — same paint language as the quick menu.
+                      className={`k-seasonrow${unaired ? " k-seasonrow--unaired" : ""}${rowEntry?.status === "not_interested" ? " k-seasonrow--dimmed" : ""}`}
+                      // Tracked rows carry their status as a thin left-edge
+                      // bar — same paint language as the quick menu.
                       style={
                         rowEntry
                           ? ({
@@ -866,8 +940,28 @@ export function AnimeDetail() {
                       {inner}
                     </button>
                   );
-                })}
-              </div>
+                };
+                return (
+                  <>
+                    <div className="k-seasonrows">
+                      {extraRows.length > 0 && (
+                        <p className="k-seasonrows__subhead">Main story</p>
+                      )}
+                      {mainRows.map((row, i) => renderSeasonRow(row, i + 1, null))}
+                    </div>
+                    {extraRows.length > 0 && (
+                      <div className="k-seasonrows k-seasonrows--extras">
+                        <p className="k-seasonrows__subhead">
+                          Extras & side stories
+                        </p>
+                        {extraRows.map((row) =>
+                          renderSeasonRow(row, null, placementLabel(row, mainRows)),
+                        )}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               {chainLoading && (
                 <Text size="xs" color="tertiary" className="k-seasonrows__loading">
                   Looking for the rest of the series…
@@ -889,7 +983,11 @@ export function AnimeDetail() {
           )}
 
           {tab === "similar" && (
-            <RecommendationsRow media={media} onOpen={(rid) => navigate(`/anime/${rid}`, { replace: true })} />
+            <RecommendationsRow
+              media={media}
+              titleLanguage={titleLanguage}
+              onOpen={(rid) => navigate(`/anime/${rid}`, { replace: true })}
+            />
           )}
           </div>
         </div>
@@ -921,7 +1019,9 @@ function SeasonRowStatus({ entry }: { entry: AnimeListEntry }) {
       ? "Watched"
       : entry.status === "plan_to_watch"
         ? "Planned"
-        : `${entry.episodes_watched} / ${entry.total_episodes ?? "?"}`;
+        : entry.status === "not_interested"
+          ? "Not interested"
+          : `${entry.episodes_watched} / ${entry.total_episodes ?? "?"}`;
   return (
     <span className="k-seasonrow__mystatus" style={{ color: meta.color }}>
       <Icon icon={meta.icon} size={11} weight="fill" />
@@ -968,6 +1068,7 @@ function StaffRow({ media }: { media: AnimeMedia }) {
 function CharactersRow({ media }: { media: AnimeMedia }) {
   const chars = media.characters ?? [];
   if (chars.length === 0) return null;
+  const anyDub = chars.some((c) => c.dubActor);
   return (
     <Section title="Characters">
       <div className="k-hscroll">
@@ -979,10 +1080,20 @@ function CharactersRow({ media }: { media: AnimeMedia }) {
             <Text size="xs" weight={500} clamp={2}>
               {c.name}
             </Text>
+            {/* Both casts, each tagged. The language tag only appears when the
+                title actually has a dub anywhere — an all-sub show doesn't
+                need every card saying "JP". */}
             {c.voiceActor && (
-              <Text size="2xs" color="tertiary" clamp={1}>
-                {c.voiceActor}
-              </Text>
+              <span className="k-charcard__va" title={c.voiceActor}>
+                {anyDub && <span className="k-charcard__lang">JP</span>}
+                <span className="k-charcard__vaname">{c.voiceActor}</span>
+              </span>
+            )}
+            {c.dubActor && (
+              <span className="k-charcard__va" title={c.dubActor}>
+                <span className="k-charcard__lang">EN</span>
+                <span className="k-charcard__vaname">{c.dubActor}</span>
+              </span>
             )}
           </div>
         ))}
@@ -993,9 +1104,11 @@ function CharactersRow({ media }: { media: AnimeMedia }) {
 
 function RecommendationsRow({
   media,
+  titleLanguage,
   onOpen,
 }: {
   media: AnimeMedia;
+  titleLanguage: TitleLanguage;
   onOpen: (id: number) => void;
 }) {
   const recs = media.recommendations ?? [];
@@ -1005,9 +1118,12 @@ function RecommendationsRow({
       <div className="k-hscroll">
         {recs.map((r) => (
           <button key={r.id} className="k-relcard" onClick={() => onOpen(r.id)}>
-            <AnimeCover src={getCoverUrl(r.coverImage)} alt={preferredTitle(r.title)} />
+            <AnimeCover
+              src={getCoverUrl(r.coverImage)}
+              alt={preferredTitle(r.title, titleLanguage)}
+            />
             <Text size="xs" weight={500} clamp={2}>
-              {preferredTitle(r.title)}
+              {preferredTitle(r.title, titleLanguage)}
             </Text>
           </button>
         ))}

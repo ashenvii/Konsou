@@ -25,13 +25,26 @@ export function entryToSummary(e: AnimeListEntry): AnimeSummary {
 
 const COVER_SIZE: keyof CoverImage = "large";
 
+/** AniList serves a literal grey "No Image" JPEG (…/default.jpg) for media
+ *  without cover art. Treat it as no URL at all, so every surface renders our
+ *  own designed fallback tile instead of their placeholder photo. */
+function realCover(url: string | null | undefined): string | null {
+  if (!url) return null;
+  return /\/default\.(jpe?g|png|webp)(\?|$)/i.test(url) ? null : url;
+}
+
 /** Browser HTTP cache handles repeat cover requests — just normalize the URL.
  *  (Disk caching via asset:// is deferred to v1.1 — see Trap 4.) */
 export function getCoverUrl(
   cover?: CoverImage | null,
   fallback = "",
 ): string {
-  return cover?.[COVER_SIZE] ?? cover?.medium ?? cover?.extraLarge ?? fallback;
+  return (
+    realCover(cover?.[COVER_SIZE]) ??
+    realCover(cover?.medium) ??
+    realCover(cover?.extraLarge) ??
+    fallback
+  );
 }
 
 /** Selectable title languages with labels + a live example (shown in onboarding
@@ -80,21 +93,8 @@ export function preferredTitle(
   return "Untitled";
 }
 
-/** The best single other-language title to show beneath the primary, or null. */
-export function secondaryTitle(
-  title: AnimeTitle,
-  pref: TitleLanguage = "romaji",
-): string | null {
-  const primary = preferredTitle(title, pref);
-  for (const key of SECONDARY_ORDER[pref]) {
-    const v = pick(title, key);
-    if (v && v !== primary) return v;
-  }
-  return null;
-}
-
-/** Every distinct title other than the primary — used on the detail page so the
- *  user can read the other-language name(s) without opening Settings. */
+/** Every distinct title other than the primary — shown behind the info toggle
+ *  on the detail page, never inline. One name per surface everywhere else. */
 export function alternateTitles(
   title: AnimeTitle,
   pref: TitleLanguage = "romaji",

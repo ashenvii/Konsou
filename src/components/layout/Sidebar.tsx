@@ -3,7 +3,6 @@ import type { FocusEvent, MouseEvent } from "react";
 import { NavLink } from "react-router-dom";
 import { Icon } from "@/components/ui/Icon";
 import { useNotificationStore } from "@/lib/store/notificationStore";
-import { useAuthStore } from "@/lib/store/authStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useNavStacks } from "@/lib/navStacks";
 import { useTabPress } from "@/hooks/useTabPress";
@@ -23,7 +22,6 @@ const CLOSE_DELAY = 160;
 
 export function Sidebar() {
   const alertCount = useNotificationStore((s) => s.items.length);
-  const account = useAuthStore((s) => s.account);
   const sidebarMode = useSettingsStore((s) => s.sidebarMode);
   const currentTab = useNavStacks((s) => s.currentTab);
   const onTabPress = useTabPress();
@@ -84,13 +82,6 @@ export function Sidebar() {
       data-expanded={expanded || undefined}
       {...hoverProps}
     >
-      <div className="k-sidebar__brand">
-        <span className="k-sidebar__logomark">
-          <img src="/konsou.svg" alt="Konsou" width={32} height={32} />
-        </span>
-        <span className="k-sidebar__wordmark">Konsou</span>
-      </div>
-
       <nav className="k-sidebar__nav" aria-label="Primary">
         {NAV_ITEMS.map((item) => {
           // The owning tab stays lit while its detail/settings pages are up.
@@ -126,30 +117,6 @@ export function Sidebar() {
       </nav>
 
       <div className="k-sidebar__footer">
-        <NavLink
-          to="/settings"
-          title="Settings, account & stats"
-          replace
-          className={({ isActive }) =>
-            `k-sidebar__account${isActive ? " k-sidebar__account--active" : ""}`
-          }
-        >
-          <div className="k-sidebar__avatar" aria-hidden>
-            {account?.avatarUrl ? (
-              <img src={account.avatarUrl} alt="" />
-            ) : (
-              <span>{account ? account.name.charAt(0) : "?"}</span>
-            )}
-          </div>
-          <div className="k-sidebar__accountinfo">
-            <span className="k-sidebar__accountname">
-              {account?.name ?? "Settings"}
-            </span>
-            <span className="k-sidebar__accountmeta">
-              {account?.email ?? "Account & stats"}
-            </span>
-          </div>
-        </NavLink>
         <span className="k-sidebar__version">v{APP_VERSION}</span>
       </div>
     </aside>

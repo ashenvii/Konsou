@@ -218,6 +218,11 @@ body.is-grab-scrolling * {
     animation-duration: 2.8s !important;
     animation-iteration-count: infinite !important;
   }
+  /* The hold-to-confirm fill is progress feedback, not decoration: flattening
+     it makes the button read "done" 650ms before the action actually fires. */
+  .k-holdbtn--holding .k-holdbtn__fill {
+    transition-duration: var(--hold-ms, 650ms) !important;
+  }
   /* Loading spinners must keep spinning or they read as a frozen page — a
      stalled "still" spinner is worse than none. Windows reports reduce when
      "Animation effects" is off (common on desktop), so keep these turning. */

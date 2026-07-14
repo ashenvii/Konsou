@@ -12,7 +12,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Icon } from "@/components/ui/Icon";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { listStatusLabel } from "@/lib/format";
-import { LIST_STATUSES } from "@/types/list";
+import { WATCH_STATUSES } from "@/types/list";
 import { statusMeta } from "@/components/anime/statusMeta";
 import type { ListFilter, ListStatus, SortSpec, ViewMode } from "@/types/list";
 
@@ -233,7 +233,7 @@ export function ListToolbar({
             </span>
             <span className="k-filteroption__count">{counts.all}</span>
           </button>
-          {LIST_STATUSES.map((t) => {
+          {WATCH_STATUSES.map((t) => {
             const active = selected.includes(t);
             return (
               <button

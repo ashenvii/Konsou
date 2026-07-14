@@ -159,7 +159,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         items = items.filter((n) => !gone.has(n.related_id));
       }
 
-      items = dedupeByRelated(items);
+      // "Started airing" alerts are retired: the Airing → Episodes calendar
+      // already shows a plan-to-watch title the moment it starts airing, so a
+      // separate notification for it was pure duplication. Drop any that the
+      // background airing scan may still have inserted so they never surface.
+      items = dedupeByRelated(items).filter((n) => n.type !== "started_airing");
       const unread = await db.unreadCount();
       const settings = await db.settingsGetAll();
       const lastRaw = Number(settings[LAST_CHECK_KEY]);

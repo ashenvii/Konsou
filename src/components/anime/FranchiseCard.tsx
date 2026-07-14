@@ -3,8 +3,6 @@ import type { CSSProperties } from "react";
 import {
   Bookmark,
   Check,
-  ChevronRight,
-  EyeOff,
   Layers,
   Pause,
   Play,
@@ -79,7 +77,6 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
       : 0;
 
   const seasonCount = entries.length;
-  const doneSeasons = entries.filter((e) => e.status === "completed").length;
   const epLabel = `${totalWatched} / ${totalEpisodes != null ? totalEpisodes : "?"}`;
   // A completed single with no known episode count would read "0 / ?" beside
   // a full season bar; the completed marker already says everything.
@@ -89,7 +86,6 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
     totalEpisodes == null &&
     totalWatched === 0;
   const seasonLabel = `${seasonCount} seasons`;
-  const seasonSummary = `${doneSeasons} done`;
 
   // ── Grid ──────────────────────────────────────────────────
   if (view === "grid") {
@@ -175,11 +171,8 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
               <span className="k-hold__label">On hold</span>
             </span>
           )}
-          {displayEntry.status === "not_interested" && (
-            <span className="k-notinterested" aria-label={status.label} title={status.label}>
-              <Icon icon={EyeOff} size={12} />
-            </span>
-          )}
+          {/* No not_interested marker: muted entries never form a card
+              (groupEntries drops them), so a card never carries that status. */}
 
           <div className="k-card__footer">
             <Text size="sm" weight={600} clamp={2} color="onCover" className="k-card__title">
@@ -210,16 +203,9 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
             {/* Segmented season bar: one chunk per tracked season. */}
             <SeasonBar entries={entries} size="grid" className="k-card__seasonbar" />
           </div>
-
-          {/* Opens the franchise sheet */}
-          <button
-            type="button"
-            className="k-card__quick k-card__quick--sheet"
-            onClick={(e) => { e.stopPropagation(); onOpen(rootId); }}
-            aria-label={isGroup ? "Manage seasons" : "View details"}
-          >
-            <Icon icon={isGroup ? Layers : ChevronRight} size={16} />
-          </button>
+          {/* No corner action button: tapping the card IS the action, and the
+              top-left badge already marks the franchise. A button that repeats
+              the card tap is clutter, not affordance. */}
         </div>
       </article>
     );
@@ -241,18 +227,19 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
             {title}
           </Text>
           <div className="k-row__sub">
-            <span className="k-pill" style={{ color: status.color }}>
-              <Icon icon={status.icon} size={12} weight="fill" />
+            <span className="k-pill">
+              <span className="k-pill__icon" style={{ color: status.color }}>
+                <Icon icon={status.icon} size={12} weight="fill" />
+              </span>
               {status.label}
             </span>
+            {/* Count only — the season bar below already draws how many are
+                done, so a "N done" caption would say it twice. */}
             {isGroup && (
-              <>
-                <span className="k-chip-mini">
-                  <Icon icon={Layers} size={10} />
-                  {seasonLabel}
-                </span>
-                <span className="k-row__dim">{seasonSummary}</span>
-              </>
+              <span className="k-chip-mini">
+                <Icon icon={Layers} size={10} />
+                {seasonLabel}
+              </span>
             )}
           </div>
           <SeasonBar entries={entries} size="row" className="k-row__seasonbar" />
@@ -263,14 +250,7 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
             <span className="k-row__scoreval">★ {formatScore(displayEntry.score)}</span>
           )}
         </div>
-        <button
-          type="button"
-          className="k-row__action"
-          onClick={(e) => { e.stopPropagation(); onOpen(rootId); }}
-          aria-label="Manage seasons"
-        >
-          <Icon icon={ChevronRight} size={18} />
-        </button>
+        {/* Tapping the row opens the sheet; a chevron repeating that is noise. */}
       </article>
     );
   }

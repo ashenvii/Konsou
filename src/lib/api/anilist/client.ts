@@ -26,6 +26,7 @@ import {
   normalizeForSearch,
   preferredTitle,
 } from "@/lib/format";
+import { isPromoNode } from "@/lib/franchise/storySplit";
 import type { MalRawEntry } from "../mal/parseExport";
 import type { AnimeListEntry, ListStatus } from "@/types/list";
 
@@ -42,6 +43,11 @@ const SEARCH_TTL = 10 * 60 * 1000; // 10 minutes
 const DETAIL_TTL = 24 * 60 * 60 * 1000; // 24 hours
 const RELATION_TTL = 6 * 60 * 60 * 1000; // 6 hours
 const BATCH_SPACING_MS = 700; // AniList burst limiter guard
+// Hard cap on any single request. Without it, a fetch that connects but never
+// gets a response (seen on mobile for the detail query, which passed no signal)
+// awaits forever and the page spins with no way out but killing the app. A
+// timeout surfaces as a retryable network error instead.
+const REQUEST_TIMEOUT_MS = 15_000;
 // AniList caps query complexity at 500 per request, and each aliased
 // `Media { relations { … } }` in the sequel-detection batch costs ~30. A
 // 50-id batch is ~1500 and is rejected outright (HTTP 400, no data), which
@@ -82,6 +88,9 @@ export type CountryCode = "JP" | "CN" | "KR" | "TW";
 export interface BrowseParams {
   sort: BrowseSort;
   page?: number;
+  /** Optional keyword: lets the filtered browse also match a title, so users can
+   *  search any anime AND narrow it by genre/year/format in one query. */
+  search?: string | null;
   season?: MediaSeason;
   seasonYear?: number;
   /** AniList genre names, e.g. "Action"; combined with AND. */
@@ -148,16 +157,40 @@ class AniListClient {
       if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
       await anilistLimiter.acquire(priority);
       if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+
+      // Own timeout controller so every request is bounded, forwarding the
+      // caller's abort (if any). A timeout aborts with a TimeoutError, which is
+      // not an AbortError, so the loop below retries it like any network blip.
+      const controller = new AbortController();
+      const onCallerAbort = () =>
+        controller.abort(signal?.reason ?? new DOMException("Aborted", "AbortError"));
+      if (signal) signal.addEventListener("abort", onCallerAbort, { once: true });
+      const timer = setTimeout(
+        () => controller.abort(new DOMException("Request timed out", "TimeoutError")),
+        REQUEST_TIMEOUT_MS,
+      );
       try {
-        const res = await fetch(ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ query, variables }),
-          signal,
-        });
+        let res: Response;
+        try {
+          res = await fetch(ENDPOINT, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({ query, variables }),
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timer);
+          if (signal) signal.removeEventListener("abort", onCallerAbort);
+        }
+
+        // Trust the server's own budget arithmetic over ours whenever it's
+        // visible. Best-effort: if CORS doesn't expose the header, get()
+        // returns null and the local bucket stands alone.
+        const remaining = Number(res.headers.get("X-RateLimit-Remaining"));
+        if (Number.isFinite(remaining)) anilistLimiter.syncRemaining(remaining);
 
         if (res.status === 429) {
           // AniList's window resets every 60s, so never pause the whole bucket
@@ -248,7 +281,11 @@ class AniListClient {
         "high",
         signal,
       );
-      let results: AnimeSummary[] = (data.Page.media ?? []).map(mapSummary);
+      // PVs/CMs/teasers are advertising, not results anyone searches for;
+      // the same conservative gate the franchise walk uses.
+      let results: AnimeSummary[] = (data.Page.media ?? [])
+        .map(mapSummary)
+        .filter((m: AnimeSummary) => !isPromoNode(m));
       let hasNextPage = data.Page.pageInfo?.hasNextPage ?? false;
 
       // AniList's SEARCH_MATCH whiffs entirely on some partial prefixes
@@ -324,28 +361,55 @@ class AniListClient {
     }
   }
 
-  /** Cache-first detail (24h). */
-  async getById(id: number): Promise<AnimeMedia> {
+  /** Detail refreshes already running in the background, keyed by media id. */
+  private detailRefreshing = new Set<number>();
+
+  /**
+   * Stale-while-revalidate detail. ANY cached copy renders immediately -- a
+   * title's description, cover, and season list don't change enough to be
+   * worth making the user watch a spinner, and repeat opens must cost zero
+   * requests or a browsing session eats the whole rate budget. A copy older
+   * than DETAIL_TTL additionally kicks off a background (low-priority)
+   * refresh, so the cache converges on fresh without the user ever waiting
+   * on it. Only a cold id -- never seen before -- goes to the network in the
+   * foreground.
+   */
+  async getById(id: number, signal?: AbortSignal): Promise<AnimeMedia> {
     const cached = await safeCache(() =>
       getDb().then((db) => db.cacheGetAnime(id)),
     );
-    if (cached && Date.now() - cached.cachedAt < DETAIL_TTL) {
+    if (cached) {
+      if (Date.now() - cached.cachedAt >= DETAIL_TTL) {
+        void this.refreshDetail(id);
+      }
       return cached.data;
     }
 
+    const data = await this.request<any>(DETAIL_QUERY, { id }, "high", signal);
+    // A deleted/private id resolves to null even on an otherwise-OK response.
+    if (!data?.Media) throw new Error(`AniList media ${id} not found`);
+    const media = mapDetail(data.Media);
+    void safeCache(() => getDb().then((db) => db.cacheSetAnime(id, media)));
+    return media;
+  }
+
+  /** Background half of getById's stale-while-revalidate: refetch one detail
+   *  at low priority and rewrite the SQLite copy. Deduped so a page being
+   *  reopened in a loop can't queue the same refresh N times; failures are
+   *  swallowed because the stale copy already rendered. */
+  private async refreshDetail(id: number): Promise<void> {
+    if (this.detailRefreshing.has(id)) return;
+    this.detailRefreshing.add(id);
     try {
-      const data = await this.request<any>(DETAIL_QUERY, { id });
-      // A deleted/private id resolves to null even on an otherwise-OK response.
-      if (!data?.Media) {
-        if (cached) return cached.data;
-        throw new Error(`AniList media ${id} not found`);
+      const data = await this.request<any>(DETAIL_QUERY, { id }, "low");
+      if (data?.Media) {
+        const media = mapDetail(data.Media);
+        await safeCache(() => getDb().then((db) => db.cacheSetAnime(id, media)));
       }
-      const media = mapDetail(data.Media);
-      void safeCache(() => getDb().then((db) => db.cacheSetAnime(id, media)));
-      return media;
-    } catch (err) {
-      if (cached) return cached.data; // serve stale on failure
-      throw err;
+    } catch (e) {
+      console.warn(`[anilist] background detail refresh failed for ${id}:`, e);
+    } finally {
+      this.detailRefreshing.delete(id);
     }
   }
 
@@ -361,10 +425,12 @@ class AniListClient {
     const withStatus = Boolean(params.status);
     const withCountry = Boolean(params.country);
     const withYear = Boolean(params.yearFrom || params.yearTo);
+    const search = params.search?.trim() ? params.search.trim() : null;
     const variables: Record<string, unknown> = {
       page,
       perPage: PER_PAGE,
       sort: [params.sort],
+      search,
       season: params.season ?? null,
       seasonYear: params.seasonYear ?? null,
       genre_in: genres,
@@ -395,25 +461,41 @@ class AniListClient {
       variables,
     );
     return {
-      results: (data.Page.media ?? []).map(mapSummary),
+      results: (data.Page.media ?? [])
+        .map(mapSummary)
+        .filter((m: AnimeSummary) => !isPromoNode(m)),
       hasNextPage: data.Page.pageInfo?.hasNextPage ?? false,
       page,
     };
   }
 
+  /** Relation ids already being revalidated in the background. */
+  private relationsRevalidating = new Set<number>();
+
   /**
-   * Relations for many anime at once. Reads the 6h snapshot cache first, only
+   * Relations for many anime at once. Reads the snapshot cache first, only
    * fetching the ids whose snapshot is missing/expired, batched ≤12 per request
-   * (AniList complexity cap) with 700ms spacing. Defaults to `low` priority —
+   * (AniList complexity cap) with 700ms spacing. Defaults to `low` priority --
    * sequel detection is background work that must yield to the user's own
    * searches and page loads.
+   *
+   * `staleOk` is the presentation mode (franchise walks, quick menu, Related):
+   * ANY snapshot serves immediately no matter its age, and expired ones queue
+   * a background low-priority revalidation instead of blocking. Franchise
+   * graphs change on the timescale of season announcements, so showing a
+   * days-old graph instantly beats making the user wait out a re-crawl --
+   * that re-crawl was most of what burned the rate budget while browsing.
+   * Correctness-sensitive callers (root resolution, the sequel radar) leave
+   * it off and keep strict TTL semantics.
    */
   async getRelationsBatch(
     ids: number[],
     priority: Priority = "low",
+    opts?: { staleOk?: boolean },
   ): Promise<RelationMap> {
     const result: RelationMap = {};
     const stale: number[] = [];
+    const revalidate: number[] = [];
 
     for (const id of ids) {
       const snap = await safeCache(() =>
@@ -421,10 +503,15 @@ class AniListClient {
       );
       if (snap && Date.now() - snap.checkedAt < RELATION_TTL) {
         result[id] = snap.relations;
+      } else if (snap && opts?.staleOk) {
+        result[id] = snap.relations;
+        revalidate.push(id);
       } else {
         stale.push(id);
       }
     }
+
+    if (revalidate.length > 0) void this.revalidateRelations(revalidate);
 
     let sawNetworkFailure = false;
     for (let i = 0; i < stale.length; i += RELATIONS_BATCH_SIZE) {
@@ -444,6 +531,28 @@ class AniListClient {
     }
 
     return result;
+  }
+
+  /** Background half of staleOk: re-fetch expired snapshots at low priority.
+   *  resolveRelationChunk rewrites the SQLite snapshots as it goes, so the
+   *  next walk simply finds them fresh. Deduped per id; failures are dropped
+   *  because a stale snapshot already served and the TTL will retry later. */
+  private async revalidateRelations(ids: number[]): Promise<void> {
+    const todo = ids.filter((id) => !this.relationsRevalidating.has(id));
+    if (todo.length === 0) return;
+    for (const id of todo) this.relationsRevalidating.add(id);
+    try {
+      const sink: RelationMap = {};
+      for (let i = 0; i < todo.length; i += RELATIONS_BATCH_SIZE) {
+        const chunk = todo.slice(i, i + RELATIONS_BATCH_SIZE);
+        await this.resolveRelationChunk(chunk, "low", sink);
+        if (i + RELATIONS_BATCH_SIZE < todo.length) await delay(BATCH_SPACING_MS);
+      }
+    } catch (e) {
+      console.warn("[anilist] background relation revalidation failed:", e);
+    } finally {
+      for (const id of todo) this.relationsRevalidating.delete(id);
+    }
   }
 
   /**

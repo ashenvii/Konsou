@@ -443,6 +443,23 @@
     padding-inline: var(--content-padding-lg);
   }
 }
+/* Scroll-reactive: Tonight is a suggestion, not a control — while reading the
+   list it folds away with the top bar and returns on scroll-up. max-height
+   collapse (bounded well above its natural height) keeps this pure CSS; the
+   trigger is data-chrome-hidden on <html> from useScrollElevation. The
+   transition property lives in pages.css (it must merge with the box-shadow
+   elevation transition declared there, which loads later and would win). */
+@media (max-width: 1023px) {
+  .k-tonight {
+    max-height: 200px;
+    overflow: hidden;
+  }
+  html[data-chrome-hidden="true"] .k-tonight {
+    max-height: 0;
+    opacity: 0;
+    padding-bottom: 0;
+  }
+}
 .k-tonight__head {
   display: flex;
   align-items: center;

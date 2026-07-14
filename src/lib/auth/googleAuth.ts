@@ -129,6 +129,23 @@ async function fetchUserInfo(accessToken: string): Promise<GoogleAccount> {
 // Loopback flow (desktop + Android): localhost TCP server via Rust command
 // ---------------------------------------------------------------------------
 
+/** Rejects the flow currently waiting on the browser, if any. */
+let cancelPending: (() => void) | null = null;
+
+/** Error identity for a user-abandoned sign-in, so callers can stay quiet
+ *  about it instead of toasting a failure. */
+export class AuthCancelledError extends Error {
+  constructor() {
+    super("Sign-in cancelled");
+    this.name = "AuthCancelled";
+  }
+}
+
+/** Cancel the in-flight sign-in (wired to the Cancel state of the button). */
+export function cancelGoogleOAuth(): void {
+  cancelPending?.();
+}
+
 async function desktopOAuth(verifier: string, challenge: string, state: string): Promise<GoogleAccount> {
   if (!DESKTOP_CLIENT_ID) {
     throw new Error("VITE_GOOGLE_CLIENT_ID is not set. Add it to your .env file.");
@@ -143,17 +160,60 @@ async function desktopOAuth(verifier: string, challenge: string, state: string):
 
   const callbackPath = await new Promise<string>((resolve, reject) => {
     let done = false;
-    const timeout = setTimeout(() => {
-      done = true;
-      reject(new Error("Sign-in timed out. Please try again."));
-    }, 5 * 60_000);
-
-    listen<string>("oauth-callback", (event) => {
+    let graceTimer = 0;
+    let unlisten: (() => void) | undefined;
+    const finish = (fn: () => void) => {
       if (done) return;
       done = true;
       clearTimeout(timeout);
-      resolve(event.payload);
-    }).catch(reject);
+      clearTimeout(graceTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
+      unlisten?.();
+      cancelPending = null;
+      fn();
+    };
+
+    const timeout = setTimeout(
+      () => finish(() => reject(new Error("Sign-in timed out. Please try again."))),
+      2 * 60_000,
+    );
+
+    cancelPending = () => finish(() => reject(new AuthCancelledError()));
+
+    // Abandon detection. On Android, opening the consent browser hides the
+    // webview; coming back makes it visible again. Visible with no callback
+    // after a short grace (the redirect, when it happened, lands first) means
+    // the user backed out — stop waiting instead of spinning for the full
+    // timeout. Desktop never goes hidden when a browser window opens, so this
+    // path simply stays dormant there; desktop cancels via the button.
+    let leftApp = false;
+    const onVisibility = () => {
+      if (done) return;
+      if (document.visibilityState === "hidden") {
+        leftApp = true;
+        clearTimeout(graceTimer);
+        return;
+      }
+      if (leftApp) {
+        graceTimer = window.setTimeout(
+          () => finish(() => reject(new AuthCancelledError())),
+          3000,
+        );
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    listen<string>("oauth-callback", (event) => {
+      finish(() => resolve(event.payload));
+    }).then(
+      (stop) => {
+        // If the flow already ended while the listener was registering,
+        // release it immediately instead of leaking it into the next flow.
+        if (done) stop();
+        else unlisten = stop;
+      },
+      (e) => finish(() => reject(e)),
+    );
   });
 
   const params = new URLSearchParams(callbackPath.split("?")[1] ?? "");
