@@ -6,6 +6,7 @@ import { Icon } from "@/components/ui/Icon";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { goBack } from "@/hooks/useAppBack";
 import { groupEntries } from "@/lib/franchise/grouping";
+import type { FranchiseGroup } from "@/lib/franchise/grouping";
 import { useListStore } from "@/lib/store/listStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import type { ListStatus } from "@/types/list";
@@ -44,10 +45,18 @@ export function StatusRoom() {
     const wanted = new Set(room.statuses);
     const scoped = entries.filter((e) => wanted.has(e.status));
     const built = groupEntries(scoped);
-    // Recent-first: last touched at the top. Plan's deliberate rank comes with
-    // the persisted-order migration; date-added stands in until then.
-    return [...built].sort((a, b) => b.sortUpdated - a.sortUpdated);
-  }, [entries, room]);
+    // Recency key differs by room: Completed sorts by when you FINISHED it (not
+    // any later edit), so a re-scored title doesn't jump the queue. Plan uses
+    // date-added until the persisted rank lands; Watching uses last-touched.
+    const keyOf = (g: FranchiseGroup) => {
+      if (status === "completed") {
+        return Math.max(...g.entries.map((e) => e.completed_at ?? e.updated_at));
+      }
+      if (status === "plan") return g.sortAdded;
+      return g.sortUpdated;
+    };
+    return [...built].sort((a, b) => keyOf(b) - keyOf(a));
+  }, [entries, room, status]);
 
   if (!room) return <Navigate to="/" replace />;
 

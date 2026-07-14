@@ -44,6 +44,13 @@ not-interested stays invisible.
       (episodes exist; duration likely does not). One rebuild-style migration
       per the v10 precedent if a CHECK is involved.
 
+### Episode entry (applies everywhere episodes are edited)
+- [ ] The episode count must be DIRECTLY EDITABLE, not just +/- stepping. A
+      300-episode series can't require 300 taps. Tap the number to type it;
+      commit on blur/Enter via setEpisodes (which clamps + fires the
+      complete-at-finale prompt). Shared EpisodeStepper used by QuickMenu,
+      FranchiseSheet's SeasonRow, and EditSheet.
+
 ### Phase 1, the quick menu (load-bearing, build first)
 - [ ] New `QuickMenu` component that replaces `FranchiseSheet` and folds in
       what `EditSheet` / `StatusSheet` / `CatchUpSheet` do.

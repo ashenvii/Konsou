@@ -3,11 +3,11 @@ import {
   Calendar,
   ChevronDown,
   ChevronRight,
-  Minus,
   Plus,
   Trash2,
   Zap,
 } from "lucide-react";
+import { EpisodeCounter } from "./EpisodeCounter";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { HoldButton } from "@/components/ui/HoldButton";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -486,7 +486,6 @@ function SeasonRow({
   onStatusTap: (id: number) => void;
   dimmed?: boolean;
 }) {
-  const incrementEpisodes = useListStore((s) => s.incrementEpisodes);
   const meta = statusMeta(entry.status);
   const { color } = seasonSegment(entry);
 
@@ -499,11 +498,6 @@ function SeasonRow({
 
   const isActive = entry.status === "watching" || entry.status === "rewatching";
   const epText = `${entry.episodes_watched} / ${entry.total_episodes ?? "?"}`;
-  const canDecrement = isActive && entry.episodes_watched > 0;
-  const canIncrement =
-    isActive &&
-    (entry.total_episodes == null ||
-      entry.episodes_watched < entry.total_episodes);
 
   return (
     <div
@@ -548,25 +542,11 @@ function SeasonRow({
           {where && <span className="k-chip-kind k-chip-kind--where">{where}</span>}
           {year != null && <span className="k-srow__dim">{year}</span>}
           {isActive ? (
-            <div className="k-srow__stepper">
-              <button
-                type="button"
-                onClick={() => void incrementEpisodes(entry.anilist_id, -1)}
-                disabled={!canDecrement}
-                aria-label="Remove one episode"
-              >
-                <Icon icon={Minus} size={14} />
-              </button>
-              <span className="k-srow__epnum">{epText}</span>
-              <button
-                type="button"
-                onClick={() => void incrementEpisodes(entry.anilist_id, 1)}
-                disabled={!canIncrement}
-                aria-label="Add one episode"
-              >
-                <Icon icon={Plus} size={14} />
-              </button>
-            </div>
+            <EpisodeCounter
+              anilistId={entry.anilist_id}
+              watched={entry.episodes_watched}
+              total={entry.total_episodes}
+            />
           ) : (
             <span className="k-srow__ep">{epText}</span>
           )}

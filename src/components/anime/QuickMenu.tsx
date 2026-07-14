@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { ChevronRight, Minus, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, Trash2 } from "lucide-react";
 import { AnimeCover } from "./AnimeCover";
+import { EpisodeCounter } from "./EpisodeCounter";
 import { statusMeta } from "./statusMeta";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Icon } from "@/components/ui/Icon";
@@ -28,7 +29,6 @@ interface QuickMenuProps {
 export function QuickMenu({ open, onClose, anilistId, onOpenDetails }: QuickMenuProps) {
   const entry = useListStore((s) => s.map[anilistId]);
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
-  const setEpisodes = useListStore((s) => s.setEpisodes);
   const updateStatus = useListStore((s) => s.updateStatus);
   const setScore = useListStore((s) => s.setScore);
   const remove = useListStore((s) => s.remove);
@@ -55,7 +55,6 @@ export function QuickMenu({ open, onClose, anilistId, onOpenDetails }: QuickMenu
   const watched = entry.episodes_watched;
   const pct = total ? Math.min(100, (watched / total) * 100) : 0;
 
-  const step = (d: number) => setEpisodes(anilistId, watched + d);
   const commitScore = () => {
     if (scoreDraft !== entry.score) setScore(anilistId, scoreDraft);
   };
@@ -81,27 +80,7 @@ export function QuickMenu({ open, onClose, anilistId, onOpenDetails }: QuickMenu
       <div className="k-qm__progress">
         <div className="k-qm__progresstop">
           <span className="k-qm__label">Episodes watched</span>
-          <div className="k-edit__stepper">
-            <button
-              type="button"
-              onClick={() => step(-1)}
-              disabled={watched <= 0}
-              aria-label="Remove one episode"
-            >
-              <Icon icon={Minus} size={18} />
-            </button>
-            <span className="k-edit__epval">
-              {watched} <span className="k-epcounter__total">/ {total ?? "?"}</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => step(1)}
-              disabled={total != null && watched >= total}
-              aria-label="Add one episode"
-            >
-              <Icon icon={Plus} size={18} />
-            </button>
-          </div>
+          <EpisodeCounter anilistId={anilistId} watched={watched} total={total} />
         </div>
         <div className="k-qm__bar">
           <span style={{ width: `${pct}%` }} />
