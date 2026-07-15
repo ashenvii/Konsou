@@ -4,7 +4,6 @@ import { ChevronRight, Search, X } from "lucide-react";
 import { FranchiseCard } from "@/components/anime/FranchiseCard";
 import { FranchiseSheet } from "@/components/anime/FranchiseSheet";
 import { FranchiseCollection } from "@/components/list/FranchiseCollection";
-import { AnimeCover } from "@/components/anime/AnimeCover";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
@@ -12,23 +11,29 @@ import { ImportSheet } from "@/components/ui/ImportSheet";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
 import { groupEntries } from "@/lib/franchise/grouping";
-import { getCoverUrl, normalizeForSearch } from "@/lib/format";
+import { normalizeForSearch } from "@/lib/format";
 import { useListStore } from "@/lib/store/listStore";
-import { useSettingsStore } from "@/lib/store/settingsStore";
 import { getUiState, setUiState } from "@/lib/uiState";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
 import type { AnimeListEntry, ListStatus } from "@/types/list";
 
 /**
- * My List landing. Not a flat list and not tabs: a calm overview whose bands
- * are doors into the dedicated status rooms. Each band shows only a recent
- * slice, so it stays instant no matter how large the library grows. A query
- * turns the whole surface into a flat "have you seen it?" search.
+ * My List landing. A responsive dashboard, not a phone layout stretched onto a
+ * desktop: on wide screens the three statuses sit side by side as columns that
+ * fill the width; on a phone they stack into sections. Same content, laid out
+ * for the platform it's on. Each column shows a recent slice and opens its
+ * dedicated room for the full, sortable view. A query turns the whole surface
+ * into a flat "have you seen it?" search across every status.
  */
 
 type BandKind = "watching" | "plan" | "completed";
 
-const BAND_PREVIEW = 12;
+// How many rows a column shows before "see all N" points at the room.
+const COLUMN_LIMIT: Record<BandKind, number> = {
+  watching: 12,
+  plan: 12,
+  completed: 8,
+};
 
 function recencyKey(g: FranchiseGroup, kind: BandKind): number {
   if (kind === "completed") {
@@ -51,7 +56,6 @@ export function Overview() {
   const navigate = useNavigate();
   const loaded = useListStore((s) => s.loaded);
   const entries = useListStore((s) => s.entries);
-  const defaultView = useSettingsStore((s) => s.defaultView);
 
   const [search, setSearchState] = useState(() => getUiState("mylist.search", ""));
   const [importOpen, setImportOpen] = useState(false);
@@ -63,18 +67,11 @@ export function Overview() {
   };
 
   const watching = useMemo(
-    () => sortBand(groupsFor(entries, ["watching", "rewatching"]), "watching").slice(0, BAND_PREVIEW),
+    () => sortBand(groupsFor(entries, ["watching", "rewatching"]), "watching"),
     [entries],
   );
-  const plan = useMemo(
-    () => sortBand(groupsFor(entries, ["plan_to_watch"]), "plan").slice(0, BAND_PREVIEW),
-    [entries],
-  );
-  const completedGroups = useMemo(() => groupsFor(entries, ["completed"]), [entries]);
-  const completedRecent = useMemo(
-    () => sortBand(completedGroups, "completed").slice(0, 6),
-    [completedGroups],
-  );
+  const plan = useMemo(() => sortBand(groupsFor(entries, ["plan_to_watch"]), "plan"), [entries]);
+  const completed = useMemo(() => sortBand(groupsFor(entries, ["completed"]), "completed"), [entries]);
 
   // Search groups across every status: "have I seen it" doesn't care where.
   const allGroups = useMemo(() => groupEntries(entries), [entries]);
@@ -98,10 +95,8 @@ export function Overview() {
 
   const sheetGroup = useMemo(() => {
     if (activeRootId == null) return null;
-    return (
-      [...watching, ...plan, ...completedRecent].find((g) => g.rootId === activeRootId) ?? null
-    );
-  }, [activeRootId, watching, plan, completedRecent]);
+    return [...watching, ...plan, ...completed].find((g) => g.rootId === activeRootId) ?? null;
+  }, [activeRootId, watching, plan, completed]);
 
   if (!loaded) {
     return (
@@ -181,7 +176,7 @@ export function Overview() {
             <p className="k-list-results">
               {matches.length} {matches.length === 1 ? "match" : "matches"} for “{debounced.trim()}”
             </p>
-            <FranchiseCollection groups={matches} view={defaultView} restoreKey="overview.search" />
+            <FranchiseCollection groups={matches} view="grid" restoreKey="overview.search" />
           </>
         ) : (
           <EmptyState
@@ -191,25 +186,29 @@ export function Overview() {
         )
       ) : (
         <div className="k-overview__scroll konsou-scroll">
-          <Band
-            title="Watching"
-            kind="watching"
-            groups={watching}
-            onOpenRoom={() => openRoom("/list/watching")}
-            onCard={setActiveRootId}
-          />
-          <Band
-            title="Want to watch"
-            kind="plan"
-            groups={plan}
-            onOpenRoom={() => openRoom("/list/plan")}
-            onCard={setActiveRootId}
-          />
-          <CompletedDrawer
-            count={completedGroups.length}
-            recent={completedRecent}
-            onOpenRoom={() => openRoom("/list/completed")}
-          />
+          <div className="k-overview__grid">
+            <Column
+              title="Watching"
+              kind="watching"
+              groups={watching}
+              onOpenRoom={() => openRoom("/list/watching")}
+              onCard={setActiveRootId}
+            />
+            <Column
+              title="Want to watch"
+              kind="plan"
+              groups={plan}
+              onOpenRoom={() => openRoom("/list/plan")}
+              onCard={setActiveRootId}
+            />
+            <Column
+              title="Completed"
+              kind="completed"
+              groups={completed}
+              onOpenRoom={() => openRoom("/list/completed")}
+              onCard={setActiveRootId}
+            />
+          </div>
         </div>
       )}
 
@@ -224,27 +223,7 @@ export function Overview() {
   );
 }
 
-function BandHead({
-  title,
-  count,
-  onOpenRoom,
-}: {
-  title: string;
-  count: number;
-  onOpenRoom: () => void;
-}) {
-  return (
-    <div className="k-band__head">
-      <h2 className="k-band__title">{title}</h2>
-      <button type="button" className="k-band__open" onClick={onOpenRoom}>
-        Open <span className="k-band__count">{count}</span>
-        <Icon icon={ChevronRight} size={15} />
-      </button>
-    </div>
-  );
-}
-
-function Band({
+function Column({
   title,
   kind,
   groups,
@@ -258,51 +237,24 @@ function Band({
   onCard: (rootId: number) => void;
 }) {
   if (groups.length === 0) return null;
+  const limit = COLUMN_LIMIT[kind];
+  const shown = groups.slice(0, limit);
+  const overflow = groups.length - shown.length;
+
   return (
-    <section className={`k-band k-band--${kind}`}>
-      <BandHead title={title} count={groups.length} onOpenRoom={onOpenRoom} />
-      <div className="k-rail konsou-scroll">
-        {groups.map((g) => (
-          <div key={g.rootId} className="k-rail__item">
-            <FranchiseCard group={g} view="grid" onOpen={onCard} />
-          </div>
+    <section className={`k-ovcol k-ovcol--${kind}`}>
+      <div className="k-ovcol__head">
+        <h2 className="k-ovcol__title">{title}</h2>
+        <span className="k-ovcol__count">{groups.length}</span>
+      </div>
+      <div className="k-ovcol__list">
+        {shown.map((g) => (
+          <FranchiseCard key={g.rootId} group={g} view="list" onOpen={onCard} />
         ))}
       </div>
-    </section>
-  );
-}
-
-function CompletedDrawer({
-  count,
-  recent,
-  onOpenRoom,
-}: {
-  count: number;
-  recent: FranchiseGroup[];
-  onOpenRoom: () => void;
-}) {
-  if (count === 0) return null;
-  return (
-    <section className="k-band k-band--completed">
-      <button type="button" className="k-drawer" onClick={onOpenRoom}>
-        <div className="k-drawer__top">
-          <span className="k-drawer__num">{count}</span>
-          <span className="k-drawer__lab">finished</span>
-          <span className="k-drawer__sub">your record</span>
-          <Icon icon={ChevronRight} size={16} className="k-drawer__go" />
-        </div>
-        <div className="k-drawer__shelf">
-          {recent.map((g) => (
-            <div key={g.rootId} className="k-drawer__bk">
-              <AnimeCover
-                src={getCoverUrl({ medium: g.displayEntry.cover_url ?? undefined })}
-                alt={g.displayEntry.title_romaji}
-                decorative
-                radius="var(--radius-sm)"
-              />
-            </div>
-          ))}
-        </div>
+      <button type="button" className="k-ovcol__more" onClick={onOpenRoom}>
+        {overflow > 0 ? `See all ${groups.length}` : "Open room"}
+        <Icon icon={ChevronRight} size={15} />
       </button>
     </section>
   );
