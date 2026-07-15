@@ -44,6 +44,153 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Overview (My List landing) ──────────────────────────────
+   A calm launcher: a global search, then status bands that are
+   doors into the dedicated rooms. Each band shows a recent slice. */
+.k-ovsearch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--content-padding-sm) var(--content-padding-sm) var(--space-3);
+  padding: 0 var(--space-4);
+  height: 44px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  flex: none;
+}
+.k-ovsearch__input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-text-primary);
+  font-size: var(--text-base);
+}
+.k-ovsearch__input::placeholder {
+  color: var(--color-text-tertiary);
+}
+.k-ovsearch__clear {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  color: var(--color-text-tertiary);
+}
+.k-ovsearch__clear:hover {
+  background: var(--color-surface-3);
+  color: var(--color-text-primary);
+}
+
+.k-overview__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: var(--space-10);
+}
+
+.k-band {
+  margin-bottom: var(--space-5);
+}
+.k-band__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--content-padding-sm) var(--space-2);
+}
+.k-band__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.k-band__open {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+.k-band__open:hover {
+  color: var(--color-text-primary);
+}
+.k-band__count {
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.k-rail {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 var(--content-padding-sm) var(--space-2);
+  scroll-snap-type: x proximity;
+}
+.k-rail__item {
+  width: 132px;
+  flex: none;
+  scroll-snap-align: start;
+}
+
+.k-drawer {
+  display: block;
+  width: auto;
+  margin: 0 var(--content-padding-sm);
+  text-align: left;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-top-color: color-mix(in oklch, var(--color-status-completed) 28%, transparent);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+.k-drawer:hover {
+  border-color: var(--color-border-strong);
+}
+.k-drawer__top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.k-drawer__num {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--color-status-completed);
+  font-variant-numeric: tabular-nums;
+}
+.k-drawer__lab {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.k-drawer__sub {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+.k-drawer__go {
+  align-self: center;
+  color: var(--color-text-tertiary);
+}
+.k-drawer__shelf {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.k-drawer__bk {
+  width: 48px;
+  height: 68px;
+  flex: none;
+}
+.k-drawer__bk .k-cover {
+  width: 100%;
+  height: 100%;
+}
+
 /* ── Header scroll elevation ─────────────────────────────────
    useScrollElevation toggles data-scrolled on the owning .k-page when its
    scroll container moves. The top chrome then gains a hairline + soft shadow
