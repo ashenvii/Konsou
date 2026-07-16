@@ -120,7 +120,10 @@
   font-variant-numeric: tabular-nums;
 }
 .k-ovsection__more {
-  margin-left: auto;
+  /* Padding grows the tap target to 44px; the negative margin absorbs it so
+     the label stays put in the header. */
+  margin: -12px -8px -12px auto;
+  padding: 12px 8px;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -191,6 +194,12 @@
   .k-qcard__start {
     opacity: 1;
     transform: none;
+  }
+}
+/* Touch pointers get a taller Start; a mouse keeps the slim overlay. */
+@media (pointer: coarse) {
+  .k-qcard__start {
+    height: 40px;
   }
 }
 .k-qcard__title {
