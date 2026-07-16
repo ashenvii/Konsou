@@ -81,6 +81,18 @@
   border-color: color-mix(in oklch, var(--color-accent) 45%, transparent);
   color: var(--color-accent-glow);
 }
+/* Narrow screens: the sorts take their own row under the title instead of
+   squeezing into the leftover column beside it. The lone Dropped chip stays
+   inline; it fits. */
+@media (max-width: 480px) {
+  .k-roomhead {
+    flex-wrap: wrap;
+  }
+  .k-roomhead__sorts {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}
 
 /* ── Overview (My List landing) ──────────────────────────────
    A calm launcher: a global search, then status bands that are
@@ -440,7 +452,9 @@
 }
 .k-shelfitem__title {
   font-size: var(--text-2xs);
-  color: var(--color-text-tertiary);
+  /* Secondary, not tertiary: 11px tertiary lands ~3.6:1 on the base and
+     fails AA; secondary reads ~7:1 and matches the queue captions. */
+  color: var(--color-text-secondary);
   line-height: 1.25;
   overflow: hidden;
   display: -webkit-box;
