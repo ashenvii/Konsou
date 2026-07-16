@@ -23,7 +23,7 @@ export interface FranchiseGroup {
   totalWatched: number;
   /** Sum of total_episodes, or null if any entry has an unknown episode count. */
   totalEpisodes: number | null;
-  /** Pre-computed sort keys used by MyList's compareGroups. */
+  /** Pre-computed sort keys used by the Overview and room sorts. */
   sortUpdated: number;
   sortAdded: number;
 }

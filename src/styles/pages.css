@@ -586,7 +586,6 @@
    the virtualized lists and scroll restore are untouched. z-index lifts the
    bar so its shadow paints over the scrolling content. Detail opts out — it
    runs its own immersive top bar. */
-.k-toolbar,
 .k-pageheader,
 .k-search__bar {
   position: relative;
@@ -594,42 +593,11 @@
   background: var(--color-base);
   transition: box-shadow var(--duration-normal) var(--ease-out);
 }
-/* The Tonight strip is the real boundary on My List (the grid tucks under it),
-   so it carries the shadow. z-index lifts it over the scrolling grid; the
-   toolbar above only needs the hairline. */
-.k-tonight {
-  position: relative;
-  z-index: 2;
-  transition: box-shadow var(--duration-normal) var(--ease-out);
-}
-/* Merge the scroll-reactive collapse transitions (see list.css) with the
-   elevation shadow — a lone transition:box-shadow here would cancel them. */
-@media (max-width: 1023px) {
-  .k-tonight {
-    transition:
-      box-shadow var(--duration-normal) var(--ease-out),
-      max-height 240ms var(--ease-out),
-      opacity 160ms var(--ease-out);
-  }
-}
-.k-page[data-scrolled="true"]:not(.k-detail) > .k-toolbar {
-  box-shadow: 0 1px 0 var(--color-border);
-}
-.k-page[data-scrolled="true"]:not(.k-detail) > .k-tonight,
 .k-page[data-scrolled="true"]:not(.k-detail) > .k-pageheader,
 .k-page[data-scrolled="true"]:not(.k-detail) > .k-search__bar {
   box-shadow:
     0 1px 0 var(--color-border),
     0 10px 22px -14px oklch(0% 0 0 / 65%);
-}
-/* When Tonight is hidden (short viewport), the toolbar becomes the boundary
-   and takes the full shadow itself. */
-@media (max-height: 680px) {
-  .k-page[data-scrolled="true"]:not(.k-detail) > .k-toolbar {
-    box-shadow:
-      0 1px 0 var(--color-border),
-      0 10px 22px -14px oklch(0% 0 0 / 65%);
-  }
 }
 
 /* ── Skeleton grid ─────────────────────────────────────────── */
