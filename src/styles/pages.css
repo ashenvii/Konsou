@@ -183,6 +183,7 @@
   scroll-snap-type: x proximity;
 }
 .k-qcard {
+  position: relative; /* anchors the stretched open button */
   width: 132px;
   flex: none;
   scroll-snap-align: start;
@@ -198,11 +199,32 @@
     transform var(--duration-normal) var(--ease-out),
     box-shadow var(--duration-normal) var(--ease-out);
 }
-.k-qcard:hover .k-qcard__cover {
+.k-qcard:hover .k-qcard__cover,
+.k-qcard:focus-within .k-qcard__cover {
   transform: translateY(-3px);
   box-shadow: var(--glow-in-list-hover);
 }
+/* The title doubles as the card's open button, stretched over the poster.
+   Start and the move controls carry z-index so they stay clickable above it. */
+.k-qcard__open {
+  width: 100%;
+  text-align: left;
+}
+.k-qcard__open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+}
+.k-qcard__open:focus-visible {
+  outline: none;
+}
+.k-qcard__open:focus-visible::after {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
 .k-qcard__start {
+  z-index: 1;
   position: absolute;
   left: var(--space-2);
   right: var(--space-2);
@@ -255,6 +277,7 @@
    and never fight the app's drag-anywhere-to-scroll. */
 .k-qcard__move {
   position: absolute;
+  z-index: 1;
   top: var(--space-2);
   left: var(--space-2);
   right: var(--space-2);
@@ -374,6 +397,7 @@
     transition: none;
   }
   .k-qcard:hover .k-qcard__cover,
+  .k-qcard:focus-within .k-qcard__cover,
   .k-shelfitem:hover .k-shelfitem__cover {
     transform: none;
   }
@@ -440,7 +464,8 @@
     transform var(--duration-normal) var(--ease-out),
     box-shadow var(--duration-normal) var(--ease-out);
 }
-.k-hero:hover {
+.k-hero:hover,
+.k-hero:focus-within {
   transform: translateY(-2px);
   box-shadow: var(--glow-in-list-hover);
 }
@@ -450,7 +475,8 @@
   box-shadow: var(--shadow-card);
   opacity: 0.72;
 }
-.k-hero--paused:hover {
+.k-hero--paused:hover,
+.k-hero--paused:focus-within {
   opacity: 1;
   box-shadow: var(--shadow-card-hi);
 }
@@ -526,6 +552,32 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* The title doubles as the card's open button, stretched over the whole hero.
+   The quick-log carries z-index so it stays clickable above the stretch. */
+.k-hero__open {
+  display: block;
+  max-width: 100%;
+  color: inherit;
+  text-align: left;
+  letter-spacing: inherit;
+  white-space: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-hero__open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.k-hero__open:focus-visible {
+  outline: none;
+}
+/* The card clips its children, so the ring draws just inside the edge. */
+.k-hero__open:focus-visible::after {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+  border-radius: var(--radius-xl);
+}
 .k-hero__meta {
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
@@ -545,6 +597,8 @@
   background: var(--card-status);
 }
 .k-hero__log {
+  position: relative;
+  z-index: 1;
   flex: none;
   align-self: stretch;
   display: flex;
@@ -574,7 +628,8 @@
   .k-hero__log {
     transition: none;
   }
-  .k-hero:hover {
+  .k-hero:hover,
+  .k-hero:focus-within {
     transform: none;
   }
 }

@@ -86,7 +86,6 @@ export function HeroCard({
     <article
       className={`k-hero${paused ? " k-hero--paused" : ""}`}
       style={{ "--card-status": status.color } as CSSProperties}
-      onClick={() => onOpen(rootId)}
     >
       {cover && (
         <div
@@ -107,7 +106,18 @@ export function HeroCard({
             <Icon icon={status.icon} size={12} weight="fill" />
             {status.label}
           </span>
-          <h3 className="k-hero__title">{title}</h3>
+          {/* The title is the card's real door: a button stretched over the
+              whole hero (see .k-hero__open), so the card opens by keyboard
+              and screen reader too. The quick-log floats above it. */}
+          <h3 className="k-hero__title">
+            <button
+              type="button"
+              className="k-hero__open"
+              onClick={() => onOpen(rootId)}
+            >
+              {title}
+            </button>
+          </h3>
           <span className="k-hero__meta">
             {displaySeason ? `${displaySeason} · ` : ""}
             Ep {watched} of {total ?? "?"}
@@ -121,10 +131,7 @@ export function HeroCard({
           <button
             type="button"
             className="k-hero__log"
-            onClick={(e) => {
-              e.stopPropagation();
-              void updateStatus(displayEntry.anilist_id, "watching");
-            }}
+            onClick={() => void updateStatus(displayEntry.anilist_id, "watching")}
             aria-label={`Resume watching ${title}`}
           >
             <Icon icon={Play} size={18} weight="fill" />
@@ -135,10 +142,7 @@ export function HeroCard({
             type="button"
             className="k-hero__log"
             disabled={atMax}
-            onClick={(e) => {
-              e.stopPropagation();
-              void incrementEpisodes(displayEntry.anilist_id, 1);
-            }}
+            onClick={() => void incrementEpisodes(displayEntry.anilist_id, 1)}
             aria-label={`Log episode ${watched + 1} of ${title}`}
           >
             <Icon icon={Plus} size={20} />

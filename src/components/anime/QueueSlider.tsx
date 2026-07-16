@@ -60,7 +60,7 @@ export function QueueCard({
   const cover = getCoverUrl({ medium: displayEntry.cover_url ?? undefined });
 
   return (
-    <article className="k-qcard" onClick={() => onOpen(rootId)}>
+    <article className="k-qcard">
       <div className="k-qcard__cover">
         <AnimeCover src={cover} alt={title} decorative radius="var(--radius-lg)" />
         {onMove && (
@@ -68,10 +68,7 @@ export function QueueCard({
             <button
               type="button"
               disabled={!canMoveEarlier}
-              onClick={(e) => {
-                e.stopPropagation();
-                onMove(rootId, -1);
-              }}
+              onClick={() => onMove(rootId, -1)}
               aria-label={`Move ${title} earlier in the queue`}
             >
               <Icon icon={ChevronLeft} size={16} />
@@ -79,10 +76,7 @@ export function QueueCard({
             <button
               type="button"
               disabled={!canMoveLater}
-              onClick={(e) => {
-                e.stopPropagation();
-                onMove(rootId, 1);
-              }}
+              onClick={() => onMove(rootId, 1)}
               aria-label={`Move ${title} later in the queue`}
             >
               <Icon icon={ChevronRight} size={16} />
@@ -92,17 +86,23 @@ export function QueueCard({
         <button
           type="button"
           className="k-qcard__start"
-          onClick={(e) => {
-            e.stopPropagation();
-            void updateStatus(displayEntry.anilist_id, "watching");
-          }}
+          onClick={() => void updateStatus(displayEntry.anilist_id, "watching")}
           aria-label={`Start watching ${title}`}
         >
           <Icon icon={Play} size={14} weight="fill" />
           Start
         </button>
       </div>
-      <span className="k-qcard__title">{title}</span>
+      {/* The title is the card's real door: a button stretched over the whole
+          poster (see .k-qcard__open); Start and the move controls float above
+          it, so the card opens by keyboard and screen reader too. */}
+      <button
+        type="button"
+        className="k-qcard__title k-qcard__open"
+        onClick={() => onOpen(rootId)}
+      >
+        {title}
+      </button>
     </article>
   );
 }
