@@ -172,6 +172,40 @@
 .k-ovsection__more:hover {
   color: var(--color-text-primary);
 }
+/* In-section invitation for an empty band: one quiet line, at most one door.
+   Dashed edges are the page's "empty slot" vocabulary (see .k-qadd__box). */
+.k-ovempty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 0 var(--content-padding-sm) var(--space-6);
+}
+.k-ovempty__text {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  max-width: 52ch;
+}
+.k-ovempty__action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 44px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  border: 1px dashed var(--color-border-strong);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+.k-ovempty__action:hover {
+  border-color: var(--color-accent);
+  background: var(--color-surface-2);
+}
 
 /* Queue Slider (plan) — aspirational poster carousel. */
 .k-queue {
@@ -305,6 +339,48 @@
   .k-qcard__move button {
     width: 40px;
     height: 40px;
+  }
+}
+
+/* Ghost tile at the end of the queue: the always-present door for adding the
+   next thing, shaped like the posters it stands with. */
+.k-qadd {
+  width: 132px;
+  flex: none;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.k-qadd__box {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border-strong);
+  background: color-mix(in oklch, var(--color-surface-2) 55%, transparent);
+  color: var(--color-text-tertiary);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.k-qadd:hover .k-qadd__box,
+.k-qadd:focus-visible .k-qadd__box {
+  border-color: var(--color-accent);
+  background: var(--color-surface-2);
+  color: var(--color-accent-glow);
+}
+.k-qadd__label {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+  text-align: left;
+}
+@media (min-width: 1080px) {
+  .k-qadd {
+    width: 158px;
   }
 }
 

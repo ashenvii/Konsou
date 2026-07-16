@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Plus } from "lucide-react";
 import { AnimeCover } from "./AnimeCover";
 import { Icon } from "@/components/ui/Icon";
 import { getCoverUrl, preferredTitle } from "@/lib/format";
@@ -14,9 +14,12 @@ import type { FranchiseGroup } from "@/lib/franchise/grouping";
 export function QueueSlider({
   groups,
   onOpen,
+  onAdd,
 }: {
   groups: FranchiseGroup[];
   onOpen: (rootId: number) => void;
+  /** Renders the ghost Add tile at the end of the queue (Overview only). */
+  onAdd?: () => void;
 }) {
   if (groups.length === 0) return null;
   return (
@@ -24,6 +27,19 @@ export function QueueSlider({
       {groups.map((g) => (
         <QueueCard key={g.rootId} group={g} onOpen={onOpen} />
       ))}
+      {onAdd && (
+        <button
+          type="button"
+          className="k-qadd"
+          onClick={onAdd}
+          aria-label="Add something to watch"
+        >
+          <span className="k-qadd__box">
+            <Icon icon={Plus} size={24} />
+          </span>
+          <span className="k-qadd__label">Add</span>
+        </button>
+      )}
     </div>
   );
 }

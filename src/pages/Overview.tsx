@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Search, X } from "lucide-react";
+import { ChevronRight, Plus, Search, X } from "lucide-react";
 import { FranchiseSheet } from "@/components/anime/FranchiseSheet";
 import { HeroBinge } from "@/components/anime/HeroBinge";
 import { QueueSlider } from "@/components/anime/QueueSlider";
@@ -56,6 +56,10 @@ export function Overview() {
   const [search, setSearchState] = useState(() => getUiState("mylist.search", ""));
   const [importOpen, setImportOpen] = useState(false);
   const [activeRootId, setActiveRootId] = useState<number | null>(null);
+  // Every add door on this page opens the same engine: Discover's search with
+  // the full status choice (the add law: a door may suggest, never lock).
+  const goDiscoverSearch = () =>
+    navigate("/discover", { replace: true, state: { fromSearchIntent: true } });
   const debounced = useDebounce(search, 300);
   const setSearch = (v: string) => {
     setSearchState(v);
@@ -123,10 +127,7 @@ export function Overview() {
             Track what you're watching, planning, or have finished. No score required.
           </p>
           <div className="k-mylist-empty__actions">
-            <Button
-              variant="primary"
-              onClick={() => navigate("/discover", { replace: true, state: { fromSearchIntent: true } })}
-            >
+            <Button variant="primary" onClick={goDiscoverSearch}>
               Search for anime
             </Button>
             <p className="k-mylist-empty__import">
@@ -185,33 +186,55 @@ export function Overview() {
         )
       ) : (
         <div className="k-overview__scroll konsou-scroll">
-          {watching.length > 0 && (
-            <Section
-              title="Watching"
-              count={watching.length}
-              onOpenRoom={() => openRoom("/list/watching")}
-            >
+          {/* Sections stay on the page when empty: a missing section reads as
+              a broken page on a small library, and the invitations are the
+              doors into the habits (queue it, start it, finish it). */}
+          <Section
+            title="Watching"
+            count={watching.length}
+            onOpenRoom={() => openRoom("/list/watching")}
+          >
+            {watching.length > 0 ? (
               <HeroBinge groups={heroGroups} onOpen={setActiveRootId} />
-            </Section>
-          )}
-          {plan.length > 0 && (
-            <Section
-              title="Want to watch"
-              count={plan.length}
-              onOpenRoom={() => openRoom("/list/plan")}
-            >
-              <QueueSlider groups={plan.slice(0, 15)} onOpen={setActiveRootId} />
-            </Section>
-          )}
-          {completed.length > 0 && (
-            <Section
-              title="Completed"
-              count={completed.length}
-              onOpenRoom={() => openRoom("/list/completed")}
-            >
+            ) : (
+              <SectionEmpty>
+                {plan.length > 0
+                  ? "Nothing on right now. Start something from your queue."
+                  : "Nothing on right now."}
+              </SectionEmpty>
+            )}
+          </Section>
+          <Section
+            title="Want to watch"
+            count={plan.length}
+            onOpenRoom={() => openRoom("/list/plan")}
+          >
+            {plan.length > 0 ? (
+              <QueueSlider
+                groups={plan.slice(0, 15)}
+                onOpen={setActiveRootId}
+                onAdd={goDiscoverSearch}
+              />
+            ) : (
+              <SectionEmpty
+                action={{ label: "Add something to watch", onClick: goDiscoverSearch }}
+              >
+                The scratchpad for what to watch next, so a title never slips
+                away again.
+              </SectionEmpty>
+            )}
+          </Section>
+          <Section
+            title="Completed"
+            count={completed.length}
+            onOpenRoom={() => openRoom("/list/completed")}
+          >
+            {completed.length > 0 ? (
               <DigitalShelf groups={completed.slice(0, 15)} onOpen={setActiveRootId} />
-            </Section>
-          )}
+            ) : (
+              <SectionEmpty>Shows you finish take their place here.</SectionEmpty>
+            )}
+          </Section>
         </div>
       )}
 
@@ -241,13 +264,38 @@ function Section({
     <section className="k-ovsection">
       <div className="k-ovsection__head">
         <h2 className="k-ovsection__title">{title}</h2>
-        <span className="k-ovsection__count">{count}</span>
-        <button type="button" className="k-ovsection__more" onClick={onOpenRoom}>
-          See all
-          <Icon icon={ChevronRight} size={15} />
-        </button>
+        {/* An empty room is a dead end, so its door and count stand down. */}
+        {count > 0 && <span className="k-ovsection__count">{count}</span>}
+        {count > 0 && (
+          <button type="button" className="k-ovsection__more" onClick={onOpenRoom}>
+            See all
+            <Icon icon={ChevronRight} size={15} />
+          </button>
+        )}
       </div>
       {children}
     </section>
+  );
+}
+
+/** The in-section invitation: one quiet line about what belongs here, plus at
+ *  most one door. Small on purpose; the page's real content stays the star. */
+function SectionEmpty({
+  action,
+  children,
+}: {
+  action?: { label: string; onClick: () => void };
+  children: ReactNode;
+}) {
+  return (
+    <div className="k-ovempty">
+      <p className="k-ovempty__text">{children}</p>
+      {action && (
+        <button type="button" className="k-ovempty__action" onClick={action.onClick}>
+          <Icon icon={Plus} size={16} />
+          {action.label}
+        </button>
+      )}
+    </div>
   );
 }

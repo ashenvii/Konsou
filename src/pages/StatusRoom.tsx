@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, X } from "lucide-react";
 import { FranchiseCollection } from "@/components/list/FranchiseCollection";
 import type { RoomVariant } from "@/components/list/FranchiseCollection";
+import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { goBack } from "@/hooks/useAppBack";
@@ -25,6 +26,8 @@ import type { ListStatus } from "@/types/list";
 
 interface RoomDef {
   title: string;
+  /** The empty state's headline ("Nothing want to watch yet" doesn't parse). */
+  emptyTitle: string;
   /** Statuses this room collects. Watching folds rewatching and on-hold in. */
   statuses: ListStatus[];
   variant: RoomVariant;
@@ -33,11 +36,22 @@ interface RoomDef {
 const ROOMS: Record<string, RoomDef> = {
   watching: {
     title: "Watching",
+    emptyTitle: "Nothing watching yet",
     statuses: ["watching", "rewatching", "on_hold"],
     variant: "hero",
   },
-  plan: { title: "Want to watch", statuses: ["plan_to_watch"], variant: "poster" },
-  completed: { title: "Completed", statuses: ["completed"], variant: "shelf" },
+  plan: {
+    title: "Want to watch",
+    emptyTitle: "Nothing queued yet",
+    statuses: ["plan_to_watch"],
+    variant: "poster",
+  },
+  completed: {
+    title: "Completed",
+    emptyTitle: "Nothing completed yet",
+    statuses: ["completed"],
+    variant: "shelf",
+  },
 };
 
 /** How the plan queue is arranged. */
@@ -71,9 +85,14 @@ function planRankOf(g: FranchiseGroup): number {
 
 export function StatusRoom() {
   const { status = "" } = useParams();
+  const navigate = useNavigate();
   const room = ROOMS[status];
   const isCompleted = status === "completed";
   const isPlan = status === "plan";
+  // The same add engine every door opens: Discover's search with the full
+  // status choice (the add law: a door may suggest, never lock).
+  const goDiscoverSearch = () =>
+    navigate("/discover", { replace: true, state: { fromSearchIntent: true } });
 
   const entries = useListStore((s) => s.entries);
   const reorderPlan = useListStore((s) => s.reorderPlan);
@@ -186,8 +205,13 @@ export function StatusRoom() {
 
       {groups.length === 0 ? (
         <EmptyState
-          title={`Nothing ${room.title.toLowerCase()} yet`}
+          title={room.emptyTitle}
           subtitle="Add something from Discover and it lands here."
+          action={
+            <Button variant="primary" onClick={goDiscoverSearch}>
+              Search for anime
+            </Button>
+          }
         />
       ) : (
         <FranchiseCollection
