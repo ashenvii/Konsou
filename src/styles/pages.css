@@ -43,6 +43,29 @@
   color: var(--color-text-tertiary);
   font-variant-numeric: tabular-nums;
 }
+/* Dropped filter: off by default, so your record reads as what you finished. */
+.k-roomhead__chip {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+.k-roomhead__chip:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text-secondary);
+}
+.k-roomhead__chip--on {
+  background: color-mix(in oklch, var(--color-status-dropped) 14%, transparent);
+  border-color: color-mix(in oklch, var(--color-status-dropped) 40%, transparent);
+  color: var(--color-status-dropped);
+}
 
 /* ── Overview (My List landing) ──────────────────────────────
    A calm launcher: a global search, then status bands that are
@@ -276,6 +299,13 @@
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
 }
+/* A dropped title is part of the record but never earned its colour. */
+.k-shelfitem--dropped .k-cover {
+  filter: saturate(0.3) brightness(0.75);
+}
+.k-shelfitem__score--dropped {
+  color: var(--color-status-dropped);
+}
 .k-shelf__ledge {
   height: 1px;
   margin: 0 var(--content-padding-sm);
@@ -364,6 +394,25 @@
 .k-hero:hover {
   transform: translateY(-2px);
   box-shadow: var(--glow-in-list-hover);
+}
+/* Paused sits quieter than what you're actually watching: no ember glow, the
+   art pulled back, so the active cards above it stay the loudest thing. */
+.k-hero--paused {
+  box-shadow: var(--shadow-card);
+  opacity: 0.72;
+}
+.k-hero--paused:hover {
+  opacity: 1;
+  box-shadow: var(--shadow-card-hi);
+}
+.k-hero--paused .k-hero__backdrop {
+  filter: blur(26px) saturate(0.5);
+  opacity: 0.32;
+}
+.k-hero--paused .k-hero__log {
+  background: var(--color-surface-3);
+  color: var(--color-text-primary);
+  box-shadow: none;
 }
 .k-hero__backdrop {
   position: absolute;

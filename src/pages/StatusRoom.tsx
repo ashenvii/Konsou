@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import { FranchiseCollection } from "@/components/list/FranchiseCollection";
 import type { RoomVariant } from "@/components/list/FranchiseCollection";
 import { Icon } from "@/components/ui/Icon";
@@ -13,54 +13,77 @@ import { useSettingsStore } from "@/lib/store/settingsStore";
 import type { ListStatus } from "@/types/list";
 
 /**
- * A dedicated status page ("room"). Reached from the My List overview by
- * tapping a band; pushed onto the My List tab's own back stack (any non-tab
- * path joins the current tab, so back returns to the overview). Each room
- * shows the franchise members whose status matches it — a series appears in
- * Watching for its airing season and in Completed for a finished one.
+ * A dedicated status page ("room"). Reached from the overview by tapping a
+ * section; pushed onto the My List tab's own back stack, so back returns to the
+ * overview. Each room shows the franchise members whose status matches it and
+ * renders its section's card language, so drilling in reads as more of the same
+ * surface.
+ *
+ * The minor statuses live here rather than getting rooms of their own: Watching
+ * carries Paused (on-hold) at the bottom, Completed offers Dropped as a filter.
  */
 
 interface RoomDef {
   title: string;
-  /** Statuses this room collects. Watching folds rewatching in with it. */
+  /** Statuses this room collects. Watching folds rewatching and on-hold in. */
   statuses: ListStatus[];
-  /** The card language, mirroring this status's overview section so opening a
-   *  room reads as more of the same surface, not a different place. */
   variant: RoomVariant;
 }
 
 const ROOMS: Record<string, RoomDef> = {
-  watching: { title: "Watching", statuses: ["watching", "rewatching"], variant: "hero" },
+  watching: {
+    title: "Watching",
+    statuses: ["watching", "rewatching", "on_hold"],
+    variant: "hero",
+  },
   plan: { title: "Want to watch", statuses: ["plan_to_watch"], variant: "poster" },
   completed: { title: "Completed", statuses: ["completed"], variant: "shelf" },
 };
 
+const isPaused = (g: FranchiseGroup) => g.displayEntry.status === "on_hold";
+
 export function StatusRoom() {
   const { status = "" } = useParams();
   const room = ROOMS[status];
+  const isCompleted = status === "completed";
 
   const entries = useListStore((s) => s.entries);
   const defaultView = useSettingsStore((s) => s.defaultView);
+  const [showDropped, setShowDropped] = useState(false);
 
-  // Filter to this room's statuses first, then group: a franchise resolves to
-  // just the members that belong here (S2 in Watching, S1 in Completed).
+  // Dropped is part of your record, not a place of its own: it hides behind a
+  // filter in Completed, where the "have I dealt with this?" answer lives.
+  const droppedCount = useMemo(
+    () => (isCompleted ? entries.filter((e) => e.status === "dropped").length : 0),
+    [entries, isCompleted],
+  );
+
   const groups = useMemo(() => {
     if (!room) return [];
-    const wanted = new Set(room.statuses);
+    const wanted = new Set<ListStatus>(room.statuses);
+    if (isCompleted && showDropped) wanted.add("dropped");
     const scoped = entries.filter((e) => wanted.has(e.status));
     const built = groupEntries(scoped);
+
     // Recency key differs by room: Completed sorts by when you FINISHED it (not
     // any later edit), so a re-scored title doesn't jump the queue. Plan uses
     // date-added until the persisted rank lands; Watching uses last-touched.
     const keyOf = (g: FranchiseGroup) => {
-      if (status === "completed") {
+      if (isCompleted) {
         return Math.max(...g.entries.map((e) => e.completed_at ?? e.updated_at));
       }
       if (status === "plan") return g.sortAdded;
       return g.sortUpdated;
     };
-    return [...built].sort((a, b) => keyOf(b) - keyOf(a));
-  }, [entries, room, status]);
+    return [...built].sort((a, b) => {
+      // Paused sinks below everything you're actually watching.
+      if (status === "watching") {
+        const paused = Number(isPaused(a)) - Number(isPaused(b));
+        if (paused !== 0) return paused;
+      }
+      return keyOf(b) - keyOf(a);
+    });
+  }, [entries, room, status, isCompleted, showDropped]);
 
   if (!room) return <Navigate to="/" replace />;
 
@@ -77,6 +100,18 @@ export function StatusRoom() {
         </button>
         <h1 className="k-roomhead__title">{room.title}</h1>
         <span className="k-roomhead__count">{groups.length}</span>
+
+        {isCompleted && droppedCount > 0 && (
+          <button
+            type="button"
+            className={`k-roomhead__chip${showDropped ? " k-roomhead__chip--on" : ""}`}
+            onClick={() => setShowDropped((v) => !v)}
+            aria-pressed={showDropped}
+          >
+            <Icon icon={X} size={13} />
+            Dropped {droppedCount}
+          </button>
+        )}
       </div>
 
       {groups.length === 0 ? (

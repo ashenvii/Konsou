@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Play, Plus } from "lucide-react";
 import { AnimeCover } from "./AnimeCover";
 import { statusMeta } from "./statusMeta";
 import { Icon } from "@/components/ui/Icon";
@@ -45,6 +45,7 @@ export function HeroCard({
 }) {
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
   const incrementEpisodes = useListStore((s) => s.incrementEpisodes);
+  const updateStatus = useListStore((s) => s.updateStatus);
 
   const { displayEntry, rootId, entries } = group;
   const rootEntry = entries.find((e) => e.anilist_id === rootId) ?? entries[0];
@@ -77,10 +78,13 @@ export function HeroCard({
   const total = displayEntry.total_episodes;
   const pct = total ? Math.min(100, (watched / total) * 100) : 0;
   const atMax = total != null && watched >= total;
+  // A paused entry sits quieter and offers to resume: +Ep would be a dead
+  // button, since episode tracking only applies while actively watching.
+  const paused = displayEntry.status === "on_hold";
 
   return (
     <article
-      className="k-hero"
+      className={`k-hero${paused ? " k-hero--paused" : ""}`}
       style={{ "--card-status": status.color } as CSSProperties}
       onClick={() => onOpen(rootId)}
     >
@@ -113,19 +117,34 @@ export function HeroCard({
           </div>
         </div>
 
-        <button
-          type="button"
-          className="k-hero__log"
-          disabled={atMax}
-          onClick={(e) => {
-            e.stopPropagation();
-            void incrementEpisodes(displayEntry.anilist_id, 1);
-          }}
-          aria-label={`Log episode ${watched + 1} of ${title}`}
-        >
-          <Icon icon={Plus} size={20} />
-          <span>Ep</span>
-        </button>
+        {paused ? (
+          <button
+            type="button"
+            className="k-hero__log"
+            onClick={(e) => {
+              e.stopPropagation();
+              void updateStatus(displayEntry.anilist_id, "watching");
+            }}
+            aria-label={`Resume watching ${title}`}
+          >
+            <Icon icon={Play} size={18} weight="fill" />
+            <span>Resume</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="k-hero__log"
+            disabled={atMax}
+            onClick={(e) => {
+              e.stopPropagation();
+              void incrementEpisodes(displayEntry.anilist_id, 1);
+            }}
+            aria-label={`Log episode ${watched + 1} of ${title}`}
+          >
+            <Icon icon={Plus} size={20} />
+            <span>Ep</span>
+          </button>
+        )}
       </div>
     </article>
   );

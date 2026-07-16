@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Star, X } from "lucide-react";
 import { AnimeCover } from "./AnimeCover";
 import { Icon } from "@/components/ui/Icon";
 import { formatScore, getCoverUrl, preferredTitle } from "@/lib/format";
@@ -58,16 +58,32 @@ export function ShelfItem({
     (best, e) => (e.score != null && (best == null || e.score > best) ? e.score : best),
     null,
   );
+  // Dropped rides the shelf when you ask for it: desaturated, marked with a
+  // cross instead of a score. It's part of the record ("I dealt with this"),
+  // just never a title you finished.
+  const dropped = displayEntry.status === "dropped";
 
   return (
-    <button type="button" className="k-shelfitem" onClick={() => onOpen(rootId)} title={title}>
+    <button
+      type="button"
+      className={`k-shelfitem${dropped ? " k-shelfitem--dropped" : ""}`}
+      onClick={() => onOpen(rootId)}
+      title={title}
+    >
       <div className="k-shelfitem__cover">
         <AnimeCover src={cover} alt={title} decorative radius="var(--radius-md)" />
-        {score != null && (
-          <span className="k-shelfitem__score">
-            <Icon icon={Star} size={11} weight="fill" />
-            {formatScore(score)}
+        {dropped ? (
+          <span className="k-shelfitem__score k-shelfitem__score--dropped">
+            <Icon icon={X} size={11} />
+            Dropped
           </span>
+        ) : (
+          score != null && (
+            <span className="k-shelfitem__score">
+              <Icon icon={Star} size={11} weight="fill" />
+              {formatScore(score)}
+            </span>
+          )
         )}
       </div>
       <span className="k-shelfitem__title">{title}</span>
