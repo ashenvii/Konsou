@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { FranchiseCollection } from "@/components/list/FranchiseCollection";
+import type { RoomVariant } from "@/components/list/FranchiseCollection";
 import { Icon } from "@/components/ui/Icon";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { goBack } from "@/hooks/useAppBack";
@@ -23,12 +24,15 @@ interface RoomDef {
   title: string;
   /** Statuses this room collects. Watching folds rewatching in with it. */
   statuses: ListStatus[];
+  /** The card language, mirroring this status's overview section so opening a
+   *  room reads as more of the same surface, not a different place. */
+  variant: RoomVariant;
 }
 
 const ROOMS: Record<string, RoomDef> = {
-  watching: { title: "Watching", statuses: ["watching", "rewatching"] },
-  plan: { title: "Want to watch", statuses: ["plan_to_watch"] },
-  completed: { title: "Completed", statuses: ["completed"] },
+  watching: { title: "Watching", statuses: ["watching", "rewatching"], variant: "hero" },
+  plan: { title: "Want to watch", statuses: ["plan_to_watch"], variant: "poster" },
+  completed: { title: "Completed", statuses: ["completed"], variant: "shelf" },
 };
 
 export function StatusRoom() {
@@ -84,6 +88,7 @@ export function StatusRoom() {
         <FranchiseCollection
           groups={groups}
           view={defaultView}
+          variant={room.variant}
           restoreKey={`room.${status}.scroll`}
         />
       )}

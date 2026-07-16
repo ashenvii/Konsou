@@ -28,7 +28,9 @@ export function QueueSlider({
   );
 }
 
-function QueueCard({
+/** One poster with its Start action. Exported so the Plan room renders the same
+ *  card in its virtualized grid. */
+export function QueueCard({
   group,
   onOpen,
 }: {

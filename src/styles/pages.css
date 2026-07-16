@@ -300,6 +300,20 @@
   }
 }
 
+/* Inside a room's virtualized grid the same cards go fluid: they fill their
+   column and keep 2:3 art, which is what the row-height math assumes. The
+   carousels keep their fixed widths. */
+.k-collection__grid .k-qcard,
+.k-collection__grid .k-shelfitem {
+  width: 100%;
+}
+.k-collection__grid .k-qcard__cover,
+.k-collection__grid .k-shelfitem__cover {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
+}
+
 /* Desktop earns bigger art: the carousels carry more presence and fill the
    width instead of huddling at the left. */
 @media (min-width: 1080px) {

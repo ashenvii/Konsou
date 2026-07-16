@@ -33,7 +33,10 @@ export function HeroBinge({
   );
 }
 
-function HeroCard({
+/** One cinematic card. Exported so the Watching room can render the same card
+ *  inside its virtualized grid, keeping the language continuous when you
+ *  drill in from the overview. */
+export function HeroCard({
   group,
   onOpen,
 }: {

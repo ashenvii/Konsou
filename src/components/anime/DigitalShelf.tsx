@@ -31,7 +31,9 @@ export function DigitalShelf({
   );
 }
 
-function ShelfItem({
+/** One cover on the ledge. Exported so the Completed room renders the same card
+ *  in its virtualized grid. */
+export function ShelfItem({
   group,
   onOpen,
 }: {
