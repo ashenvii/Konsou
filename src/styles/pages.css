@@ -91,74 +91,223 @@
   overflow-x: hidden;
 }
 
-/* The dashboard: one column on a phone, filling out to three side-by-side
-   columns on a desktop. Designed wide, adapts down. */
-.k-overview__grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-5);
-  max-width: 1500px;
-  margin: 0 auto;
-  padding: 0 var(--content-padding-sm) var(--space-10);
-  align-items: start;
-}
-@media (min-width: 700px) {
-  .k-overview__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-4);
-  }
-}
-@media (min-width: 1080px) {
-  .k-overview__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+.k-overview__scroll {
+  padding-bottom: var(--space-8);
 }
 
-.k-ovcol {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
+/* Full-width differentiated sections. Each carries its own shape (hero card,
+   queue carousel, collector shelf) but shares one header. */
+.k-ovsection {
+  max-width: 1500px;
+  margin: 0 auto var(--space-4);
 }
-.k-ovcol__head {
+.k-ovsection__head {
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--content-padding-sm) var(--space-3);
 }
-.k-ovcol__title {
+.k-ovsection__title {
   margin: 0;
   font-size: var(--text-lg);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
-.k-ovcol__count {
+.k-ovsection__count {
   font-size: var(--text-sm);
   font-weight: 500;
   color: var(--color-text-tertiary);
   font-variant-numeric: tabular-nums;
 }
-.k-ovcol__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-.k-ovcol__more {
+.k-ovsection__more {
+  margin-left: auto;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  height: 40px;
-  margin-top: var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  gap: 2px;
   color: var(--color-text-secondary);
   font-size: var(--text-sm);
   font-weight: 500;
 }
-.k-ovcol__more:hover {
-  background: var(--color-surface-2);
-  border-color: var(--color-border-strong);
+.k-ovsection__more:hover {
   color: var(--color-text-primary);
+}
+
+/* Queue Slider (plan) — aspirational poster carousel. */
+.k-queue {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 var(--content-padding-sm) var(--space-2);
+  scroll-snap-type: x proximity;
+}
+.k-qcard {
+  width: 132px;
+  flex: none;
+  scroll-snap-align: start;
+  cursor: pointer;
+}
+.k-qcard__cover {
+  position: relative;
+  width: 132px;
+  height: 198px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out);
+}
+.k-qcard:hover .k-qcard__cover {
+  transform: translateY(-3px);
+  box-shadow: var(--glow-in-list-hover);
+}
+.k-qcard__start {
+  position: absolute;
+  left: var(--space-2);
+  right: var(--space-2);
+  bottom: var(--space-2);
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: oklch(20% 0.06 40);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+.k-qcard:hover .k-qcard__start,
+.k-qcard:focus-within .k-qcard__start {
+  opacity: 1;
+  transform: none;
+}
+@media (hover: none) {
+  .k-qcard__start {
+    opacity: 1;
+    transform: none;
+  }
+}
+.k-qcard__title {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Digital Shelf (completed) — covers resting on a ledge, score on the corner. */
+.k-shelf {
+  max-width: 1500px;
+  margin: 0 auto;
+}
+.k-shelf__row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--space-4) var(--content-padding-sm) var(--space-3);
+  scroll-snap-type: x proximity;
+}
+.k-shelfitem {
+  width: 104px;
+  flex: none;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  text-align: left;
+}
+.k-shelfitem__cover {
+  position: relative;
+  width: 104px;
+  height: 156px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 18px -6px oklch(0% 0 0 / 0.6);
+  transition:
+    transform var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out);
+}
+.k-shelfitem:hover .k-shelfitem__cover {
+  transform: translateY(-10px);
+  box-shadow:
+    0 18px 26px -8px oklch(0% 0 0 / 0.7),
+    var(--glow-in-list);
+}
+.k-shelfitem__score {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: var(--radius-full);
+  background: oklch(12% 0.04 34 / 0.85);
+  color: var(--color-accent-glow);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+}
+.k-shelfitem__title {
+  font-size: var(--text-2xs);
+  color: var(--color-text-tertiary);
+  line-height: 1.25;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+.k-shelf__ledge {
+  height: 1px;
+  margin: 0 var(--content-padding-sm);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-border-strong) 20%,
+    var(--color-border-strong) 80%,
+    transparent
+  );
+  box-shadow: 0 -10px 20px -8px oklch(0% 0 0 / 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-qcard__cover,
+  .k-qcard__start,
+  .k-shelfitem__cover {
+    transition: none;
+  }
+  .k-qcard:hover .k-qcard__cover,
+  .k-shelfitem:hover .k-shelfitem__cover {
+    transform: none;
+  }
+}
+
+/* Desktop earns bigger art: the carousels carry more presence and fill the
+   width instead of huddling at the left. */
+@media (min-width: 1080px) {
+  .k-qcard,
+  .k-qcard__cover {
+    width: 158px;
+  }
+  .k-qcard__cover {
+    height: 237px;
+  }
+  .k-shelfitem,
+  .k-shelfitem__cover {
+    width: 122px;
+  }
+  .k-shelfitem__cover {
+    height: 183px;
+  }
 }
 
 /* ── Hero Binge (active-watch focus) ─────────────────────────

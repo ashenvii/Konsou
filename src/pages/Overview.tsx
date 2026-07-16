@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Search, X } from "lucide-react";
-import { FranchiseCard } from "@/components/anime/FranchiseCard";
 import { FranchiseSheet } from "@/components/anime/FranchiseSheet";
 import { HeroBinge } from "@/components/anime/HeroBinge";
+import { QueueSlider } from "@/components/anime/QueueSlider";
+import { DigitalShelf } from "@/components/anime/DigitalShelf";
 import { FranchiseCollection } from "@/components/list/FranchiseCollection";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -15,6 +16,7 @@ import { groupEntries } from "@/lib/franchise/grouping";
 import { normalizeForSearch } from "@/lib/format";
 import { useListStore } from "@/lib/store/listStore";
 import { getUiState, setUiState } from "@/lib/uiState";
+import type { ReactNode } from "react";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
 import type { AnimeListEntry, ListStatus } from "@/types/list";
 
@@ -28,13 +30,6 @@ import type { AnimeListEntry, ListStatus } from "@/types/list";
  */
 
 type BandKind = "watching" | "plan" | "completed";
-
-// How many rows a column shows before "see all N" points at the room.
-const COLUMN_LIMIT: Record<BandKind, number> = {
-  watching: 12,
-  plan: 12,
-  completed: 8,
-};
 
 function recencyKey(g: FranchiseGroup, kind: BandKind): number {
   if (kind === "completed") {
@@ -71,10 +66,9 @@ export function Overview() {
     () => sortBand(groupsFor(entries, ["watching", "rewatching"]), "watching"),
     [entries],
   );
-  // The 1-2 most-active shows are spotlit in the Hero Binge and pulled out of
-  // the Watching column so nothing shows twice.
+  // The 1-2 most-active shows are spotlit in the Hero Binge; the rest of
+  // Watching lives one tap away in its room.
   const heroGroups = useMemo(() => watching.slice(0, 2), [watching]);
-  const watchingRest = useMemo(() => watching.slice(heroGroups.length), [watching, heroGroups]);
   const plan = useMemo(() => sortBand(groupsFor(entries, ["plan_to_watch"]), "plan"), [entries]);
   const completed = useMemo(() => sortBand(groupsFor(entries, ["completed"]), "completed"), [entries]);
 
@@ -191,30 +185,33 @@ export function Overview() {
         )
       ) : (
         <div className="k-overview__scroll konsou-scroll">
-          <HeroBinge groups={heroGroups} onOpen={setActiveRootId} />
-          <div className="k-overview__grid">
-            <Column
+          {watching.length > 0 && (
+            <Section
               title="Watching"
-              kind="watching"
-              groups={watchingRest}
+              count={watching.length}
               onOpenRoom={() => openRoom("/list/watching")}
-              onCard={setActiveRootId}
-            />
-            <Column
+            >
+              <HeroBinge groups={heroGroups} onOpen={setActiveRootId} />
+            </Section>
+          )}
+          {plan.length > 0 && (
+            <Section
               title="Want to watch"
-              kind="plan"
-              groups={plan}
+              count={plan.length}
               onOpenRoom={() => openRoom("/list/plan")}
-              onCard={setActiveRootId}
-            />
-            <Column
+            >
+              <QueueSlider groups={plan.slice(0, 15)} onOpen={setActiveRootId} />
+            </Section>
+          )}
+          {completed.length > 0 && (
+            <Section
               title="Completed"
-              kind="completed"
-              groups={completed}
+              count={completed.length}
               onOpenRoom={() => openRoom("/list/completed")}
-              onCard={setActiveRootId}
-            />
-          </div>
+            >
+              <DigitalShelf groups={completed.slice(0, 15)} onOpen={setActiveRootId} />
+            </Section>
+          )}
         </div>
       )}
 
@@ -229,39 +226,28 @@ export function Overview() {
   );
 }
 
-function Column({
+function Section({
   title,
-  kind,
-  groups,
+  count,
   onOpenRoom,
-  onCard,
+  children,
 }: {
   title: string;
-  kind: BandKind;
-  groups: FranchiseGroup[];
+  count: number;
   onOpenRoom: () => void;
-  onCard: (rootId: number) => void;
+  children: ReactNode;
 }) {
-  if (groups.length === 0) return null;
-  const limit = COLUMN_LIMIT[kind];
-  const shown = groups.slice(0, limit);
-  const overflow = groups.length - shown.length;
-
   return (
-    <section className={`k-ovcol k-ovcol--${kind}`}>
-      <div className="k-ovcol__head">
-        <h2 className="k-ovcol__title">{title}</h2>
-        <span className="k-ovcol__count">{groups.length}</span>
+    <section className="k-ovsection">
+      <div className="k-ovsection__head">
+        <h2 className="k-ovsection__title">{title}</h2>
+        <span className="k-ovsection__count">{count}</span>
+        <button type="button" className="k-ovsection__more" onClick={onOpenRoom}>
+          See all
+          <Icon icon={ChevronRight} size={15} />
+        </button>
       </div>
-      <div className="k-ovcol__list">
-        {shown.map((g) => (
-          <FranchiseCard key={g.rootId} group={g} view="list" onOpen={onCard} />
-        ))}
-      </div>
-      <button type="button" className="k-ovcol__more" onClick={onOpenRoom}>
-        {overflow > 0 ? `See all ${groups.length}` : "Open room"}
-        <Icon icon={ChevronRight} size={15} />
-      </button>
+      {children}
     </section>
   );
 }
