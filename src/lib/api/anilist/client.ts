@@ -687,6 +687,9 @@ class AniListClient {
           has_dub: null,
           franchise_root_id: null,
           airing_status: (e.media.status as string) ?? null,
+          // AniList has no equivalent of our manual plan order, so an import
+          // arrives unranked and falls back to date-added.
+          plan_rank: null,
           episode_duration: (e.media.duration as number) ?? null,
           // AniList's `repeat` is exactly Konsou's rewatch_count: completed
           // prior watches.
@@ -773,6 +776,9 @@ class AniListClient {
         has_dub: null,
         franchise_root_id: null,
         airing_status: m.status ?? null,
+        // MyAnimeList carries no manual plan order either; unranked entries
+        // fall back to date-added.
+        plan_rank: null,
         episode_duration: m.duration ?? null,
         rewatch_count: r.times_watched,
         aired_episodes: airedEpisodes(m),

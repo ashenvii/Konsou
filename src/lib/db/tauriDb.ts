@@ -27,6 +27,7 @@ const UPDATABLE_COLUMNS: (keyof ListEntryPatch | "updated_at")[] = [
   "episode_duration",
   "rewatch_count",
   "aired_episodes",
+  "plan_rank",
   "updated_at",
 ];
 
@@ -71,8 +72,8 @@ export class TauriKonsouDb implements KonsouDb {
          anilist_id, mal_id, title_romaji, title_english, title_native, cover_url,
          total_episodes, status, episodes_watched, score, notes,
          added_at, updated_at, started_at, completed_at, has_dub, franchise_root_id,
-         airing_status, episode_duration, rewatch_count, aired_episodes
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+         airing_status, episode_duration, rewatch_count, aired_episodes, plan_rank
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
        ON CONFLICT(anilist_id) DO UPDATE SET
          mal_id           = excluded.mal_id,
          title_romaji     = excluded.title_romaji,
@@ -91,13 +92,15 @@ export class TauriKonsouDb implements KonsouDb {
          airing_status    = excluded.airing_status,
          episode_duration = excluded.episode_duration,
          rewatch_count    = excluded.rewatch_count,
-         aired_episodes   = excluded.aired_episodes`,
+         aired_episodes   = excluded.aired_episodes,
+         plan_rank        = excluded.plan_rank`,
       [
         e.anilist_id, e.mal_id, e.title_romaji, e.title_english, e.title_native, e.cover_url,
         e.total_episodes, e.status, e.episodes_watched, e.score, e.notes,
         e.added_at, e.updated_at, e.started_at, e.completed_at, hasDub,
         e.franchise_root_id ?? null, e.airing_status ?? null,
         e.episode_duration ?? null, e.rewatch_count ?? 0, e.aired_episodes ?? null,
+        e.plan_rank ?? null,
       ],
     );
   }

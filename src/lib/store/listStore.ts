@@ -37,6 +37,10 @@ interface ListState {
   setEpisodes: (anilistId: number, episodes: number) => Promise<void>;
   incrementEpisodes: (anilistId: number, delta: number) => Promise<void>;
   setScore: (anilistId: number, score: number | null) => Promise<void>;
+  /** Rewrite the plan queue's manual order. Takes the anilist_ids in their new
+   *  order and stamps each one's rank, so the arrangement survives restarts
+   *  and rides the Drive sync. */
+  reorderPlan: (anilistIdsInOrder: number[]) => Promise<void>;
   patch: (anilistId: number, patch: ListEntryPatch) => Promise<void>;
   /** Force re-resolve a franchise so its tracked members share one root card.
    *  Lets the user fix a grouping the background pass missed (e.g. a sequel
@@ -82,6 +86,8 @@ function completedRelEntry(
     has_dub: null,
     franchise_root_id: rootId,
     airing_status: rel.status ?? null,
+    // Completed, so it never rides the plan queue.
+    plan_rank: null,
     // Relation nodes don't carry duration; the detail visit backfills it.
     episode_duration: null,
     rewatch_count: 0,
@@ -331,6 +337,7 @@ export const useListStore = create<ListState>((set, get) => {
         episode_duration: e.episode_duration ?? null,
         rewatch_count: e.rewatch_count ?? 0,
         aired_episodes: e.aired_episodes ?? null,
+        plan_rank: e.plan_rank ?? null,
       }));
       set({ entries, map: indexBy(entries), loaded: true });
       if (!groomingStarted) {
@@ -368,6 +375,8 @@ export const useListStore = create<ListState>((set, get) => {
         has_dub: null,
         franchise_root_id: null,
         airing_status: s.status ?? null,
+        // Unranked: a fresh plan entry falls in by date-added until you drag it.
+        plan_rank: null,
         episode_duration: s.duration ?? null,
         rewatch_count: 0,
         aired_episodes: airedEpisodes(s),
@@ -560,6 +569,45 @@ export const useListStore = create<ListState>((set, get) => {
 
     setScore: async (anilistId, score) => {
       await patchEntry(anilistId, { score });
+    },
+
+    reorderPlan: async (anilistIdsInOrder) => {
+      // Ranks are rewritten densely from 0 on every reorder. The queue is a
+      // bounded, deliberately-arranged list, so a full rewrite is simpler than
+      // gap-based ranks and can't drift out of order over time. Only entries
+      // whose rank actually changed are written.
+      const prev = get().map;
+      const changed = anilistIdsInOrder
+        .map((id, rank) => ({ id, rank }))
+        .filter(({ id, rank }) => prev[id] && prev[id].plan_rank !== rank);
+      if (changed.length === 0) return;
+
+      const now = Date.now();
+      // Optimistic: the whole new order lands at once so the list can't flicker
+      // through a half-applied arrangement.
+      set((s) => {
+        const map = { ...s.map };
+        for (const { id, rank } of changed) {
+          map[id] = { ...map[id], plan_rank: rank, updated_at: now };
+        }
+        return { entries: s.entries.map((e) => map[e.anilist_id] ?? e), map };
+      });
+
+      try {
+        const db = await getDb();
+        for (const { id, rank } of changed) {
+          await db.listUpdate(id, { plan_rank: rank, updated_at: now });
+        }
+        queueSync();
+      } catch {
+        // Put the old order back rather than leave a half-written queue.
+        set((s) => {
+          const map = { ...s.map };
+          for (const { id } of changed) map[id] = prev[id];
+          return { entries: s.entries.map((e) => map[e.anilist_id] ?? e), map };
+        });
+        toast.error("Couldn't save that order");
+      }
     },
 
     patch: async (anilistId, p) => {

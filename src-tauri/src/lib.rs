@@ -295,6 +295,16 @@ CREATE INDEX IF NOT EXISTS idx_list_franchise ON anime_list(franchise_root_id);
 "#,
             kind: MigrationKind::Up,
         },
+        // The plan queue is a ranked list you arrange yourself, so the order has
+        // to survive restarts and ride the Drive sync like any other field.
+        // Nullable: an unranked entry falls back to date-added, so existing
+        // lists need no backfill.
+        Migration {
+            version: 11,
+            description: "plan queue: persisted manual rank",
+            sql: "ALTER TABLE anime_list ADD COLUMN plan_rank INTEGER;",
+            kind: MigrationKind::Up,
+        },
     ];
 
     let builder = tauri::Builder::default()

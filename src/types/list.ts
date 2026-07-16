@@ -65,6 +65,12 @@ export interface AnimeListEntry {
   /** anilist_id of the first entry in this franchise's SEQUEL chain. null = unresolved or standalone. */
   franchise_root_id: number | null;
   /**
+   * Your manual position in the plan-to-watch queue. Lower sorts first.
+   * null = never ranked, which falls back to date-added, so an untouched list
+   * needs no backfill. Only meaningful while status is plan_to_watch.
+   */
+  plan_rank: number | null;
+  /**
    * AniList media airing status at the time of last sync. Drives status-picker guards and
    * plan-to-watch airing notifications. null = unknown (entry predates this field).
    * Values: "FINISHED" | "RELEASING" | "NOT_YET_RELEASED" | "CANCELLED" | "HIATUS"
@@ -99,6 +105,7 @@ export type ListEntryPatch = Partial<
     | "episode_duration"
     | "rewatch_count"
     | "aired_episodes"
+    | "plan_rank"
   >
 >;
 

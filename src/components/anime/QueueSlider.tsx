@@ -1,4 +1,4 @@
-import { Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { AnimeCover } from "./AnimeCover";
 import { Icon } from "@/components/ui/Icon";
 import { getCoverUrl, preferredTitle } from "@/lib/format";
@@ -33,9 +33,16 @@ export function QueueSlider({
 export function QueueCard({
   group,
   onOpen,
+  onMove,
+  canMoveEarlier,
+  canMoveLater,
 }: {
   group: FranchiseGroup;
   onOpen: (rootId: number) => void;
+  /** Only supplied while the Plan room is on your manual order. */
+  onMove?: (rootId: number, dir: -1 | 1) => void;
+  canMoveEarlier?: boolean;
+  canMoveLater?: boolean;
 }) {
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
   const updateStatus = useListStore((s) => s.updateStatus);
@@ -56,6 +63,32 @@ export function QueueCard({
     <article className="k-qcard" onClick={() => onOpen(rootId)}>
       <div className="k-qcard__cover">
         <AnimeCover src={cover} alt={title} decorative radius="var(--radius-lg)" />
+        {onMove && (
+          <div className="k-qcard__move">
+            <button
+              type="button"
+              disabled={!canMoveEarlier}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMove(rootId, -1);
+              }}
+              aria-label={`Move ${title} earlier in the queue`}
+            >
+              <Icon icon={ChevronLeft} size={16} />
+            </button>
+            <button
+              type="button"
+              disabled={!canMoveLater}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMove(rootId, 1);
+              }}
+              aria-label={`Move ${title} later in the queue`}
+            >
+              <Icon icon={ChevronRight} size={16} />
+            </button>
+          </div>
+        )}
         <button
           type="button"
           className="k-qcard__start"

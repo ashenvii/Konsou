@@ -78,6 +78,13 @@ export function mergeAnimeEntry(
       local.aired_episodes ?? null,
       remote.aired_episodes ?? null,
     ),
+    // The plan rank is a deliberate arrangement, not a fact that "advances",
+    // so the side that wrote most recently wins — same rule as the fields
+    // above that follow updated_at. ?? guards payloads that predate the field.
+    plan_rank:
+      (local.updated_at >= remote.updated_at
+        ? (local.plan_rank ?? remote.plan_rank)
+        : (remote.plan_rank ?? local.plan_rank)) ?? null,
   };
 }
 

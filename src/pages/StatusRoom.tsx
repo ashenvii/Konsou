@@ -40,16 +40,46 @@ const ROOMS: Record<string, RoomDef> = {
   completed: { title: "Completed", statuses: ["completed"], variant: "shelf" },
 };
 
+/** How the plan queue is arranged. */
+type PlanSort = "manual" | "length" | "added";
+const PLAN_SORTS: { key: PlanSort; label: string }[] = [
+  { key: "manual", label: "My order" },
+  { key: "length", label: "Shortest" },
+  { key: "added", label: "Recently added" },
+];
+
 const isPaused = (g: FranchiseGroup) => g.displayEntry.status === "on_hold";
+
+/** Total runtime of everything tracked under this card. AniList's duration is
+ *  per-episode; 24 is the same fallback Stats uses when it's unknown. */
+function totalMinutes(g: FranchiseGroup): number {
+  return g.entries.reduce(
+    (sum, e) => sum + (e.total_episodes ?? 0) * (e.episode_duration ?? 24),
+    0,
+  );
+}
+
+/** A franchise's place in the queue is its earliest-ranked member; never-ranked
+ *  cards sort after the arranged ones. */
+function planRankOf(g: FranchiseGroup): number {
+  let min = Number.POSITIVE_INFINITY;
+  for (const e of g.entries) {
+    if (e.plan_rank != null && e.plan_rank < min) min = e.plan_rank;
+  }
+  return min;
+}
 
 export function StatusRoom() {
   const { status = "" } = useParams();
   const room = ROOMS[status];
   const isCompleted = status === "completed";
+  const isPlan = status === "plan";
 
   const entries = useListStore((s) => s.entries);
+  const reorderPlan = useListStore((s) => s.reorderPlan);
   const defaultView = useSettingsStore((s) => s.defaultView);
   const [showDropped, setShowDropped] = useState(false);
+  const [planSort, setPlanSort] = useState<PlanSort>("manual");
 
   // Dropped is part of your record, not a place of its own: it hides behind a
   // filter in Completed, where the "have I dealt with this?" answer lives.
@@ -65,16 +95,29 @@ export function StatusRoom() {
     const scoped = entries.filter((e) => wanted.has(e.status));
     const built = groupEntries(scoped);
 
-    // Recency key differs by room: Completed sorts by when you FINISHED it (not
-    // any later edit), so a re-scored title doesn't jump the queue. Plan uses
-    // date-added until the persisted rank lands; Watching uses last-touched.
-    const keyOf = (g: FranchiseGroup) => {
-      if (isCompleted) {
-        return Math.max(...g.entries.map((e) => e.completed_at ?? e.updated_at));
+    if (isPlan) {
+      if (planSort === "length") {
+        // Shortest first: the queue's job is helping you pick something you can
+        // actually finish tonight.
+        return [...built].sort((a, b) => totalMinutes(a) - totalMinutes(b));
       }
-      if (status === "plan") return g.sortAdded;
-      return g.sortUpdated;
-    };
+      if (planSort === "added") return [...built].sort((a, b) => b.sortAdded - a.sortAdded);
+      return [...built].sort((a, b) => {
+        const ra = planRankOf(a);
+        const rb = planRankOf(b);
+        if (ra !== rb) return ra - rb;
+        return b.sortAdded - a.sortAdded;
+      });
+    }
+
+    // Recency key differs by room: Completed sorts by when you FINISHED it (not
+    // any later edit), so a re-scored title doesn't jump the queue. Watching
+    // uses last-touched.
+    const keyOf = (g: FranchiseGroup) =>
+      isCompleted
+        ? Math.max(...g.entries.map((e) => e.completed_at ?? e.updated_at))
+        : g.sortUpdated;
+
     return [...built].sort((a, b) => {
       // Paused sinks below everything you're actually watching.
       if (status === "watching") {
@@ -83,9 +126,20 @@ export function StatusRoom() {
       }
       return keyOf(b) - keyOf(a);
     });
-  }, [entries, room, status, isCompleted, showDropped]);
+  }, [entries, room, status, isCompleted, isPlan, showDropped, planSort]);
 
   if (!room) return <Navigate to="/" replace />;
+
+  /** Swap a card one slot, then rewrite the whole queue's ranks. Members of a
+   *  franchise move together, so a grouped card never splits across the queue. */
+  const onMove = (rootId: number, dir: -1 | 1) => {
+    const idx = groups.findIndex((g) => g.rootId === rootId);
+    const next = idx + dir;
+    if (idx < 0 || next < 0 || next >= groups.length) return;
+    const reordered = [...groups];
+    [reordered[idx], reordered[next]] = [reordered[next], reordered[idx]];
+    void reorderPlan(reordered.flatMap((g) => g.entries.map((e) => e.anilist_id)));
+  };
 
   return (
     <div className="k-page">
@@ -100,6 +154,22 @@ export function StatusRoom() {
         </button>
         <h1 className="k-roomhead__title">{room.title}</h1>
         <span className="k-roomhead__count">{groups.length}</span>
+
+        {isPlan && (
+          <div className="k-roomhead__sorts" role="group" aria-label="Sort the queue">
+            {PLAN_SORTS.map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                className={`k-roomhead__chip${planSort === s.key ? " k-roomhead__chip--sel" : ""}`}
+                onClick={() => setPlanSort(s.key)}
+                aria-pressed={planSort === s.key}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {isCompleted && droppedCount > 0 && (
           <button
@@ -124,6 +194,8 @@ export function StatusRoom() {
           groups={groups}
           view={defaultView}
           variant={room.variant}
+          // Reranking only means something while the queue is on your order.
+          onMove={isPlan && planSort === "manual" ? onMove : undefined}
           restoreKey={`room.${status}.scroll`}
         />
       )}

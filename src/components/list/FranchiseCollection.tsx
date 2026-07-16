@@ -23,6 +23,8 @@ interface FranchiseCollectionProps {
   view: ViewMode;
   /** When set, overrides `view` and renders that room's card. */
   variant?: RoomVariant;
+  /** Plan room, manual order only: rerank a card one slot either way. */
+  onMove?: (rootId: number, dir: -1 | 1) => void;
   dimmedIds?: Set<number> | null;
   showStatus?: boolean;
   /** Save/restore the scroll offset under this key across unmounts. */
@@ -46,6 +48,7 @@ export function FranchiseCollection({
   groups,
   view,
   variant,
+  onMove,
   dimmedIds,
   restoreKey,
 }: FranchiseCollectionProps) {
@@ -128,9 +131,19 @@ export function FranchiseCollection({
   const dimOf = (rootId: number) =>
     dimmedIds && !dimmedIds.has(rootId) ? 0.2 : 1;
 
-  const renderGroup = (group: FranchiseGroup) => {
+  const renderGroup = (group: FranchiseGroup, index: number) => {
     if (variant === "hero") return <HeroCard group={group} onOpen={setActiveRootId} />;
-    if (variant === "poster") return <QueueCard group={group} onOpen={setActiveRootId} />;
+    if (variant === "poster") {
+      return (
+        <QueueCard
+          group={group}
+          onOpen={setActiveRootId}
+          onMove={onMove}
+          canMoveEarlier={index > 0}
+          canMoveLater={index < groups.length - 1}
+        />
+      );
+    }
     if (variant === "shelf") return <ShelfItem group={group} onOpen={setActiveRootId} />;
     return <FranchiseCard group={group} view={view} onOpen={setActiveRootId} />;
   };
@@ -160,7 +173,7 @@ export function FranchiseCollection({
                     paddingBottom: gap,
                   }}
                 >
-                  {rowGroups.map((group) => (
+                  {rowGroups.map((group, i) => (
                     <div
                       key={group.rootId}
                       style={{
@@ -168,7 +181,7 @@ export function FranchiseCollection({
                         transition: "opacity 200ms var(--ease-out)",
                       }}
                     >
-                      {renderGroup(group)}
+                      {renderGroup(group, startIdx + i)}
                     </div>
                   ))}
                 </div>
@@ -186,7 +199,7 @@ export function FranchiseCollection({
                   transition: "opacity 200ms var(--ease-out)",
                 }}
               >
-                {renderGroup(group)}
+                {renderGroup(group, vRow.index)}
               </div>
             );
           })}

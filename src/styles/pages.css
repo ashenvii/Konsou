@@ -66,6 +66,21 @@
   border-color: color-mix(in oklch, var(--color-status-dropped) 40%, transparent);
   color: var(--color-status-dropped);
 }
+/* Plan queue sort. Selected reads as the accent, since it's a mode you're in. */
+.k-roomhead__sorts {
+  margin-left: auto;
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.k-roomhead__sorts .k-roomhead__chip {
+  margin-left: 0;
+}
+.k-roomhead__chip--sel {
+  background: var(--color-accent-dim);
+  border-color: color-mix(in oklch, var(--color-accent) 45%, transparent);
+  color: var(--color-accent-glow);
+}
 
 /* ── Overview (My List landing) ──────────────────────────────
    A calm launcher: a global search, then status bands that are
@@ -234,6 +249,40 @@
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+/* Rerank controls. Buttons rather than drag: they work by touch and keyboard,
+   and never fight the app's drag-anywhere-to-scroll. */
+.k-qcard__move {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.k-qcard__move button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: oklch(10% 0.03 34 / 0.78);
+  color: var(--color-text-primary);
+}
+.k-qcard__move button:hover:not(:disabled) {
+  background: var(--color-accent);
+  color: oklch(20% 0.06 40);
+}
+.k-qcard__move button:disabled {
+  opacity: 0.25;
+}
+@media (pointer: coarse) {
+  .k-qcard__move button {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 /* Digital Shelf (completed) — covers resting on a ledge, score on the corner. */
