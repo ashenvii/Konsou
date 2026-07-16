@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronRight, Search, X } from "lucide-react";
 import { FranchiseCard } from "@/components/anime/FranchiseCard";
 import { FranchiseSheet } from "@/components/anime/FranchiseSheet";
+import { HeroBinge } from "@/components/anime/HeroBinge";
 import { FranchiseCollection } from "@/components/list/FranchiseCollection";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -70,6 +71,10 @@ export function Overview() {
     () => sortBand(groupsFor(entries, ["watching", "rewatching"]), "watching"),
     [entries],
   );
+  // The 1-2 most-active shows are spotlit in the Hero Binge and pulled out of
+  // the Watching column so nothing shows twice.
+  const heroGroups = useMemo(() => watching.slice(0, 2), [watching]);
+  const watchingRest = useMemo(() => watching.slice(heroGroups.length), [watching, heroGroups]);
   const plan = useMemo(() => sortBand(groupsFor(entries, ["plan_to_watch"]), "plan"), [entries]);
   const completed = useMemo(() => sortBand(groupsFor(entries, ["completed"]), "completed"), [entries]);
 
@@ -186,11 +191,12 @@ export function Overview() {
         )
       ) : (
         <div className="k-overview__scroll konsou-scroll">
+          <HeroBinge groups={heroGroups} onOpen={setActiveRootId} />
           <div className="k-overview__grid">
             <Column
               title="Watching"
               kind="watching"
-              groups={watching}
+              groups={watchingRest}
               onOpenRoom={() => openRoom("/list/watching")}
               onCard={setActiveRootId}
             />
