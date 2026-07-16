@@ -36,9 +36,14 @@ export function QuickMenu({ open, onClose, anilistId, onOpenDetails }: QuickMenu
   // Score is the one control that drags, so it's held locally and committed on
   // release instead of writing to the DB on every tick.
   const [scoreDraft, setScoreDraft] = useState<number | null>(null);
+  // Keyed on primitives, not the entry object: re-seeding on every unrelated
+  // change (an episode bump lands a new object) would yank the slider out from
+  // under a drag in progress.
+  const entryId = entry?.anilist_id;
+  const entryScore = entry?.score ?? null;
   useEffect(() => {
-    if (open && entry) setScoreDraft(entry.score);
-  }, [open, entry?.anilist_id, entry?.score]);
+    if (entryId != null) setScoreDraft(entryScore);
+  }, [open, entryId, entryScore]);
 
   if (!entry) return null;
 
