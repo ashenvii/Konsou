@@ -1,5 +1,9 @@
 import { create } from "zustand";
-import { syncManager, type ReconcileStrategy } from "@/lib/sync/syncManager";
+import {
+  syncManager,
+  type MergePreview,
+  type ReconcileStrategy,
+} from "@/lib/sync/syncManager";
 import { useListStore } from "./listStore";
 import { toast } from "./toastStore";
 
@@ -14,6 +18,8 @@ interface ReconcileState {
   open: boolean;
   localCount: number;
   remoteCount: number;
+  /** What Merge would produce; null until computed (or if Drive is unreachable). */
+  preview: MergePreview | null;
   /** True while a chosen strategy is being applied (guards double-taps). */
   busy: boolean;
   show: (localCount: number, remoteCount: number) => void;
@@ -24,10 +30,17 @@ export const useReconcileStore = create<ReconcileState>((set, get) => ({
   open: false,
   localCount: 0,
   remoteCount: 0,
+  preview: null,
   busy: false,
 
-  show: (localCount, remoteCount) =>
-    set({ open: true, localCount, remoteCount, busy: false }),
+  show: (localCount, remoteCount) => {
+    set({ open: true, localCount, remoteCount, preview: null, busy: false });
+    // Compute the merge outcome in the background so the prompt can preview it.
+    // A failure just leaves preview null and the prompt shows plain counts.
+    void syncManager.previewMerge().then((preview) => {
+      if (get().open) set({ preview });
+    });
+  },
 
   resolve: async (strategy) => {
     if (get().busy) return;
@@ -42,7 +55,7 @@ export const useReconcileStore = create<ReconcileState>((set, get) => ({
             ? "Replaced your Drive backup"
             : "Lists merged",
       );
-      set({ open: false, busy: false });
+      set({ open: false, busy: false, preview: null });
     } catch {
       set({ busy: false });
       toast.error("Couldn't sync — please try again");

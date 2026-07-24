@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
@@ -11,6 +12,7 @@ import { useAuthStore } from "@/lib/store/authStore";
 import { useListStore } from "@/lib/store/listStore";
 
 export function LibrarySettings() {
+  const navigate = useNavigate();
   const account = useAuthStore((s) => s.account);
   const clearAll = useListStore((s) => s.clearAll);
   const entryCount = useListStore((s) => s.entries.length);
@@ -77,11 +79,21 @@ export function LibrarySettings() {
     <SettingsSubPage title="Library & Sync">
       <Section title="Sync">
         {account ? (
-          <Row label="Backup" hint={`Synced to Google Drive as ${account.email}`}>
-            <Button variant="secondary" onClick={() => void syncNow()} disabled={syncing}>
-              {syncing ? "Syncing…" : "Sync now"}
-            </Button>
-          </Row>
+          <>
+            <Row label="Backup" hint={`Synced to Google Drive as ${account.email}`}>
+              <Button variant="secondary" onClick={() => void syncNow()} disabled={syncing}>
+                {syncing ? "Syncing…" : "Sync now"}
+              </Button>
+            </Row>
+            <Row label="Sync history" hint="See every pull, push and merge Konsou ran">
+              <Button
+                variant="secondary"
+                onClick={() => navigate("/settings/sync-history", { replace: true })}
+              >
+                View
+              </Button>
+            </Row>
+          </>
         ) : (
           <Row
             label="Backup"

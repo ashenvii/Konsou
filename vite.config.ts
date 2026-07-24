@@ -48,5 +48,29 @@ export default defineConfig(() => ({
     target: process.env.TAURI_ENV_PLATFORM === "windows" ? "chrome105" : "safari13",
     minify: process.env.TAURI_ENV_DEBUG ? false : ("esbuild" as const),
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
+    rollupOptions: {
+      output: {
+        // The framework is loaded on first paint no matter what and almost never
+        // changes between releases, so it rides in its own chunk: it splits the
+        // heaviest weight out of the app bundle and lets the web build reuse it
+        // from cache across updates. Feature libraries (icons especially, which
+        // Vite already tree-shakes per-glyph into the lazy route chunks) are left
+        // to default chunking on purpose.
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (
+            id.includes("/react-router") ||
+            id.includes("/react-dom/") ||
+            id.includes("/react/") ||
+            id.includes("/scheduler/") ||
+            id.includes("/@tanstack/") ||
+            id.includes("/zustand/")
+          ) {
+            return "vendor";
+          }
+          return undefined;
+        },
+      },
+    },
   },
 }));

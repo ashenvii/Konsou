@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { Spinner } from "@/components/ui/Spinner";
 import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
@@ -79,7 +80,17 @@ export function AppShell() {
       {isDesktop && !isBackstage && <Sidebar />}
       <main className="k-shell__content">
         {!isImmersive && !isBackstage && <Header />}
-        <Outlet />
+        {/* Lazily-loaded routes suspend here, so only the page area waits — the
+            nav, header and overlays around it stay put during the chunk fetch. */}
+        <Suspense
+          fallback={
+            <div style={{ display: "grid", placeItems: "center", minHeight: "40vh" }}>
+              <Spinner size={22} />
+            </div>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </main>
       {!isDesktop && !isBackstage && <BottomNav />}
       <StorageBanner />

@@ -15,6 +15,7 @@ export function ReconcilePrompt() {
   const open = useReconcileStore((s) => s.open);
   const localCount = useReconcileStore((s) => s.localCount);
   const remoteCount = useReconcileStore((s) => s.remoteCount);
+  const preview = useReconcileStore((s) => s.preview);
   const busy = useReconcileStore((s) => s.busy);
   const resolve = useReconcileStore((s) => s.resolve);
 
@@ -69,6 +70,18 @@ export function ReconcilePrompt() {
           device and {remoteCount} in your Drive backup. How should we combine
           them?
         </Text>
+        {preview && (
+          <Text size="sm" color="tertiary">
+            Merging keeps everything: {preview.total}{" "}
+            {preview.total === 1 ? "title" : "titles"} in total
+            {preview.shared > 0 && ` (${preview.shared} on both`}
+            {preview.shared > 0 && preview.driveOnly > 0 && `, ${preview.driveOnly} only in Drive`}
+            {preview.shared > 0 && preview.localOnly > 0 && `, ${preview.localOnly} only here`}
+            {preview.shared > 0 && ")"}
+            {preview.removed > 0 &&
+              `. ${preview.removed} deleted ${preview.removed === 1 ? "title stays" : "titles stay"} removed.`}
+          </Text>
+        )}
         <div className="k-reconcile__actions">
           <Button variant="primary" block disabled={busy} onClick={() => run("merge")}>
             Merge both (recommended)

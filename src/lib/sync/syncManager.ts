@@ -36,25 +36,126 @@ export interface SignInSyncResult {
   remoteCount: number;
 }
 
-type LogLevel = "info" | "warn" | "error";
-interface LogEntry {
+export type SyncLogLevel = "info" | "warn" | "error";
+export interface SyncLogEntry {
   at: number;
-  level: LogLevel;
+  level: SyncLogLevel;
   msg: string;
 }
 
-class SyncManager {
-  private log: LogEntry[] = [];
+/** What a Merge would produce, shown to the user before they commit to it. */
+export interface MergePreview {
+  /** Titles that end up on the list after merging. */
+  total: number;
+  /** Only in the Drive backup (arrive on this device). */
+  driveOnly: number;
+  /** Only on this device (get pushed up to Drive). */
+  localOnly: number;
+  /** On both sides (reconciled field by field). */
+  shared: number;
+  /** Dropped because a deletion on one side is newer than the edit on the other. */
+  removed: number;
+}
 
-  private record(level: LogLevel, msg: string): void {
-    this.log.push({ at: Date.now(), level, msg });
-    if (this.log.length > 50) this.log.shift();
-    if (level === "error") console.warn(`[sync] ${msg}`);
+const LOG_KEY = "konsou.sync.log";
+const LOG_LIMIT = 50;
+
+class SyncManager {
+  private log: SyncLogEntry[] = this.loadLog();
+
+  /** The log outlives a reload so the history screen isn't wiped every launch. */
+  private loadLog(): SyncLogEntry[] {
+    try {
+      const raw = localStorage.getItem(LOG_KEY);
+      const parsed: unknown = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? (parsed as SyncLogEntry[]) : [];
+    } catch {
+      return [];
+    }
   }
 
-  /** Last 50 sync events, surfaced in Settings dev mode. */
-  getDebugLog(): readonly LogEntry[] {
+  private record(level: SyncLogLevel, msg: string): void {
+    this.log.push({ at: Date.now(), level, msg });
+    if (this.log.length > LOG_LIMIT) this.log.shift();
+    if (level === "error") console.warn(`[sync] ${msg}`);
+    try {
+      localStorage.setItem(LOG_KEY, JSON.stringify(this.log));
+    } catch {
+      // Storage full or unavailable: the in-memory log still works this session.
+    }
+  }
+
+  /** Last 50 sync events, newest last. Surfaced on the Sync History screen. */
+  getDebugLog(): readonly SyncLogEntry[] {
     return this.log;
+  }
+
+  /** Wipe the recorded history (a user action from the Sync History screen). */
+  clearLog(): void {
+    this.log = [];
+    try {
+      localStorage.removeItem(LOG_KEY);
+    } catch {
+      // Nothing to do — the in-memory copy is already cleared.
+    }
+  }
+
+  /**
+   * Compute — without changing anything — what a Merge of this device and the
+   * Drive backup would produce, so the reconcile prompt can show the outcome
+   * before the user commits. Runs the real {@link mergeLists}, so the preview
+   * can't drift from what Merge actually does. Returns null when sync is off,
+   * signed out, or Drive can't be reached (the prompt falls back to plain counts).
+   */
+  async previewMerge(): Promise<MergePreview | null> {
+    if (!this.enabled || !this.isSignedIn) return null;
+    try {
+      const db = await getDb();
+      const localEntries = await db.listAll();
+      const localTombstones = await db.tombstonesAll();
+
+      const remoteMeta = await driveReadMeta();
+      const remoteFile = remoteMeta
+        ? await driveRead<DriveListFile>("list.json")
+        : null;
+      const remoteEntries = remoteFile?.entries ?? [];
+      const remoteTombstones = remoteFile?.tombstones ?? [];
+
+      const localIds = new Set(localEntries.map((e) => e.anilist_id));
+      const remoteIds = new Set(remoteEntries.map((e) => e.anilist_id));
+      const { entries } = mergeLists(
+        localEntries,
+        remoteEntries,
+        localTombstones,
+        remoteTombstones,
+      );
+
+      let driveOnly = 0;
+      let localOnly = 0;
+      let shared = 0;
+      for (const id of new Set([...localIds, ...remoteIds])) {
+        const inLocal = localIds.has(id);
+        const inRemote = remoteIds.has(id);
+        if (inLocal && inRemote) shared++;
+        else if (inRemote) driveOnly++;
+        else localOnly++;
+      }
+      const union = new Set([...localIds, ...remoteIds]).size;
+
+      return {
+        total: entries.length,
+        driveOnly,
+        localOnly,
+        shared,
+        removed: Math.max(0, union - entries.length),
+      };
+    } catch (e) {
+      this.record(
+        "warn",
+        `previewMerge: ${e instanceof Error ? e.message : String(e)}`,
+      );
+      return null;
+    }
   }
 
   get enabled(): boolean {
