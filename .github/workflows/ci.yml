@@ -1,0 +1,77 @@
+name: CI
+
+# Runs on every push and pull request, so a break is caught before it reaches a
+# tag. release.yml only fires on tags and does not check anything — by then the
+# build is already going out to users.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+# A new push to the same branch cancels the run still going for the old commit.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Types, lint, tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+  # The migration tests are the reason this job exists: schema changes can only
+  # ever be wrong on a real database, and the browser dev shim has no schema to
+  # be wrong about. Rust only, no full Tauri bundle — the app build is the
+  # release workflow's job.
+  database:
+    name: Migrations
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Set up Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artefacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      # tauri-build reads the frontend dist path from tauri.conf.json; an empty
+      # directory is enough to compile the crate for tests.
+      - name: Stub the frontend build output
+        run: mkdir -p dist
+
+      - name: Run migration tests
+        working-directory: src-tauri
+        run: cargo test

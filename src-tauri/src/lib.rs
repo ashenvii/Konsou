@@ -1,12 +1,19 @@
 use tauri::Emitter;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
+#[cfg(test)]
+mod migration_tests;
+
 // ---------------------------------------------------------------------------
 // Database migrations
 //
 // Migrations are versioned and append-only. NEVER edit an existing migration;
-// always add a new one with the next version number. The JS shim used in the
-// browser-only dev build mirrors this same schema in src/lib/db/schema.ts.
+// always add a new one with the next version number.
+//
+// The browser dev build runs against a localStorage shim (src/lib/db/webDb.ts)
+// with no schema at all, so it will happily accept writes this database would
+// reject. Anything added here needs a test in migration_tests.rs — that is the
+// only place the real SQL ever runs before a release.
 // ---------------------------------------------------------------------------
 const MIGRATION_1_INITIAL: &str = r#"
 CREATE TABLE IF NOT EXISTS anime_list (
@@ -152,9 +159,14 @@ async fn oauth_listen(window: tauri::WebviewWindow) -> Result<u16, String> {
     Ok(port)
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    let migrations = vec![
+/// The full ordered migration list.
+///
+/// Pulled out of `run()` so the test suite can apply the exact same SQL to a
+/// throwaway SQLite file. Without that, a migration is only ever exercised on a
+/// real device after release — the browser dev shim has no schema at all, so it
+/// happily accepts writes that the real database would reject.
+pub fn migrations() -> Vec<Migration> {
+    vec![
         Migration {
             version: 1,
             description: "initial schema",
@@ -305,7 +317,12 @@ CREATE INDEX IF NOT EXISTS idx_list_franchise ON anime_list(franchise_root_id);
             sql: "ALTER TABLE anime_list ADD COLUMN plan_rank INTEGER;",
             kind: MigrationKind::Up,
         },
-    ];
+    ]
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    let migrations = migrations();
 
     let builder = tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![oauth_listen])

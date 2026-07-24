@@ -101,6 +101,26 @@ npm run android:build   # release APK
 
 A signed release APK needs `src-tauri/gen/android/keystore.properties` pointing at your keystore. Without it the build is unsigned.
 
+### Tests
+
+```bash
+npm run typecheck       # tsc across the app and the build configs
+npm run lint
+npm test                # Vitest, jsdom
+npm run test:watch
+
+cd src-tauri && cargo test    # migration tests against real SQLite
+```
+
+The Rust tests matter more than their count suggests. They apply the real
+migration SQL to a throwaway database, both fresh-install and upgrade-from-every-
+released-version, because the browser dev build runs on a localStorage shim with
+no schema at all: it accepts writes a real device would reject. A schema change
+without a test in `src-tauri/src/migration_tests.rs` has never actually run.
+
+Everything above runs on every push and pull request, and again before a tagged
+release builds.
+
 ---
 
 ## Tech stack

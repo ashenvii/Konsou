@@ -18,6 +18,11 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
+# Test-only. `bundled` compiles SQLite in, so the migration tests run the real
+# SQL against a real engine on any CI runner without needing a system libsqlite.
+[dev-dependencies]
+rusqlite = { version = "0.32", features = ["bundled"] }
+
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-deep-link = "2"

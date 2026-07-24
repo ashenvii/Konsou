@@ -10,7 +10,33 @@ permissions:
   contents: write
 
 jobs:
+  # Gate the release on the same checks CI runs. A tag can be pushed at any
+  # commit, including one that never went through a green CI run, and a broken
+  # build here goes straight to users' auto-updater.
+  verify:
+    name: Verify before building
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Typecheck, lint, test
+        run: |
+          npm run typecheck
+          npm run lint
+          npm test
+
   build:
+    needs: verify
     strategy:
       fail-fast: false
       matrix:
