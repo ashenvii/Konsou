@@ -5,7 +5,9 @@ import tsparser from "@typescript-eslint/parser";
 import reactHooks from "eslint-plugin-react-hooks";
 
 export default [
-  { ignores: ["dist", "src-tauri", "node_modules"] },
+  // devdata/ and the root generator are Node-only dev tooling (they run under
+  // `node`, use console/process), not part of the browser app the rules target.
+  { ignores: ["dist", "src-tauri", "node_modules", "devdata", "gen-stress-list.mjs"] },
   js.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],

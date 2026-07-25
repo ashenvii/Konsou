@@ -66,6 +66,920 @@
   border-color: color-mix(in oklch, var(--color-status-dropped) 40%, transparent);
   color: var(--color-status-dropped);
 }
+/* ── Room filter control + sheet ─────────────────────────────
+   One button in the room header replaces a sort row, a tag strip and a toggle.
+   On a 390px phone those bands cost ~150px before any content. */
+.k-roomhead__filter {
+  margin-left: auto;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+}
+.k-roomhead__filter:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+}
+.k-roomhead__filter--on {
+  background: var(--color-accent-dim);
+  border-color: color-mix(in oklch, var(--color-accent) 45%, transparent);
+  color: var(--color-accent-glow);
+}
+/* The badge is the whole point of collapsing the bands: the button has to say
+   the list is narrowed, or a filter becomes invisible state. */
+.k-roomhead__badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-bg);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 17px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.k-rfilter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.k-rfilter__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.k-rfilter__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.k-rfilter__label {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+}
+.k-rfilter__clear {
+  color: var(--color-accent-glow);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+.k-rfilter__sorts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.k-rfilter__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.k-rfilter__sort--on {
+  background: var(--color-accent-dim);
+  border-color: color-mix(in oklch, var(--color-accent) 45%, transparent);
+  color: var(--color-accent-glow);
+}
+.k-rfilter__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 42px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+}
+.k-rfilter__search input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  /* 16px keeps iOS from zooming the sheet on focus. */
+  font-size: 16px;
+}
+.k-rfilter__search input:focus {
+  outline: none;
+}
+/* Vertical, scrollable, and capped so the sheet never grows past the screen:
+   this is what lets the tag vocabulary keep growing without breaking. */
+.k-rfilter__tags {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.k-rfilter__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* Comfortably above the 44px touch minimum. */
+  min-height: 46px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: left;
+}
+.k-rfilter__row:hover {
+  background: var(--color-surface-2);
+}
+.k-rfilter__row--on {
+  background: var(--color-accent-dim);
+  color: var(--color-accent-glow);
+}
+.k-rfilter__tagname {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-rfilter__count {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.k-rfilter__row--on .k-rfilter__count {
+  color: inherit;
+  opacity: 0.75;
+}
+.k-rfilter__none {
+  margin: 0;
+  padding: var(--space-3);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+}
+
+/* ── Up Next shelf (plan room) ───────────────────────────────
+   A short hand-ordered shelf above the unordered library. Horizontal so it
+   never nests a second vertical scroll inside the virtualized list. */
+.k-upnext {
+  flex: none;
+  padding-bottom: var(--space-2);
+}
+.k-upnext__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 0 var(--content-padding-sm) var(--space-2);
+}
+.k-upnext__title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+/* The cap is shown, not hidden: knowing the shelf is nearly full is what makes
+   someone curate it instead of being surprised by a refusal. */
+.k-upnext__count {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Watch-order stamp on a queue poster. Deliberately flat: no blur, no shadow,
+   nothing that composites per frame, because this sits on every card in a
+   scrolling list. */
+/* The number is the loudest thing on a numbered card: it is the one piece of
+   information you curated by hand, so it carries the accent and the size.
+   Square-cornered so it never reads as an unread-count badge, and flat (no
+   blur, no shadow) because this sits in a scrolling list. */
+.k-qcard__num {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  min-width: 42px;
+  height: 42px;
+  padding: 0 8px;
+  border-bottom-right-radius: var(--radius-lg);
+  background: var(--color-accent);
+  color: var(--color-bg);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Hold-to-add feedback ────────────────────────────────────
+   Overlays the poster while you press and hold. Transform + opacity only: no
+   blur, no shadow, nothing that re-composites the moving list behind it. */
+.k-qhold {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: var(--space-3);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  pointer-events: none;
+  background: oklch(0% 0 0 / 45%);
+}
+/* The sweep. scaleX from a left origin so the browser can composite it without
+   touching layout; a width animation would relayout the card every frame. */
+.k-qhold__fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(0);
+  background: color-mix(in oklch, var(--color-accent) 55%, transparent);
+}
+.k-qcard--hold-holding .k-qhold__fill {
+  transform: scaleX(1);
+  /* Linear on purpose: this reports elapsed time, so easing it would lie about
+     how much longer the hold has to go. Matches HOLD_FILL_MS in
+     QueueSlider.tsx, and the same feel as the Hold-to-remove button. */
+  transition: transform 520ms linear;
+}
+/* Completion and refusal both stop the sweep where it is and let the label
+   carry the message; exits are faster than the enter. */
+.k-qcard--hold-done .k-qhold__fill {
+  transform: scaleX(1);
+  background: color-mix(in oklch, var(--color-accent) 75%, transparent);
+}
+.k-qcard--hold-full .k-qhold__fill {
+  transform: scaleX(1);
+  background: color-mix(in oklch, var(--color-error) 55%, transparent);
+}
+.k-qhold__label {
+  position: relative;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: oklch(0% 0 0 / 78%);
+  color: oklch(100% 0 0 / 95%);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.25;
+}
+/* Reduced motion: the sweep is a timed animation, and the global reduce block
+   collapses transitions to 0.01ms, which would snap the bar to full instantly
+   and claim the hold was done. Drop the sweep entirely and let the static tint
+   plus the label carry it, so the gesture still gives honest feedback. */
+@media (prefers-reduced-motion: reduce) {
+  .k-qcard--hold-holding .k-qhold__fill {
+    transform: scaleX(1);
+    background: color-mix(in oklch, var(--color-accent) 30%, transparent);
+  }
+}
+
+/* ── My Order dashboard ─────────────────────────────────────── */
+.k-order {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.k-order__count {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.k-order__empty,
+.k-order__none {
+  margin: 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+/* Absolutely-positioned rows so a drag moves one transform instead of
+   reflowing the list on every pointer move. */
+.k-order__list {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.k-order__row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-right: var(--space-1);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+/* The row being dragged: lifted, no transition so it tracks the finger exactly,
+   and flat (no shadow) because this list sits in a scrolling sheet. */
+.k-order__row--dragging {
+  z-index: 2;
+  transition: none;
+  background: var(--color-surface-3);
+  border-radius: var(--radius-md);
+}
+.k-order__n {
+  flex: none;
+  min-width: 22px;
+  font-size: var(--text-base);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent-glow);
+}
+.k-order__cover {
+  flex: none;
+  width: 34px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.k-order__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: left;
+}
+.k-order__remove,
+.k-order__grip {
+  flex: none;
+  display: grid;
+  place-items: center;
+  /* 44px touch minimum: these sit side by side and must not be a lottery. */
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  color: var(--color-text-tertiary);
+}
+.k-order__remove:hover {
+  color: var(--color-error);
+}
+/* Deliberately oversized: this is the one control you aim for repeatedly while
+   rearranging, and a miss does not just do nothing, it scrolls or dismisses the
+   sheet. Fills the row's full height and is wider than the 44px minimum.
+   touch-action:none stops the browser claiming the gesture as a scroll. */
+.k-order__grip {
+  width: 56px;
+  height: 56px;
+  cursor: grab;
+  touch-action: none;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
+.k-order__grip:active {
+  cursor: grabbing;
+  color: var(--color-bg);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.k-order__add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-4);
+}
+.k-order__addlabel {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+}
+.k-order__hint {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-2xs);
+  line-height: 1.4;
+  color: var(--color-text-tertiary);
+}
+.k-order__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+}
+.k-order__search input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  /* 16px stops iOS zooming the sheet on focus. */
+  font-size: 16px;
+}
+.k-order__search input:focus {
+  outline: none;
+}
+.k-order__candidate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+.k-order__candidate:hover {
+  background: var(--color-surface-3);
+}
+
+/* ── Watch-order picker ─────────────────────────────────────── */
+.k-numpick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.k-numpick__for {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.k-numpick__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.k-numpick__slot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* Above the 44px touch minimum: this is a precision-free target. */
+  min-height: 48px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+  text-align: left;
+}
+.k-numpick__n {
+  flex: none;
+  min-width: 20px;
+  font-size: var(--text-base);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+/* Showing who holds a number is what makes the swap honest rather than a
+   surprise: you can see what you are trading places with before you tap. */
+.k-numpick__holder {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-2xs);
+  color: var(--color-text-tertiary);
+}
+.k-numpick__slot--mine {
+  background: var(--color-accent-dim);
+  border-color: color-mix(in oklch, var(--color-accent) 50%, transparent);
+}
+.k-numpick__slot--mine .k-numpick__n {
+  color: var(--color-accent-glow);
+}
+.k-numpick__slot--taken {
+  border-style: dashed;
+}
+.k-numpick__clear {
+  align-self: flex-start;
+  color: var(--color-error);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* ── QuickMenu (the one entry sheet) ─────────────────────────── */
+.k-qm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.k-qm__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.k-qm__cover {
+  flex: none;
+  width: 52px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.k-qm__ident {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.k-qm__title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+  line-height: var(--leading-sm);
+  /* Long romaji titles are the norm; two lines then ellipsis. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.k-qm__details {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-accent-glow);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+.k-qm__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.k-qm__label {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+}
+.k-qm__score {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.k-qm__stepbtn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+}
+.k-qm__stepbtn:disabled {
+  opacity: 0.4;
+}
+.k-qm__scoreval {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 56px;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.k-qm__clear {
+  margin-left: auto;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+.k-qm__notes {
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  /* 16px stops iOS zooming the sheet when the field takes focus. */
+  font-size: 16px;
+  line-height: var(--leading-sm);
+  resize: vertical;
+}
+.k-qm__notes:focus {
+  outline: none;
+  border-color: color-mix(in oklch, var(--color-accent) 55%, transparent);
+}
+
+/* ── Detail page tracking panel ──────────────────────────────
+   One block holding everything about YOUR relationship to the title. The
+   episode stepper stays live inside it (logging is the frequent act and must
+   not cost a sheet); everything else is one tap into the QuickMenu. */
+.k-track {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-2);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  overflow: hidden;
+}
+.k-track__top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  color: var(--color-text-primary);
+  text-align: left;
+}
+.k-track__top:hover {
+  background: var(--color-surface-3);
+}
+.k-track__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+.k-track__score {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+.k-track__chev {
+  color: var(--color-text-tertiary);
+}
+.k-track__progress {
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--space-3) var(--space-3);
+}
+.k-track__note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  text-align: left;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+.k-track__note:hover {
+  background: var(--color-surface-3);
+}
+.k-track__note > svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--color-text-tertiary);
+}
+.k-track__notetext {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.k-track__note--empty .k-track__notetext {
+  color: var(--color-text-tertiary);
+}
+.k-track__tag {
+  color: var(--color-accent-glow);
+  font-weight: 600;
+}
+
+/* ── Tag picker (edit sheet) ─────────────────────────────────
+   Tags are stored inside the note; this is assisted input over that storage. */
+.k-tagpick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.k-tagpick__applied {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.k-tagpick__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 6px 0 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-dim);
+  border: 1px solid color-mix(in oklch, var(--color-accent) 40%, transparent);
+  color: var(--color-accent-glow);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+.k-tagpick__remove {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  color: inherit;
+  opacity: 0.7;
+}
+.k-tagpick__remove:hover {
+  opacity: 1;
+  background: color-mix(in oklch, var(--color-accent) 25%, transparent);
+}
+.k-tagpick__input {
+  height: 40px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  /* 16px keeps iOS from zooming the sheet on focus. */
+  font-size: 16px;
+}
+.k-tagpick__input:focus {
+  outline: none;
+  border-color: color-mix(in oklch, var(--color-accent) 55%, transparent);
+}
+.k-tagpick__suggest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.k-tagpick__sugg {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+.k-tagpick__sugg:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+}
+.k-tagpick__sugg--new {
+  border-style: dashed;
+  color: var(--color-text-tertiary);
+}
+.k-tagpick__n {
+  font-size: var(--text-2xs);
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Note card (detail page) ─────────────────────────────────
+   The user's own note, visible rather than buried behind the score control.
+   Whole block is the edit affordance. */
+.k-notecard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+  text-align: left;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+.k-notecard:hover {
+  border-color: var(--color-border-strong);
+}
+.k-notecard > svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--color-text-tertiary);
+}
+.k-notecard__text {
+  /* The note is the user's writing: keep their line breaks. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.k-notecard--empty .k-notecard__text {
+  color: var(--color-text-tertiary);
+}
+/* Tags read as the accent so they are obviously the part that does something. */
+.k-notecard__tag {
+  color: var(--color-accent-glow);
+  font-weight: 600;
+}
+
+/* ── Tag facet row ───────────────────────────────────────────
+   Hashtags people wrote in their own notes, as filters. Horizontal rail:
+   native scroll on touch, drag-pan on desktop, scrollbar hidden. */
+.k-tagrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--content-padding-sm) var(--space-3);
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: none;
+  scrollbar-width: none;
+}
+.k-tagrow::-webkit-scrollbar {
+  display: none;
+}
+.k-tagchip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.k-tagchip:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+}
+.k-tagchip--on {
+  background: var(--color-accent-dim);
+  border-color: color-mix(in oklch, var(--color-accent) 45%, transparent);
+  color: var(--color-accent-glow);
+}
+/* The count is supporting information, never louder than the tag itself. */
+.k-tagchip__n {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-2xs);
+  color: var(--color-text-tertiary);
+}
+.k-tagchip--on .k-tagchip__n {
+  color: inherit;
+  opacity: 0.75;
+}
+.k-tagchip--clear {
+  color: var(--color-text-tertiary);
+}
+
+/* ── Room list + A-Z index rail ──────────────────────────────
+   The list and its rail share one box that takes the leftover height, so the
+   rail spans exactly the list. It used to be positioned against the page with
+   a hardcoded top offset, which left it floating over the header and shelf and
+   scrolling a list that wasn't under it. */
+.k-roomlist {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.k-rail {
+  position: absolute;
+  right: 2px;
+  inset-block: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 22px;
+  padding: var(--space-2) 0;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklch, var(--color-surface-1) 70%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.k-rail__letter {
+  flex: 1 1 auto;
+  /* Small by necessity: 26 letters at the 44px touch minimum needs 1100px of
+     screen. The rail is a supplement, never the only route to a card. */
+  min-height: 15px;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.k-rail__letter:hover,
+.k-rail__letter:active {
+  color: var(--color-accent-glow);
+}
+
 /* Plan queue sort. Selected reads as the accent, since it's a mode you're in. */
 .k-roomhead__sorts {
   margin-left: auto;
@@ -80,6 +994,22 @@
   background: var(--color-accent-dim);
   border-color: color-mix(in oklch, var(--color-accent) 45%, transparent);
   color: var(--color-accent-glow);
+}
+/* "N updated": the list is held still while you log, and this is the invitation
+   to take the fresh order. Accent because it is an offer to act, not a state
+   you are in; the icon carries the meaning alongside the colour. */
+.k-roomhead__chip--restack {
+  background: var(--color-accent-dim);
+  border-color: color-mix(in oklch, var(--color-accent) 40%, transparent);
+  color: var(--color-accent-glow);
+}
+.k-roomhead__chip--restack:hover {
+  border-color: color-mix(in oklch, var(--color-accent) 70%, transparent);
+  color: var(--color-accent-glow);
+}
+/* When the plan sorts already claimed the right edge, sit beside them. */
+.k-roomhead__sorts + .k-roomhead__chip--restack {
+  margin-left: var(--space-2);
 }
 /* Narrow screens: the sorts take their own row under the title instead of
    squeezing into the leftover column beside it. The lone Dropped chip stays
@@ -101,7 +1031,11 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin: var(--content-padding-sm) var(--content-padding-sm) var(--space-3);
+  /* Width mirrors the sections' 1500px cap so the pill and the bands share
+     edges on ultrawide instead of the search running past them. */
+  width: calc(100% - 2 * var(--content-padding-sm));
+  max-width: calc(1500px - 2 * var(--content-padding-sm));
+  margin: var(--content-padding-sm) auto var(--space-3);
   padding: 0 var(--space-4);
   height: 44px;
   background: var(--color-surface-2);
@@ -119,7 +1053,8 @@
   font-size: var(--text-base);
 }
 .k-ovsearch__input::placeholder {
-  color: var(--color-text-tertiary);
+  /* Secondary, not tertiary: tertiary measures ~3.5:1 here, under AA. */
+  color: var(--color-text-secondary);
 }
 .k-ovsearch__clear {
   display: grid;
@@ -139,10 +1074,26 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-}
-
-.k-overview__scroll {
   padding-bottom: var(--space-8);
+}
+/* Content dissolves as it tucks under the search zone instead of shearing
+   at the scroller's edge (the sticky strip rides the top of the viewport).
+   Only present once scrolled, so the resting page keeps its clean top. */
+.k-overview__scroll::before {
+  content: "";
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: block;
+  height: 18px;
+  margin-bottom: -18px;
+  background: linear-gradient(var(--color-base), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-out);
+}
+.k-page[data-scrolled="true"] .k-overview__scroll::before {
+  opacity: 1;
 }
 
 /* Full-width differentiated sections. Each carries its own shape (hero card,
@@ -163,26 +1114,40 @@
   font-weight: 700;
   letter-spacing: -0.01em;
 }
+/* The heading IS the room's door: one button carrying title, count, and
+   chevron. Padding grows the tap target to 44px; the negative margin absorbs
+   it so the text stays on the page's alignment line. */
+.k-ovsection__open {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  margin: -12px -8px;
+  padding: 12px 8px;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.k-ovsection__chev {
+  align-self: center;
+  color: var(--color-text-tertiary);
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.k-ovsection__open:hover {
+  color: var(--color-accent);
+}
+.k-ovsection__open:hover .k-ovsection__chev {
+  color: var(--color-accent);
+  transform: translateX(2px);
+}
 .k-ovsection__count {
   font-size: var(--text-sm);
   font-weight: 500;
-  color: var(--color-text-tertiary);
-  font-variant-numeric: tabular-nums;
-}
-.k-ovsection__more {
-  /* Padding grows the tap target to 44px; the negative margin absorbs it so
-     the label stays put in the header. */
-  margin: -12px -8px -12px auto;
-  padding: 12px 8px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
+  /* Secondary, not tertiary: 13px tertiary measures ~3.5:1, under AA. */
   color: var(--color-text-secondary);
-  font-size: var(--text-sm);
-  font-weight: 500;
-}
-.k-ovsection__more:hover {
-  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
 }
 /* In-section invitation for an empty band: one quiet line, at most one door.
    Dashed edges are the page's "empty slot" vocabulary (see .k-qadd__box). */
@@ -219,14 +1184,29 @@
   background: var(--color-surface-2);
 }
 
-/* Queue Slider (plan) — aspirational poster carousel. */
+/* Queue Slider (plan) — aspirational poster carousel.
+   Same scroll contract as the Discover lanes: no visible bar, mouse drag
+   pans (useDragScroll), the wheel is never intercepted so the page keeps
+   scrolling, and x-containment stops the row from peeling a back gesture.
+   Touch scrolls natively. */
 .k-queue {
   display: flex;
   gap: var(--space-3);
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 0 var(--content-padding-sm) var(--space-2);
+  /* Vertical breathing room: the hover lift (-3px) and its glow need space
+     inside the row, or overflow-y shears them into hard edges. */
+  padding: var(--space-3) var(--content-padding-sm) var(--space-3);
   scroll-snap-type: x proximity;
+  /* Snap must rest at the padded edge (same trap as .k-lane__scroller), or
+     snap-align: start drags the first poster 16px left of the headings. */
+  scroll-padding-inline: var(--content-padding-sm);
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.k-queue::-webkit-scrollbar {
+  display: none;
 }
 .k-qcard {
   position: relative; /* anchors the stretched open button */
@@ -240,10 +1220,21 @@
   width: 132px;
   height: 198px;
   border-radius: var(--radius-lg);
+  /* Top-left is squared so the watch-order number reads as a corner tab that
+     is PART of the card, not a badge floating on top of the art. The other
+     three corners stay round. The inner cover layers are squared to match, or
+     the image would keep rounding the corner under the tab. */
+  border-top-left-radius: 0;
   box-shadow: var(--shadow-card);
   transition:
     transform var(--duration-normal) var(--ease-out),
     box-shadow var(--duration-normal) var(--ease-out);
+}
+/* Square the inner cover layers' top-left to agree with the card corner. */
+.k-qcard__cover .k-cover,
+.k-qcard__cover .k-cover__img,
+.k-qcard__cover .k-cover__placeholder {
+  border-top-left-radius: 0;
 }
 .k-qcard:hover .k-qcard__cover,
 .k-qcard:focus-within .k-qcard__cover {
@@ -281,8 +1272,13 @@
   justify-content: center;
   gap: 5px;
   border-radius: var(--radius-full);
-  background: var(--color-accent);
-  color: oklch(20% 0.06 40);
+  /* Quieted deliberately. A solid accent pill on every poster made Start the
+     loudest thing on a wall of cover art, and the accent should mark the one
+     thing you chose (the number), not a control that repeats on all 1200
+     cards. Dark glass keeps it legible over any cover without competing. */
+  background: oklch(0% 0 0 / 72%);
+  border: 1px solid oklch(100% 0 0 / 18%);
+  color: oklch(100% 0 0 / 92%);
   font-size: var(--text-xs);
   font-weight: 700;
   opacity: 0;
@@ -401,6 +1397,7 @@
   max-width: 1500px;
   margin: 0 auto;
 }
+/* Same scroll contract as .k-queue: drag pans, wheel stays with the page. */
 .k-shelf__row {
   display: flex;
   align-items: flex-end;
@@ -409,6 +1406,25 @@
   overflow-y: hidden;
   padding: var(--space-4) var(--content-padding-sm) var(--space-3);
   scroll-snap-type: x proximity;
+  /* Same snap-vs-inset trap as .k-queue: rest at the padded edge. */
+  scroll-padding-inline: var(--content-padding-sm);
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.k-shelf__row::-webkit-scrollbar {
+  display: none;
+}
+/* Mouse users pan these rails by dragging; say so with the cursor. */
+@media (hover: hover) {
+  .k-queue,
+  .k-shelf__row {
+    cursor: grab;
+  }
+  .k-queue:active,
+  .k-shelf__row:active {
+    cursor: grabbing;
+  }
 }
 .k-shelfitem {
   width: 104px;
@@ -531,7 +1547,9 @@
    material: a blurred backdrop under a scrim, ember glow marks it as yours. */
 .k-herobinge {
   display: grid;
-  grid-template-columns: 1fr;
+  /* minmax(0): a bare 1fr's auto minimum can inherit a nowrap title's width
+     and push the card past a narrow viewport (same trap as the room rows). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   max-width: 1500px;
   margin: 0 auto;
@@ -604,13 +1622,29 @@
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-3);
+  /* Clears the full-bleed cover pinned to the card's left edge. */
+  padding-left: calc(86px + var(--space-4));
+  min-height: 128px;
 }
 .k-hero__cover {
-  width: 74px;
-  height: 104px;
-  flex: none;
-  border-radius: var(--radius-md);
+  /* Full-bleed art: pinned to the card's left edge, top to bottom (the
+     card's overflow clip rounds its corners), so there's no inset gap ring
+     around it. Width is the 2:3 slice of the card's 128px height; the
+     img's object-fit keeps the art's ratio by cropping if the card ever
+     runs taller. */
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 86px;
+  border-radius: 0;
   box-shadow: var(--shadow-card-hi);
+}
+/* The generic cover tile locks itself to 2:3; here the stretched wrapper
+   owns the shape and the img crops into it. */
+.k-hero__cover .k-cover {
+  height: 100%;
+  aspect-ratio: auto;
 }
 .k-hero__info {
   flex: 1;
@@ -618,6 +1652,9 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+  /* The text block shares the cover's edges instead of floating centered:
+     tag tops out with the cover, the progress bar anchors to its bottom. */
+  align-self: stretch;
 }
 .k-hero__tag {
   align-self: flex-start;
@@ -672,10 +1709,28 @@
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
   font-variant-numeric: tabular-nums;
+  /* One line, always: the season name yields, the episode count stays.
+     Left to wrap, a long season subtitle runs the meta to three lines on a
+     narrow card and shoves the progress bar out of the fixed room row. */
+  display: flex;
+  min-width: 0;
+  white-space: nowrap;
+}
+.k-hero__metaseason {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Keep the " · " joiner glued to the season text it belongs to. */
+  white-space: pre;
+}
+.k-hero__metaep {
+  flex: none;
 }
 .k-hero__bar {
   height: 6px;
-  margin-top: 3px;
+  /* Pinned to the info column's bottom edge (level with the cover's). */
+  margin-top: auto;
   border-radius: var(--radius-full);
   background: oklch(100% 0 0 / 0.12);
   overflow: hidden;
@@ -696,8 +1751,11 @@
   align-items: center;
   justify-content: center;
   gap: 1px;
-  min-width: 62px;
-  padding: 0 var(--space-3);
+  /* Fixed footprint: the action is one component whose label swaps (+Ep /
+     Resume). Content must never resize it, or the info column and progress
+     bar shift between sibling cards and the stack stops lining up. */
+  width: 72px;
+  padding: 0;
   border-radius: var(--radius-lg);
   background: var(--color-accent);
   color: oklch(20% 0.06 40);
@@ -738,11 +1796,10 @@
   background: var(--color-base);
   transition: box-shadow var(--duration-normal) var(--ease-out);
 }
+/* Soft falloff only, no hairline: same law as the global header. */
 .k-page[data-scrolled="true"]:not(.k-detail) > .k-pageheader,
 .k-page[data-scrolled="true"]:not(.k-detail) > .k-search__bar {
-  box-shadow:
-    0 1px 0 var(--color-border),
-    0 10px 22px -14px oklch(0% 0 0 / 65%);
+  box-shadow: 0 14px 28px -16px oklch(0% 0 0 / 75%);
 }
 
 /* ── Skeleton grid ─────────────────────────────────────────── */

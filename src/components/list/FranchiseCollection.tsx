@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { MutableRefObject } from "react";
 import { useNavigate } from "react-router-dom";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { FranchiseCard } from "@/components/anime/FranchiseCard";
@@ -21,14 +22,26 @@ export type RoomVariant = "hero" | "poster" | "shelf";
 interface FranchiseCollectionProps {
   groups: FranchiseGroup[];
   view: ViewMode;
-  /** When set, overrides `view` and renders that room's card. */
+  /** The room's themed card, used while `view` is "grid"; list/compact win. */
   variant?: RoomVariant;
-  /** Plan room, manual order only: rerank a card one slot either way. */
+  /** Up Next only: rerank a card one slot either way. */
   onMove?: (rootId: number, dir: -1 | 1) => void;
+  /** Plan room: open the watch-order number picker for a card. */
+  onNumber?: (rootId: number) => void;
+  /** rootId -> stamped number, for the cards that carry one. */
+  planNumbers?: Map<number, number>;
+  /** Press-and-hold a card to append it to the watch order. */
+  onQuickAdd?: (rootId: number) => boolean;
   dimmedIds?: Set<number> | null;
   showStatus?: boolean;
   /** Save/restore the scroll offset under this key across unmounts. */
   restoreKey?: string;
+  /**
+   * Filled with a "jump the list to this group index" function while mounted.
+   * The virtualizer owns the row maths (and the column count that turns a group
+   * index into a row), so the index rail asks it rather than guessing offsets.
+   */
+  jumpRef?: MutableRefObject<((groupIndex: number) => void) | null>;
 }
 
 const MIN_COL_WIDTH = 190;
@@ -47,11 +60,19 @@ const SHELF_TITLE_H = 26;
 export function FranchiseCollection({
   groups,
   view,
-  variant,
+  variant: roomVariant,
   onMove,
+  onNumber,
+  planNumbers,
+  onQuickAdd,
   dimmedIds,
   restoreKey,
+  jumpRef,
 }: FranchiseCollectionProps) {
+  // The themed room card is that room's GRID language. When the user's view
+  // mode says list or compact, the mode wins; before this gate the variant
+  // silently overrode the setting everywhere, leaving it dead.
+  const variant = view === "grid" ? roomVariant : undefined;
   const navigate = useNavigate();
   const parentRef = useRef<HTMLDivElement>(null);
   const { isDesktop } = useBreakpoint();
@@ -112,6 +133,19 @@ export function FranchiseCollection({
 
   useEffect(() => { virtualizer.measure(); }, [rowHeight, columns, virtualizer]);
 
+  // Publish the jump handle. A group index becomes a row index here, where the
+  // column count actually lives.
+  useEffect(() => {
+    if (!jumpRef) return;
+    jumpRef.current = (groupIndex: number) => {
+      const row = isGrid ? Math.floor(groupIndex / columns) : groupIndex;
+      virtualizer.scrollToIndex(Math.max(0, row), { align: "start" });
+    };
+    return () => {
+      jumpRef.current = null;
+    };
+  }, [jumpRef, virtualizer, columns, isGrid]);
+
   // Restore the last scroll offset on mount, then track it so coming back
   // from a detail page lands where the user left off.
   useEffect(() => {
@@ -141,6 +175,9 @@ export function FranchiseCollection({
           onMove={onMove}
           canMoveEarlier={index > 0}
           canMoveLater={index < groups.length - 1}
+          onNumber={onNumber}
+          planNumber={planNumbers?.get(group.rootId) ?? null}
+          onQuickAdd={onQuickAdd}
         />
       );
     }
@@ -168,7 +205,10 @@ export function FranchiseCollection({
                   className="k-collection__row k-collection__grid"
                   style={{
                     transform: `translateY(${top}px)`,
-                    gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                    // minmax(0): a bare 1fr's auto minimum inherits the card's
+                    // min-content, and one nowrap hero title then widens the
+                    // track past the phone viewport, pushing Ep/+1 off-screen.
+                    gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
                     gap,
                     paddingBottom: gap,
                   }}

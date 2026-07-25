@@ -23,6 +23,9 @@ export function BottomNav() {
               key={item.to}
               to={item.to}
               className="k-bottomnav__item"
+              // The visible label only exists on the active tab, so the name
+              // must come from here or the other tabs are anonymous "link"s.
+              aria-label={item.label}
               aria-current={location.pathname === item.to ? "page" : undefined}
               onClick={(e) => {
                 // Tab presses go through the per-tab stack policy

@@ -15,16 +15,16 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { groupEntries } from "@/lib/franchise/grouping";
 import { normalizeForSearch } from "@/lib/format";
 import { useListStore } from "@/lib/store/listStore";
+import { useSettingsStore } from "@/lib/store/settingsStore";
 import { getUiState, setUiState } from "@/lib/uiState";
 import type { ReactNode } from "react";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
 import type { AnimeListEntry, ListStatus } from "@/types/list";
 
 /**
- * My List landing. A responsive dashboard, not a phone layout stretched onto a
- * desktop: on wide screens the three statuses sit side by side as columns that
- * fill the width; on a phone they stack into sections. Same content, laid out
- * for the platform it's on. Each column shows a recent slice and opens its
+ * My List landing. Three stacked full-width bands, each with its own shape:
+ * the Hero Binge pair for what's on now, the plan poster rail, the completed
+ * shelf. Every band shows a recent slice and its heading is the door into the
  * dedicated room for the full, sortable view. A query turns the whole surface
  * into a flat "have you seen it?" search across every status.
  */
@@ -44,7 +44,28 @@ function groupsFor(entries: AnimeListEntry[], statuses: ListStatus[]): Franchise
   return groupEntries(entries.filter((e) => wanted.has(e.status)));
 }
 
+/** A franchise's place on the Up Next shelf: its earliest-ranked member.
+ *  Infinity means it is not on the shelf at all. */
+function planRankOf(g: FranchiseGroup): number {
+  let min = Number.POSITIVE_INFINITY;
+  for (const e of g.entries) {
+    if (e.plan_rank != null && e.plan_rank < min) min = e.plan_rank;
+  }
+  return min;
+}
+
 function sortBand(groups: FranchiseGroup[], kind: BandKind): FranchiseGroup[] {
+  // Up Next leads the plan rail, in the order you arranged it, then everything
+  // else by recency. The shelf lives here rather than inside the plan room,
+  // where it was crushing the library into a third of the screen.
+  if (kind === "plan") {
+    return [...groups].sort((a, b) => {
+      const ra = planRankOf(a);
+      const rb = planRankOf(b);
+      if (ra !== rb) return ra - rb;
+      return b.sortAdded - a.sortAdded;
+    });
+  }
   return [...groups].sort((a, b) => recencyKey(b, kind) - recencyKey(a, kind));
 }
 
@@ -52,6 +73,7 @@ export function Overview() {
   const navigate = useNavigate();
   const loaded = useListStore((s) => s.loaded);
   const entries = useListStore((s) => s.entries);
+  const defaultView = useSettingsStore((s) => s.defaultView);
 
   const [search, setSearchState] = useState(() => getUiState("mylist.search", ""));
   const [importOpen, setImportOpen] = useState(false);
@@ -60,14 +82,21 @@ export function Overview() {
   // the full status choice (the add law: a door may suggest, never lock).
   const goDiscoverSearch = () =>
     navigate("/discover", { replace: true, state: { fromSearchIntent: true } });
+  // The no-match handoff: carry the words along so they type the title once.
+  const goDiscoverSearchFor = (query: string) =>
+    navigate("/discover", { replace: true, state: { fromSearchIntent: true, query } });
   const debounced = useDebounce(search, 300);
   const setSearch = (v: string) => {
     setSearchState(v);
     setUiState("mylist.search", v);
   };
 
+  // Folds on_hold in, matching the room this band opens: the door's count
+  // tells the truth, and a paused show can hold a hero slot in its quieter
+  // dress instead of vanishing from the page. Recency keeps active shows on
+  // top, since a paused entry has not been touched lately by definition.
   const watching = useMemo(
-    () => sortBand(groupsFor(entries, ["watching", "rewatching"]), "watching"),
+    () => sortBand(groupsFor(entries, ["watching", "rewatching", "on_hold"]), "watching"),
     [entries],
   );
   // The 1-2 most-active shows are spotlit in the Hero Binge; the rest of
@@ -170,18 +199,39 @@ export function Overview() {
         )}
       </div>
 
+      {/* Always mounted: a live region created together with its content is
+          not announced, so the filter's outcome would stay silent. */}
+      <p className="sr-only" role="status">
+        {searching
+          ? matches.length > 0
+            ? `${matches.length} ${matches.length === 1 ? "match" : "matches"} for ${debounced.trim()}`
+            : `No matches for ${debounced.trim()}`
+          : ""}
+      </p>
+
       {searching ? (
         matches.length > 0 ? (
           <>
             <p className="k-list-results">
               {matches.length} {matches.length === 1 ? "match" : "matches"} for “{debounced.trim()}”
             </p>
-            <FranchiseCollection groups={matches} view="grid" restoreKey="overview.search" />
+            <FranchiseCollection groups={matches} view={defaultView} restoreKey="overview.search" />
           </>
         ) : (
+          /* The likeliest reason it's not in the list: it was never added.
+             Finish the thought the user started instead of dead-ending. */
           <EmptyState
             title="No matches"
             subtitle={`Nothing in your list matches “${debounced.trim()}”.`}
+            action={
+              <Button variant="primary" onClick={() => goDiscoverSearchFor(debounced.trim())}>
+                Search all anime for “
+                {debounced.trim().length > 32
+                  ? `${debounced.trim().slice(0, 32)}…`
+                  : debounced.trim()}
+                ”
+              </Button>
+            }
           />
         )
       ) : (
@@ -263,15 +313,26 @@ function Section({
   return (
     <section className="k-ovsection">
       <div className="k-ovsection__head">
-        <h2 className="k-ovsection__title">{title}</h2>
-        {/* An empty room is a dead end, so its door and count stand down. */}
-        {count > 0 && <span className="k-ovsection__count">{count}</span>}
-        {count > 0 && (
-          <button type="button" className="k-ovsection__more" onClick={onOpenRoom}>
-            See all
-            <Icon icon={ChevronRight} size={15} />
-          </button>
-        )}
+        {/* The whole heading is the room's door: title, count, and a chevron
+            as ONE control ("Watching 2 ›"). The chevron riding the title is
+            the visible tell that it opens; no separate "See all" fragment.
+            An empty room is a dead end, so its chevron and count stand down. */}
+        <h2 className="k-ovsection__title">
+          {count > 0 ? (
+            <button
+              type="button"
+              className="k-ovsection__open"
+              onClick={onOpenRoom}
+              aria-label={`See all in ${title}`}
+            >
+              {title}
+              <span className="k-ovsection__count">{count}</span>
+              <Icon icon={ChevronRight} size={18} className="k-ovsection__chev" />
+            </button>
+          ) : (
+            title
+          )}
+        </h2>
       </div>
       {children}
     </section>

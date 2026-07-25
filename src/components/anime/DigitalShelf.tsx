@@ -1,6 +1,9 @@
+import { memo } from "react";
 import { Star, X } from "lucide-react";
 import { AnimeCover } from "./AnimeCover";
 import { Icon } from "@/components/ui/Icon";
+import { useDragScroll } from "@/hooks/useDragScroll";
+import { bestScore } from "@/lib/franchise/grouping";
 import { formatScore, getCoverUrl, preferredTitle } from "@/lib/format";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
@@ -10,6 +13,7 @@ import type { FranchiseGroup } from "@/lib/franchise/grouping";
  * the corner (always visible, so touch never needs a hover) and lifts on hover
  * for the desktop flourish. Tapping a cover opens the quick menu. A recent
  * slice only; the full record lives in the Completed room.
+ * Desktop pans by mouse drag (no scrollbar); the wheel stays with the page.
  */
 export function DigitalShelf({
   groups,
@@ -18,10 +22,11 @@ export function DigitalShelf({
   groups: FranchiseGroup[];
   onOpen: (rootId: number) => void;
 }) {
+  const rowRef = useDragScroll<HTMLDivElement>();
   if (groups.length === 0) return null;
   return (
     <div className="k-shelf">
-      <div className="k-shelf__row konsou-scroll">
+      <div className="k-shelf__row" ref={rowRef}>
         {groups.map((g) => (
           <ShelfItem key={g.rootId} group={g} onOpen={onOpen} />
         ))}
@@ -33,7 +38,7 @@ export function DigitalShelf({
 
 /** One cover on the ledge. Exported so the Completed room renders the same card
  *  in its virtualized grid. */
-export function ShelfItem({
+function ShelfItemImpl({
   group,
   onOpen,
 }: {
@@ -53,11 +58,9 @@ export function ShelfItem({
     titleLanguage,
   );
   const cover = getCoverUrl({ medium: displayEntry.cover_url ?? undefined });
-  // The best score across the franchise's finished members represents the set.
-  const score = entries.reduce<number | null>(
-    (best, e) => (e.score != null && (best == null || e.score > best) ? e.score : best),
-    null,
-  );
+  // The best score across the franchise's members represents the set (the
+  // shared rule: see bestScore in grouping).
+  const score = bestScore(entries);
   // Dropped rides the shelf when you ask for it: desaturated, marked with a
   // cross instead of a score. It's part of the record ("I dealt with this"),
   // just never a title you finished.
@@ -69,6 +72,15 @@ export function ShelfItem({
       className={`k-shelfitem${dropped ? " k-shelfitem--dropped" : ""}`}
       onClick={() => onOpen(rootId)}
       title={title}
+      // Content order would put the corner badge before the title ("9 Cowboy
+      // Bebop"); name the button explicitly so the score reads as a score.
+      aria-label={
+        dropped
+          ? `${title}, dropped`
+          : score != null
+            ? `${title}, scored ${formatScore(score)}`
+            : title
+      }
     >
       <div className="k-shelfitem__cover">
         <AnimeCover src={cover} alt={title} decorative radius="var(--radius-md)" />
@@ -90,3 +102,8 @@ export function ShelfItem({
     </button>
   );
 }
+
+/** Memoized for the same reason as QueueCard: the virtualizer re-renders the
+ *  parent every scroll frame. Cheaper tree than the queue poster, which is why
+ *  Completed already felt smoother, but it still pays per frame without this. */
+export const ShelfItem = memo(ShelfItemImpl);

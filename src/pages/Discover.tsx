@@ -40,6 +40,7 @@ export function Discover() {
   const setSearching = useSearchStore((s) => s.setSearching);
   const debouncedQuery = useDebounce(value, 400);
 
+  const defaultView = useSettingsStore((s) => s.defaultView);
   const recent = useSettingsStore((s) => s.recentSearches);
   const addRecent = useSettingsStore((s) => s.addRecentSearch);
   const removeRecent = useSettingsStore((s) => s.removeRecentSearch);
@@ -65,12 +66,18 @@ export function Discover() {
   const showRecents = !browsing && searching && !searchMode;
 
   // Arriving from a "Search for anime" CTA opens search and focuses the field.
+  // The door may carry the words the user already typed (My List's no-match
+  // handoff), so the title they just searched for never needs retyping.
   useEffect(() => {
-    if ((location.state as { fromSearchIntent?: boolean } | null)?.fromSearchIntent) {
+    const intent = location.state as
+      | { fromSearchIntent?: boolean; query?: string }
+      | null;
+    if (intent?.fromSearchIntent) {
+      if (intent.query) setValue(intent.query);
       setSearching(true);
       inputRef.current?.focus();
     }
-  }, [location.state, setSearching]);
+  }, [location.state, setSearching, setValue]);
 
   const runChip = (q: string) => {
     setValue(q);
@@ -177,7 +184,7 @@ export function Discover() {
           onBack={() => setBrowsing(false)}
         />
       ) : searchMode ? (
-        <SearchResults query={debouncedQuery} view="grid" />
+        <SearchResults query={debouncedQuery} view={defaultView} />
       ) : showRecents ? (
         // preventDefault on mousedown keeps the input focused while tapping a
         // chip; without it the blur empties `searching`, the panel unmounts

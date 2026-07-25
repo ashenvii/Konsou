@@ -186,6 +186,12 @@ textarea,
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  /* The scroll-away header resizes these scrollers as it folds. Scroll
+     anchoring answers such resizes with compensating scrollTop bumps, which
+     the header logic reads as real scrolling — on short pages the two feed
+     each other into a per-frame fold/unfold seesaw. The app manages its own
+     scroll restoration, so anchoring buys nothing here. */
+  overflow-anchor: none;
 }
 
 /* Live mouse grab-pan (useViewportDragScroll): no accidental text selection

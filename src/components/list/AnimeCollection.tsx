@@ -91,13 +91,38 @@ export function AnimeCollection({
     virtualizer.measure();
   }, [rowHeight, columns, virtualizer]);
 
-  // Pagination trigger.
+  /**
+   * Pagination trigger, fired at most once per page of results.
+   *
+   * Two things made this loop forever on narrow filters. Callers pass an inline
+   * `() => fetchNextPage()`, so its identity changed every render, and it was in
+   * this effect's deps: render → new identity → effect → fetch → state → render.
+   * And the "near the end" test is trivially TRUE when the results only fill a
+   * row or two, so a search returning four cards re-triggered on every pass and
+   * the page visibly jittered until relaunch. Large result sets hid it.
+   *
+   * So: read the callback through a ref (identity can no longer schedule work),
+   * and remember the rowCount we last asked at. A fresh request only goes out
+   * once the list has actually grown, which also means a query with no further
+   * pages asks exactly once and then stops.
+   */
   const virtualRows = virtualizer.getVirtualItems();
+  const onEndRef = useRef(onEndReached);
+  onEndRef.current = onEndReached;
+  const requestedAt = useRef(-1);
+
   useEffect(() => {
-    if (!onEndReached) return;
+    if (rowCount === 0) {
+      requestedAt.current = -1;
+      return;
+    }
+    if (!onEndRef.current) return;
     const last = virtualRows[virtualRows.length - 1];
-    if (last && last.index >= rowCount - 2 && rowCount > 0) onEndReached();
-  }, [virtualRows, rowCount, onEndReached]);
+    if (!last || last.index < rowCount - 2) return;
+    if (requestedAt.current === rowCount) return;
+    requestedAt.current = rowCount;
+    onEndRef.current();
+  }, [virtualRows, rowCount]);
 
   const dimOf = (id: number) =>
     dimmedIds && !dimmedIds.has(id) ? 0.2 : 1;
@@ -119,7 +144,9 @@ export function AnimeCollection({
                 className="k-collection__row k-collection__grid"
                 style={{
                   transform: `translateY(${top}px)`,
-                  gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                  // minmax(0): see FranchiseCollection — bare 1fr lets a
+                  // nowrap title widen the track past the viewport.
+                  gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
                   gap,
                   paddingBottom: gap,
                 }}

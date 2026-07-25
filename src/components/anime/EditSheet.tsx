@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Icon } from "@/components/ui/Icon";
+import { TagPicker } from "./TagPicker";
+import { collectHashtags } from "@/lib/hashtags";
 import { useListStore } from "@/lib/store/listStore";
 import { LIST_STATUSES } from "@/types/list";
 import type { ListEntryPatch, ListStatus } from "@/types/list";
@@ -26,9 +28,17 @@ function dateInputToMs(v: string): number | null {
 /** Full entry editor. Draft-based: changes only persist on Save. */
 export function EditSheet({ open, onClose, anilistId }: EditSheetProps) {
   const entry = useListStore((s) => s.map[anilistId]);
+  const entries = useListStore((s) => s.entries);
   const patch = useListStore((s) => s.patch);
   const updateStatus = useListStore((s) => s.updateStatus);
   const remove = useListStore((s) => s.remove);
+
+  // Your whole library's tag vocabulary, so the picker can suggest what you
+  // already use rather than letting a second spelling creep in.
+  const tagVocabulary = useMemo(
+    () => collectHashtags(entries.map((e) => e.notes)),
+    [entries],
+  );
 
   const [status, setStatus] = useState<ListStatus>("watching");
   const [episodes, setEpisodes] = useState(0);
@@ -182,6 +192,11 @@ export function EditSheet({ open, onClose, anilistId }: EditSheetProps) {
             onChange={(e) => setCompletedAt(e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="k-edit__row k-edit__row--col">
+        <label className="k-edit__label">Tags</label>
+        <TagPicker note={notes} onChange={setNotes} suggestions={tagVocabulary} />
       </div>
 
       <div className="k-edit__row k-edit__row--col">

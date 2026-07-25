@@ -91,14 +91,32 @@ export function FranchiseSheet({
   const remove = useListStore((s) => s.remove);
   const removeMany = useListStore((s) => s.removeMany);
   const listMap = useListStore((s) => s.map);
+  const allEntries = useListStore((s) => s.entries);
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
 
   const [pendingAdd, setPendingAdd] = useState<AnimeSummary | null>(null);
   const [pendingStatusId, setPendingStatusId] = useState<number | null>(null);
 
+  // The quick menu is the ONE surface where the whole franchise unifies
+  // across statuses. Rooms and the Overview group per status, so the group
+  // that arrives here may carry just one room's slice (a completed S1
+  // without its planned S2). Membership, totals, the root row, and the
+  // franchise-wide remove all resolve against the full list instead:
+  // every entry sharing the group's root key, whatever its status.
+  const franchiseEntries = useMemo(() => {
+    if (!group) return [] as AnimeListEntry[];
+    const byId = new Map(group.entries.map((e) => [e.anilist_id, e]));
+    for (const e of allEntries) {
+      if ((e.franchise_root_id ?? e.anilist_id) === group.rootId) {
+        byId.set(e.anilist_id, e);
+      }
+    }
+    return [...byId.values()].sort((a, b) => a.added_at - b.added_at);
+  }, [group, allEntries]);
+
   const trackedMap = useMemo(
-    () => new Map(group?.entries.map((e) => [e.anilist_id, e]) ?? []),
-    [group],
+    () => new Map(franchiseEntries.map((e) => [e.anilist_id, e])),
+    [franchiseEntries],
   );
 
   // THE shared franchise walk — the exact function behind the Related tab,
@@ -108,7 +126,9 @@ export function FranchiseSheet({
   const anchorId =
     group == null ? null : group.rootId > 0 ? group.rootId : group.entries[0].anilist_id;
   const anchorEntry =
-    group?.entries.find((e) => e.anilist_id === anchorId) ?? group?.entries[0] ?? null;
+    franchiseEntries.find((e) => e.anilist_id === anchorId) ??
+    franchiseEntries[0] ??
+    null;
   const anchorTitle = anchorEntry
     ? {
         romaji: anchorEntry.title_romaji,
@@ -193,7 +213,9 @@ export function FranchiseSheet({
   if (!group) return null;
 
   const rootEntry =
-    group.entries.find((e) => e.anilist_id === group.rootId) ?? group.entries[0];
+    franchiseEntries.find((e) => e.anilist_id === group.rootId) ??
+    franchiseEntries[0] ??
+    group.entries[0];
 
   const franchiseTitle = preferredTitle(
     {
@@ -204,14 +226,26 @@ export function FranchiseSheet({
     titleLanguage,
   );
 
+  // Totals span the whole franchise, not the room slice the group carries.
+  // Muted (not-interested) members stay out of the math: a mute is a
+  // decision, not progress.
+  let totalWatched = 0;
+  let totalEpisodes: number | null = 0;
+  for (const e of franchiseEntries) {
+    if (e.status === "not_interested") continue;
+    totalWatched += e.episodes_watched;
+    if (totalEpisodes !== null) {
+      totalEpisodes = e.total_episodes == null ? null : totalEpisodes + e.total_episodes;
+    }
+  }
   const overallPct =
-    group.totalEpisodes != null && group.totalEpisodes > 0
-      ? Math.round((group.totalWatched / group.totalEpisodes) * 100)
+    totalEpisodes != null && totalEpisodes > 0
+      ? Math.round((totalWatched / totalEpisodes) * 100)
       : null;
   const epSummary =
-    group.totalEpisodes != null
-      ? `${group.totalWatched} / ${group.totalEpisodes} episodes`
-      : `${group.totalWatched} episodes watched`;
+    totalEpisodes != null
+      ? `${totalWatched} / ${totalEpisodes} episodes`
+      : `${totalWatched} episodes watched`;
 
   const art = rootEntry.cover_url ?? group.displayEntry.cover_url ?? undefined;
   const poster = group.displayEntry.cover_url ?? rootEntry.cover_url ?? undefined;
@@ -239,12 +273,14 @@ export function FranchiseSheet({
     if (pendingStatusId != null) {
       remove(pendingStatusId);
       setPendingStatusId(null);
-      if (group.entries.length <= 1) onClose();
+      if (franchiseEntries.length <= 1) onClose();
     }
   };
 
+  // Franchise-wide means the WHOLE franchise: every tracked member across
+  // every status, not just the room slice this group carries.
   const removeFranchise = () => {
-    removeMany(group.entries.map((e) => e.anilist_id));
+    removeMany(franchiseEntries.map((e) => e.anilist_id));
     onClose();
   };
 
@@ -265,36 +301,21 @@ export function FranchiseSheet({
     const node = allRelNodes.get(id);
     const kind = kindChipFor(node);
     const year = node?.seasonYear ?? node?.startDate?.year ?? null;
-    const tracked = trackedMap.get(id);
-    if (tracked) {
+    // On the list in ANY status counts as yours. The listMap fallback also
+    // catches tracked members whose root linkage diverged from this card
+    // (the walk found them; the grouping key didn't). Muted members render
+    // dimmed: present for honesty, visually parked.
+    const onList = trackedMap.get(id) ?? listMap[id];
+    if (onList) {
       return (
         <SeasonRow
           key={id}
-          entry={tracked}
+          entry={onList}
           posNo={posNo}
           kind={kind}
           where={where}
           year={year}
-          titleLanguage={titleLanguage}
-          onOpen={(entryId) => {
-            onClose();
-            onNavigate(entryId);
-          }}
-          onStatusTap={(entryId) => setPendingStatusId(entryId)}
-        />
-      );
-    }
-    const notInterested = listMap[id];
-    if (notInterested?.status === "not_interested") {
-      return (
-        <SeasonRow
-          key={id}
-          entry={notInterested}
-          posNo={posNo}
-          kind={kind}
-          where={where}
-          year={year}
-          dimmed
+          dimmed={onList.status === "not_interested"}
           titleLanguage={titleLanguage}
           onOpen={(entryId) => {
             onClose();
@@ -364,7 +385,7 @@ export function FranchiseSheet({
 
         {relLoading ? (
           <div className="k-seasonlist">
-            {Array.from({ length: Math.max(3, group.entries.length + 1) }).map(
+            {Array.from({ length: Math.max(3, franchiseEntries.length + 1) }).map(
               (_, i) => (
                 <Skeleton key={i} height={72} radius="var(--radius-lg)" />
               ),
@@ -409,7 +430,9 @@ export function FranchiseSheet({
           className="k-holdbtn--danger k-fsheet-removehold"
         >
           <Icon icon={Trash2} size={15} />
-          {group.isGroup ? "Hold to remove whole franchise" : "Hold to remove from list"}
+          {franchiseEntries.length > 1
+            ? "Hold to remove whole franchise"
+            : "Hold to remove from list"}
         </HoldButton>
       </BottomSheet>
 

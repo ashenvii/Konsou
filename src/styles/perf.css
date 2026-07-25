@@ -7,11 +7,35 @@
    + RecyclerView) bake effects into the bitmap once; this is the CSS equivalent
    — swap live effects for static, near-identical ones. */
 
-/* Translucent-blur chips on cards → slightly more opaque, no blur. */
-.perf-lite .k-franchise-badge {
+/* Translucent-blur chips on cards → slightly more opaque, no blur.
+   Measured on an OPPO CPH2273 with ~1200 planned entries: 50.8% janky frames
+   with "Slow issue draw commands" at 468, while "Slow bitmap uploads" stayed
+   at 0. Images were never the cost; live compositor effects were. Every one of
+   these sits on a card or an overlay that MOVES during the scroll, so each
+   re-samples and re-blurs the content behind it every frame. */
+.perf-lite .k-franchise-badge,
+.perf-lite .k-mark,
+.perf-lite .k-seal,
+.perf-lite .k-bookmark,
+.perf-lite .k-notinterested,
+.perf-lite .k-qcard__pin,
+.perf-lite .k-card__epnow,
+.perf-lite .k-rail {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+/* Keep these readable without the blur doing the separation. */
+.perf-lite .k-franchise-badge,
+.perf-lite .k-mark,
+.perf-lite .k-seal,
+.perf-lite .k-card__epnow {
   background: oklch(0% 0 0 / 78%);
+}
+.perf-lite .k-qcard__pin {
+  background: oklch(0% 0 0 / 72%);
+}
+.perf-lite .k-rail {
+  background: color-mix(in oklch, var(--color-surface-1) 92%, transparent);
 }
 
 /* Soft glows: invisible at phone size, expensive to composite. Keep the

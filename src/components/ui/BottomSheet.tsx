@@ -7,6 +7,10 @@ interface BottomSheetProps {
   open: boolean;
   onClose: () => void;
   title?: string;
+  /** Accessible name when the sheet draws its own header instead of using
+   *  `title` (QuickMenu shows a cover + title block). Without this such a sheet
+   *  is a modal dialog with no name at all. */
+  ariaLabel?: string;
   children: ReactNode;
   /** Disable swipe/backdrop dismissal (e.g. while a keyboard is open inside). */
   dismissable?: boolean;
@@ -18,8 +22,13 @@ const CLOSE_FRACTION = 0.3;
 const FLICK_VELOCITY = 0.55; // px per ms, downward
 // Downward pull inside the scroll body, while already scrolled to the top,
 // needed before we take the gesture over as a sheet drag instead of a scroll.
-// Small enough to feel immediate, large enough that a tap never triggers it.
-const PULL_ENGAGE_SLOP = 6; // px
+//
+// This was 6px, which is finger jitter rather than an intention: reaching the
+// top of a scrollable sheet and continuing to drag dismissed it instantly, so
+// the only way to read content was to scroll down first and back up. The
+// sheet now holds still through a deliberate pull before it starts following
+// the finger, which is the resistance a nested scroll needs to feel safe.
+const PULL_ENGAGE_SLOP = 56; // px
 
 /**
  * The container for all modal interactions. Bottom sheet on mobile, centered
@@ -31,6 +40,7 @@ export function BottomSheet({
   open,
   onClose,
   title,
+  ariaLabel,
   children,
   dismissable = true,
 }: BottomSheetProps) {
@@ -43,6 +53,10 @@ export function BottomSheet({
     lastT: number;
     velocity: number;
   } | null>(null);
+  // Read through a ref by the touch listeners so toggling it never forces them
+  // to re-register in the middle of a gesture.
+  const dismissableRef = useRef(dismissable);
+  dismissableRef.current = dismissable;
   const closing = useRef(false);
   const raf = useRef(0);
   const pendingDy = useRef(0);
@@ -87,8 +101,21 @@ export function BottomSheet({
     let engaged = false;
     let done = false;
 
+    // Classify ONCE, here, and never revisit it. A gesture that begins with
+    // content still scrolled, or on something that owns its own drag, is a
+    // scroll for its entire life no matter where the finger ends up. Deciding
+    // this per-move is what let a drag turn into a dismiss halfway through.
     const onStart = (e: TouchEvent) => {
-      if (!dismissable || closing.current || e.touches.length !== 1) {
+      const target = e.target as HTMLElement | null;
+      if (
+        !dismissableRef.current ||
+        closing.current ||
+        e.touches.length !== 1 ||
+        body.scrollTop > 0 ||
+        // Anything that runs its own drag (the My Order grip) opts out, so the
+        // sheet never competes with it for the same finger.
+        target?.closest("[data-sheet-nodrag]")
+      ) {
         done = true;
         return;
       }
@@ -98,14 +125,22 @@ export function BottomSheet({
     };
     const onMove = (e: TouchEvent) => {
       if (done || closing.current) return;
+      // Locked mid-gesture (a row drag started): abandon quietly rather than
+      // keep tracking toward a dismiss.
+      if (!dismissableRef.current) {
+        done = true;
+        return;
+      }
       const y = e.touches[0].clientY;
       const dy = y - startY;
       if (!engaged) {
-        // Content can still scroll up, or the pull is upward: it's a scroll.
-        if (body.scrollTop > 0 || dy < 0) {
+        // Upward means the user is scrolling; that settles it for good.
+        if (dy < 0) {
           done = true;
           return;
         }
+        // Below the threshold the sheet holds completely still. This is the
+        // resistance: nothing moves until the pull is unmistakably a dismiss.
         if (dy < PULL_ENGAGE_SLOP) return;
         engaged = true;
         beginRef.current(y, e.timeStamp); // anchor here so there's no jump
@@ -133,7 +168,13 @@ export function BottomSheet({
       body.removeEventListener("touchend", onEnd);
       body.removeEventListener("touchcancel", onEnd);
     };
-  }, [open, dismissable]);
+    // Deliberately NOT keyed on `dismissable`. Re-registering these listeners
+    // mid-gesture wipes startY/engaged/done, and the next touchmove then reads
+    // a delta of hundreds of pixels from a zeroed origin and dismisses the
+    // sheet instantly. That is exactly what locking the sheet during a My Order
+    // row drag used to trigger. `dismissable` is read through a ref instead, so
+    // the listeners survive the whole gesture.
+  }, [open]);
 
   if (!open) return null;
 
@@ -245,7 +286,7 @@ export function BottomSheet({
         className="k-sheet"
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-label={ariaLabel ?? title}
         tabIndex={-1}
         ref={sheetRef}
       >

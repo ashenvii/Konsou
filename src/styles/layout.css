@@ -5,6 +5,10 @@
   flex-direction: column;
   height: 100%;
   height: 100dvh;
+  /* Safety net: a WebView that supports dvh but misreports it would collapse
+     the shell to 0 (the dvh line discards the 100% fallback). Costs nothing
+     where dvh is honest. */
+  min-height: 100%;
   overflow: hidden;
 }
 .k-shell--desktop {
@@ -404,10 +408,10 @@
   }
 }
 /* Content tucks under it: a hairline + soft shadow once the page scrolls. */
+/* No drawn line: the elevation is a soft falloff only, so the chrome reads
+   as content sliding beneath it rather than a bar clamped on top. */
 html[data-page-scrolled="true"] .k-header {
-  box-shadow:
-    0 1px 0 var(--color-border),
-    0 10px 22px -14px oklch(0% 0 0 / 65%);
+  box-shadow: 0 14px 28px -16px oklch(0% 0 0 / 75%);
 }
 
 .k-header__brand {
@@ -442,7 +446,8 @@ html[data-page-scrolled="true"] .k-header {
   font-size: var(--text-sm);
 }
 .k-hsearch__input::placeholder {
-  color: var(--color-text-tertiary);
+  /* Same rule as .k-ovsearch__input: tertiary placeholders fail AA. */
+  color: var(--color-text-secondary);
 }
 .k-hsearch__input::-webkit-search-cancel-button {
   display: none;

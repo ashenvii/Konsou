@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Play, Plus } from "lucide-react";
 import { AnimeCover } from "./AnimeCover";
 import { statusMeta } from "./statusMeta";
@@ -36,7 +37,7 @@ export function HeroBinge({
 /** One cinematic card. Exported so the Watching room can render the same card
  *  inside its virtualized grid, keeping the language continuous when you
  *  drill in from the overview. */
-export function HeroCard({
+function HeroCardImpl({
   group,
   onOpen,
 }: {
@@ -98,7 +99,9 @@ export function HeroCard({
 
       <div className="k-hero__body">
         <div className="k-hero__cover">
-          <AnimeCover src={cover} alt={title} decorative radius="var(--radius-md)" />
+          {/* Radius 0: the art bleeds to the card edges and the card's own
+              overflow clip rounds the outer corners. */}
+          <AnimeCover src={cover} alt={title} decorative radius="0" />
         </div>
 
         <div className="k-hero__info">
@@ -119,8 +122,15 @@ export function HeroCard({
             </button>
           </h3>
           <span className="k-hero__meta">
-            {displaySeason ? `${displaySeason} · ` : ""}
-            Ep {watched} of {total ?? "?"}
+            {/* The season name gives way; the episode count never leaves view.
+                On narrow cards a long subtitle otherwise wraps the meta to
+                three lines and pushes the bar out of the fixed room row. */}
+            {displaySeason && (
+              <span className="k-hero__metaseason">{displaySeason} · </span>
+            )}
+            <span className="k-hero__metaep">
+              Ep {watched} of {total ?? "?"}
+            </span>
           </span>
           <div className="k-hero__bar">
             <span style={{ width: `${pct}%` }} />
@@ -134,7 +144,7 @@ export function HeroCard({
             onClick={() => void updateStatus(displayEntry.anilist_id, "watching")}
             aria-label={`Resume watching ${title}`}
           >
-            <Icon icon={Play} size={18} weight="fill" />
+            <Icon icon={Play} size={20} weight="fill" />
             <span>Resume</span>
           </button>
         ) : (
@@ -153,3 +163,7 @@ export function HeroCard({
     </article>
   );
 }
+
+/** Memoized for the same reason as QueueCard: the Watching room renders these
+ *  inside the virtualizer, which re-renders its parent on every scroll frame. */
+export const HeroCard = memo(HeroCardImpl);

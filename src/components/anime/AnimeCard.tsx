@@ -57,7 +57,11 @@ function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
   const progressive =
     entry?.status === "watching" || entry?.status === "rewatching";
 
-  const { increment, pending } = useEpisodeIncrement(media.id, watched, total);
+  // undoToast: a card +1 is a quick, easy-to-mis-tap action, so give every
+  // commit a one-tap Undo (the deliberate detail stepper opts out).
+  const { increment, pending } = useEpisodeIncrement(media.id, watched, total, {
+    undoToast: true,
+  });
 
   const open = () => navigate(`/anime/${media.id}`, { replace: true });
   const stop = (e: MouseEvent) => e.stopPropagation();

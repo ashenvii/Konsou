@@ -15,6 +15,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
 import { formatScore, getCoverUrl, preferredTitle } from "@/lib/format";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import { bestScore } from "@/lib/franchise/grouping";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
 import type { ViewMode } from "@/types/list";
 
@@ -86,6 +87,15 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
     totalEpisodes == null &&
     totalWatched === 0;
   const seasonLabel = `${seasonCount} seasons`;
+  // A fully-completed card's season bar is a solid status-colored line: it
+  // says nothing the check and count don't, and a room of them reads as
+  // hard rules drawn under every row. The bar earns its place only while
+  // some part of the franchise is unfinished.
+  const allCompleted = entries.every((e) => e.status === "completed");
+
+  // Same rule as the shelf badge: the group's best score, never the display
+  // entry's own (an unscored active season would hide the finished one's).
+  const score = bestScore(entries);
 
   // ── Grid ──────────────────────────────────────────────────
   if (view === "grid") {
@@ -194,14 +204,16 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
                 !hideEpLabel && (
                   <span className="k-card__epcaption">{epLabel}</span>
                 )}
-              {displayEntry.score != null && (
+              {score != null && (
                 <span className="k-card__scorechip">
-                  {formatScore(displayEntry.score)}
+                  {formatScore(score)}
                 </span>
               )}
             </div>
             {/* Segmented season bar: one chunk per tracked season. */}
-            <SeasonBar entries={entries} size="grid" className="k-card__seasonbar" />
+            {!allCompleted && (
+              <SeasonBar entries={entries} size="grid" className="k-card__seasonbar" />
+            )}
           </div>
           {/* No corner action button: tapping the card IS the action, and the
               top-left badge already marks the franchise. A button that repeats
@@ -242,12 +254,14 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
               </span>
             )}
           </div>
-          <SeasonBar entries={entries} size="row" className="k-row__seasonbar" />
+          {!allCompleted && (
+            <SeasonBar entries={entries} size="row" className="k-row__seasonbar" />
+          )}
         </div>
         <div className="k-row__metacol">
           <span className="k-row__ep">{hideEpLabel ? "" : epLabel}</span>
-          {displayEntry.score != null && (
-            <span className="k-row__scoreval">★ {formatScore(displayEntry.score)}</span>
+          {score != null && (
+            <span className="k-row__scoreval">★ {formatScore(score)}</span>
           )}
         </div>
         {/* Tapping the row opens the sheet; a chevron repeating that is noise. */}
@@ -279,9 +293,11 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
         <Icon icon={status.icon} size={14} weight="fill" />
       </span>
       <span className="k-compact__score">
-        {displayEntry.score != null ? formatScore(displayEntry.score) : ""}
+        {score != null ? formatScore(score) : ""}
       </span>
-      <SeasonBar entries={entries} size="row" className="k-compact__seasonbar" />
+      {!allCompleted && (
+        <SeasonBar entries={entries} size="row" className="k-compact__seasonbar" />
+      )}
     </article>
   );
 }

@@ -9,6 +9,7 @@ import { statusBlockReason } from "@/lib/statusValidation";
 import { syncQueue } from "@/lib/sync/queue";
 import { syncManager } from "@/lib/sync/syncManager";
 import { useCatchUpStore } from "./catchUpStore";
+import { recordEpisodeLog } from "./episodeUndo";
 import { useSettingsStore } from "./settingsStore";
 import { toast } from "./toastStore";
 import type { AnimeSummary, AnimeTitle, RelationNode } from "@/types/anime";
@@ -41,6 +42,12 @@ interface ListState {
    *  order and stamps each one's rank, so the arrangement survives restarts
    *  and rides the Drive sync. */
   reorderPlan: (anilistIdsInOrder: number[]) => Promise<void>;
+  /** Stamp a 1..UP_NEXT_CAP number onto an entry, or `null` to clear it.
+   *  Swaps with whoever holds that number. */
+  setPlanNumber: (anilistId: number, rank: number | null) => Promise<void>;
+  /** Give an entry the lowest free number. False when the order is full or the
+   *  entry already has one, so callers can say so instead of failing silently. */
+  addToPlanOrder: (anilistId: number) => boolean;
   patch: (anilistId: number, patch: ListEntryPatch) => Promise<void>;
   /** Force re-resolve a franchise so its tracked members share one root card.
    *  Lets the user fix a grouping the background pass missed (e.g. a sequel
@@ -51,6 +58,12 @@ interface ListState {
   clearAll: (opts?: { propagateToDrive?: boolean }) => Promise<void>;
   restore: (entry: AnimeListEntry) => Promise<void>;
 }
+
+/**
+ * How many cards Up Next holds. Small on purpose: a shortlist you can rank by
+ * hand is the thing a total order over a thousand plan entries can never be.
+ */
+export const UP_NEXT_CAP = 10;
 
 function indexBy(entries: AnimeListEntry[]): Record<number, AnimeListEntry> {
   const m: Record<number, AnimeListEntry> = {};
@@ -162,11 +175,11 @@ export const useListStore = create<ListState>((set, get) => {
       );
 
       // Give the newly added entry its franchise root.
-      await patchEntry(primaryId, { franchise_root_id: rootId });
+      await patchEntryQuiet(primaryId, { franchise_root_id: rootId });
 
       // Stamp already-tracked ancestors that were added before this feature.
       for (const id of toUpdate) {
-        await patchEntry(id, { franchise_root_id: rootId });
+        await patchEntryQuiet(id, { franchise_root_id: rootId });
       }
 
       if (toAdd.length === 0 || !promptCatchUp) return;
@@ -208,6 +221,126 @@ export const useListStore = create<ListState>((set, get) => {
   };
 
   /**
+   * Write a batch of plan_rank values, optimistically and reversibly. A rank
+   * means "position in Up Next"; null means the entry lives in the unordered
+   * library. Only entries whose rank actually changes are written.
+   */
+  const writePlanRanks = async (
+    updates: { id: number; rank: number | null }[],
+  ): Promise<void> => {
+    const prev = get().map;
+    const changed = updates.filter(
+      ({ id, rank }) => prev[id] && prev[id].plan_rank !== rank,
+    );
+    if (changed.length === 0) return;
+
+    const now = Date.now();
+    // The whole arrangement lands at once so the shelf can't flicker through a
+    // half-applied order.
+    set((s) => {
+      const map = { ...s.map };
+      for (const { id, rank } of changed) {
+        map[id] = { ...map[id], plan_rank: rank, updated_at: now };
+      }
+      return { entries: s.entries.map((e) => map[e.anilist_id] ?? e), map };
+    });
+
+    try {
+      const db = await getDb();
+      for (const { id, rank } of changed) {
+        await db.listUpdate(id, { plan_rank: rank, updated_at: now });
+      }
+      queueSync();
+    } catch {
+      // Put the old order back rather than leave a half-written queue.
+      set((s) => {
+        const map = { ...s.map };
+        for (const { id } of changed) map[id] = prev[id];
+        return { entries: s.entries.map((e) => map[e.anilist_id] ?? e), map };
+      });
+      toast.error("Couldn't save that order");
+    }
+  };
+
+  /**
+   * Force every watch-order number back into 1..UP_NEXT_CAP.
+   *
+   * Any backup written before the numbering rework carries the OLD model, where
+   * plan_rank was a dense position across EVERY planned entry, so a restore
+   * reintroduces numbers in the hundreds. Data arriving from outside has to be
+   * made legal on the way in; leaving it to whichever screen notices first is
+   * why the numbers appeared to "fix themselves after a few relaunches".
+   *
+   * The lowest ranks survive, because in the old model those were the entries
+   * deliberately placed first. Everything past the cap is released. Returns the
+   * number of rows changed so callers can skip the write when there is nothing
+   * to do.
+   */
+  /**
+   * The watch order is a DENSE queue: the planned+ranked entries always carry
+   * exactly the numbers 1..N in position order, never a gap. The number is a
+   * position, so every surface can show the same value (a card's stored rank
+   * equals its place in the list) and removing one shifts the rest up.
+   *
+   * Every mutation funnels through here: pass the ids in their new order and
+   * they become 1..N; anything ranked but not listed is released to the
+   * unordered library. Beyond the cap is dropped, so the queue can never exceed
+   * UP_NEXT_CAP however the data arrived.
+   */
+  const orderedPlanIds = (): number[] =>
+    get()
+      .entries.filter((e) => e.status === "plan_to_watch" && e.plan_rank != null)
+      .sort((a, b) => (a.plan_rank ?? 0) - (b.plan_rank ?? 0))
+      .map((e) => e.anilist_id);
+
+  const commitPlanOrder = async (ids: number[]): Promise<void> => {
+    const capped = ids.slice(0, UP_NEXT_CAP);
+    const kept = new Set(capped);
+    const updates: { id: number; rank: number | null }[] = capped.map((id, i) => ({
+      id,
+      rank: i + 1,
+    }));
+    // A rank that survives an operation but isn't in the new order is orphaned
+    // (a removed entry, an overflow past the cap); release it.
+    for (const e of get().entries) {
+      if (
+        e.status === "plan_to_watch" &&
+        e.plan_rank != null &&
+        !kept.has(e.anilist_id)
+      ) {
+        updates.push({ id: e.anilist_id, rank: null });
+      }
+    }
+    await writePlanRanks(updates);
+  };
+
+  /** Force the order dense. Idempotent (writePlanRanks skips unchanged rows),
+   *  so it is safe to run on every load and after any edit that could orphan a
+   *  rank. Also repairs legacy data: a total order 0..N, duplicates, or numbers
+   *  above the cap all collapse to a clean 1..N. */
+  const normalizePlanNumbers = async (): Promise<void> => {
+    await commitPlanOrder(orderedPlanIds());
+  };
+
+  /** Metadata patch that keeps updated_at where the user left it. Root stamps,
+   *  dub backfills and the like are bookkeeping, not touches: letting them bump
+   *  updated_at reorders "recently watched" (the Hero Binge's pick) and hands
+   *  sync's last-write-wins to a write the user never made. No failure toast;
+   *  bookkeeping retries on a later pass, the callers own any messaging. */
+  const patchEntryQuiet = async (anilistId: number, patch: ListEntryPatch) => {
+    const prev = get().map[anilistId];
+    if (!prev) return;
+    applyEntry({ ...prev, ...patch });
+    try {
+      const db = await getDb();
+      await db.listUpdate(anilistId, { ...patch, updated_at: prev.updated_at });
+      queueSync();
+    } catch {
+      applyEntry(prev); // revert
+    }
+  };
+
+  /**
    * Background pass that stamps franchise_root_id on entries that were added
    * before this feature shipped. Runs at "low" priority so it never competes
    * with foreground API calls. Already-resolved entries are skipped, and when
@@ -238,13 +371,13 @@ export const useListStore = create<ListState>((set, get) => {
           entryTitle(entry),
         );
 
-        await patchEntry(entry.anilist_id, { franchise_root_id: rootId });
+        await patchEntryQuiet(entry.anilist_id, { franchise_root_id: rootId });
 
         // Stamp the rest of the chain that's already in the list so the loop
         // can skip them — avoids redundant chain walks for sibling seasons.
         for (const id of toUpdate) {
           if (get().map[id]?.franchise_root_id == null) {
-            await patchEntry(id, { franchise_root_id: rootId });
+            await patchEntryQuiet(id, { franchise_root_id: rootId });
           }
         }
       } catch {
@@ -305,7 +438,7 @@ export const useListStore = create<ListState>((set, get) => {
             const current = e.franchise_root_id ?? e.anilist_id;
             const belongs = current === rootId || members.has(e.anilist_id);
             if (belongs && e.franchise_root_id !== trueRoot) {
-              await patchEntry(e.anilist_id, { franchise_root_id: trueRoot });
+              await patchEntryQuiet(e.anilist_id, { franchise_root_id: trueRoot });
             }
           }
         } catch {
@@ -340,6 +473,11 @@ export const useListStore = create<ListState>((set, get) => {
         plan_rank: e.plan_rank ?? null,
       }));
       set({ entries, map: indexBy(entries), loaded: true });
+      // Rows can predate the numbering rework (a restored backup, or a device
+      // that synced one). Settle them once here so every surface sees legal
+      // numbers, rather than leaving it to whichever screen renders first.
+      // A no-op once the data is already legal.
+      void normalizePlanNumbers();
       if (!groomingStarted) {
         groomingStarted = true;
         void resolveOrphanRoots().then(() => reconcileSplitRoots());
@@ -461,6 +599,10 @@ export const useListStore = create<ListState>((set, get) => {
         await db.tombstoneRemove(incoming.anilist_id);
         count++;
       }
+      // Imported ranks come from whatever model wrote that backup, and the
+      // merge can also push the combined list past the cap, so settle the
+      // numbering before anything renders it.
+      await normalizePlanNumbers();
       queueSync();
       return count;
     },
@@ -468,7 +610,8 @@ export const useListStore = create<ListState>((set, get) => {
     setDubStatus: async (anilistId, hasDub) => {
       const entry = get().map[anilistId];
       if (!entry || entry.has_dub === hasDub) return;
-      await patchEntry(anilistId, { has_dub: hasDub });
+      // Backfilled on a detail visit; looking at a show is not watching it.
+      await patchEntryQuiet(anilistId, { has_dub: hasDub });
     },
 
     updateStatus: async (anilistId, status) => {
@@ -495,6 +638,13 @@ export const useListStore = create<ListState>((set, get) => {
         return;
       }
       const patch: ListEntryPatch = { status };
+      // A number means "this is next in my plan queue", so it cannot outlive
+      // the plan status. Without this the rank leaks: start watching a
+      // numbered title and it keeps #3 forever, still occupying a slot and
+      // reappearing if it ever returns to planned.
+      if (status !== "plan_to_watch" && prev.plan_rank != null) {
+        patch.plan_rank = null;
+      }
       if (status === "completed") {
         patch.completed_at = prev.completed_at ?? Date.now();
         if (prev.total_episodes != null) {
@@ -514,6 +664,9 @@ export const useListStore = create<ListState>((set, get) => {
         patch.started_at = Date.now();
       }
       await patchEntry(anilistId, patch);
+      // Leaving the plan status vacates a slot; close the gap so the queue
+      // stays a dense 1..N.
+      if (patch.plan_rank === null) void commitPlanOrder(orderedPlanIds());
       haptic(status === "completed" ? "success" : "light");
       // Scan just this seed immediately when marked completed/dropped.
       if (status === "completed" || status === "dropped") {
@@ -564,50 +717,83 @@ export const useListStore = create<ListState>((set, get) => {
       if (!prev) return;
       // Episode tracking only makes sense while actively watching.
       if (prev.status !== "watching" && prev.status !== "rewatching") return;
-      await get().setEpisodes(anilistId, prev.episodes_watched + delta);
+      const before = prev.episodes_watched;
+      await get().setEpisodes(anilistId, before + delta);
+      const after = get().map[anilistId]?.episodes_watched ?? before;
+      // A quick +1 joins the shared undo batch, so a run of taps shares one
+      // snackbar. The finale moment opts out: the mark-complete toast owns that
+      // moment, and two stacked toasts fight for it.
+      const reachedFinale = prev.total_episodes != null && after >= prev.total_episodes;
+      if (delta > 0 && after > before && !reachedFinale) {
+        recordEpisodeLog(anilistId, before, after);
+      }
     },
 
     setScore: async (anilistId, score) => {
       await patchEntry(anilistId, { score });
     },
 
+    /** Rewrite the whole order as 1..N. Numbers are 1-based because the user
+     *  sees and assigns them directly; a 0 would be a slot nobody can name. */
     reorderPlan: async (anilistIdsInOrder) => {
-      // Ranks are rewritten densely from 0 on every reorder. The queue is a
-      // bounded, deliberately-arranged list, so a full rewrite is simpler than
-      // gap-based ranks and can't drift out of order over time. Only entries
-      // whose rank actually changed are written.
-      const prev = get().map;
-      const changed = anilistIdsInOrder
-        .map((id, rank) => ({ id, rank }))
-        .filter(({ id, rank }) => prev[id] && prev[id].plan_rank !== rank);
-      if (changed.length === 0) return;
+      // Same dense committer every order edit uses, so drag, move-to-position
+      // and append can never drift apart on how the numbers are written.
+      await commitPlanOrder(anilistIdsInOrder);
+    },
 
-      const now = Date.now();
-      // Optimistic: the whole new order lands at once so the list can't flicker
-      // through a half-applied arrangement.
-      set((s) => {
-        const map = { ...s.map };
-        for (const { id, rank } of changed) {
-          map[id] = { ...map[id], plan_rank: rank, updated_at: now };
-        }
-        return { entries: s.entries.map((e) => map[e.anilist_id] ?? e), map };
-      });
-
-      try {
-        const db = await getDb();
-        for (const { id, rank } of changed) {
-          await db.listUpdate(id, { plan_rank: rank, updated_at: now });
-        }
-        queueSync();
-      } catch {
-        // Put the old order back rather than leave a half-written queue.
-        set((s) => {
-          const map = { ...s.map };
-          for (const { id } of changed) map[id] = prev[id];
-          return { entries: s.entries.map((e) => map[e.anilist_id] ?? e), map };
-        });
-        toast.error("Couldn't save that order");
+    /**
+     * Stamp a number onto an entry, or clear it with `null`.
+     *
+     * The whole point of numbering instead of dragging: assigning "this is #3"
+     * is one action no matter how long the list is, where MOVING something to
+     * third place means traversing everything in between. At 1200 planned
+     * titles that is the difference between possible and not.
+     *
+     * Collision swaps. If something already holds the number, the two trade
+     * places (or the old holder is released when this entry had none). Nothing
+     * cascades, exactly two entries change, and it is reversible by repeating
+     * the action.
+     *
+     * Gaps are allowed and ranks are NEVER renumbered automatically. The number
+     * is a label you chose, not an index into an array, so removing #3 leaves
+     * 1, 2, 4 rather than silently rewriting the numbers you assigned.
+     */
+    /**
+     * Append to the end of the queue, which in a dense order is the next
+     * number. Synchronous return so a caller can report "full" in the same
+     * gesture; the write itself is fire-and-forget like every optimistic patch.
+     */
+    addToPlanOrder: (anilistId) => {
+      const entry = get().map[anilistId];
+      if (!entry || entry.status !== "plan_to_watch" || entry.plan_rank != null) {
+        return false;
       }
+      const ids = orderedPlanIds();
+      if (ids.length >= UP_NEXT_CAP) return false;
+      void commitPlanOrder([...ids, anilistId]);
+      return true;
+    },
+
+    setPlanNumber: async (anilistId, rank) => {
+      const entry = get().map[anilistId];
+      if (!entry || entry.status !== "plan_to_watch") return;
+
+      // null clears the number and closes the gap it leaves behind.
+      if (rank == null) {
+        if (entry.plan_rank == null) return;
+        await commitPlanOrder(orderedPlanIds().filter((id) => id !== anilistId));
+        return;
+      }
+
+      // A number is a POSITION: move (or insert) this card to that slot and let
+      // everything renumber densely around it. Replaces the old swap, so "make
+      // this #3" now means "put it third", not "trade places with whoever is
+      // third" — which is what a dense queue needs.
+      const without = orderedPlanIds().filter((id) => id !== anilistId);
+      if (entry.plan_rank == null && without.length >= UP_NEXT_CAP) return; // full
+      const target = Math.max(0, Math.min(rank - 1, without.length));
+      const next = [...without.slice(0, target), anilistId, ...without.slice(target)];
+      await commitPlanOrder(next);
     },
 
     patch: async (anilistId, p) => {
@@ -627,9 +813,9 @@ export const useListStore = create<ListState>((set, get) => {
           "high",
           entryTitle(entry),
         );
-        await patchEntry(anilistId, { franchise_root_id: rootId });
+        await patchEntryQuiet(anilistId, { franchise_root_id: rootId });
         for (const id of toUpdate) {
-          await patchEntry(id, { franchise_root_id: rootId });
+          await patchEntryQuiet(id, { franchise_root_id: rootId });
         }
         const grouped = 1 + toUpdate.length;
         toast.success(
@@ -673,6 +859,12 @@ export const useListStore = create<ListState>((set, get) => {
           // otherwise they'd keep pointing at a title that's no longer tracked.
           const { useNotificationStore } = await import("./notificationStore");
           void useNotificationStore.getState().entriesRemoved([anilistId]);
+          // Removing a numbered plan entry vacates its slot. Compacting only
+          // AFTER the commit means Undo restores the exact gap the entry left,
+          // so the order is dense again without any renumber-then-collide race.
+          if (entry.status === "plan_to_watch" && entry.plan_rank != null) {
+            void commitPlanOrder(orderedPlanIds());
+          }
         } catch {
           applyEntry(entry);
           toast.error("Couldn't remove that entry");

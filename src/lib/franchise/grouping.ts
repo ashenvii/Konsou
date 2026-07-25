@@ -128,6 +128,18 @@ export function groupEntries(entries: AnimeListEntry[]): FranchiseGroup[] {
 }
 
 /**
+ * The score that represents a whole card: the best any member earned. One rule
+ * for every surface (shelf badge, franchise card chip, list row), so the same
+ * franchise never shows two different numbers depending on where you look.
+ */
+export function bestScore(entries: AnimeListEntry[]): number | null {
+  return entries.reduce<number | null>(
+    (best, e) => (e.score != null && (best == null || e.score > best) ? e.score : best),
+    null,
+  );
+}
+
+/**
  * Re-export the display priority so FranchiseCard can read the active status
  * without re-deriving it.
  */

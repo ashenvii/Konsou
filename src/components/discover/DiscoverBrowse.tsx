@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useDiscover } from "@/hooks/useAniList";
 import { useDragScroll } from "@/hooks/useDragScroll";
 import { formatLabel } from "@/lib/format";
+import { useSettingsStore } from "@/lib/store/settingsStore";
 import { GENRES } from "./DiscoverFilterSheet";
 import { browseActive, resolveSeason, seasonLabel, EMPTY_BROWSE } from "./lanes";
 import type { BrowseState } from "./lanes";
@@ -79,6 +80,7 @@ function Pill({ placeholder, value, options, accent, onChange }: PillProps) {
  */
 export function DiscoverBrowse({ state, onChange, keyword, onBack }: DiscoverBrowseProps) {
   const pillsRef = useDragScroll<HTMLDivElement>();
+  const defaultView = useSettingsStore((s) => s.defaultView);
   const seasonYear = state.season ? (state.year ?? resolveSeason(0).year) : undefined;
 
   const { results, isLoading, isError, hasNextPage, fetchNextPage, refetch } = useDiscover({
@@ -191,7 +193,7 @@ export function DiscoverBrowse({ state, onChange, keyword, onBack }: DiscoverBro
       ) : (
         <AnimeCollection
           items={results}
-          view="grid"
+          view={defaultView}
           onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
           restoreKey="discover.browse.scroll"
         />

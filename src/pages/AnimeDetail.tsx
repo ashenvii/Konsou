@@ -3,10 +3,12 @@ import type { CSSProperties, ReactNode, UIEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ChevronLeft,
+  ChevronRight,
   Copy,
   Globe,
   Info,
   Loader2,
+  NotebookPen,
   Play,
   Plus,
   Share2,
@@ -14,10 +16,9 @@ import {
   Tv,
 } from "lucide-react";
 import { AnimeCover, hueFromTitle } from "@/components/anime/AnimeCover";
-import { EditSheet } from "@/components/anime/EditSheet";
+import { QuickMenu } from "@/components/anime/QuickMenu";
 import { EpisodeCounter } from "@/components/anime/EpisodeCounter";
 import { formatChipMeta, relationChipMeta } from "@/components/anime/relationMeta";
-import { StatusBadge } from "@/components/anime/StatusBadge";
 import { statusMeta } from "@/components/anime/statusMeta";
 import { StatusSheet } from "@/components/anime/StatusSheet";
 import { Button } from "@/components/ui/Button";
@@ -26,6 +27,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useAnimeDetail, useMalScore, useRelationChain } from "@/hooks/useAniList";
+import { segmentHashtags } from "@/lib/hashtags";
 import { computeFranchiseLedger, ledgerEpisodeLabel } from "@/lib/franchise/ledger";
 import { isFranchiseOther } from "@/lib/franchise/relatedness";
 import { isPromoNode, mainStoryIds, placementLabel } from "@/lib/franchise/storySplit";
@@ -644,27 +646,66 @@ export function AnimeDetail() {
         <div className="k-detail__body">
           {/* User controls */}
           {entry ? (
-            <div className="k-detail__controls">
-              <StatusBadge
-                status={entry.status}
-                onClick={() => setStatusOpen(true)}
-              />
-              {/* The reached-finale "Mark complete" prompt now lives in the
-                  store (listStore.setEpisodes), so it fires from every
-                  increment surface, not just here. */}
-              <EpisodeCounter
-                anilistId={animeId!}
-                watched={entry.episodes_watched}
-                total={entry.total_episodes}
-              />
+            /* One panel for your relationship to this title: state, score,
+               progress, tags and note together, instead of three unrelated
+               controls that each opened a different sheet. */
+            <div className="k-track">
               <button
                 type="button"
-                className="k-detail__score"
+                className="k-track__top"
                 onClick={() => setEditOpen(true)}
-                aria-label="Edit score"
+                aria-label="Edit status, score, tags and notes"
               >
-                <Icon icon={Star} size={16} weight={entry.score != null ? "fill" : "regular"} color="var(--color-warning)" />
-                {formatScore(entry.score)}
+                <span
+                  className="k-track__status"
+                  style={{ color: statusMeta(entry.status).color }}
+                >
+                  <Icon icon={statusMeta(entry.status).icon} size={16} weight="fill" />
+                  {statusMeta(entry.status).label}
+                </span>
+                <span className="k-track__score">
+                  <Icon
+                    icon={Star}
+                    size={15}
+                    weight={entry.score != null ? "fill" : "regular"}
+                    color="var(--color-warning)"
+                  />
+                  {formatScore(entry.score)}
+                </span>
+                <Icon icon={ChevronRight} size={16} className="k-track__chev" />
+              </button>
+
+              {/* Logging stays inline: it is the frequent act, and making it
+                  cost a sheet would be a step backwards. The reached-finale
+                  prompt lives in listStore.setEpisodes, so it fires here too. */}
+              <div className="k-track__progress">
+                <EpisodeCounter
+                  anilistId={animeId!}
+                  watched={entry.episodes_watched}
+                  total={entry.total_episodes}
+                />
+              </div>
+
+              <button
+                type="button"
+                className={`k-track__note${entry.notes ? "" : " k-track__note--empty"}`}
+                onClick={() => setEditOpen(true)}
+                aria-label={entry.notes ? "Edit your note" : "Add a note"}
+              >
+                <Icon icon={NotebookPen} size={15} />
+                <span className="k-track__notetext">
+                  {entry.notes
+                    ? segmentHashtags(entry.notes).map((seg, i) =>
+                        seg.tag ? (
+                          <span key={i} className="k-track__tag">
+                            {seg.text}
+                          </span>
+                        ) : (
+                          <span key={i}>{seg.text}</span>
+                        ),
+                      )
+                    : "Add a private note. Use #tags to group titles across your list."}
+                </span>
               </button>
             </div>
           ) : (
@@ -1005,7 +1046,11 @@ export function AnimeDetail() {
         )}
       />
       {inList && animeId != null && (
-        <EditSheet open={editOpen} onClose={() => setEditOpen(false)} anilistId={animeId} />
+        <QuickMenu
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          anilistId={animeId}
+        />
       )}
     </div>
   );

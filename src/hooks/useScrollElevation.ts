@@ -76,10 +76,23 @@ export function useScrollElevation() {
       let shift = shifts.get(el) ?? 0;
       if (el.scrollTop <= 0) {
         shift = 0;
+      } else if (delta > 0) {
+        // Folding hands the header's space to this scroller, which SHRINKS
+        // its max scroll. Do that with less runway below than the fold would
+        // release and the browser clamps scrollTop, feeding a fake upward
+        // delta back into this handler — the fold seesaws every wheel tick
+        // (the search-jitters-over-the-header bug on short pages). So the
+        // fold only deepens while the runway can absorb what it releases;
+        // otherwise it holds where it is.
+        const capacity = HEADER_H + shift;
+        const runway = el.scrollHeight - el.clientHeight - el.scrollTop;
+        if (runway > capacity) {
+          shift = Math.max(-HEADER_H, shift - delta);
+        }
       } else {
-        // Follow scroll direction 1:1, clamped to the header's height. Down folds
-        // it away, up brings it back — continuous, so it never snaps.
-        shift = Math.max(-HEADER_H, Math.min(0, shift - delta));
+        // Scrolling up always brings the header back; unfolding only grows
+        // the max scroll, so it can never trigger the clamp loop.
+        shift = Math.min(0, shift - delta);
       }
       shifts.set(el, shift);
       const header = getHeader();
