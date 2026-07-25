@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { bestScore, groupEntries } from "./grouping";
+import { groupEntries } from "./grouping";
 import { makeEntry } from "@/test/factories";
 
 /**
@@ -136,22 +136,5 @@ describe("groupEntries — totals and sort keys", () => {
     ]);
     expect(groups[0].sortUpdated).toBe(900);
     expect(groups[0].sortAdded).toBe(10);
-  });
-});
-
-describe("bestScore", () => {
-  it("reports the highest score any member earned", () => {
-    expect(
-      bestScore([
-        makeEntry({ anilist_id: 1, score: 7 }),
-        makeEntry({ anilist_id: 2, score: 9 }),
-        makeEntry({ anilist_id: 3, score: null }),
-      ]),
-    ).toBe(9);
-  });
-
-  it("is null when nothing has been scored", () => {
-    expect(bestScore([makeEntry({ anilist_id: 1, score: null })])).toBeNull();
-    expect(bestScore([])).toBeNull();
   });
 });

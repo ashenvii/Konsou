@@ -45,8 +45,6 @@ vi.mock("@/lib/store/notificationStore", () => ({
     }),
   },
 }));
-vi.mock("@/lib/store/episodeUndo", () => ({ recordEpisodeLog: vi.fn() }));
-
 import { useListStore } from "@/lib/store/listStore";
 import { mergeLists } from "@/lib/sync/merger";
 import { detectSequels } from "@/lib/sequel/detector";
