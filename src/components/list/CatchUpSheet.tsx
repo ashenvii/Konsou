@@ -18,7 +18,7 @@ import { useSettingsStore } from "@/lib/store/settingsStore";
  * side entries no longer drag a whole card into the wrong state.
  */
 export function CatchUpSheet() {
-  const request = useCatchUpStore((s) => s.request);
+  const request = useCatchUpStore((s) => s.queue[0] ?? null);
   const close = useCatchUpStore((s) => s.close);
   const addWatchedPrior = useListStore((s) => s.addWatchedPrior);
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
@@ -58,7 +58,15 @@ export function CatchUpSheet() {
   };
 
   return (
-    <BottomSheet open={request != null} onClose={close} title="Already caught up?">
+    <BottomSheet
+      open={request != null}
+      onClose={close}
+      title="Already caught up?"
+      // A forced choice, not a passing sheet: it holds the answer to "what did
+      // you already watch" and a stray swipe/backdrop tap used to lose it for
+      // good mid-scroll. Only the Skip and Mark buttons below dismiss it.
+      dismissable={false}
+    >
       <div className="k-catchup">
         <Text size="sm" color="secondary" className="k-catchup__intro">
           {request?.primaryTitle

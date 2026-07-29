@@ -98,7 +98,7 @@ export function QuickMenu({ open, onClose, anilistId, onOpenDetails }: QuickMenu
     // The sheet's title feeds the dialog's aria-label; an empty one leaves the
     // modal with no accessible name. The heading inside is the cover + title
     // block, so name it after the entry rather than showing a second header.
-    <BottomSheet open={open} onClose={close} title="" ariaLabel={title}>
+    <BottomSheet open={open} onClose={close} title="" ariaLabel={title} dock modeless>
       <div className="k-qm">
         <header className="k-qm__head">
           <div className="k-qm__cover">

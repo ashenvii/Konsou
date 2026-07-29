@@ -14,9 +14,6 @@
    these sits on a card or an overlay that MOVES during the scroll, so each
    re-samples and re-blurs the content behind it every frame. */
 .perf-lite .k-franchise-badge,
-.perf-lite .k-mark,
-.perf-lite .k-seal,
-.perf-lite .k-bookmark,
 .perf-lite .k-notinterested,
 .perf-lite .k-qcard__pin,
 .perf-lite .k-card__epnow,
@@ -26,8 +23,6 @@
 }
 /* Keep these readable without the blur doing the separation. */
 .perf-lite .k-franchise-badge,
-.perf-lite .k-mark,
-.perf-lite .k-seal,
 .perf-lite .k-card__epnow {
   background: oklch(0% 0 0 / 78%);
 }
@@ -45,9 +40,6 @@
 }
 .perf-lite .k-card--status-completed.k-card--grid.k-card--inlist {
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--card-status) 55%, transparent);
-}
-.perf-lite .k-seal {
-  box-shadow: none;
 }
 .perf-lite .k-seasonbar__fill {
   box-shadow: none;
@@ -79,8 +71,6 @@
    so on phone GPUs they hold their end state instead of looping. Desktop
    keeps the motion. */
 .perf-lite .k-card--status-watching .k-card__front,
-.perf-lite .k-card--status-rewatching .k-card__front,
-.perf-lite .k-card--status-on_hold .k-hold__circle,
-.perf-lite .k-mark--spin .k-mark__icon {
+.perf-lite .k-card--status-rewatching .k-card__front {
   animation: none !important;
 }

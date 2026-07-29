@@ -106,8 +106,11 @@ export function EpisodeCounter({
           />
         ) : (
           <button
+            // Remounts on each change so the stamp animation replays: logging an
+            // episode presses the number in like an ink stamp.
+            key={displayEp}
             type="button"
-            className="k-epcounter__num"
+            className="k-epcounter__num k-stamped"
             style={isPending ? { color: "var(--color-accent)" } : undefined}
             onClick={beginEdit}
             aria-label={`Watched ${displayEp} episodes. Tap to type a number`}

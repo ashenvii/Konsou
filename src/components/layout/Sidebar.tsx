@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import type { FocusEvent, MouseEvent } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { UserRound } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
 import { useNotificationStore } from "@/lib/store/notificationStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import { useAuthStore } from "@/lib/store/authStore";
 import { useNavStacks } from "@/lib/navStacks";
 import { useTabPress } from "@/hooks/useTabPress";
 import { NAV_ITEMS } from "./navConfig";
@@ -21,9 +23,11 @@ const CLOSE_X = EXPANDED_WIDTH - 48; // 172px — past the labels, before the ed
 const CLOSE_DELAY = 160;
 
 export function Sidebar() {
+  const navigate = useNavigate();
   const alertCount = useNotificationStore((s) => s.items.length);
   const sidebarMode = useSettingsStore((s) => s.sidebarMode);
   const currentTab = useNavStacks((s) => s.currentTab);
+  const account = useAuthStore((s) => s.account);
   const onTabPress = useTabPress();
 
   const [hovered, setHovered] = useState(false);
@@ -82,6 +86,13 @@ export function Sidebar() {
       data-expanded={expanded || undefined}
       {...hoverProps}
     >
+      <div className="k-sidebar__brand">
+        <span className="k-sidebar__logomark">
+          <img src="/konsou.svg" alt="" width={32} height={32} />
+        </span>
+        <span className="k-sidebar__wordmark">Konsou</span>
+      </div>
+
       <nav className="k-sidebar__nav" aria-label="Primary">
         {NAV_ITEMS.map((item) => {
           // The owning tab stays lit while its detail/settings pages are up.
@@ -117,6 +128,28 @@ export function Sidebar() {
       </nav>
 
       <div className="k-sidebar__footer">
+        <button
+          type="button"
+          className="k-sidebar__account"
+          onClick={() => navigate("/settings", { replace: true })}
+          aria-label="Settings and account"
+        >
+          <span className="k-sidebar__avatar">
+            {account?.avatarUrl ? (
+              <img src={account.avatarUrl} alt="" />
+            ) : account ? (
+              <span>{account.name.charAt(0).toUpperCase()}</span>
+            ) : (
+              <Icon icon={UserRound} size={15} />
+            )}
+          </span>
+          <span className="k-sidebar__accountinfo">
+            <span className="k-sidebar__accountname">{account?.name ?? "Settings"}</span>
+            <span className="k-sidebar__accountmeta">
+              {account ? "Account & settings" : "Local only"}
+            </span>
+          </span>
+        </button>
         <span className="k-sidebar__version">v{APP_VERSION}</span>
       </div>
     </aside>

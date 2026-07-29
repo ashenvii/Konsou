@@ -2,62 +2,89 @@
 /* Color format: oklch(lightness% chroma hue). */
 
 :root {
-  /* ── Void surfaces (default dark — violet cast) ───────────── */
-  /* Chroma is high enough to feel distinctly purple, not just "dark grey". */
-  --color-base:          oklch(8%  0.022 280);
-  --color-surface:       oklch(11% 0.028 280);
-  --color-surface-2:     oklch(15% 0.038 280);
-  --color-surface-3:     oklch(19% 0.048 280);
-  --color-border:        oklch(100% 0 0 / 8%);
-  --color-border-strong: oklch(100% 0 0 / 18%);
+  /* ═══ THE FIELD GUIDE — default world (Herbarium plate) ════════════════
+     A naturalist's catalogue: deep herbarium examination table, warm ivory
+     ink, one vermilion stamp of record, crisp ruled plates. The full 8-theme
+     rebuild lands in /impeccable extract; this :root is the canonical
+     default. World contract lives in DESIGN.md. ═════════════════════════ */
 
-  /* ── Text ─────────────────────────────────────────────────── */
-  --color-text-primary:   oklch(100% 0 0 / 90%);
-  --color-text-secondary: oklch(100% 0 0 / 60%);
-  --color-text-tertiary:  oklch(100% 0 0 / 38%);
+  /* ── Herbarium table: deep desaturated botanical green-black ───────── */
+  --color-base:          oklch(16% 0.020 158);
+  --color-surface:       oklch(20% 0.024 158);
+  --color-surface-2:     oklch(25% 0.026 158);
+  --color-surface-3:     oklch(30% 0.028 158);
+  /* Keyline: the ruled frame, warm ivory at low alpha. Depth is drawn, not lit. */
+  --color-border:        oklch(90% 0.030 90 / 24%);
+  --color-border-strong: oklch(90% 0.035 88 / 46%);
+  --color-keyline:        var(--color-border);
+  --color-keyline-strong: var(--color-border-strong);
 
-  /* ── Accent — violet fallback; always overridden by [data-accent] ── */
-  --color-accent:      oklch(52% 0.27 290);
-  --color-accent-glow: oklch(65% 0.18 290);
-  --color-accent-dim:  oklch(52% 0.27 290 / 15%);
-  --color-accent-h: 290;
-  --color-accent-l: 52%;
-  --color-accent-c: 0.27;
+  /* ── Ink: warm ivory, an aged label — never pure white ─────────────── */
+  --color-text-primary:   oklch(93% 0.020 88 / 92%);
+  --color-text-secondary: oklch(93% 0.018 88 / 66%);
+  --color-text-tertiary:  oklch(93% 0.016 88 / 54%);  /* held at AA (4.5:1) on the table */
 
-  /* ── Status — semantic ───────────────────────────────────────
-     Each status owns a distinct hue so it reads at a glance:
-       completed   → green  (most positive, celebratory)
-       watching    → blue   (active)
-       plan_to_watch → amber (future-oriented)
-       dropped     → red    (negative / stop)
-       on_hold     → purple (neutral / paused)
-       rewatching  → teal   (distinct from watching)                */
-  --color-status-watching:      oklch(64% 0.17 250);
-  --color-status-completed:     oklch(72% 0.17 150);
-  --color-status-plan_to_watch: oklch(80% 0.15 85);
-  --color-status-on_hold:       oklch(60% 0.19 300);
-  --color-status-dropped:       oklch(61% 0.21 25);
-  --color-status-rewatching:    oklch(73% 0.13 195);
-  /* Not interested → muted grey. A deliberate "won't watch" that stays quiet:
-     never louder than a real watch state on a card. */
-  --color-status-not_interested: oklch(58% 0.015 280);
+  /* ── The one ink of record: vermilion (the collector's stamp) ──────────
+     Means "catalogued / in your collection" / active. Never decoration;
+     under 10% of any screen. Overridable per user via [data-accent], carried
+     decomposed so stamps rebuild at any opacity. */
+  --color-accent:      oklch(55% 0.19 32);
+  --color-accent-glow: oklch(67% 0.19 34);
+  --color-accent-dim:  oklch(55% 0.19 32 / 16%);
+  --color-accent-h: 32;
+  --color-accent-l: 55%;
+  --color-accent-c: 0.19;
+  /* Text/glyph that sits ON an accent fill (the primary button, the stamp).
+     Ivory by default (reads on the darker inks); light inks override to dark. */
+  --color-on-accent: oklch(97% 0.02 88);
+
+  /* ── Field-note stamps — semantic state ───────────────────────────────
+     Each state = a distinct hue AND a glyph AND a word (colorblind-safe),
+     inked toward paper (never neon):
+       watching   → field blue      (observing)
+       completed  → catalogued green
+       plan       → ochre           (to collect)
+       on_hold    → pressed violet
+       dropped    → released oxblood (browner/deeper than the accent so the
+                                      two reds never collide)
+       rewatching → re-observed teal                                        */
+  --color-status-watching:      oklch(62% 0.12 240);
+  --color-status-completed:     oklch(68% 0.14 150);
+  --color-status-plan_to_watch: oklch(75% 0.13 80);
+  --color-status-on_hold:       oklch(58% 0.12 300);
+  --color-status-dropped:       oklch(52% 0.13 25);
+  --color-status-rewatching:    oklch(68% 0.10 195);
+  /* Not collecting: a quiet muted grey-green, never louder than a real stamp. */
+  --color-status-not_interested: oklch(52% 0.012 158);
 
   /* ── Semantic ─────────────────────────────────────────────── */
-  --color-success: oklch(72% 0.12 165);
-  --color-warning: oklch(72% 0.16 60);
-  --color-error:   oklch(55% 0.20 10);
-  --color-info:    oklch(62% 0.15 250);
+  --color-success: oklch(68% 0.12 150);
+  --color-warning: oklch(74% 0.14 75);
+  --color-error:   oklch(54% 0.18 25);
+  --color-info:    oklch(62% 0.12 240);
 
-  /* ── Typography ───────────────────────────────────────────── */
-  --font-sans: "Plus Jakarta Sans", "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+  /* ── Typography — the two voices of a specimen plate ───────────────────
+     Serif (EB Garamond): species names (italic), titles, field-note reading.
+     Mono (Courier Prime): accession numbers, labels, nav, tags, stamps. */
+  --font-serif: "EB Garamond", "Noto Serif JP", Georgia, "Times New Roman", serif;
+  --font-mono:  "Courier Prime", ui-monospace, "Courier New", monospace;
+  --font-sans:  var(--font-serif); /* legacy alias: default reading voice */
+  --track-label: 0.08em;           /* letterpress tracking for mono small-caps */
 
-  --text-2xs:  11px;  --leading-2xs:  15px;
-  --text-xs:   12px;  --leading-xs:   16px;
-  --text-sm:   13px;  --leading-sm:   18px;
-  --text-base: 14px;  --leading-base: 20px;
-  --text-lg:   16px;  --leading-lg:   24px;
-  --text-xl:   20px;  --leading-xl:   28px;
-  --text-2xl:  26px;  --leading-2xl:  34px;
+  /* The scale is set for THESE two faces, not for a UI sans. EB Garamond has a
+     small x-height and Courier Prime is a light, wide typewriter: both need
+     roughly 1-2px more than a grotesque to read the same, and both suffer most
+     at the bottom of the scale. An on-screen audit found Garamond at 12px was
+     the most common text in the app and mono at 11px the second — which is
+     exactly what "cool but hard to read" means. Every step below 16px moved up
+     one notch; leadings moved with them so the extra size buys real space. */
+  --text-2xs:  12px;  --leading-2xs:  16px;
+  --text-xs:   13px;  --leading-xs:   18px;
+  --text-sm:   14px;  --leading-sm:   20px;
+  --text-base: 15px;  --leading-base: 22px;
+  --text-lg:   17px;  --leading-lg:   25px;
+  --text-xl:   21px;  --leading-xl:   29px;
+  --text-2xl:  27px;  --leading-2xl:  35px;
   --text-3xl:  34px;  --leading-3xl:  42px;
 
   /* ── Spacing (4px base unit) ──────────────────────────────── */
@@ -66,13 +93,15 @@
   --space-8:  32px;   --space-10: 40px;   --space-12: 48px;
   --space-16: 64px;   --space-20: 80px;
 
-  /* ── Radius ───────────────────────────────────────────────── */
-  --radius-sm:     4px;
-  --radius-md:     8px;
-  --radius-lg:    12px;
-  --radius-xl:    16px;
-  --radius-sheet: 28px;
-  --radius-full:  9999px;
+  /* ── Radius — crisp plates and ruled tags, not pills ──────────────── */
+  --radius-sm:     2px;
+  --radius-md:     2px;
+  --radius-lg:     3px;
+  --radius-xl:     4px;
+  --radius-sheet:  6px;
+  --radius-full:  9999px;   /* seals / avatars / spinner rings only */
+  --radius-plate:  2px;
+  --radius-tag:    1px;
 
   /* ── Motion ───────────────────────────────────────────────── */
   --duration-instant: 100ms;
@@ -86,6 +115,7 @@
   --ease-in:       cubic-bezier(0.4, 0.0, 1.0, 1.0);
   --ease-standard: cubic-bezier(0.2, 0.0, 0.0, 1.0);
   --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1.0);
+  --ease-stamp:    cubic-bezier(0.22, 0.9, 0.28, 1.0);  /* the ink-stamp press: fast-in, firm settle */
 
   /* ── Layout ───────────────────────────────────────────────── */
   --sidebar-width:      220px;
@@ -96,241 +126,238 @@
   --content-padding-sm: 16px;
   --content-padding-lg: 24px;
 
-  /* ── Elevation ───────────────────────────────────────────── */
-  --shadow-card:    0 4px 16px oklch(0% 0 0 / 45%);
-  --shadow-card-hi: 0 6px 28px oklch(0% 0 0 / 55%);
-  --shadow-sheet:   0 -8px 40px oklch(0% 0 0 / 60%);
-  --shadow-pop:     0 8px 32px oklch(0% 0 0 / 52%);
+  /* ── Elevation — paper on felt, not bloom ─────────────────────────────
+     A specimen rests on the table via a contact shadow; raised chrome lifts.
+     Nothing glows: membership is the keyline + accession + stamp. */
+  --shadow-card:    0 1px 2px oklch(0% 0 0 / 40%), 0 8px 20px oklch(0% 0 0 / 26%);
+  --shadow-card-hi: 0 2px 5px oklch(0% 0 0 / 44%), 0 14px 30px oklch(0% 0 0 / 34%);
+  --shadow-sheet:   0 -8px 40px oklch(0% 0 0 / 55%);
+  --shadow-pop:     0 12px 40px oklch(0% 0 0 / 50%);
+  --shadow-contact: var(--shadow-card);
+  --shadow-lifted:  var(--shadow-pop);
 
-  /* In-list glow — hue tracks the active accent automatically. */
+  /* "In collection" is the keyline frame + accession + stamp, NOT a bloom.
+     Kept as a subtle keyline ring so anything still referencing it degrades
+     to a ruled edge instead of colored light. */
   --glow-in-list:
-    0 0 10px oklch(var(--color-accent-l) var(--color-accent-c) var(--color-accent-h) / 28%),
-    0 4px 16px oklch(0% 0 0 / 44%);
+    0 0 0 1px var(--color-border-strong),
+    var(--shadow-card);
   --glow-in-list-hover:
-    0 0 16px oklch(var(--color-accent-l) var(--color-accent-c) var(--color-accent-h) / 38%),
-    0 6px 24px oklch(0% 0 0 / 54%);
+    0 0 0 1px color-mix(in oklch, var(--color-accent) 55%, transparent),
+    var(--shadow-card-hi);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   DARK THEMES
-   Each overrides the surface palette and bundles a default accent.
-   Higher chroma = distinctive, not generic dark grey.
-   Accent overrides ([data-accent]) come AFTER in the file and always win.
+   THE EIGHT PLATES
+   Every theme is a rendition of the Field Guide: a deep tinted examination
+   ground (or, for the two light plates, the printed page), warm ivory ink,
+   ruled keylines, one ink of record. All derive from the :root Herbarium
+   world. Internal keys stay stable (ember/ocean/void/…); the Settings UI
+   shows the plate names. Accent overrides ([data-accent]) win in the cascade.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* Ocean — ink-blue water, saturated navy depths */
+/* ── DARK PLATES ─────────────────────────────────────────────────────── */
+
+/* Herbarium (key: ember) — the default green-black table, defined on :root.
+   data-theme="ember" carries no overrides so it inherits the Field Guide. */
+
+/* Nocturne (key: void) — deep indigo-violet examination table at night. */
+[data-theme="void"] {
+  --color-base:      oklch(15%   0.038 288);
+  --color-surface:   oklch(19%   0.046 288);
+  --color-surface-2: oklch(24%   0.052 288);
+  --color-surface-3: oklch(29%   0.058 288);
+}
+
+/* Cyanotype (key: ocean) — Prussian-blue blueprint plate. */
 [data-theme="ocean"] {
-  --color-base:      oklch(7.5%  0.026 218);
-  --color-surface:   oklch(10.5% 0.034 218);
-  --color-surface-2: oklch(14.5% 0.046 218);
-  --color-surface-3: oklch(18%   0.056 218);
-  --color-border:        oklch(100% 0 0 / 9%);
-  --color-border-strong: oklch(100% 0 0 / 20%);
-
-  --color-accent:      oklch(71% 0.16 190);
-  --color-accent-glow: oklch(82% 0.12 190);
-  --color-accent-dim:  oklch(71% 0.16 190 / 15%);
-  --color-accent-h: 190; --color-accent-l: 71%; --color-accent-c: 0.16;
+  --color-base:      oklch(15%   0.050 250);
+  --color-surface:   oklch(19%   0.058 250);
+  --color-surface-2: oklch(24%   0.066 250);
+  --color-surface-3: oklch(29%   0.074 250);
 }
 
-/* Ember — sunset coal: warm near-black surfaces with a real amber glow in them.
-   Chroma is pushed past "tinted grey" so the dark actually reads as warm, not
-   muted. This is Konsou's default identity. */
-[data-theme="ember"] {
-  --color-base:      oklch(8.5%  0.032 34);
-  --color-surface:   oklch(12%   0.040 34);
-  --color-surface-2: oklch(16%   0.052 34);
-  --color-surface-3: oklch(20%   0.062 34);
-  --color-border:        oklch(90% 0.04 45 / 9%);
-  --color-border-strong: oklch(90% 0.05 45 / 20%);
-
-  /* Warm text — creamier white */
-  --color-text-primary:   oklch(97% 0.010 55 / 92%);
-  --color-text-secondary: oklch(97% 0.010 55 / 62%);
-  --color-text-tertiary:  oklch(97% 0.010 55 / 40%);
-
-  /* Warm shadow + a coral-tinted card glow give the shell depth instead of flat black. */
-  --shadow-card:    0 4px 16px oklch(2% 0.03 34 / 55%);
-  --shadow-card-hi: 0 6px 28px oklch(2% 0.03 34 / 62%);
-
-  --color-accent:      oklch(70% 0.20 45);
-  --color-accent-glow: oklch(83% 0.15 40);
-  --color-accent-dim:  oklch(70% 0.20 45 / 15%);
-  --color-accent-h: 45; --color-accent-l: 70%; --color-accent-c: 0.20;
-}
-
-/* Forest — ancient black-green, like light through a closed canopy */
+/* Foxing (key: forest) — warm tobacco-sepia, the age-spots on old paper. */
 [data-theme="forest"] {
-  --color-base:      oklch(8%    0.026 148);
-  --color-surface:   oklch(11%   0.032 148);
-  --color-surface-2: oklch(15%   0.044 148);
-  --color-surface-3: oklch(19%   0.054 148);
-  --color-border:        oklch(100% 0 0 / 8%);
-  --color-border-strong: oklch(100% 0 0 / 18%);
-
-  --color-accent:      oklch(65% 0.18 148);
-  --color-accent-glow: oklch(76% 0.13 148);
-  --color-accent-dim:  oklch(65% 0.18 148 / 15%);
-  --color-accent-h: 148; --color-accent-l: 65%; --color-accent-c: 0.18;
+  --color-base:      oklch(17%   0.028 55);
+  --color-surface:   oklch(21%   0.034 55);
+  --color-surface-2: oklch(26%   0.042 55);
+  --color-surface-3: oklch(31%   0.050 55);
 }
 
-/* Midnight — the deepest navy, electric against the black */
+/* Slate (key: midnight) — the quiet plate: near-neutral cool graphite. */
 [data-theme="midnight"] {
-  --color-base:      oklch(6.5%  0.034 258);
-  --color-surface:   oklch(9.5%  0.042 258);
-  --color-surface-2: oklch(13.5% 0.055 258);
-  --color-surface-3: oklch(17%   0.066 258);
-  --color-border:        oklch(100% 0 0 / 10%);
-  --color-border-strong: oklch(100% 0 0 / 22%);
-
-  /* Cool-tinted text reads against the saturated navy */
-  --color-text-primary:   oklch(96% 0.006 250 / 90%);
-  --color-text-secondary: oklch(96% 0.006 250 / 60%);
-  --color-text-tertiary:  oklch(96% 0.006 250 / 38%);
-
-  --color-accent:      oklch(60% 0.22 242);
-  --color-accent-glow: oklch(74% 0.16 242);
-  --color-accent-dim:  oklch(60% 0.22 242 / 15%);
-  --color-accent-h: 242; --color-accent-l: 60%; --color-accent-c: 0.22;
+  --color-base:      oklch(19%   0.010 250);
+  --color-surface:   oklch(23%   0.012 250);
+  --color-surface-2: oklch(28%   0.016 250);
+  --color-surface-3: oklch(33%   0.020 250);
 }
 
-/* Crimson — dried blood in the shadows, vivid rose cuts through */
+/* Oxblood (key: crimson) — deep carmine specimen board. */
 [data-theme="crimson"] {
-  --color-base:      oklch(8%    0.026 8);
-  --color-surface:   oklch(11%   0.032 8);
-  --color-surface-2: oklch(15%   0.044 8);
-  --color-surface-3: oklch(19%   0.054 8);
-  --color-border:        oklch(100% 0 0 / 8%);
-  --color-border-strong: oklch(100% 0 0 / 18%);
-
-  --color-accent:      oklch(57% 0.24 10);
-  --color-accent-glow: oklch(70% 0.18 10);
-  --color-accent-dim:  oklch(57% 0.24 10 / 15%);
-  --color-accent-h: 10; --color-accent-l: 57%; --color-accent-c: 0.24;
+  --color-base:      oklch(15%   0.050 20);
+  --color-surface:   oklch(19%   0.058 20);
+  --color-surface-2: oklch(24%   0.066 20);
+  --color-surface-3: oklch(29%   0.074 20);
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   LIGHT THEMES
-   High-contrast editorial feel — white cards, ink text, vivid accent.
-   Not pastel. Not washed out. The accent sings because the bg is clean.
-   ═══════════════════════════════════════════════════════════════════ */
+/* ── LIGHT PLATES ────────────────────────────────────────────────────────
+   The printed guide page: ink text on paper, dark ruled keylines, membership
+   as a keyline ring instead of a bloom. ─────────────────────────────────── */
 
-/* Paper — manga page: almost-white canvas, tinted sidebar, ink text */
+/* Vellum (key: paper) — aged ivory field-guide page. */
 [data-theme="paper"] {
-  --color-base:          oklch(98.5% 0.003 280);   /* canvas: barely-there violet whisper */
-  --color-surface:       oklch(93.5% 0.010 280);   /* sidebar/nav: visibly tinted */
-  --color-surface-2:     oklch(100%  0 0);          /* cards: float as pure white */
-  --color-surface-3:     oklch(90%   0.014 280);   /* hover: clearly darker */
-  --color-border:        oklch(0% 0 0 / 8%);
-  --color-border-strong: oklch(0% 0 0 / 16%);
+  --color-base:          oklch(95%   0.020 85);    /* warm aged ivory page */
+  --color-surface:       oklch(91%   0.026 82);    /* tinted margin / nav */
+  --color-surface-2:     oklch(98.5% 0.012 85);    /* mounted cards, near-white */
+  --color-surface-3:     oklch(88%   0.032 80);    /* hover, deeper into the paper */
+  --color-border:        oklch(32% 0.045 60 / 24%); /* sepia ruled keyline */
+  --color-border-strong: oklch(32% 0.050 58 / 46%);
 
-  --color-text-primary:   oklch(9%  0.018 280);    /* near ink-black */
-  --color-text-secondary: oklch(26% 0.014 280);
-  --color-text-tertiary:  oklch(46% 0.009 280);    /* 4.5:1 on white, 4.6:1 on canvas */
+  --color-text-primary:   oklch(24% 0.030 55);     /* sepia ink */
+  --color-text-secondary: oklch(38% 0.026 55);
+  --color-text-tertiary:  oklch(47% 0.020 58);     /* ~4.5:1 on the ivory */
 
-  --shadow-card:    0 1px 3px oklch(0% 0 0 / 8%), 0 0 0 1px oklch(0% 0 0 / 5%);
-  --shadow-card-hi: 0 4px 14px oklch(0% 0 0 / 10%), 0 0 0 1px oklch(0% 0 0 / 6%);
-  --shadow-sheet:   0 -4px 28px oklch(0% 0 0 / 14%);
-  --shadow-pop:     0 4px 18px oklch(0% 0 0 / 14%);
+  --shadow-card:    0 1px 2px oklch(30% 0.04 55 / 14%), 0 6px 16px oklch(30% 0.04 55 / 10%);
+  --shadow-card-hi: 0 2px 5px oklch(30% 0.04 55 / 16%), 0 12px 26px oklch(30% 0.04 55 / 14%);
+  --shadow-sheet:   0 -4px 28px oklch(20% 0.03 55 / 16%);
+  --shadow-pop:     0 8px 26px oklch(20% 0.03 55 / 18%);
 
-  /* Light-mode glow: ring instead of bloom — cleaner on white */
+  /* Light membership: a keyline ring, never a bloom. */
   --glow-in-list:
-    0 0 0 1px var(--color-accent-dim),
-    0 2px 10px oklch(0% 0 0 / 6%);
+    0 0 0 1px var(--color-border-strong),
+    var(--shadow-card);
   --glow-in-list-hover:
-    0 0 0 2px var(--color-accent-dim),
-    0 4px 14px oklch(0% 0 0 / 8%);
+    0 0 0 1px color-mix(in oklch, var(--color-accent) 55%, transparent),
+    var(--shadow-card-hi);
 
-  --color-accent:      oklch(65% 0.23 350);
-  --color-accent-glow: oklch(77% 0.17 350);
-  --color-accent-dim:  oklch(65% 0.23 350 / 18%);
-  --color-accent-h: 350; --color-accent-l: 65%; --color-accent-c: 0.23;
+  --color-accent:      oklch(48% 0.16 25);
+  --color-accent-glow: oklch(42% 0.16 25);
+  --color-accent-dim:  oklch(48% 0.16 25 / 16%);
+  --color-accent-h: 25; --color-accent-l: 48%; --color-accent-c: 0.16;
 }
 
-/* Ash — cool slate canvas, white cards pop, cobalt accent cuts sharp */
+/* Specimen Card (key: ash) — cool museum index card. */
 [data-theme="ash"] {
-  --color-base:          oklch(91%  0.015 245);    /* distinctive blue-gray slate */
-  --color-surface:       oklch(97%  0.006 245);    /* nav: lighter (inverted hierarchy) */
-  --color-surface-2:     oklch(100% 0 0);           /* cards: pure white on slate */
-  --color-surface-3:     oklch(86%  0.022 245);    /* hover: deeper into the slate */
-  --color-border:        oklch(0% 0 0 / 10%);
-  --color-border-strong: oklch(0% 0 0 / 20%);
+  --color-base:          oklch(92%  0.008 240);    /* cool bone card stock */
+  --color-surface:       oklch(96%  0.005 240);
+  --color-surface-2:     oklch(100% 0 0);           /* pure white mounts */
+  --color-surface-3:     oklch(87%  0.014 240);
+  --color-border:        oklch(22% 0.035 250 / 22%); /* ink-blue ruled keyline */
+  --color-border-strong: oklch(22% 0.040 250 / 44%);
 
-  --color-text-primary:   oklch(8%  0.024 245);    /* deep blue-black */
-  --color-text-secondary: oklch(25% 0.016 245);
-  --color-text-tertiary:  oklch(43% 0.011 245);    /* 4.6:1 on slate bg */
+  --color-text-primary:   oklch(22% 0.032 250);    /* ink blue-black */
+  --color-text-secondary: oklch(36% 0.024 250);
+  --color-text-tertiary:  oklch(46% 0.018 250);
 
-  --shadow-card:    0 2px 8px oklch(0% 0 0 / 10%);
-  --shadow-card-hi: 0 4px 16px oklch(0% 0 0 / 13%);
-  --shadow-sheet:   0 -4px 28px oklch(0% 0 0 / 14%);
-  --shadow-pop:     0 4px 18px oklch(0% 0 0 / 14%);
+  --shadow-card:    0 1px 2px oklch(22% 0.03 250 / 12%), 0 6px 16px oklch(22% 0.03 250 / 9%);
+  --shadow-card-hi: 0 2px 5px oklch(22% 0.03 250 / 15%), 0 12px 26px oklch(22% 0.03 250 / 12%);
+  --shadow-sheet:   0 -4px 28px oklch(22% 0.03 250 / 14%);
+  --shadow-pop:     0 8px 26px oklch(22% 0.03 250 / 16%);
 
   --glow-in-list:
-    0 0 0 1px var(--color-accent-dim),
-    0 2px 10px oklch(0% 0 0 / 7%);
+    0 0 0 1px var(--color-border-strong),
+    var(--shadow-card);
   --glow-in-list-hover:
-    0 0 0 2px var(--color-accent-dim),
-    0 4px 14px oklch(0% 0 0 / 10%);
+    0 0 0 1px color-mix(in oklch, var(--color-accent) 55%, transparent),
+    var(--shadow-card-hi);
 
-  --color-accent:      oklch(48% 0.24 242);
-  --color-accent-glow: oklch(62% 0.20 242);
-  --color-accent-dim:  oklch(48% 0.24 242 / 18%);
-  --color-accent-h: 242; --color-accent-l: 48%; --color-accent-c: 0.24;
+  --color-accent:      oklch(45% 0.15 250);
+  --color-accent-glow: oklch(40% 0.15 250);
+  --color-accent-dim:  oklch(45% 0.15 250 / 16%);
+  --color-accent-h: 250; --color-accent-l: 45%; --color-accent-c: 0.15;
+}
+
+/* On the light plates the mid-lightness stamp inks are pulled darker so a
+   field-note reads at AA on paper. */
+[data-theme="paper"],
+[data-theme="ash"] {
+  --color-status-watching:      oklch(48% 0.14 240);
+  --color-status-completed:     oklch(46% 0.14 150);
+  --color-status-plan_to_watch: oklch(52% 0.13 70);
+  --color-status-on_hold:       oklch(46% 0.13 300);
+  --color-status-dropped:       oklch(48% 0.15 25);
+  --color-status-rewatching:    oklch(48% 0.11 195);
+  --color-status-not_interested: oklch(48% 0.010 250);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   ACCENT OVERRIDES
-   Come after all theme blocks — always win in the cascade.
-   Set via [data-accent] attribute; lets users mix any surface + color.
+   ACCENT INKS
+   The user's pickable ink of record. Come after all plate blocks so they win.
+   Keys stay stable; the Settings UI shows the ink names. All are inked
+   (saturated but not neon) so the stamp reads as a stamp on any plate.
    ═══════════════════════════════════════════════════════════════════ */
 
+/* Vermilion (key: coral) — the default, the collector's seal. */
 [data-accent="coral"] {
-  --color-accent:      oklch(70% 0.20 45);
-  --color-accent-glow: oklch(83% 0.15 40);
-  --color-accent-dim:  oklch(70% 0.20 45 / 15%);
-  --color-accent-h: 45; --color-accent-l: 70%; --color-accent-c: 0.20;
+  --color-accent:      oklch(55% 0.19 32);
+  --color-accent-glow: oklch(67% 0.19 34);
+  --color-accent-dim:  oklch(55% 0.19 32 / 16%);
+  --color-accent-h: 32; --color-accent-l: 55%; --color-accent-c: 0.19;
 }
+/* Ink Violet (key: violet) */
 [data-accent="violet"] {
-  --color-accent:      oklch(52% 0.27 290);
-  --color-accent-glow: oklch(65% 0.18 290);
-  --color-accent-dim:  oklch(52% 0.27 290 / 15%);
-  --color-accent-h: 290; --color-accent-l: 52%; --color-accent-c: 0.27;
+  --color-accent:      oklch(55% 0.18 300);
+  --color-accent-glow: oklch(68% 0.15 300);
+  --color-accent-dim:  oklch(55% 0.18 300 / 16%);
+  --color-accent-h: 300; --color-accent-l: 55%; --color-accent-c: 0.18;
 }
+/* Prussian (key: cobalt) */
 [data-accent="cobalt"] {
-  --color-accent:      oklch(58% 0.22 242);
-  --color-accent-glow: oklch(72% 0.16 242);
-  --color-accent-dim:  oklch(58% 0.22 242 / 15%);
-  --color-accent-h: 242; --color-accent-l: 58%; --color-accent-c: 0.22;
+  --color-accent:      oklch(52% 0.16 250);
+  --color-accent-glow: oklch(64% 0.15 250);
+  --color-accent-dim:  oklch(52% 0.16 250 / 16%);
+  --color-accent-h: 250; --color-accent-l: 52%; --color-accent-c: 0.16;
 }
+/* Oxblood (key: crimson) — the browner, deeper red, distinct from vermilion. */
 [data-accent="crimson"] {
-  --color-accent:      oklch(57% 0.24 10);
-  --color-accent-glow: oklch(70% 0.18 10);
-  --color-accent-dim:  oklch(57% 0.24 10 / 15%);
-  --color-accent-h: 10; --color-accent-l: 57%; --color-accent-c: 0.24;
+  --color-accent:      oklch(50% 0.16 22);
+  --color-accent-glow: oklch(60% 0.16 24);
+  --color-accent-dim:  oklch(50% 0.16 22 / 16%);
+  --color-accent-h: 22; --color-accent-l: 50%; --color-accent-c: 0.16;
 }
+/* Rose (key: sakura) */
 [data-accent="sakura"] {
-  --color-accent:      oklch(65% 0.23 350);
-  --color-accent-glow: oklch(77% 0.17 350);
-  --color-accent-dim:  oklch(65% 0.23 350 / 15%);
-  --color-accent-h: 350; --color-accent-l: 65%; --color-accent-c: 0.23;
+  --color-accent:      oklch(62% 0.15 0);
+  --color-accent-glow: oklch(72% 0.13 2);
+  --color-accent-dim:  oklch(62% 0.15 0 / 16%);
+  --color-accent-h: 0; --color-accent-l: 62%; --color-accent-c: 0.15;
+  --color-on-accent: oklch(20% 0.03 10);  /* dark ink: rose is light */
 }
+/* Ochre (key: amber) — the gilt annotation ink. */
 [data-accent="amber"] {
-  --color-accent:      oklch(70% 0.20 55);
-  --color-accent-glow: oklch(84% 0.15 55);
-  --color-accent-dim:  oklch(70% 0.20 55 / 15%);
-  --color-accent-h: 55; --color-accent-l: 70%; --color-accent-c: 0.20;
+  --color-accent:      oklch(66% 0.13 75);
+  --color-accent-glow: oklch(76% 0.13 78);
+  --color-accent-dim:  oklch(66% 0.13 75 / 16%);
+  --color-accent-h: 75; --color-accent-l: 66%; --color-accent-c: 0.13;
+  --color-on-accent: oklch(20% 0.03 70);  /* dark ink: the ochre fill is light */
 }
+/* Verdigris (key: aqua) — aged copper-green patina. */
 [data-accent="aqua"] {
-  --color-accent:      oklch(71% 0.18 190);
-  --color-accent-glow: oklch(82% 0.13 190);
-  --color-accent-dim:  oklch(71% 0.18 190 / 15%);
-  --color-accent-h: 190; --color-accent-l: 71%; --color-accent-c: 0.18;
+  --color-accent:      oklch(60% 0.10 190);
+  --color-accent-glow: oklch(72% 0.10 192);
+  --color-accent-dim:  oklch(60% 0.10 190 / 16%);
+  --color-accent-h: 190; --color-accent-l: 60%; --color-accent-c: 0.10;
+  --color-on-accent: oklch(20% 0.03 200);  /* dark ink: verdigris is light */
 }
+/* Herbarium Green (key: jade) */
 [data-accent="jade"] {
-  --color-accent:      oklch(65% 0.18 148);
-  --color-accent-glow: oklch(76% 0.13 148);
-  --color-accent-dim:  oklch(65% 0.18 148 / 15%);
-  --color-accent-h: 148; --color-accent-l: 65%; --color-accent-c: 0.18;
+  --color-accent:      oklch(60% 0.13 155);
+  --color-accent-glow: oklch(70% 0.12 155);
+  --color-accent-dim:  oklch(60% 0.13 155 / 16%);
+  --color-accent-h: 155; --color-accent-l: 60%; --color-accent-c: 0.13;
+  --color-on-accent: oklch(20% 0.03 155);  /* dark ink: sage is light */
 }
 
-/* Completed status stays violet across all themes — Konsou's signature. */
+/* ═══════════════════════════════════════════════════════════════════
+   LIGHT-PLATE ACCENT-TEXT CORRECTION  (must stay last)
+   accent-glow is a LIGHTER accent, meant as accent TEXT on a dark ground.
+   On the two printed pages that light glow fails contrast on paper, so darken
+   accent text there instead — whatever ink is active. Placed after the accent
+   blocks so it wins the cascade; on the darker inks the fill stays dark enough
+   for ivory, so on-accent needs no light-plate override.
+   ═══════════════════════════════════════════════════════════════════ */
+[data-theme="paper"],
+[data-theme="ash"] {
+  --color-accent-glow: color-mix(in oklch, var(--color-accent) 84%, black);
+}

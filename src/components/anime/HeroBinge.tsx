@@ -9,31 +9,6 @@ import { useSettingsStore } from "@/lib/store/settingsStore";
 import type { CSSProperties } from "react";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
 
-/**
- * The active-watch focus. Your 1-2 most-recently-watched shows get a cinematic
- * card: the cover art becomes the material (a blurred backdrop under a scrim,
- * no glass, no color extraction), the ember glow marks it as yours, and a
- * prominent quick-log advances the episode without opening anything. Tapping
- * the card body still opens the quick menu; the +1 is the one inline exception,
- * because this surface is specifically about the show you're mid-binge on.
- */
-export function HeroBinge({
-  groups,
-  onOpen,
-}: {
-  groups: FranchiseGroup[];
-  onOpen: (rootId: number) => void;
-}) {
-  if (groups.length === 0) return null;
-  return (
-    <div className="k-herobinge">
-      {groups.map((g) => (
-        <HeroCard key={g.rootId} group={g} onOpen={onOpen} />
-      ))}
-    </div>
-  );
-}
-
 /** One cinematic card. Exported so the Watching room can render the same card
  *  inside its virtualized grid, keeping the language continuous when you
  *  drill in from the overview. */

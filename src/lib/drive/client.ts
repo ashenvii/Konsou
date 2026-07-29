@@ -12,7 +12,11 @@ import {
   type GoogleTokens,
 } from "@/lib/auth/tokenStore";
 import type { DriveMeta } from "@/types/sync";
-import type { AnimeListEntry, DeletionTombstone } from "@/types/list";
+import type {
+  AnimeListEntry,
+  CompletionEvent,
+  DeletionTombstone,
+} from "@/types/list";
 
 const DRIVE_FILES = "https://www.googleapis.com/drive/v3/files";
 const UPLOAD_URL = "https://www.googleapis.com/upload/drive/v3/files";
@@ -31,6 +35,9 @@ export interface DriveListFile {
   entries: AnimeListEntry[];
   /** Optional for backward-compat with list.json written before tombstones existed. */
   tombstones?: DeletionTombstone[];
+  /** Every recorded completion. Optional: written from v0.8 onward, so a file
+   *  from an older device simply carries no history to union. */
+  completions?: CompletionEvent[];
   exported_at: number;
 }
 

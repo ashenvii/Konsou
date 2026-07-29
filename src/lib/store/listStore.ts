@@ -9,6 +9,7 @@ import { statusBlockReason } from "@/lib/statusValidation";
 import { syncQueue } from "@/lib/sync/queue";
 import { syncManager } from "@/lib/sync/syncManager";
 import { useCatchUpStore } from "./catchUpStore";
+import { useCompletionStore } from "./completionStore";
 import { recordEpisodeLog } from "./episodeUndo";
 import { useSettingsStore } from "./settingsStore";
 import { toast } from "./toastStore";
@@ -35,6 +36,14 @@ interface ListState {
   importEntries: (toImport: AnimeListEntry[]) => Promise<number>;
   setDubStatus: (anilistId: number, hasDub: boolean) => Promise<void>;
   updateStatus: (anilistId: number, status: ListStatus) => Promise<void>;
+  /** A status change that says what it did and offers one tap to take it back.
+   *  For the card-level actions where a mistap is a real risk (the plan room's
+   *  Start / Done pair sit next to each other under a thumb). */
+  updateStatusUndoable: (
+    anilistId: number,
+    status: ListStatus,
+    title: string,
+  ) => Promise<void>;
   setEpisodes: (anilistId: number, episodes: number) => Promise<void>;
   incrementEpisodes: (anilistId: number, delta: number) => Promise<void>;
   setScore: (anilistId: number, score: number | null) => Promise<void>;
@@ -60,10 +69,12 @@ interface ListState {
 }
 
 /**
- * How many cards Up Next holds. Small on purpose: a shortlist you can rank by
- * hand is the thing a total order over a thousand plan entries can never be.
+ * How many titles the watch order holds. Small on purpose: a shortlist you can
+ * rank by hand is the thing a total order over a thousand plan entries can
+ * never be. Fifteen is the owner's call — enough to plan a season ahead,
+ * still short enough to arrange in one sitting.
  */
-export const UP_NEXT_CAP = 10;
+export const UP_NEXT_CAP = 15;
 
 function indexBy(entries: AnimeListEntry[]): Record<number, AnimeListEntry> {
   const m: Record<number, AnimeListEntry> = {};
@@ -196,7 +207,9 @@ export const useListStore = create<ListState>((set, get) => {
             native: primary.title_native,
           })
         : "";
-      useCatchUpStore.getState().open({ rootId, primaryTitle, candidates: toAdd });
+      useCatchUpStore
+        .getState()
+        .enqueue({ rootId, primaryTitle, candidates: toAdd });
     } catch (err) {
       console.warn("[cascade] franchise chain resolve failed:", err);
       // Non-fatal: the primary entry is already in the list, just ungrouped until
@@ -532,6 +545,11 @@ export const useListStore = create<ListState>((set, get) => {
         await db.tombstoneRemove(s.id);
         queueSync();
         haptic("light");
+        // Added straight as finished: that is a completion, and the ledger is
+        // where completions live.
+        if (status === "completed") {
+          void useCompletionStore.getState().record(entry, now);
+        }
         // Immediately scan this one new seed for sequels when added as
         // completed/dropped (foreground priority — the user is right here).
         if (status === "completed" || status === "dropped") {
@@ -557,6 +575,7 @@ export const useListStore = create<ListState>((set, get) => {
       if (nodes.length === 0) return;
       const db = await getDb();
       const now = Date.now();
+      const recorded: AnimeListEntry[] = [];
       for (const rel of nodes) {
         // A candidate the user picked up in the meantime shouldn't be clobbered.
         if (get().map[rel.id]) continue;
@@ -565,10 +584,14 @@ export const useListStore = create<ListState>((set, get) => {
         try {
           await db.listUpsert(entry);
           await db.tombstoneRemove(rel.id);
+          recorded.push(entry);
         } catch {
           removeFromState(rel.id);
         }
       }
+      // "I already watched these" is a statement about the past, so the ledger
+      // takes them as reconstructed rather than dating them all to today.
+      void useCompletionStore.getState().backfill(recorded);
       queueSync();
       haptic("light");
       toast.success(
@@ -580,6 +603,7 @@ export const useListStore = create<ListState>((set, get) => {
 
     importEntries: async (toImport) => {
       const db = await getDb();
+      const imported: AnimeListEntry[] = [];
       let count = 0;
       for (const incoming of toImport) {
         const existing = get().map[incoming.anilist_id];
@@ -597,8 +621,13 @@ export const useListStore = create<ListState>((set, get) => {
         applyEntry(entry);
         await db.listUpsert(entry);
         await db.tombstoneRemove(incoming.anilist_id);
+        imported.push(entry);
         count++;
       }
+      // A backup or an AniList export carries finishes but no event history —
+      // rebuild what it implies so a restore doesn't land with an empty ledger.
+      // Already-known events are skipped, so re-importing changes nothing.
+      await useCompletionStore.getState().backfill(imported);
       // Imported ranks come from whatever model wrote that backup, and the
       // merge can also push the combined list past the cap, so settle the
       // numbering before anything renders it.
@@ -645,8 +674,13 @@ export const useListStore = create<ListState>((set, get) => {
       if (status !== "plan_to_watch" && prev.plan_rank != null) {
         patch.plan_rank = null;
       }
+      // A finish is an event, not a flag. Every completion writes its own row
+      // in the ledger and stamps its own date — so a title finished again this
+      // week stops reading as finished years ago, which is what the single
+      // never-updated completed_at column used to do.
+      const finishing = status === "completed" && prev.status !== "completed";
       if (status === "completed") {
-        patch.completed_at = prev.completed_at ?? Date.now();
+        patch.completed_at = finishing ? Date.now() : (prev.completed_at ?? Date.now());
         if (prev.total_episodes != null) {
           patch.episodes_watched = prev.total_episodes;
         }
@@ -664,6 +698,14 @@ export const useListStore = create<ListState>((set, get) => {
         patch.started_at = Date.now();
       }
       await patchEntry(anilistId, patch);
+      // Recorded from the entry as it was BEFORE the patch: its rewatch_count
+      // is the number of watches already finished, which is exactly this
+      // event's index.
+      if (finishing) {
+        void useCompletionStore
+          .getState()
+          .record(prev, patch.completed_at ?? Date.now());
+      }
       // Leaving the plan status vacates a slot; close the gap so the queue
       // stays a dense 1..N.
       if (patch.plan_rank === null) void commitPlanOrder(orderedPlanIds());
@@ -681,6 +723,58 @@ export const useListStore = create<ListState>((set, get) => {
       if (prev.franchise_root_id == null && status !== "not_interested") {
         void runFranchiseCascade(anilistId, status !== "dropped");
       }
+    },
+
+    /**
+     * The same status change as above, wrapped in the app's existing undo
+     * pattern. Everything the change consumes is captured first: the queue
+     * number it releases, the dates it stamps, the episodes a completion
+     * backfills, and the ledger row a completion writes. Undo puts all of it
+     * back, including the entry's exact place in the watch order.
+     */
+    updateStatusUndoable: async (anilistId, status, title) => {
+      const prev = get().map[anilistId];
+      if (!prev) return;
+      const before = {
+        status: prev.status,
+        plan_rank: prev.plan_rank,
+        started_at: prev.started_at,
+        completed_at: prev.completed_at,
+        episodes_watched: prev.episodes_watched,
+        rewatch_index: prev.rewatch_count ?? 0,
+      };
+      await get().updateStatus(anilistId, status);
+      // Blocked by a guard (an unaired title can't be completed) — the guard
+      // already said why, and there is nothing to undo.
+      if (get().map[anilistId]?.status !== status) return;
+
+      toast.action({
+        message:
+          status === "completed" ? `Marked "${title}" complete` : `Started "${title}"`,
+        actionLabel: "Undo",
+        duration: 5000,
+        onAction: () => {
+          void (async () => {
+            await patchEntry(anilistId, {
+              status: before.status,
+              started_at: before.started_at,
+              completed_at: before.completed_at,
+              episodes_watched: before.episodes_watched,
+            });
+            // A completion that never happened leaves no record of happening.
+            if (status === "completed") {
+              void useCompletionStore
+                .getState()
+                .retract(anilistId, before.rewatch_index);
+            }
+            // Put it back at the number it held, closing the gap the rest of
+            // the queue shifted into.
+            if (before.plan_rank != null) {
+              await get().setPlanNumber(anilistId, before.plan_rank);
+            }
+          })();
+        },
+      });
     },
 
     setEpisodes: async (anilistId, episodes) => {
@@ -925,6 +1019,10 @@ export const useListStore = create<ListState>((set, get) => {
       try {
         const db = await getDb();
         await db.listReplaceAll([]);
+        // Ghost records survive removing ONE title; they do not survive "erase
+        // everything". Leaving the ledger behind after a full clear would put
+        // the whole collection back on the Completed room as ghosts.
+        await useCompletionStore.getState().clear();
         // Nothing tracked means nothing to alert on or scan — wipe both, and
         // let the notification store see the now-empty tables.
         await db.notificationsClear();

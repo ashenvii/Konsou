@@ -279,9 +279,13 @@
   padding: 0 8px;
   border-bottom-right-radius: var(--radius-lg);
   background: var(--color-accent);
-  color: var(--color-bg);
+  color: var(--color-on-accent);
+  /* Mono, like every other number in the app. This was inheriting the serif —
+     the most prominent figure in the plan room, set in the one voice the
+     contract says never carries numbers. */
+  font-family: var(--font-mono);
   font-size: var(--text-xl);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -351,161 +355,179 @@
 }
 
 /* ── My Order dashboard ─────────────────────────────────────── */
-.k-order {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+/* ── The watch order, as a page ──────────────────────────────
+   Rows are ordinary flow, not absolutely-positioned transforms: the whole
+   transform dance existed to survive a pointer drag inside a sheet, and there
+   is no sheet here to survive. */
+.k-orderpage {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--content-padding-sm) var(--space-12);
 }
-.k-order__count {
-  margin: 0;
-  font-size: var(--text-xs);
-  font-weight: 700;
-  color: var(--color-text-tertiary);
-  font-variant-numeric: tabular-nums;
-}
-.k-order__empty,
-.k-order__none {
-  margin: 0;
-  color: var(--color-text-tertiary);
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
-}
-/* Absolutely-positioned rows so a drag moves one transform instead of
-   reflowing the list on every pointer move. */
-.k-order__list {
-  position: relative;
-  margin: 0;
-  padding: 0;
+.k-ord {
   list-style: none;
+  margin: 0 0 var(--space-8);
+  padding: 0;
+  border-top: 1px solid var(--color-border);
 }
-.k-order__row {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 60px;
+.k-ord__row {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding-right: var(--space-1);
-  transition: transform var(--duration-fast) var(--ease-out);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
 }
-/* The row being dragged: lifted, no transition so it tracks the finger exactly,
-   and flat (no shadow) because this list sits in a scrolling sheet. */
-.k-order__row--dragging {
-  z-index: 2;
-  transition: none;
-  background: var(--color-surface-3);
-  border-radius: var(--radius-md);
-}
-.k-order__n {
+/* The number is the point of this screen, so it is the loudest figure on the
+   row: mono, tabular, and given its own column so the list reads as a ranking
+   rather than a pile. */
+.k-ord__n {
   flex: none;
-  min-width: 22px;
-  font-size: var(--text-base);
-  font-weight: 800;
+  width: 30px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
   font-variant-numeric: tabular-nums;
   color: var(--color-accent-glow);
+  text-align: right;
 }
-.k-order__cover {
+.k-ord__cover {
   flex: none;
   width: 34px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
-.k-order__title {
+.k-ord__cover .k-cover {
+  aspect-ratio: 2 / 3;
+}
+.k-ord__title {
   flex: 1;
   min-width: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-lg);
+  color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  text-align: left;
 }
-.k-order__remove,
-.k-order__grip {
+.k-ord__meta {
   flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+.k-ord__moves {
+  flex: none;
+  display: flex;
+  gap: 2px;
+}
+.k-ord__moves button,
+.k-ord__remove {
   display: grid;
   place-items: center;
-  /* 44px touch minimum: these sit side by side and must not be a lottery. */
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  color: var(--color-text-tertiary);
-}
-.k-order__remove:hover {
-  color: var(--color-error);
-}
-/* Deliberately oversized: this is the one control you aim for repeatedly while
-   rearranging, and a miss does not just do nothing, it scrolls or dismisses the
-   sheet. Fills the row's full height and is wider than the 44px minimum.
-   touch-action:none stops the browser claiming the gesture as a scroll. */
-.k-order__grip {
-  width: 56px;
-  height: 56px;
-  cursor: grab;
-  touch-action: none;
-  background: var(--color-surface-2);
+  width: 34px;
+  height: 34px;
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-plate);
+  color: var(--color-text-secondary);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
 }
-.k-order__grip:active {
-  cursor: grabbing;
-  color: var(--color-bg);
-  background: var(--color-accent);
+.k-ord__moves button:hover:not(:disabled),
+.k-ord__remove:hover {
   border-color: var(--color-accent);
+  color: var(--color-text-primary);
 }
-.k-order__add {
+.k-ord__moves button:disabled {
+  opacity: 0.3;
+}
+.k-ord__remove {
+  flex: none;
+}
+
+/* Adding is a list you pick from, not only a box you type into: at this cap
+   the thing you want is usually something you added recently. */
+.k-ordadd {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  border-top: 1px solid var(--color-border);
-  padding-top: var(--space-4);
 }
-.k-order__addlabel {
+.k-ordadd__label {
   margin: 0;
-  font-size: var(--text-xs);
-  font-weight: 700;
-  color: var(--color-text-tertiary);
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  font-weight: 500;
 }
-.k-order__hint {
-  margin: 0 0 var(--space-1);
+.k-ordadd__hint {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
   font-size: var(--text-2xs);
-  line-height: 1.4;
-  color: var(--color-text-tertiary);
+  letter-spacing: 0.02em;
+  color: var(--color-text-secondary);
 }
-.k-order__search {
+.k-ordadd__search {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   height: 44px;
   padding: 0 var(--space-3);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-plate);
+  background: var(--color-surface);
 }
-.k-order__search input {
+.k-ordadd__search:focus-within {
+  border-color: var(--color-accent);
+}
+.k-ordadd__search input {
   flex: 1;
   min-width: 0;
-  background: none;
+  background: transparent;
   border: none;
-  color: var(--color-text-primary);
-  /* 16px stops iOS zooming the sheet on focus. */
-  font-size: 16px;
-}
-.k-order__search input:focus {
   outline: none;
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
 }
-.k-order__candidate {
+.k-ordadd__search input::placeholder {
+  color: var(--color-text-secondary);
+}
+.k-ordadd__search button {
+  color: var(--color-text-secondary);
+}
+.k-ordadd__row {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  min-height: 52px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-2);
+  width: 100%;
+  padding: var(--space-2);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color var(--duration-fast) var(--ease-out);
 }
-.k-order__candidate:hover {
-  background: var(--color-surface-3);
+.k-ordadd__row:hover:not(:disabled) {
+  background: var(--color-surface);
+}
+.k-ordadd__row:disabled {
+  opacity: 0.4;
+}
+.k-ordadd__plus {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-plate);
+  color: var(--color-accent-glow);
+}
+.k-ordadd__none {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
 }
 
 /* ── Watch-order picker ─────────────────────────────────────── */
@@ -585,11 +607,25 @@
   gap: var(--space-3);
 }
 .k-qm__cover {
+  position: relative;
   flex: none;
   width: 52px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-plate);
   overflow: hidden;
+  border: 1px solid var(--color-border-strong);
 }
+.k-qm__cover::before,
+.k-qm__cover::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid oklch(96% 0.02 88 / 78%);
+  pointer-events: none;
+}
+.k-qm__cover::before { top: 2px; left: 2px; border-right: 0; border-bottom: 0; }
+.k-qm__cover::after { bottom: 2px; right: 2px; border-left: 0; border-top: 0; }
 .k-qm__ident {
   min-width: 0;
   display: flex;
@@ -598,8 +634,9 @@
 }
 .k-qm__title {
   margin: 0;
-  font-size: var(--text-base);
-  font-weight: 700;
+  font-size: var(--text-lg);
+  font-style: italic;
+  font-weight: 500;
   line-height: var(--leading-sm);
   /* Long romaji titles are the norm; two lines then ellipsis. */
   display: -webkit-box;
@@ -623,9 +660,12 @@
 }
 .k-qm__label {
   margin: 0;
-  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
   font-weight: 700;
-  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+  color: var(--color-text-secondary);
 }
 .k-qm__score {
   display: flex;
@@ -1025,48 +1065,156 @@
 }
 
 /* ── Overview (My List landing) ──────────────────────────────
-   A calm launcher: a global search, then status bands that are
-   doors into the dedicated rooms. Each band shows a recent slice. */
-.k-ovsearch {
+   A calm launcher: the cross-status search, a census, the two rooms as equal
+   doors, then ruled lines for what's on now and what the radar found. */
+.k-overview {
+  /* One column for the whole surface — the field, the launcher and the search
+     results all sit inside it, so nothing on this page has a second edge. The
+     width is set by the doors: two square plates side by side is the widest
+     thing here, and everything else lines up with them. */
+  --launch-max: 736px;
+}
+/* The census header carries search. The field is not on the page until the
+   icon is pressed, and its results hang off the header rather than replacing
+   the launcher — you never lose the page you were on. */
+.k-census__row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 44px;
+}
+.k-census__find {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-plate);
+  color: var(--color-text-secondary);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.k-census__find:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+/* A ruled catalogue blank, taking the title's place while it is open. */
+.k-findfield {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  /* Width mirrors the sections' 1500px cap so the pill and the bands share
-     edges on ultrawide instead of the search running past them. */
-  width: calc(100% - 2 * var(--content-padding-sm));
-  max-width: calc(1500px - 2 * var(--content-padding-sm));
-  margin: var(--content-padding-sm) auto var(--space-3);
-  padding: 0 var(--space-4);
   height: 44px;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  flex: none;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-plate);
+  background: var(--color-surface);
 }
-.k-ovsearch__input {
+.k-findfield__input {
   flex: 1;
   min-width: 0;
   background: transparent;
   border: none;
   outline: none;
   color: var(--color-text-primary);
-  font-size: var(--text-base);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.01em;
 }
-.k-ovsearch__input::placeholder {
-  /* Secondary, not tertiary: tertiary measures ~3.5:1 here, under AA. */
+.k-findfield__input::placeholder {
+  /* Secondary, not tertiary: tertiary measures under AA at this size. */
   color: var(--color-text-secondary);
 }
-.k-ovsearch__clear {
+.k-findfield__clear {
+  flex: none;
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  color: var(--color-text-tertiary);
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-plate);
+  color: var(--color-text-secondary);
 }
-.k-ovsearch__clear:hover {
-  background: var(--color-surface-3);
+.k-findfield__clear:hover {
   color: var(--color-text-primary);
+}
+/* The results overlay: anchored under the header, over the launcher. */
+.k-findresults {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  top: calc(100% + var(--space-2));
+  max-height: min(60vh, 460px);
+  overflow-y: auto;
+  padding: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-plate);
+  box-shadow: var(--shadow-pop);
+}
+.k-findresults__count {
+  margin: 0 0 var(--space-2);
+  padding: 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.k-findrow {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  text-align: left;
+  border-radius: var(--radius-plate);
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+.k-findrow:hover {
+  background: var(--color-surface-2);
+}
+.k-findrow__cover {
+  flex: none;
+  width: 26px;
+}
+.k-findrow__cover .k-cover {
+  aspect-ratio: 2 / 3;
+}
+.k-findrow__title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-lg);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The stamp rides the row's right edge rather than the corner of a plate. */
+.k-findrow .k-stamp {
+  position: static;
+  flex: none;
+}
+.k-findresults__none {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2);
+}
+.k-findresults__none p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
 }
 
 .k-overview__scroll {
@@ -1096,129 +1244,455 @@
   opacity: 1;
 }
 
-/* Full-width differentiated sections. Each carries its own shape (hero card,
-   queue carousel, collector shelf) but shares one header. */
-.k-ovsection {
-  max-width: 1500px;
-  margin: 0 auto var(--space-4);
+/* ── The launcher ────────────────────────────────────────────
+   My List's landing is a plate on the table, not a page of bands: a census
+   header, the two rooms as equal doors, and everything else as a ruled line.
+   One column holds the search field, the launcher and the search results, so
+   the whole surface shares a single alignment. */
+.k-launch {
+  width: 100%;
+  max-width: var(--launch-max);
+  margin: 0 auto;
+  padding: var(--space-2) var(--content-padding-sm) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
 }
-.k-ovsection__head {
+.k-overview__results {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: var(--launch-max);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The collection's own header: the title engraved, the count typewritten. */
+.k-census {
+  /* Anchors the search results, which hang off the whole header rather than
+     off the title row alone. */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border-strong);
+}
+.k-census__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-2xl);
+  font-weight: 500;
+}
+.k-census__line {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  /* Secondary, not tertiary: 12px mono at tertiary drops under AA. */
+  color: var(--color-text-secondary);
+}
+.k-census__n {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+/* ── The two doors ───────────────────────────────────────────
+   Planned and Completed, identical footprint. The pair is capped and centred
+   rather than stretched: two plates laid on a table, not two panels filling a
+   dashboard. Square while there is room for it; the cap stops them growing
+   into billboards on a wide screen. */
+.k-doors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  width: 100%;
+}
+.k-door {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* The grid sets the width; this sets the height, so the pair is square on a
+     wide column and merely tall on a phone. Driving it off aspect-ratio
+     instead made the HEIGHT set the width, and two square doors then ran off
+     the side of a 390px screen. */
+  height: clamp(200px, 42vw, 344px);
+  overflow: hidden;
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-plate);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform var(--duration-normal) var(--ease-out),
+    border-color var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out);
+}
+/* Under the loupe: the plate lifts a hair and the keyline inks stronger. */
+.k-door:hover,
+.k-door:focus-within {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklch, var(--color-accent) 55%, var(--color-border-strong));
+  box-shadow: var(--shadow-card-hi);
+}
+/* Photo-corners: the specimen is mounted, not floating. */
+.k-door__corners i {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--color-border);
+}
+.k-door__corners i:nth-child(1) {
+  top: 5px;
+  left: 5px;
+  border-right: 0;
+  border-bottom: 0;
+}
+.k-door__corners i:nth-child(2) {
+  top: 5px;
+  right: 5px;
+  border-left: 0;
+  border-bottom: 0;
+}
+.k-door__corners i:nth-child(3) {
+  bottom: 5px;
+  left: 5px;
+  border-right: 0;
+  border-top: 0;
+}
+.k-door__corners i:nth-child(4) {
+  bottom: 5px;
+  right: 5px;
+  border-left: 0;
+  border-top: 0;
+}
+.k-door__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+/* The room's name is the control, stretched over the whole plate. */
+.k-door__open {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+  text-align: left;
+}
+.k-door__open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-plate);
+}
+.k-door__open:focus-visible {
+  outline: none;
+}
+.k-door__open:focus-visible::after {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+.k-door__count {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+/* The front of the room: real covers, mounted and overlapping like filed
+   plates, resting on the label rule. */
+.k-door__stack {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: var(--space-3) 0;
+  /* The covers are the most obvious thing to click on the plate, and they sat
+     on top of the door's own stretched button and ate the click. They are
+     decoration; the whole plate is one control. */
+  pointer-events: none;
+}
+/* Filed, not fanned: each plate behind the front one is a little smaller, the
+   way cards sit back in a drawer. Everything is a share of the stack's width,
+   so the arrangement holds at any door size and can never run past the plate. */
+.k-door__mount {
+  position: relative;
+  width: 40%;
+  aspect-ratio: 2 / 3;
+  flex: none;
+  box-shadow: var(--shadow-card);
+}
+.k-door__mount:nth-child(2) {
+  width: 36%;
+}
+.k-door__mount:nth-child(3) {
+  width: 32%;
+}
+.k-door__mount + .k-door__mount {
+  margin-left: -10%;
+}
+.k-door__mount .k-cover {
+  height: 100%;
+}
+.k-door__foot {
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
-  padding: var(--space-2) var(--content-padding-sm) var(--space-3);
-}
-.k-ovsection__title {
+  min-width: 0;
   margin: 0;
-  font-size: var(--text-lg);
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
 }
-/* The heading IS the room's door: one button carrying title, count, and
-   chevron. Padding grows the tap target to 44px; the negative margin absorbs
-   it so the text stays on the page's alignment line. */
-.k-ovsection__open {
-  display: inline-flex;
-  align-items: baseline;
+.k-door__footlabel {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.k-door__foottitle,
+.k-door__emptyline {
+  min-width: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-door__foottitle {
+  font-style: italic;
+}
+/* An empty room keeps its door and says what belongs behind it. */
+.k-door--empty {
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+}
+.k-door--empty .k-door__count {
+  color: var(--color-text-tertiary);
+}
+.k-door--empty .k-door__emptyline {
+  white-space: normal;
+}
+
+/* ── Ruled lines under the doors ─────────────────────────────
+   Everything below the plates is a rule and a row: what's on now, and what the
+   radar found. A heading doubles as the door into its room. */
+.k-onnow,
+.k-strip {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-2);
-  font: inherit;
-  letter-spacing: inherit;
-  color: inherit;
-  margin: -12px -8px;
-  padding: 12px 8px;
+}
+.k-strip__door {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* Padding grows the tap target; the negative margin keeps the label on the
+     page's alignment line. */
+  margin: -10px -6px;
+  padding: 10px 6px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--color-text-primary);
   transition: color var(--duration-fast) var(--ease-out);
 }
-.k-ovsection__chev {
-  align-self: center;
+.k-strip__count {
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+.k-strip__chev {
   color: var(--color-text-tertiary);
   transition:
     transform var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out);
 }
-.k-ovsection__open:hover {
-  color: var(--color-accent);
+.k-strip__door:hover,
+.k-strip__door:hover .k-strip__count {
+  color: var(--color-accent-glow);
 }
-.k-ovsection__open:hover .k-ovsection__chev {
-  color: var(--color-accent);
+.k-strip__door:hover .k-strip__chev {
+  color: var(--color-accent-glow);
   transform: translateX(2px);
 }
-.k-ovsection__count {
-  font-size: var(--text-sm);
-  font-weight: 500;
-  /* Secondary, not tertiary: 13px tertiary measures ~3.5:1, under AA. */
-  color: var(--color-text-secondary);
-  font-variant-numeric: tabular-nums;
+
+/* The one show that's on: a single ruled line carrying its episode stamp. */
+.k-onnow__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-border-strong);
+  border-bottom: 1px solid var(--color-border-strong);
 }
-/* In-section invitation for an empty band: one quiet line, at most one door.
-   Dashed edges are the page's "empty slot" vocabulary (see .k-qadd__box). */
-.k-ovempty {
+.k-onnow__cover {
+  width: 30px;
+  flex: none;
+}
+.k-onnow__open {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-lg);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.k-onnow__open:hover {
+  color: var(--color-accent-glow);
+}
+.k-onnow__count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+/* The stamp. The one vermilion control on the launcher, because logging
+   tonight's episode is the act this whole page exists to keep one tap away. */
+.k-onnow__stamp {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in oklch, var(--color-accent) 55%, transparent);
+  border-radius: var(--radius-plate);
+  background: var(--color-accent-dim);
+  color: var(--color-accent-glow);
+  transition:
+    transform var(--duration-instant) var(--ease-stamp),
+    background-color var(--duration-fast) var(--ease-out);
+}
+.k-onnow__stamp:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--color-accent) 26%, transparent);
+}
+.k-onnow__stamp:active:not(:disabled) {
+  transform: scale(0.92);
+}
+.k-onnow__stamp:disabled {
+  border-color: var(--color-border);
+  background: transparent;
+  color: var(--color-text-tertiary);
+}
+/* Paused reads quieter, and its line offers Resume instead of an episode. */
+.k-onnow__row--paused .k-onnow__open {
+  color: var(--color-text-secondary);
+}
+
+/* The radar's finds. Same scroll contract as every other rail: no visible bar,
+   mouse drag pans, the wheel always belongs to the page. */
+.k-strip__row {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: var(--space-2);
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.k-strip__row::-webkit-scrollbar {
+  display: none;
+}
+.k-strip__item {
+  width: 78px;
+  flex: none;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: 0 var(--content-padding-sm) var(--space-6);
+  gap: var(--space-2);
+  text-align: left;
 }
-.k-ovempty__text {
-  margin: 0;
-  font-size: var(--text-sm);
+.k-strip__item .k-cover {
+  box-shadow: var(--shadow-card);
+  transition:
+    transform var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out);
+}
+.k-strip__item:hover .k-cover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hi);
+}
+.k-strip__title {
+  font-size: var(--text-2xs);
+  line-height: var(--leading-2xs);
   color: var(--color-text-secondary);
-  max-width: 52ch;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
-.k-ovempty__action {
+
+/* The always-present way to put something new in the collection. Dashed edges
+   are this surface's "empty slot" vocabulary. */
+.k-launch__add {
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   height: 44px;
   padding: 0 var(--space-4);
-  border-radius: var(--radius-full);
   border: 1px dashed var(--color-border-strong);
-  color: var(--color-text-primary);
-  font-size: var(--text-sm);
-  font-weight: 600;
+  border-radius: var(--radius-plate);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
   transition:
     border-color var(--duration-fast) var(--ease-out),
-    background-color var(--duration-fast) var(--ease-out);
+    color var(--duration-fast) var(--ease-out);
 }
-.k-ovempty__action:hover {
+.k-launch__add:hover {
   border-color: var(--color-accent);
-  background: var(--color-surface-2);
+  color: var(--color-text-primary);
 }
 
-/* Queue Slider (plan) — aspirational poster carousel.
-   Same scroll contract as the Discover lanes: no visible bar, mouse drag
-   pans (useDragScroll), the wheel is never intercepted so the page keeps
-   scrolling, and x-containment stops the row from peeling a back gesture.
-   Touch scrolls natively. */
-.k-queue {
-  display: flex;
-  gap: var(--space-3);
-  overflow-x: auto;
-  overflow-y: hidden;
-  /* Vertical breathing room: the hover lift (-3px) and its glow need space
-     inside the row, or overflow-y shears them into hard edges. */
-  padding: var(--space-3) var(--content-padding-sm) var(--space-3);
-  scroll-snap-type: x proximity;
-  /* Snap must rest at the padded edge (same trap as .k-lane__scroller), or
-     snap-align: start drags the first poster 16px left of the headings. */
-  scroll-padding-inline: var(--content-padding-sm);
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+/* Narrow phones: the doors give up some padding before they give up covers. */
+@media (max-width: 400px) {
+  .k-door {
+    padding: var(--space-3);
+  }
+  .k-launch {
+    gap: var(--space-6);
+  }
 }
-.k-queue::-webkit-scrollbar {
-  display: none;
-}
+
+/* The plan card. It used to live in a carousel at a fixed 132px and go fluid
+   only inside a room's grid; the launcher retired the carousel, so the grid is
+   the only place it renders and fluid is simply what it is. The 2:3 art is
+   what the virtualizer's row-height maths assumes. */
 .k-qcard {
   position: relative; /* anchors the stretched open button */
-  width: 132px;
-  flex: none;
-  scroll-snap-align: start;
+  width: 100%;
   cursor: pointer;
+  transition: transform var(--duration-normal) var(--ease-out);
 }
 .k-qcard__cover {
   position: relative;
-  width: 132px;
-  height: 198px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
   border-radius: var(--radius-lg);
   /* Top-left is squared so the watch-order number reads as a corner tab that
      is PART of the card, not a badge floating on top of the art. The other
@@ -1236,9 +1710,18 @@
 .k-qcard__cover .k-cover__placeholder {
   border-top-left-radius: 0;
 }
+/* The lift lives on the CARD, not on the cover, and that is load-bearing:
+   a transform makes the cover a stacking context, which trapped the action
+   buttons' z-index inside it and let the open button's stretched ::after —
+   a later sibling — paint over them. Every tap on Start or Done went to the
+   card's own open button and raised the quick menu instead. Lifting the whole
+   card keeps one stacking context for the lot, in DOM order. */
+.k-qcard:hover,
+.k-qcard:focus-within {
+  transform: translateY(-3px);
+}
 .k-qcard:hover .k-qcard__cover,
 .k-qcard:focus-within .k-qcard__cover {
-  transform: translateY(-3px);
   box-shadow: var(--glow-in-list-hover);
 }
 /* The title doubles as the card's open button, stretched over the poster.
@@ -1260,47 +1743,67 @@
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
-.k-qcard__start {
+/* The two ways out of the plan, side by side on the same footprint the single
+   Start button used to hold — so nothing about the grid's row height changes.
+   The gap between them is real space, not a divider: each half is its own
+   keyline rectangle, which is what stops a wide thumb bridging the two. */
+.k-qcard__acts {
   z-index: 1;
   position: absolute;
   left: var(--space-2);
   right: var(--space-2);
   bottom: var(--space-2);
-  height: 30px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  border-radius: var(--radius-full);
-  /* Quieted deliberately. A solid accent pill on every poster made Start the
-     loudest thing on a wall of cover art, and the accent should mark the one
-     thing you chose (the number), not a control that repeats on all 1200
-     cards. Dark glass keeps it legible over any cover without competing. */
-  background: oklch(0% 0 0 / 72%);
-  border: 1px solid oklch(100% 0 0 / 18%);
-  color: oklch(100% 0 0 / 92%);
-  font-size: var(--text-xs);
-  font-weight: 700;
+  gap: var(--space-1);
   opacity: 0;
   transform: translateY(4px);
   transition:
     opacity var(--duration-fast) var(--ease-out),
     transform var(--duration-fast) var(--ease-out);
 }
-.k-qcard:hover .k-qcard__start,
-.k-qcard:focus-within .k-qcard__start {
+.k-qcard__act {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: var(--radius-plate);
+  /* Quieted deliberately. A solid accent fill on every poster made these the
+     loudest thing on a wall of cover art, and the accent should mark the one
+     thing you chose (the number), not a control that repeats on all 1200
+     cards. Dark glass keeps it legible over any cover without competing. */
+  background: oklch(0% 0 0 / 72%);
+  border: 1px solid oklch(100% 0 0 / 18%);
+  color: oklch(100% 0 0 / 92%);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+.k-qcard__act:hover {
+  background: oklch(0% 0 0 / 86%);
+  border-color: oklch(100% 0 0 / 42%);
+}
+.k-qcard:hover .k-qcard__acts,
+.k-qcard:focus-within .k-qcard__acts {
   opacity: 1;
   transform: none;
 }
 @media (hover: none) {
-  .k-qcard__start {
+  .k-qcard__acts {
     opacity: 1;
     transform: none;
   }
 }
-/* Touch pointers get a taller Start; a mouse keeps the slim overlay. */
+/* Touch pointers get taller targets; a mouse keeps the slim overlay. */
 @media (pointer: coarse) {
-  .k-qcard__start {
+  .k-qcard__act {
     height: 40px;
   }
 }
@@ -1350,216 +1853,6 @@
   }
 }
 
-/* Ghost tile at the end of the queue: the always-present door for adding the
-   next thing, shaped like the posters it stands with. */
-.k-qadd {
-  width: 132px;
-  flex: none;
-  scroll-snap-align: start;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-.k-qadd__box {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  aspect-ratio: 2 / 3;
-  border-radius: var(--radius-lg);
-  border: 1px dashed var(--color-border-strong);
-  background: color-mix(in oklch, var(--color-surface-2) 55%, transparent);
-  color: var(--color-text-tertiary);
-  transition:
-    border-color var(--duration-fast) var(--ease-out),
-    background-color var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
-}
-.k-qadd:hover .k-qadd__box,
-.k-qadd:focus-visible .k-qadd__box {
-  border-color: var(--color-accent);
-  background: var(--color-surface-2);
-  color: var(--color-accent-glow);
-}
-.k-qadd__label {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  line-height: 1.3;
-  text-align: left;
-}
-@media (min-width: 1080px) {
-  .k-qadd {
-    width: 158px;
-  }
-}
-
-/* Digital Shelf (completed) — covers resting on a ledge, score on the corner. */
-.k-shelf {
-  max-width: 1500px;
-  margin: 0 auto;
-}
-/* Same scroll contract as .k-queue: drag pans, wheel stays with the page. */
-.k-shelf__row {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-3);
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: var(--space-4) var(--content-padding-sm) var(--space-3);
-  scroll-snap-type: x proximity;
-  /* Same snap-vs-inset trap as .k-queue: rest at the padded edge. */
-  scroll-padding-inline: var(--content-padding-sm);
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.k-shelf__row::-webkit-scrollbar {
-  display: none;
-}
-/* Mouse users pan these rails by dragging; say so with the cursor. */
-@media (hover: hover) {
-  .k-queue,
-  .k-shelf__row {
-    cursor: grab;
-  }
-  .k-queue:active,
-  .k-shelf__row:active {
-    cursor: grabbing;
-  }
-}
-.k-shelfitem {
-  width: 104px;
-  flex: none;
-  scroll-snap-align: start;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  text-align: left;
-}
-.k-shelfitem__cover {
-  position: relative;
-  width: 104px;
-  height: 156px;
-  border-radius: var(--radius-md);
-  box-shadow: 0 10px 18px -6px oklch(0% 0 0 / 0.6);
-  transition:
-    transform var(--duration-normal) var(--ease-out),
-    box-shadow var(--duration-normal) var(--ease-out);
-}
-.k-shelfitem:hover .k-shelfitem__cover {
-  transform: translateY(-10px);
-  box-shadow:
-    0 18px 26px -8px oklch(0% 0 0 / 0.7),
-    var(--glow-in-list);
-}
-.k-shelfitem__score {
-  position: absolute;
-  top: var(--space-1);
-  right: var(--space-1);
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  height: 20px;
-  padding: 0 7px;
-  border-radius: var(--radius-full);
-  background: oklch(12% 0.04 34 / 0.85);
-  color: var(--color-accent-glow);
-  font-size: var(--text-2xs);
-  font-weight: 700;
-}
-.k-shelfitem__title {
-  font-size: var(--text-2xs);
-  /* Secondary, not tertiary: 11px tertiary lands ~3.6:1 on the base and
-     fails AA; secondary reads ~7:1 and matches the queue captions. */
-  color: var(--color-text-secondary);
-  line-height: 1.25;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-}
-/* A dropped title is part of the record but never earned its colour. */
-.k-shelfitem--dropped .k-cover {
-  filter: saturate(0.3) brightness(0.75);
-}
-.k-shelfitem__score--dropped {
-  color: var(--color-status-dropped);
-}
-.k-shelf__ledge {
-  height: 1px;
-  margin: 0 var(--content-padding-sm);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-border-strong) 20%,
-    var(--color-border-strong) 80%,
-    transparent
-  );
-  box-shadow: 0 -10px 20px -8px oklch(0% 0 0 / 0.5);
-}
-@media (prefers-reduced-motion: reduce) {
-  .k-qcard__cover,
-  .k-qcard__start,
-  .k-shelfitem__cover {
-    transition: none;
-  }
-  .k-qcard:hover .k-qcard__cover,
-  .k-qcard:focus-within .k-qcard__cover,
-  .k-shelfitem:hover .k-shelfitem__cover {
-    transform: none;
-  }
-}
-
-/* Inside a room's virtualized grid the same cards go fluid: they fill their
-   column and keep 2:3 art, which is what the row-height math assumes. The
-   carousels keep their fixed widths. */
-.k-collection__grid .k-qcard,
-.k-collection__grid .k-shelfitem {
-  width: 100%;
-}
-.k-collection__grid .k-qcard__cover,
-.k-collection__grid .k-shelfitem__cover {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 2 / 3;
-}
-
-/* Desktop earns bigger art: the carousels carry more presence and fill the
-   width instead of huddling at the left. */
-@media (min-width: 1080px) {
-  .k-qcard,
-  .k-qcard__cover {
-    width: 158px;
-  }
-  .k-qcard__cover {
-    height: 237px;
-  }
-  .k-shelfitem,
-  .k-shelfitem__cover {
-    width: 122px;
-  }
-  .k-shelfitem__cover {
-    height: 183px;
-  }
-}
-
-/* ── Hero Binge (active-watch focus) ─────────────────────────
-   Cinematic cards for the 1-2 shows you're mid-binge on. The cover art is the
-   material: a blurred backdrop under a scrim, ember glow marks it as yours. */
-.k-herobinge {
-  display: grid;
-  /* minmax(0): a bare 1fr's auto minimum can inherit a nowrap title's width
-     and push the card past a narrow viewport (same trap as the room rows). */
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-3);
-  max-width: 1500px;
-  margin: 0 auto;
-  padding: 0 var(--content-padding-sm) var(--space-6);
-}
-@media (min-width: 860px) {
-  .k-herobinge {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 .k-hero {
   position: relative;
   isolation: isolate;
@@ -3435,19 +3728,6 @@
   display: grid;
   gap: var(--space-2);
 }
-.k-seasonrows--extras {
-  margin-top: var(--space-4);
-}
-/* Main story / Extras section labels — same quiet uppercase voice as the
-   Tonight header, so the split reads as structure, not decoration. */
-.k-seasonrows__subhead {
-  margin: 0;
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
-}
 /* Where an extra falls in the story ("after #2") — slightly brighter than a
    kind chip so the placement answer stands out from the taxonomy. */
 .k-chip-kind--where {
@@ -3455,7 +3735,7 @@
 }
 .k-seasonrow {
   display: grid;
-  grid-template-columns: 22px 54px 1fr;
+  grid-template-columns: 36px 54px 1fr;
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-2);
@@ -3490,16 +3770,26 @@
 button.k-seasonrow:hover .k-seasonrow__title {
   color: var(--color-accent-glow);
 }
-/* Watch-order position: the chain reads 1, 2, 3… top to bottom. */
+/* Watch-order position, now a badge on the cover (same as the quick menu) so
+   the year rail can own the far-left gutter and sit against the artwork. */
+.k-seasonrow__cover {
+  position: relative;
+  width: 54px;
+}
 .k-seasonrow__num {
-  justify-self: center;
-  font-size: var(--text-sm);
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  height: 16px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: oklch(0% 0 0 / 72%);
+  color: #fff;
+  font-size: var(--text-2xs);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-tertiary);
-}
-.k-seasonrow--current .k-seasonrow__num {
-  color: var(--color-accent-glow);
 }
 .k-seasonrow__chips {
   display: flex;
@@ -3604,6 +3894,14 @@ button.k-seasonrow:hover .k-seasonrow__title {
 .k-seasonrow__type--current {
   background: var(--color-accent);
   color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+/* Entry-point anchor: softer than the solid "You are here", so it points
+   without shouting over the current-title marker. */
+.k-seasonrow__type--start {
+  background: var(--color-accent-dim);
+  color: var(--color-accent-glow);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -4642,20 +4940,24 @@ button.k-seasonrow:hover .k-seasonrow__title {
 
 /* ── Franchise sheet: the season manager ───────────────────── */
 /* Art-backed header that bleeds to the sheet edges. */
+/* The loupe: the genus laid on the examination table. A header plate over a
+   watch-order thread. */
 .k-fhead {
   position: relative;
   margin: 0 calc(-1 * var(--space-5)) var(--space-4);
   padding: var(--space-4) var(--space-5);
   overflow: hidden;
+  border-bottom: 1px solid var(--color-border-strong);
 }
+/* A faint wash of the specimen's own colour on the table, not a glass backdrop. */
 .k-fhead__art {
   position: absolute;
   inset: 0;
   background-size: cover;
   background-position: center 22%;
-  filter: blur(26px) saturate(1.15);
+  filter: blur(30px) saturate(0.8);
   transform: scale(1.35);
-  opacity: 0.5;
+  opacity: 0.14;
 }
 .k-fhead__scrim {
   position: absolute;
@@ -4673,12 +4975,27 @@ button.k-seasonrow:hover .k-seasonrow__title {
   align-items: flex-end;
 }
 .k-fhead__cover {
+  position: relative;
   width: 78px;
   flex: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-plate);
   overflow: hidden;
-  box-shadow: 0 10px 28px oklch(0% 0 0 / 55%);
+  border: 1px solid var(--color-border-strong);
+  box-shadow: var(--shadow-card);
 }
+/* Photo-corners: the specimen is mounted, not floating. */
+.k-fhead__cover::before,
+.k-fhead__cover::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid oklch(96% 0.02 88 / 78%);
+  pointer-events: none;
+}
+.k-fhead__cover::before { top: 3px; left: 3px; border-right: 0; border-bottom: 0; }
+.k-fhead__cover::after { bottom: 3px; right: 3px; border-left: 0; border-top: 0; }
 .k-fhead__cover .k-cover {
   width: 78px;
   height: 117px;
@@ -4693,13 +5010,17 @@ button.k-seasonrow:hover .k-seasonrow__title {
 }
 .k-fhead__title {
   color: var(--color-text-primary);
+  font-style: italic;
 }
 .k-fhead__stats {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--color-text-secondary);
 }
 .k-fhead__stats > span + span::before {
@@ -4714,242 +5035,305 @@ button.k-seasonrow:hover .k-seasonrow__title {
 /* Franchise-wide completion line in the sheet head. */
 .k-fhead__ledger {
   margin-top: var(--space-2);
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
+  letter-spacing: 0.02em;
   color: var(--color-text-secondary);
 }
 .k-fhead__ledger--full {
   font-weight: 600;
   color: var(--color-accent-glow);
 }
-.k-fsheet-heading {
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
-  padding: var(--space-3) 0 var(--space-2);
-}
+/* Ruled records, not stacked cards: the gap between cards is what made a long
+   franchise read as a pile. One hairline between rows instead. */
 .k-seasonlist {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
   margin-bottom: var(--space-2);
+  border-top: 1px solid var(--color-border);
 }
-/* One season = one card. Status colour rides in via --card-status as a thin
-   left-edge bar; the surface itself stays neutral so a ten-season franchise
-   doesn't read as ten differently-tinted stripes. */
+/* The spine: one gutter, shared by the franchise quick menu and the detail
+   Related list, that carries three things at once — the release year (turned a
+   quarter-turn so it rests against the cover), a continuous thread down the
+   list, and a node whose fill encodes your progress. A glance top-to-bottom is
+   both the order and how far you've watched. Fixed width keeps covers aligned. */
+.k-spine {
+  position: relative;
+  flex: none;
+  width: 36px;
+  align-self: stretch;
+  min-height: 58px;
+  overflow: visible;
+}
+/* The thread. It runs past the row top and bottom by half the list gap so the
+   segments meet across the gap and read as one continuous line. The end rows
+   cap it at their node instead of trailing into the padding. */
+.k-spine__line {
+  position: absolute;
+  left: 24px;
+  /* Reach the neighbour's node, not just this card's edge: the spine is inset
+     by the card padding (space-2), and the cards are separated by the list gap
+     (space-2), so the line must extend padding + gap to bridge. Anything less
+     and it stops at the card edge and the thread reads as broken segments. */
+  top: calc(-2 * var(--space-2));
+  bottom: calc(-2 * var(--space-2));
+  width: 2px;
+  background: var(--color-border-strong);
+}
+.k-spine__line--first {
+  top: 50%;
+}
+.k-spine__line--last {
+  bottom: 50%;
+}
+/* Short connector from the line out to a branched (extra) node. */
+.k-spine__branch {
+  position: absolute;
+  left: 26px;
+  top: 50%;
+  width: 9px;
+  height: 2px;
+  background: var(--color-border-strong);
+  transform: translateY(-50%);
+}
+/* The node sits on the line, centered on the row. Its fill is the progress
+   language: filled = watched, ringed = watching now, hollow = planned,
+   dashed = not on your list. */
+.k-spine__node {
+  position: absolute;
+  left: 25px;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--color-surface-2);
+  border: 2px solid var(--color-text-tertiary);
+  z-index: 1;
+}
+.k-spine__node--done {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.k-spine__node--active {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-dim);
+}
+.k-spine__node--planned {
+  background: var(--color-surface-2);
+  border-color: var(--color-text-tertiary);
+}
+.k-spine__node--untracked {
+  background: transparent;
+  border-style: dashed;
+}
+/* Extra: a small diamond offset to the right of the line, so side content
+   visibly hangs off the main story instead of sitting in it. */
+.k-spine__node--branch {
+  left: 35px;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+/* Year lives in its own fixed slot at the far-left of the gutter. Fixed width
+   (not text-width) so its centre never drifts under the line — that overlap is
+   what made the two read as one vertical mark. */
+.k-spine__year {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 16px;
+  text-align: center;
+  /* line-height:1 shrinks the glyph band so the rotated year stays a slim
+     column instead of a fat block that crowds the line and node. */
+  line-height: 1;
+  transform: translateY(-50%) rotate(-90deg);
+  white-space: nowrap;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+.k-spine__year--none {
+  opacity: 0;
+}
+/* One member = one ruled record.
+   Two lines and one control. The row this replaced carried a spine rail, a
+   sideways year, a number badge, a hover chevron, a status pill with a caret, a
+   kind chip, a placement chip, an episode counter, a score and sometimes a
+   "Start here" label — ten things fighting over 72px, which is what made a
+   six-season franchise unreadable. Status colour rides in as a hairline edge
+   bar, never a tinted surface: ten seasons should not read as ten stripes. */
 .k-srow {
   position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-2);
-  box-shadow: inset 3px 0 0 var(--card-status, transparent);
-  border: 1px solid var(--color-border);
-  transition: border-color 150ms var(--ease-out), background-color 150ms var(--ease-out);
+  padding: var(--space-2) var(--space-2) var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: inset 2px 0 0 var(--card-status, transparent);
+  transition: background-color var(--duration-fast) var(--ease-out);
 }
-/* The row holds several distinct controls; a faint lift on hover signals the
-   whole item is live, while each control below carries its own affordance. */
 .k-srow:hover {
-  border-color: var(--color-border-strong);
+  background: var(--color-surface-2);
 }
-/* Not aired yet: the art reads parked, the dashed chip carries the date. */
-.k-srow--unaired .k-srow__cover .k-cover__img {
-  filter: saturate(0.55) brightness(0.85);
-}
-/* A member the user opted out of: present for honesty, visually parked. */
 .k-srow--dimmed {
   opacity: 0.55;
 }
-.k-srow--dimmed:hover {
-  opacity: 0.85;
+/* Not aired yet: the art reads parked, the meta line carries the date. */
+.k-srow--unaired .k-srow__cover .k-cover__img {
+  filter: grayscale(0.7) brightness(0.8);
 }
-.k-srow--dimmed .k-srow__cover .k-cover__img {
-  filter: grayscale(0.7);
+/* The running number is the one piece of order the list states outright. */
+.k-srow__no {
+  flex: none;
+  width: 26px;
+  padding-left: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+  text-align: right;
 }
 .k-srow__open {
   flex: none;
   display: block;
-  cursor: pointer;
 }
 .k-srow__cover {
-  position: relative;
-  width: 46px;
-  height: 65px;
-  flex: none;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  display: block;
+  width: 38px;
+  box-shadow: var(--shadow-card);
 }
 .k-srow__cover .k-cover {
-  width: 46px;
-  height: 65px;
-}
-/* Cover signals "opens the page": art eases in, an open glyph fades over it. */
-.k-srow__cover .k-cover__img {
-  transition: transform 200ms var(--ease-out);
-}
-.k-srow__open:hover .k-cover__img,
-.k-srow__open:focus-visible .k-cover__img {
-  transform: scale(1.08);
-}
-.k-srow__openhint {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: oklch(0% 0 0 / 42%);
-  color: #fff;
-  opacity: 0;
-  transition: opacity 160ms var(--ease-out);
-  pointer-events: none;
-}
-.k-srow__open:hover .k-srow__openhint,
-.k-srow__open:focus-visible .k-srow__openhint {
-  opacity: 1;
-}
-.k-srow__num {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  height: 16px;
-  padding: 0 5px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-sm);
-  background: oklch(0% 0 0 / 72%);
-  color: #fff;
-  font-size: var(--text-2xs);
-  font-weight: 800;
+  aspect-ratio: 2 / 3;
 }
 .k-srow__main {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 2px;
 }
-/* Title and cover are one destination (the detail page), so they share one
-   affordance: hovering either shifts the title to the accent shade and lights
-   the cover's open hint. No underline — accent colour is the link language. */
 .k-srow__titlebtn {
   display: block;
   width: 100%;
   text-align: left;
-  min-width: 0;
-  max-width: 100%;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
   color: var(--color-text-primary);
-  cursor: pointer;
-  transition: color 150ms var(--ease-out);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-out);
 }
 .k-srow__titlebtn:hover,
 .k-srow:has(.k-srow__open:hover) .k-srow__titlebtn {
   color: var(--color-accent-glow);
 }
-.k-srow:has(.k-srow__titlebtn:hover) .k-srow__openhint {
-  opacity: 1;
+/* One mono line for every fact about the entry, separated by middots rather
+   than by a chip each. */
+.k-srow__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
 }
-.k-srow:has(.k-srow__titlebtn:hover) .k-cover__img {
-  transform: scale(1.08);
+.k-srow__meta > span + span::before {
+  content: "·";
+  margin-right: var(--space-2);
+  color: var(--color-text-tertiary);
 }
-.k-srow__controls {
+.k-srow__airing {
+  color: var(--color-accent-glow);
+}
+.k-srow__act {
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex-wrap: wrap;
 }
-/* Status pill is a control: caret hints the picker, it grows on hover, dips on press. */
+/* The status is a field-note stamp you can press, same shape as the one on a
+   card — one status language across the app. */
 .k-srow__statusbtn {
-  cursor: pointer;
-  transition: background-color 150ms var(--ease-out), transform 100ms var(--ease-out);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 var(--space-2);
+  border: 1px solid color-mix(in oklch, var(--stamp) 55%, transparent);
+  border-radius: var(--radius-tag);
+  background: color-mix(in oklch, var(--stamp) 14%, transparent);
+  color: color-mix(in oklab, var(--stamp) 60%, var(--color-text-primary));
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: border-color var(--duration-fast) var(--ease-out);
 }
 .k-srow__statusbtn:hover {
-  background: color-mix(in oklab, currentColor 24%, transparent);
-  transform: translateY(-1px);
+  border-color: var(--stamp);
 }
-.k-srow__statusbtn:active {
-  transform: scale(0.96);
-}
-.k-srow__caret {
-  margin-left: 1px;
-  opacity: 0.7;
-  transition: transform 150ms var(--ease-out);
-}
-.k-srow__statusbtn:hover .k-srow__caret {
-  transform: translateY(1px);
-  opacity: 1;
-}
-.k-srow__ep,
-.k-srow__dim {
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-  font-variant-numeric: tabular-nums;
-}
-.k-srow__score {
-  font-size: var(--text-xs);
-  font-weight: 700;
-  color: var(--color-text-secondary);
+.k-srow__statusglyph {
+  color: var(--stamp);
 }
 .k-srow__stepper {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 2px;
 }
 .k-srow__stepper button {
-  width: 26px;
-  height: 26px;
   display: grid;
   place-items: center;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-3);
-  color: var(--color-text-primary);
-  transition: background-color 120ms var(--ease-out), transform 100ms var(--ease-out);
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-plate);
+  color: var(--color-text-secondary);
 }
 .k-srow__stepper button:hover:not(:disabled) {
-  background: var(--color-border-strong);
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
 }
 .k-srow__stepper button:active:not(:disabled) {
-  transform: scale(0.88);
+  transform: scale(0.94);
 }
 .k-srow__stepper button:disabled {
   opacity: 0.35;
-  cursor: not-allowed;
 }
 .k-srow__epnum {
-  min-width: 54px;
+  min-width: 44px;
   text-align: center;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
 }
-/* Ownership is the sheet's loudest signal: tracked rows (k-srow--mine) keep
-   the solid surface + status edge bar of the base row; untracked rows are
-   hollow — transparent with a dashed border — so "on my list vs not" reads
-   before any text does. */
-.k-srow--add {
-  background: transparent;
-  border-style: dashed;
-  border-color: color-mix(in oklab, var(--color-border-strong) 80%, transparent);
-}
+/* Not on your list: hollow, so membership is readable down the column. */
 .k-srow--add .k-srow__titlebtn {
   color: var(--color-text-secondary);
 }
-.k-srow__notin {
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
+.k-srow--add .k-srow__cover {
+  opacity: 0.7;
 }
 .k-srow--next {
-  background: color-mix(in oklch, var(--color-accent) 10%, var(--color-surface-2));
-  border: 1px solid color-mix(in oklch, var(--color-accent) 35%, transparent);
+  background: color-mix(in oklch, var(--color-accent) 8%, transparent);
 }
 .k-srow__nextlabel {
+  font-family: var(--font-mono);
   font-size: var(--text-2xs);
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--color-accent-glow);
 }
@@ -4958,30 +5342,32 @@ button.k-seasonrow:hover .k-seasonrow__title {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 40px;
-  padding: 0 12px;
-  border-radius: var(--radius-md);
-  background: var(--color-surface-3);
+  height: 30px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-plate);
   color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
   font-weight: 700;
-  font-size: var(--text-sm);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out), transform 100ms var(--ease-out);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
 }
 .k-srow__add:hover {
-  background: var(--color-border-strong);
+  border-color: var(--color-accent);
   color: var(--color-text-primary);
-  transform: translateY(-1px);
-}
-.k-srow__add:active {
-  transform: scale(0.96);
 }
 .k-srow__add--primary {
+  border-color: var(--color-accent);
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-on-accent);
 }
 .k-srow__add--primary:hover {
-  background: var(--color-accent);
+  color: var(--color-on-accent);
   filter: brightness(1.08);
 }
 
@@ -5868,5 +6254,315 @@ button.k-seasonrow:hover .k-seasonrow__title {
   }
   .k-stats__hist {
     gap: var(--space-1);
+  }
+}
+
+/* ── The ledger (Completed room) ─────────────────────────────
+   A year index beside a wall of covers. Two things this shape is for: the
+   covers ARE the record (a few thousand finished shows rendered as rows of
+   text is a bank statement, not a collection), and every view is BOUNDED —
+   you pick a year and see that year, so a 3000-entry record never becomes one
+   endless scroll with no landmarks. */
+.k-years {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--space-3) var(--content-padding-sm) 0;
+}
+/* The index: a column of years, like the tabs down the edge of a filing
+   cabinet. Its own scroller, so a twenty-year record does not push the wall. */
+.k-years__index {
+  flex: none;
+  width: 132px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  padding-right: var(--space-2);
+  border-right: 1px solid var(--color-border);
+}
+.k-years__year {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-plate);
+  border: 1px solid transparent;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.k-years__year:hover {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+/* The year you are in is marked by ink and a keyline, never by fill alone. */
+.k-years__year--on {
+  background: var(--color-accent-dim);
+  border-color: color-mix(in oklch, var(--color-accent) 45%, transparent);
+  color: var(--color-accent-glow);
+}
+.k-years__num {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.k-years__count {
+  font-size: var(--text-2xs);
+  /* Secondary, not tertiary: at 12px in an index you actually read, tertiary
+     measured 4.8:1 on the light plates — over AA but with no room to spare. */
+  color: var(--color-text-secondary);
+}
+.k-years__year--on .k-years__count {
+  color: inherit;
+}
+.k-years__pane {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* What this year alone amounts to. The reason a bounded view beats a feed:
+   a feed can never tell you this. */
+.k-years__census {
+  flex: none;
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--color-text-primary);
+}
+.k-years__wall {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: var(--space-8);
+}
+.k-years__inner {
+  position: relative;
+  width: 100%;
+}
+.k-years__row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: grid;
+}
+/* One finished watch. Cover, the day, the name — nothing else earns a place
+   at this size. */
+.k-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+.k-tile:hover {
+  transform: translateY(-2px);
+}
+.k-tile__art {
+  position: relative;
+  display: block;
+  box-shadow: var(--shadow-card);
+}
+.k-tile__art .k-cover {
+  aspect-ratio: 2 / 3;
+}
+.k-tile:hover .k-tile__art {
+  box-shadow: var(--shadow-card-hi);
+}
+/* A repeat watch says so on the plate, the same tie-on tag language the rest
+   of the app uses. */
+.k-tile__rewatch,
+.k-tile__dropped {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  padding: 0 5px;
+  border-radius: var(--radius-tag);
+  border: 1px solid color-mix(in oklch, var(--color-status-rewatching) 60%, transparent);
+  background: oklch(8% 0.012 158 / 88%);
+  color: color-mix(in oklab, var(--color-status-rewatching) 55%, oklch(97% 0.02 88));
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.k-tile__dropped {
+  border-color: color-mix(in oklch, var(--color-status-dropped) 60%, transparent);
+  color: color-mix(in oklab, var(--color-status-dropped) 55%, oklch(97% 0.02 88));
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+.k-tile__date {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-tile__approx {
+  color: var(--color-text-tertiary);
+}
+.k-tile__gone {
+  color: var(--color-text-tertiary);
+}
+.k-tile__title {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+/* A watch whose entry has left the collection: the plate fades, the name only
+   steps down a weight of ink. Fading the text measured under AA on the light
+   plates, and a record you cannot read is not a record. */
+.k-tile--ghost .k-tile__art {
+  opacity: 0.5;
+}
+.k-tile--ghost .k-tile__title {
+  color: var(--color-text-secondary);
+}
+
+/* A phone has no column to spare, so the index lies down as a row of year
+   chips above the wall — the same list, turned a quarter turn. */
+@media (max-width: 720px) {
+  .k-years {
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-inline: var(--space-3);
+  }
+  .k-years__index {
+    width: auto;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 0 var(--space-2);
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+    scrollbar-width: none;
+  }
+  .k-years__index::-webkit-scrollbar {
+    display: none;
+  }
+  .k-years__year {
+    flex: none;
+    gap: var(--space-1);
+  }
+}
+
+/* The header sits over the same column the index and wall share, so the room
+   reads as one block rather than a header floating above a narrower body. */
+.k-page--years .k-roomtop {
+  width: 100%;
+  max-width: 1180px;
+  margin-inline: auto;
+}
+
+/* ── A room's header ─────────────────────────────────────────
+   Built like the launcher's: the name engraved, a mono census under it, and one
+   plain line saying what the room is for. The rooms used to open with a bare
+   back-arrow-title-count bar left from before the rework, so walking in from
+   the launcher felt like landing in an older app. */
+.k-roomtop {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--content-padding-sm) var(--space-3);
+  border-bottom: 1px solid var(--color-border-strong);
+}
+.k-roomtop__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+}
+.k-roomtop__back {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  /* Pulled left so the title, not the arrow, sits on the page's margin. */
+  margin-left: -10px;
+  border-radius: var(--radius-plate);
+  color: var(--color-text-secondary);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.k-roomtop__back:hover {
+  color: var(--color-text-primary);
+}
+.k-roomtop__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-2xl);
+  font-weight: 500;
+}
+.k-roomtop__actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.k-roomtop__census {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--color-text-primary);
+}
+.k-roomtop__sep {
+  color: var(--color-text-tertiary);
+}
+/* What the room is for, in the reading voice. One line, and never a heading. */
+.k-roomtop__purpose {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  max-width: 62ch;
+}
+@media (max-width: 520px) {
+  .k-roomtop__title {
+    font-size: var(--text-xl);
+  }
+  .k-roomtop__purpose {
+    font-size: var(--text-sm);
+  }
+}
+
+/* A phone row has no room for the meta line to wrap into three: one line,
+   clipped, since the facts on it are ordered most-useful-first. */
+@media (max-width: 520px) {
+  .k-srow__meta {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .k-srow__meta > span {
+    flex: none;
   }
 }

@@ -50,6 +50,7 @@ vi.mock("@/lib/store/notificationStore", () => ({
 vi.mock("@/lib/store/episodeUndo", () => ({ recordEpisodeLog: vi.fn() }));
 
 import { useListStore, UP_NEXT_CAP } from "./listStore";
+import { useCompletionStore } from "./completionStore";
 import { recordEpisodeLog } from "./episodeUndo";
 import { toast } from "./toastStore";
 import { getDb } from "@/lib/db";
@@ -315,5 +316,144 @@ describe("the plan queue", () => {
       await flush();
       expect(store().map[1].updated_at).toBe(before);
     });
+  });
+});
+
+/**
+ * The completion ledger. Before it, `completed_at` was a single column written
+ * once: finish a show in 2021, rewatch and finish it again this week, and the
+ * list still said 2021. Every finish now writes its own dated row, and those
+ * rows outlive the entry.
+ */
+describe("the completion ledger", () => {
+  const events = () => useCompletionStore.getState().events;
+
+  beforeEach(async () => {
+    useCompletionStore.setState({ events: [], loaded: false });
+  });
+
+  it("records a row the first time an entry is finished", async () => {
+    await seed([makeEntry({ anilist_id: 1, status: "watching", total_episodes: 12 })]);
+    await store().updateStatus(1, "completed");
+    await flush();
+    expect(events()).toHaveLength(1);
+    expect(events()[0]).toMatchObject({
+      anilist_id: 1,
+      rewatch_index: 0,
+      episodes_at_completion: 12,
+      estimated: false,
+    });
+  });
+
+  it("gives every rewatch its own dated row instead of overwriting the first", async () => {
+    await seed([makeEntry({ anilist_id: 1, status: "watching", total_episodes: 12 })]);
+    await store().updateStatus(1, "completed");
+    await flush();
+    const first = store().map[1].completed_at!;
+
+    vi.setSystemTime(new Date(first + 60_000));
+    await store().updateStatus(1, "rewatching");
+    await store().updateStatus(1, "completed");
+    await flush();
+    vi.useRealTimers();
+
+    expect(events().map((e) => e.rewatch_index).sort()).toEqual([0, 1]);
+    // The bug this table exists for: the entry's own date now moves too.
+    expect(store().map[1].completed_at).toBeGreaterThan(first);
+  });
+
+  it("does not log a second event for re-picking a status already set", async () => {
+    await seed([makeEntry({ anilist_id: 1, status: "completed", completed_at: 500 })]);
+    await store().updateStatus(1, "completed");
+    await flush();
+    expect(events()).toHaveLength(0);
+    expect(store().map[1].completed_at).toBe(500);
+  });
+
+  it("keeps the record after the entry itself is removed", async () => {
+    await seed([makeEntry({ anilist_id: 1, status: "watching", total_episodes: 12 })]);
+    await store().updateStatus(1, "completed");
+    await flush();
+    store().remove(1);
+    await flush();
+    expect(store().map[1]).toBeUndefined();
+    expect(events()).toHaveLength(1);
+    expect(events()[0].title_romaji).toBe("Title 1");
+  });
+
+  it("rebuilds history from a restored backup, without duplicating it", async () => {
+    await seed([]);
+    const backup = [
+      makeEntry({ anilist_id: 1, status: "completed", completed_at: 900, rewatch_count: 2 }),
+      makeEntry({ anilist_id: 2, status: "watching" }),
+    ];
+    await store().importEntries(backup);
+    await flush();
+    // Three finishes for the rewatched title, none for the one still running.
+    expect(events()).toHaveLength(3);
+    expect(events().every((e) => e.estimated)).toBe(true);
+
+    await store().importEntries(backup);
+    await flush();
+    expect(events()).toHaveLength(3);
+  });
+
+  it("clears the ledger when the whole list is erased", async () => {
+    await seed([makeEntry({ anilist_id: 1, status: "watching", total_episodes: 12 })]);
+    await store().updateStatus(1, "completed");
+    await flush();
+    await store().clearAll();
+    await flush();
+    expect(events()).toHaveLength(0);
+  });
+});
+
+/**
+ * Start and Done sit next to each other under a thumb in the plan room, so a
+ * mistap has to be one tap to reverse — including the queue number the change
+ * released and the ledger row a completion wrote.
+ */
+describe("updateStatusUndoable", () => {
+  const events = () => useCompletionStore.getState().events;
+
+  beforeEach(() => {
+    useCompletionStore.setState({ events: [], loaded: false });
+  });
+
+  it("offers an undo that puts the entry back exactly as it was", async () => {
+    const action = vi.spyOn(toast, "action").mockReturnValue(0);
+    await seed([planned(1, 1), planned(2, 2)]);
+    await store().updateStatusUndoable(1, "completed", "Title 1");
+    await flush();
+    expect(store().map[1].status).toBe("completed");
+    expect(store().map[1].episodes_watched).toBe(12);
+    expect(rankOf(1)).toBeNull();
+    // The queue closed the gap behind it.
+    expect(rankOf(2)).toBe(1);
+    expect(events()).toHaveLength(1);
+
+    const undo = action.mock.calls.at(-1)?.[0];
+    expect(undo?.actionLabel).toBe("Undo");
+    undo?.onAction?.();
+    await flush();
+
+    expect(store().map[1].status).toBe("plan_to_watch");
+    expect(store().map[1].episodes_watched).toBe(0);
+    expect(rankOf(1)).toBe(1);
+    expect(rankOf(2)).toBe(2);
+    // A completion that was taken back leaves no record of having happened.
+    expect(events()).toHaveLength(0);
+  });
+
+  it("says nothing to undo when a guard refused the change", async () => {
+    await seed([
+      makeEntry({ anilist_id: 1, status: "plan_to_watch", airing_status: "NOT_YET_RELEASED" }),
+    ]);
+    const action = vi.spyOn(toast, "action").mockReturnValue(0);
+    vi.spyOn(toast, "error").mockReturnValue(0);
+    await store().updateStatusUndoable(1, "watching", "Title 1");
+    await flush();
+    expect(store().map[1].status).toBe("plan_to_watch");
+    expect(action).not.toHaveBeenCalled();
   });
 });

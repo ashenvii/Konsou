@@ -41,27 +41,52 @@ const DISPLAY_PRIORITY: Record<ListStatus, number> = {
 };
 
 /**
+ * Story position of an entry within its franchise, lowest first.
+ *
+ * The root is the chain's start by construction (resolveFranchiseChain walks
+ * PREQUEL edges until nothing precedes it), so it always leads. After that,
+ * anilist_id ascends roughly with release, which is the closest thing to watch
+ * order available here: this function is pure and runs over the whole library
+ * on every group, so it cannot reach for relation edges the way
+ * `orderForWatching` does.
+ */
+function storyRank(e: AnimeListEntry, rootId: number): number {
+  return e.anilist_id === rootId ? -1 : e.anilist_id;
+}
+
+/**
  * Pick the entry that best represents where the user currently is.
- * `sortedEntries` is already ordered by added_at ASC so .find() returns
- * the earliest one for tied-priority statuses (e.g. first plan_to_watch
- * in the chain rather than a later one).
+ *
+ * Ties between same-status members break on story position, NOT on when the
+ * user happened to add them. Adding season 2 before season 1 used to make
+ * season 2 the card's current entry — so Start, Complete and the loupe all
+ * acted on the middle of a franchise while its first season sat unwatched.
  */
 function pickDisplayEntry(
   sortedEntries: AnimeListEntry[],
   rootId: number,
 ): AnimeListEntry {
+  const earliest = (match: (e: AnimeListEntry) => boolean) => {
+    let best: AnimeListEntry | undefined;
+    for (const e of sortedEntries) {
+      if (!match(e)) continue;
+      if (!best || storyRank(e, rootId) < storyRank(best, rootId)) best = e;
+    }
+    return best;
+  };
+
   // Active watch states win immediately.
-  const active = sortedEntries.find(
+  const active = earliest(
     (e) => e.status === "watching" || e.status === "rewatching",
   );
   if (active) return active;
 
-  // Next-in-queue: the earliest plan_to_watch signals what's coming up.
-  const planned = sortedEntries.find((e) => e.status === "plan_to_watch");
+  // Next-in-queue: the earliest planned season signals what's coming up.
+  const planned = earliest((e) => e.status === "plan_to_watch");
   if (planned) return planned;
 
   // Something stalled.
-  const onHold = sortedEntries.find((e) => e.status === "on_hold");
+  const onHold = earliest((e) => e.status === "on_hold");
   if (onHold) return onHold;
 
   // All completed or dropped: revert to the franchise root artwork (S1).

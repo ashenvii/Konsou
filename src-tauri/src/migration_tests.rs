@@ -143,6 +143,7 @@ fn fresh_install_creates_every_table_the_contract_expects() {
         "sync_state",
         "list_tombstones",
         "scan_schedule",
+        "completion_log",
     ] {
         let found = count(
             &conn,
@@ -373,6 +374,96 @@ fn the_plan_queue_rank_is_writable_and_survives() {
             .unwrap();
         assert_eq!(rank, Some(3), "fresh install: {}", !from_v1);
     }
+}
+
+// ---------------------------------------------------------------------------
+// The completion log (v12)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn the_completion_log_backfills_one_row_per_finished_watch() {
+    let conn = Connection::open_in_memory().unwrap();
+    apply(&conn, 1..=11);
+
+    // Finished once. Two rewatches on top of that. Currently rewatching (so the
+    // run in progress has NOT been finished yet). Never finished at all.
+    conn.execute_batch(
+        "INSERT INTO anime_list
+           (anilist_id, title_romaji, status, episodes_watched, added_at, updated_at,
+            completed_at, total_episodes, rewatch_count, episode_duration)
+         VALUES
+           (1, 'Once',      'completed',     12, 1, 2, 500, 12, 0, 24),
+           (2, 'Thrice',    'completed',     24, 1, 2, 600, 24, 2, 23),
+           (3, 'Mid-again', 'rewatching',     3, 1, 2, 700, 13, 1, 24),
+           (4, 'Watching',  'watching',       5, 1, 2, NULL, 12, 0, 24);",
+    )
+    .unwrap();
+
+    apply(&conn, 12..=i64::MAX);
+
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM completion_log WHERE anilist_id = 1"), 1);
+    // One first watch plus the two rewatches it counted.
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM completion_log WHERE anilist_id = 2"), 3);
+    // Rewatching: only the finished prior run is an event; the current one isn't.
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM completion_log WHERE anilist_id = 3"), 1);
+    // Never finished, so it has no place in the ledger.
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM completion_log WHERE anilist_id = 4"), 0);
+
+    // Indices are 0..n, so "x2" on the timeline means the second watch.
+    let indices: Vec<i64> = {
+        let mut stmt = conn
+            .prepare("SELECT rewatch_index FROM completion_log WHERE anilist_id = 2 ORDER BY rewatch_index")
+            .unwrap();
+        let rows = stmt.query_map([], |r| r.get(0)).unwrap();
+        rows.map(|r| r.unwrap()).collect()
+    };
+    assert_eq!(indices, vec![0, 1, 2]);
+
+    // The snapshot is what lets a removed entry still render on the timeline.
+    let (title, at, eps, estimated): (String, i64, i64, i64) = conn
+        .query_row(
+            "SELECT title_romaji, completed_at, episodes_at_completion, estimated
+             FROM completion_log WHERE anilist_id = 1",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+        )
+        .unwrap();
+    assert_eq!(title, "Once");
+    assert_eq!(at, 500);
+    assert_eq!(eps, 12);
+    assert_eq!(estimated, 1, "backfilled dates are reconstructed, not recorded");
+}
+
+#[test]
+fn a_completion_row_outlives_the_entry_it_came_from() {
+    let conn = fresh();
+    conn.execute(
+        "INSERT INTO completion_log
+           (anilist_id, rewatch_index, completed_at, episodes_at_completion, title_romaji)
+         VALUES (99, 0, 1000, 12, 'Gone')",
+        [],
+    )
+    .unwrap();
+    conn.execute("DELETE FROM anime_list WHERE anilist_id = 99", []).unwrap();
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM completion_log"), 1);
+}
+
+#[test]
+fn the_same_completion_event_cannot_land_twice() {
+    // The union merge replays rows from other devices. The Nth completion of a
+    // title is one event, so a repeat has to collapse rather than double-count.
+    let conn = fresh();
+    let insert = || {
+        conn.execute(
+            "INSERT OR IGNORE INTO completion_log
+               (anilist_id, rewatch_index, completed_at, episodes_at_completion, title_romaji)
+             VALUES (7, 1, 1000, 12, 'Twice')",
+            [],
+        )
+    };
+    insert().unwrap();
+    insert().unwrap();
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM completion_log"), 1);
 }
 
 #[test]

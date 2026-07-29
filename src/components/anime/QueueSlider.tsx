@@ -1,72 +1,19 @@
 import { memo, useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
-import { ChevronLeft, ChevronRight, Play, Plus } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { haptic } from "@/lib/haptics";
 import { AnimeCover } from "./AnimeCover";
 import { Icon } from "@/components/ui/Icon";
-import { useDragScroll } from "@/hooks/useDragScroll";
 import { getCoverUrl, preferredTitle } from "@/lib/format";
 import { useListStore } from "@/lib/store/listStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
 
 /**
- * Plan-to-watch as an aspirational poster carousel. Tapping a poster opens the
- * quick menu; the Start button promotes it straight into Watching without the
- * detour. Full-width so it uses the desktop, a natural swipe on a phone.
- * Desktop pans by mouse drag (no scrollbar); the wheel stays with the page.
+ * The plan card: a mounted poster with its watch-order number and the two
+ * ways out of the plan on its footer. Rendered by the plan room inside the
+ * virtualized grid.
  */
-/** The card's watch-order number: the lowest one any of its entries carries. */
-export function planNumberOf(g: FranchiseGroup): number | null {
-  let min = Number.POSITIVE_INFINITY;
-  for (const e of g.entries) {
-    if (e.status === "plan_to_watch" && e.plan_rank != null && e.plan_rank < min) {
-      min = e.plan_rank;
-    }
-  }
-  return min === Number.POSITIVE_INFINITY ? null : min;
-}
-
-export function QueueSlider({
-  groups,
-  onOpen,
-  onAdd,
-}: {
-  groups: FranchiseGroup[];
-  onOpen: (rootId: number) => void;
-  /** Renders the ghost Add tile at the end of the queue (Overview only). */
-  onAdd?: () => void;
-}) {
-  const rowRef = useDragScroll<HTMLDivElement>();
-  if (groups.length === 0) return null;
-  return (
-    <div className="k-queue" ref={rowRef}>
-      {groups.map((g) => (
-        <QueueCard
-          key={g.rootId}
-          group={g}
-          onOpen={onOpen}
-          // The rail already leads with your numbered titles, so it has to show
-          // the numbers too: the order is meaningless if you cannot read it.
-          planNumber={planNumberOf(g)}
-        />
-      ))}
-      {onAdd && (
-        <button
-          type="button"
-          className="k-qadd"
-          onClick={onAdd}
-          aria-label="Add something to watch"
-        >
-          <span className="k-qadd__box">
-            <Icon icon={Plus} size={24} />
-          </span>
-          <span className="k-qadd__label">Add</span>
-        </button>
-      )}
-    </div>
-  );
-}
 
 /** How long the card must be held before it commits. Long enough to be
  *  deliberate, short enough not to feel like the app has stalled. */
@@ -213,7 +160,7 @@ function QueueCardImpl({
   onQuickAdd?: (rootId: number) => boolean;
 }) {
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
-  const updateStatus = useListStore((s) => s.updateStatus);
+  const updateStatusUndoable = useListStore((s) => s.updateStatusUndoable);
 
   const { displayEntry, rootId, entries } = group;
   const hold = useHoldToAdd(rootId, onQuickAdd);
@@ -283,15 +230,36 @@ function QueueCardImpl({
             {planNumber}
           </button>
         )}
-        <button
-          type="button"
-          className="k-qcard__start"
-          onClick={() => void updateStatus(displayEntry.anilist_id, "watching")}
-          aria-label={`Start watching ${title}`}
-        >
-          <Icon icon={Play} size={14} weight="fill" />
-          Start
-        </button>
+        {/* Two ways out of the plan, weighted the same: people either start a
+            title or find they have already seen it, and promoting one of those
+            over the other just makes the other a menu trip. Split across the
+            footprint the single Start button used to have, so the grid's row
+            maths is untouched — and each half carries its own keyline, so a
+            wide thumb can't land on both. Both are undoable. */}
+        <div className="k-qcard__acts">
+          <button
+            type="button"
+            className="k-qcard__act"
+            onClick={() =>
+              void updateStatusUndoable(displayEntry.anilist_id, "watching", title)
+            }
+            aria-label={`Start watching ${title}`}
+          >
+            <Icon icon={Play} size={12} weight="fill" />
+            Start
+          </button>
+          <button
+            type="button"
+            className="k-qcard__act"
+            onClick={() =>
+              void updateStatusUndoable(displayEntry.anilist_id, "completed", title)
+            }
+            aria-label={`Mark ${title} complete`}
+          >
+            <Icon icon={Check} size={12} />
+            Done
+          </button>
+        </div>
       </div>
       {/* The title is the card's real door: a button stretched over the whole
           poster (see .k-qcard__open); Start and the move controls float above

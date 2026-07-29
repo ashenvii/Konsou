@@ -1,42 +1,57 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Plus, Search, X } from "lucide-react";
+import { ChevronRight, Play, Plus, Search, X } from "lucide-react";
+import { AnimeCover } from "@/components/anime/AnimeCover";
 import { FranchiseSheet } from "@/components/anime/FranchiseSheet";
-import { HeroBinge } from "@/components/anime/HeroBinge";
-import { QueueSlider } from "@/components/anime/QueueSlider";
-import { DigitalShelf } from "@/components/anime/DigitalShelf";
-import { FranchiseCollection } from "@/components/list/FranchiseCollection";
+import { StatusStamp } from "@/components/anime/StatusStamp";
+import { RoomDoor } from "@/components/list/RoomDoor";
 import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { ImportSheet } from "@/components/ui/ImportSheet";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useDragScroll } from "@/hooks/useDragScroll";
 import { groupEntries } from "@/lib/franchise/grouping";
-import { normalizeForSearch } from "@/lib/format";
+import { getCoverUrl, normalizeForSearch, preferredTitle } from "@/lib/format";
+import { useCompletionStore } from "@/lib/store/completionStore";
 import { useListStore } from "@/lib/store/listStore";
+import { useNotificationStore } from "@/lib/store/notificationStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { getUiState, setUiState } from "@/lib/uiState";
-import type { ReactNode } from "react";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
-import type { AnimeListEntry, ListStatus } from "@/types/list";
+import type { AnimeListEntry, ListStatus, TitleLanguage } from "@/types/list";
+import type { KonsouNotification } from "@/types/notification";
 
 /**
- * My List landing. Three stacked full-width bands, each with its own shape:
- * the Hero Binge pair for what's on now, the plan poster rail, the completed
- * shelf. Every band shows a recent slice and its heading is the door into the
- * dedicated room for the full, sortable view. A query turns the whole surface
- * into a flat "have you seen it?" search across every status.
+ * My List's landing: a launcher, not a list.
+ *
+ * The library itself lives in the rooms. This page answers four things and
+ * stops: how big is the collection, what am I planning, what have I finished,
+ * and is anything on right now. Two equal doors carry the two rooms people
+ * actually live in; the show in progress gets one ruled line with its episode
+ * stamp on it, so tonight's log is still one tap from the landing; the sequel
+ * radar keeps its strip because "there's more of something you own" is half the
+ * reason this app exists.
+ *
+ * Typing turns the whole surface into the cross-status "have you seen it?"
+ * search — the memory job, and the one thing that must not care which room a
+ * title is in.
  */
 
-type BandKind = "watching" | "plan" | "completed";
+/** How many matches the overlay renders before it asks you to narrow down.
+ *  A query over a few thousand entries can match hundreds; a panel is for
+ *  finding one thing, not for browsing. */
+const FIND_LIMIT = 40;
 
-function recencyKey(g: FranchiseGroup, kind: BandKind): number {
-  if (kind === "completed") {
-    return Math.max(...g.entries.map((e) => e.completed_at ?? e.updated_at));
-  }
-  if (kind === "plan") return g.sortAdded;
-  return g.sortUpdated;
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+/** "Mar 2024" — the month a record starts is precise enough to mean something. */
+function monthYear(ms: number): string {
+  const d = new Date(ms);
+  return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 function groupsFor(entries: AnimeListEntry[], statuses: ListStatus[]): FranchiseGroup[] {
@@ -44,8 +59,7 @@ function groupsFor(entries: AnimeListEntry[], statuses: ListStatus[]): Franchise
   return groupEntries(entries.filter((e) => wanted.has(e.status)));
 }
 
-/** A franchise's place on the Up Next shelf: its earliest-ranked member.
- *  Infinity means it is not on the shelf at all. */
+/** A franchise's place in the watch order: its earliest-ranked member. */
 function planRankOf(g: FranchiseGroup): number {
   let min = Number.POSITIVE_INFINITY;
   for (const e of g.entries) {
@@ -54,28 +68,33 @@ function planRankOf(g: FranchiseGroup): number {
   return min;
 }
 
-function sortBand(groups: FranchiseGroup[], kind: BandKind): FranchiseGroup[] {
-  // Up Next leads the plan rail, in the order you arranged it, then everything
-  // else by recency. The shelf lives here rather than inside the plan room,
-  // where it was crushing the library into a third of the screen.
-  if (kind === "plan") {
-    return [...groups].sort((a, b) => {
-      const ra = planRankOf(a);
-      const rb = planRankOf(b);
-      if (ra !== rb) return ra - rb;
-      return b.sortAdded - a.sortAdded;
-    });
-  }
-  return [...groups].sort((a, b) => recencyKey(b, kind) - recencyKey(a, kind));
+function titleOf(g: FranchiseGroup, lang: TitleLanguage): string {
+  const root = g.entries.find((e) => e.anilist_id === g.rootId) ?? g.entries[0];
+  return preferredTitle(
+    { romaji: root.title_romaji, english: root.title_english, native: root.title_native },
+    lang,
+  );
 }
 
 export function Overview() {
   const navigate = useNavigate();
   const loaded = useListStore((s) => s.loaded);
   const entries = useListStore((s) => s.entries);
-  const defaultView = useSettingsStore((s) => s.defaultView);
+  const incrementEpisodes = useListStore((s) => s.incrementEpisodes);
+  const updateStatus = useListStore((s) => s.updateStatus);
+  const titleLanguage = useSettingsStore((s) => s.titleLanguage);
+  const alerts = useNotificationStore((s) => s.items);
+  // The ledger loads a beat after the list, so until it is there the door
+  // counts cards. Showing a real zero on a full collection for one frame reads
+  // as data loss, which is the one thing this app must never look like.
+  const ledgerLoaded = useCompletionStore((s) => s.loaded);
+  const completionCount = useCompletionStore((s) => s.events.length);
 
   const [search, setSearchState] = useState(() => getUiState("mylist.search", ""));
+  // The field is not on the page until asked for. A saved query would reopen
+  // it behind your back on the next launch, so an open search starts empty.
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [activeRootId, setActiveRootId] = useState<number | null>(null);
   // Every add door on this page opens the same engine: Discover's search with
@@ -90,20 +109,64 @@ export function Overview() {
     setSearchState(v);
     setUiState("mylist.search", v);
   };
+  const closeSearch = () => {
+    setSearch("");
+    setSearchOpen(false);
+  };
 
-  // Folds on_hold in, matching the room this band opens: the door's count
-  // tells the truth, and a paused show can hold a hero slot in its quieter
-  // dress instead of vanishing from the page. Recency keeps active shows on
-  // top, since a paused entry has not been touched lately by definition.
-  const watching = useMemo(
-    () => sortBand(groupsFor(entries, ["watching", "rewatching", "on_hold"]), "watching"),
-    [entries],
-  );
-  // The 1-2 most-active shows are spotlit in the Hero Binge; the rest of
-  // Watching lives one tap away in its room.
-  const heroGroups = useMemo(() => watching.slice(0, 2), [watching]);
-  const plan = useMemo(() => sortBand(groupsFor(entries, ["plan_to_watch"]), "plan"), [entries]);
-  const completed = useMemo(() => sortBand(groupsFor(entries, ["completed"]), "completed"), [entries]);
+  // Opening the field should put the caret in it; a search you have to click
+  // twice to use is a search nobody uses.
+  useEffect(() => {
+    if (searchOpen) searchRef.current?.focus();
+  }, [searchOpen]);
+
+  // On now. Paused folds in, matching the room this line opens: recency keeps
+  // the active shows on top, since a paused entry has not been touched lately
+  // by definition.
+  const watching = useMemo(() => {
+    const groups = groupsFor(entries, ["watching", "rewatching", "on_hold"]);
+    return groups.sort((a, b) => {
+      const paused =
+        Number(a.displayEntry.status === "on_hold") -
+        Number(b.displayEntry.status === "on_hold");
+      return paused !== 0 ? paused : b.sortUpdated - a.sortUpdated;
+    });
+  }, [entries]);
+
+  // The plan room's own order: what you numbered comes first, then the newest.
+  // The door shows the front of that queue, so it agrees with the room.
+  const plan = useMemo(() => {
+    const groups = groupsFor(entries, ["plan_to_watch"]);
+    return groups.sort((a, b) => {
+      const ra = planRankOf(a);
+      const rb = planRankOf(b);
+      return ra !== rb ? ra - rb : b.sortAdded - a.sortAdded;
+    });
+  }, [entries]);
+
+  // Completed sorts by when it was FINISHED, not by any later edit, so a
+  // re-scored title doesn't jump to the front of the door.
+  const completed = useMemo(() => {
+    const groups = groupsFor(entries, ["completed"]);
+    return groups.sort(
+      (a, b) =>
+        Math.max(...b.entries.map((e) => e.completed_at ?? e.updated_at)) -
+        Math.max(...a.entries.map((e) => e.completed_at ?? e.updated_at)),
+    );
+  }, [entries]);
+
+  // The census counts titles, not cards: a franchise of six seasons is six
+  // things you tracked. Muted entries are not part of the collection.
+  const census = useMemo(() => {
+    let tracked = 0;
+    let since = Number.POSITIVE_INFINITY;
+    for (const e of entries) {
+      if (e.status === "not_interested") continue;
+      tracked++;
+      if (e.added_at < since) since = e.added_at;
+    }
+    return { tracked, since: since === Number.POSITIVE_INFINITY ? null : since };
+  }, [entries]);
 
   // Search groups across every status: "have I seen it" doesn't care where.
   const allGroups = useMemo(() => groupEntries(entries), [entries]);
@@ -127,8 +190,8 @@ export function Overview() {
 
   const sheetGroup = useMemo(() => {
     if (activeRootId == null) return null;
-    return [...watching, ...plan, ...completed].find((g) => g.rootId === activeRootId) ?? null;
-  }, [activeRootId, watching, plan, completed]);
+    return allGroups.find((g) => g.rootId === activeRootId) ?? null;
+  }, [activeRootId, allGroups]);
 
   if (!loaded) {
     return (
@@ -173,34 +236,12 @@ export function Overview() {
   }
 
   const openRoom = (path: string) => navigate(path, { replace: true });
+  const onNow = watching[0] ?? null;
 
   return (
     <div className="k-page k-overview">
-      <div className="k-ovsearch">
-        <Icon icon={Search} size={18} color="var(--color-text-tertiary)" />
-        <input
-          className="k-ovsearch__input"
-          type="search"
-          inputMode="search"
-          placeholder="Have you seen it? Search everything…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Search your whole list"
-        />
-        {search && (
-          <button
-            type="button"
-            className="k-ovsearch__clear"
-            onClick={() => setSearch("")}
-            aria-label="Clear search"
-          >
-            <Icon icon={X} size={16} />
-          </button>
-        )}
-      </div>
-
       {/* Always mounted: a live region created together with its content is
-          not announced, so the filter's outcome would stay silent. */}
+          not announced, so the search's outcome would stay silent. */}
       <p className="sr-only" role="status">
         {searching
           ? matches.length > 0
@@ -209,84 +250,171 @@ export function Overview() {
           : ""}
       </p>
 
-      {searching ? (
-        matches.length > 0 ? (
-          <>
-            <p className="k-list-results">
-              {matches.length} {matches.length === 1 ? "match" : "matches"} for “{debounced.trim()}”
-            </p>
-            <FranchiseCollection groups={matches} view={defaultView} restoreKey="overview.search" />
-          </>
-        ) : (
-          /* The likeliest reason it's not in the list: it was never added.
-             Finish the thought the user started instead of dead-ending. */
-          <EmptyState
-            title="No matches"
-            subtitle={`Nothing in your list matches “${debounced.trim()}”.`}
-            action={
-              <Button variant="primary" onClick={() => goDiscoverSearchFor(debounced.trim())}>
-                Search all anime for “
-                {debounced.trim().length > 32
-                  ? `${debounced.trim().slice(0, 32)}…`
-                  : debounced.trim()}
-                ”
-              </Button>
-            }
-          />
-        )
-      ) : (
-        <div className="k-overview__scroll konsou-scroll">
-          {/* Sections stay on the page when empty: a missing section reads as
-              a broken page on a small library, and the invitations are the
-              doors into the habits (queue it, start it, finish it). */}
-          <Section
-            title="Watching"
-            count={watching.length}
-            onOpenRoom={() => openRoom("/list/watching")}
-          >
-            {watching.length > 0 ? (
-              <HeroBinge groups={heroGroups} onOpen={setActiveRootId} />
-            ) : (
-              <SectionEmpty>
-                {plan.length > 0
-                  ? "Nothing on right now. Start something from your queue."
-                  : "Nothing on right now."}
-              </SectionEmpty>
-            )}
-          </Section>
-          <Section
-            title="Want to watch"
-            count={plan.length}
-            onOpenRoom={() => openRoom("/list/plan")}
-          >
-            {plan.length > 0 ? (
-              <QueueSlider
-                groups={plan.slice(0, 15)}
-                onOpen={setActiveRootId}
-                onAdd={goDiscoverSearch}
+      <div className="k-overview__scroll konsou-scroll">
+          <div className="k-launch">
+            {/* The collection's header, and the one place search lives. The
+                field used to hold the top of the page permanently, which put a
+                control nobody had asked for above everything they came for.
+                Now it opens from the title line and its results hang under it,
+                over the page rather than instead of it. */}
+            <header className="k-census">
+              <div className="k-census__row">
+                {searchOpen ? (
+                  <div className="k-findfield">
+                    <Icon icon={Search} size={16} color="var(--color-text-tertiary)" />
+                    <input
+                      ref={searchRef}
+                      className="k-findfield__input"
+                      type="search"
+                      inputMode="search"
+                      placeholder="Have you seen it?"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") closeSearch();
+                      }}
+                      aria-label="Search your whole list"
+                    />
+                    <button
+                      type="button"
+                      className="k-findfield__clear"
+                      onClick={closeSearch}
+                      aria-label="Close search"
+                    >
+                      <Icon icon={X} size={15} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h1 className="k-census__title">My List</h1>
+                    <button
+                      type="button"
+                      className="k-census__find"
+                      onClick={() => setSearchOpen(true)}
+                      aria-label="Search your whole list"
+                    >
+                      <Icon icon={Search} size={17} />
+                    </button>
+                  </>
+                )}
+              </div>
+              <p className="k-census__line">
+                <span className="k-census__n">{census.tracked}</span>
+                {census.tracked === 1 ? " title" : " titles"}
+                {census.since && <> · kept since {monthYear(census.since)}</>}
+              </p>
+
+              {/* Results hang off the field: the launcher stays where it was,
+                  so closing the search returns you to the page you never left. */}
+              {searching && (
+                <div className="k-findresults konsou-scroll">
+                  {matches.length > 0 ? (
+                    <>
+                      <p className="k-findresults__count">
+                        {matches.length} {matches.length === 1 ? "match" : "matches"}
+                        {matches.length > FIND_LIMIT && ` · showing ${FIND_LIMIT}`}
+                      </p>
+                      {matches.slice(0, FIND_LIMIT).map((g) => (
+                        <button
+                          type="button"
+                          key={g.rootId}
+                          className="k-findrow"
+                          onClick={() => {
+                            setActiveRootId(g.rootId);
+                            closeSearch();
+                          }}
+                        >
+                          <span className="k-findrow__cover" aria-hidden>
+                            <AnimeCover
+                              src={getCoverUrl({
+                                medium: g.displayEntry.cover_url ?? undefined,
+                              })}
+                              alt=""
+                              decorative
+                              radius="var(--radius-plate)"
+                            />
+                          </span>
+                          <span className="k-findrow__title">
+                            {titleOf(g, titleLanguage)}
+                          </span>
+                          <StatusStamp status={g.displayEntry.status} />
+                        </button>
+                      ))}
+                    </>
+                  ) : (
+                    /* The likeliest reason it's not in the list: it was never
+                       added. Finish the thought instead of dead-ending. */
+                    <div className="k-findresults__none">
+                      <p>Nothing in your list matches “{debounced.trim()}”.</p>
+                      <button
+                        type="button"
+                        className="k-launch__add"
+                        onClick={() => goDiscoverSearchFor(debounced.trim())}
+                      >
+                        <Icon icon={Search} size={15} />
+                        Search all anime
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </header>
+
+            {/* The two rooms, equal footing. Everything else on this page is a
+                line; only these are plates. */}
+            <div className="k-doors">
+              <RoomDoor
+                label="Planned"
+                count={plan.length}
+                groups={plan}
+                footLabel="Next"
+                footValue={plan[0] ? titleOf(plan[0], titleLanguage) : null}
+                emptyLine="Nothing queued. Anything you might watch goes here."
+                onOpen={() => openRoom("/list/plan")}
               />
-            ) : (
-              <SectionEmpty
-                action={{ label: "Add something to watch", onClick: goDiscoverSearch }}
-              >
-                The scratchpad for what to watch next, so a title never slips
-                away again.
-              </SectionEmpty>
+              <RoomDoor
+                label="Completed"
+                // Counts finished WATCHES, not titles, so the door agrees with
+                // the room behind it: the ledger lists a rewatch as its own
+                // line, and a door that said something different would just be
+                // a second number to reconcile.
+                count={ledgerLoaded ? completionCount : completed.length}
+                groups={completed}
+                footLabel="Last"
+                footValue={completed[0] ? titleOf(completed[0], titleLanguage) : null}
+                emptyLine="Shows you finish take their place here."
+                onOpen={() => openRoom("/list/completed")}
+              />
+            </div>
+
+            {/* Only present while something is actually on. A permanent empty
+                "Watching" band was the launcher's biggest piece of nothing. */}
+            {onNow && (
+              <OnNowLine
+                group={onNow}
+                total={watching.length}
+                titleLanguage={titleLanguage}
+                onOpen={() => setActiveRootId(onNow.rootId)}
+                onRoom={() => openRoom("/list/watching")}
+                onLog={() => void incrementEpisodes(onNow.displayEntry.anilist_id, 1)}
+                onResume={() => void updateStatus(onNow.displayEntry.anilist_id, "watching")}
+              />
             )}
-          </Section>
-          <Section
-            title="Completed"
-            count={completed.length}
-            onOpenRoom={() => openRoom("/list/completed")}
-          >
-            {completed.length > 0 ? (
-              <DigitalShelf groups={completed.slice(0, 15)} onOpen={setActiveRootId} />
-            ) : (
-              <SectionEmpty>Shows you finish take their place here.</SectionEmpty>
+
+            {alerts.length > 0 && (
+              <SequelStrip
+                alerts={alerts}
+                onRoom={() => openRoom("/airing")}
+                onPick={(id) => navigate(`/anime/${id}`, { replace: true })}
+              />
             )}
-          </Section>
-        </div>
-      )}
+
+            <button type="button" className="k-launch__add" onClick={goDiscoverSearch}>
+              <Icon icon={Plus} size={16} />
+              Add something
+            </button>
+          </div>
+      </div>
 
       <FranchiseSheet
         group={sheetGroup}
@@ -299,64 +427,131 @@ export function Overview() {
   );
 }
 
-function Section({
-  title,
-  count,
-  onOpenRoom,
-  children,
+/**
+ * What the sequel radar turned up on titles you already own. This is the other
+ * half of the app's reason to exist ("there is more of this"), so it keeps a
+ * first-class place on the landing rather than living only behind the Airing
+ * tab. Absent entirely when the radar has nothing.
+ */
+function SequelStrip({
+  alerts,
+  onRoom,
+  onPick,
 }: {
-  title: string;
-  count: number;
-  onOpenRoom: () => void;
-  children: ReactNode;
+  alerts: KonsouNotification[];
+  onRoom: () => void;
+  onPick: (relatedId: number) => void;
 }) {
+  // Desktop pans by mouse drag with no scrollbar; touch scrolls natively and
+  // the wheel always stays with the page (the app-wide rail contract).
+  const rowRef = useDragScroll<HTMLDivElement>();
+
   return (
-    <section className="k-ovsection">
-      <div className="k-ovsection__head">
-        {/* The whole heading is the room's door: title, count, and a chevron
-            as ONE control ("Watching 2 ›"). The chevron riding the title is
-            the visible tell that it opens; no separate "See all" fragment.
-            An empty room is a dead end, so its chevron and count stand down. */}
-        <h2 className="k-ovsection__title">
-          {count > 0 ? (
-            <button
-              type="button"
-              className="k-ovsection__open"
-              onClick={onOpenRoom}
-              aria-label={`See all in ${title}`}
-            >
-              {title}
-              <span className="k-ovsection__count">{count}</span>
-              <Icon icon={ChevronRight} size={18} className="k-ovsection__chev" />
-            </button>
-          ) : (
-            title
-          )}
-        </h2>
+    <section className="k-strip">
+      <button type="button" className="k-strip__door" onClick={onRoom}>
+        New sequels
+        <span className="k-strip__count">{alerts.length}</span>
+        <Icon icon={ChevronRight} size={16} className="k-strip__chev" />
+      </button>
+      <div className="k-strip__row" ref={rowRef}>
+        {alerts.slice(0, 12).map((n) => (
+          <button
+            type="button"
+            key={n.related_id}
+            className="k-strip__item"
+            onClick={() => onPick(n.related_id)}
+          >
+            <AnimeCover
+              src={getCoverUrl({ medium: n.related_cover ?? undefined })}
+              alt=""
+              decorative
+              radius="var(--radius-plate)"
+            />
+            <span className="k-strip__title">{n.related_title}</span>
+          </button>
+        ))}
       </div>
-      {children}
     </section>
   );
 }
 
-/** The in-section invitation: one quiet line about what belongs here, plus at
- *  most one door. Small on purpose; the page's real content stays the star. */
-function SectionEmpty({
-  action,
-  children,
+/**
+ * The one show that's on right now, as a single ruled line under the doors.
+ *
+ * It is a line and not a card because the launcher has exactly two plates and
+ * this isn't one of them — but it still carries the episode stamp, because
+ * logging tonight's episode is the app's signature act and it has to stay one
+ * tap from the landing. A paused show offers Resume instead: episode tracking
+ * only means anything while a run is actually going.
+ */
+function OnNowLine({
+  group,
+  total,
+  titleLanguage,
+  onOpen,
+  onRoom,
+  onLog,
+  onResume,
 }: {
-  action?: { label: string; onClick: () => void };
-  children: ReactNode;
+  group: FranchiseGroup;
+  total: number;
+  titleLanguage: TitleLanguage;
+  onOpen: () => void;
+  onRoom: () => void;
+  onLog: () => void;
+  onResume: () => void;
 }) {
+  const entry = group.displayEntry;
+  const title = titleOf(group, titleLanguage);
+  const watched = entry.episodes_watched;
+  const totalEps = entry.total_episodes;
+  const paused = entry.status === "on_hold";
+  const atMax = totalEps != null && watched >= totalEps;
+
   return (
-    <div className="k-ovempty">
-      <p className="k-ovempty__text">{children}</p>
-      {action && (
-        <button type="button" className="k-ovempty__action" onClick={action.onClick}>
-          <Icon icon={Plus} size={16} />
-          {action.label}
+    <section className="k-onnow">
+      <button type="button" className="k-strip__door" onClick={onRoom}>
+        Watching
+        <span className="k-strip__count">{total}</span>
+        <Icon icon={ChevronRight} size={16} className="k-strip__chev" />
+      </button>
+
+      <div className={`k-onnow__row${paused ? " k-onnow__row--paused" : ""}`}>
+        <div className="k-onnow__cover" aria-hidden>
+          <AnimeCover
+            src={getCoverUrl({ medium: entry.cover_url ?? undefined })}
+            alt=""
+            decorative
+            radius="var(--radius-plate)"
+          />
+        </div>
+        <button type="button" className="k-onnow__open" onClick={onOpen}>
+          {title}
         </button>
-      )}
-    </div>
+        <span className="k-onnow__count">
+          {paused ? "Paused" : `Ep ${watched} / ${totalEps ?? "?"}`}
+        </span>
+        {paused ? (
+          <button
+            type="button"
+            className="k-onnow__stamp"
+            onClick={onResume}
+            aria-label={`Resume watching ${title}`}
+          >
+            <Icon icon={Play} size={15} weight="fill" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="k-onnow__stamp"
+            disabled={atMax}
+            onClick={onLog}
+            aria-label={`Log episode ${watched + 1} of ${title}`}
+          >
+            <Icon icon={Plus} size={17} />
+          </button>
+        )}
+      </div>
+    </section>
   );
 }

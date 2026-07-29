@@ -13,6 +13,16 @@ import { Overview } from "@/pages/Overview";
 // settings tree — that has no business sitting in the first paint. Each becomes
 // its own chunk; AppShell's Suspense boundary covers the fetch.
 const StatusRoom = lazy(() => import("@/pages/StatusRoom").then((m) => ({ default: m.StatusRoom })));
+// Planned and Completed are the two rooms people live in, so they get built
+// surfaces of their own instead of the generic status room: an ordered watch
+// plan, and the completion ledger.
+const PlanRoom = lazy(() => import("@/pages/PlanRoom").then((m) => ({ default: m.PlanRoom })));
+const CompletedRoom = lazy(() =>
+  import("@/pages/CompletedRoom").then((m) => ({ default: m.CompletedRoom })),
+);
+// The watch order is a place you go, not a sheet you summon: it was the sheet
+// gestures fighting the row drag that made it feel broken.
+const OrderPage = lazy(() => import("@/pages/OrderPage").then((m) => ({ default: m.OrderPage })));
 const Discover = lazy(() => import("@/pages/Discover").then((m) => ({ default: m.Discover })));
 const Airing = lazy(() => import("@/pages/Airing").then((m) => ({ default: m.Airing })));
 const AnimeDetail = lazy(() => import("@/pages/AnimeDetail").then((m) => ({ default: m.AnimeDetail })));
@@ -37,7 +47,12 @@ export function App() {
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<Wrap name="My List"><Overview /></Wrap>} />
-          {/* Dedicated status rooms, pushed onto the My List tab's back stack. */}
+          {/* Dedicated status rooms, pushed onto the My List tab's back stack.
+              The two bespoke rooms match first; watching and on-hold keep the
+              generic one. */}
+          <Route path="list/plan" element={<Wrap name="Planned"><PlanRoom /></Wrap>} />
+          <Route path="list/plan/order" element={<Wrap name="My order"><OrderPage /></Wrap>} />
+          <Route path="list/completed" element={<Wrap name="Completed"><CompletedRoom /></Wrap>} />
           <Route path="list/:status" element={<Wrap name="List"><StatusRoom /></Wrap>} />
           {/* Search merged into Discover; keep the path alive for old links. */}
           <Route path="search" element={<Navigate to="/discover" replace />} />

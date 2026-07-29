@@ -13,15 +13,17 @@ const RECENT_SEARCH_LIMIT = 5;
 
 /** Each color theme ships with a paired accent. Picking a theme auto-sets it;
  *  the user can override the accent independently afterwards. */
+/* Each plate ships with a paired ink of record. (Keys are the legacy theme ids;
+ * the labels — Herbarium, Nocturne, … — live in the Settings UI.) */
 export const THEME_DEFAULT_ACCENTS: Record<ColorTheme, AccentName> = {
-  void:     "sakura",
-  ocean:    "aqua",
-  ember:    "coral",
-  forest:   "jade",
-  midnight: "cobalt",
-  crimson:  "crimson",
-  paper:    "sakura",
-  ash:      "cobalt",
+  ember:    "coral",   // Herbarium     → Vermilion
+  void:     "violet",  // Nocturne      → Ink Violet
+  ocean:    "amber",   // Cyanotype     → Ochre
+  forest:   "aqua",    // Foxing        → Verdigris
+  midnight: "coral",   // Slate         → Vermilion
+  crimson:  "amber",   // Oxblood       → Ochre
+  paper:    "crimson", // Vellum        → Oxblood
+  ash:      "cobalt",  // Specimen Card → Prussian
 };
 
 interface SettingsState {

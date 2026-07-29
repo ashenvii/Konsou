@@ -14,6 +14,18 @@ interface BottomSheetProps {
   children: ReactNode;
   /** Disable swipe/backdrop dismissal (e.g. while a keyboard is open inside). */
   dismissable?: boolean;
+  /** Desktop only: dock as a right-side examination panel (the loupe) instead
+   *  of a centered dialog. Mobile is unchanged (always a bottom sheet). */
+  dock?: boolean;
+  /**
+   * Desktop only, and only with `dock`: the panel stops being modal. No
+   * backdrop, nothing trapped, the list behind it stays live — so picking
+   * another card just swaps what the panel is showing instead of closing it
+   * and making you start again. Closing becomes explicit: the X, Escape, or
+   * hardware back. Mobile keeps the modal sheet, where an overlay covering the
+   * whole screen has no "behind" to leave usable.
+   */
+  modeless?: boolean;
 }
 
 // Dragging past this fraction of the sheet height (or flicking faster than
@@ -43,7 +55,18 @@ export function BottomSheet({
   ariaLabel,
   children,
   dismissable = true,
+  dock = false,
+  modeless = false,
 }: BottomSheetProps) {
+  // Modeless is a desktop arrangement: it needs a "behind" that is still worth
+  // interacting with, and a phone sheet covers everything. Read once per open
+  // rather than watched, so a resize mid-session can't swap the panel's whole
+  // interaction model under the user.
+  const asPanel =
+    modeless &&
+    dock &&
+    typeof window !== "undefined" &&
+    window.matchMedia("(min-width: 1024px)").matches;
   const sheetRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -76,8 +99,13 @@ export function BottomSheet({
     };
     window.addEventListener("keydown", onKey);
     sheetRef.current?.focus();
-    // Android back closes this sheet instead of navigating.
-    const unregister = registerSheet(() => onCloseRef.current());
+    // Android back closes this sheet instead of navigating. When the sheet is
+    // locked (dismissable=false) back is still swallowed here — so it never
+    // falls through to a page navigation — but it does nothing, keeping "only
+    // the buttons close this" true on hardware back too.
+    const unregister = registerSheet(() => {
+      if (dismissableRef.current) onCloseRef.current();
+    });
     return () => {
       window.removeEventListener("keydown", onKey);
       unregister();
@@ -276,29 +304,59 @@ export function BottomSheet({
   };
 
   return createPortal(
-    <div className="k-sheet-overlay crossfade" role="presentation">
+    <div
+      className={`k-sheet-overlay crossfade${dock ? " k-sheet-overlay--dock" : ""}${asPanel ? " k-sheet-overlay--panel" : ""}`}
+      role="presentation"
+    >
+      {/* A modeless panel has no backdrop at all — not a transparent one. An
+          invisible full-screen layer would still eat every click meant for the
+          list it is supposed to leave usable. */}
+      {!asPanel && (
+        <div
+          ref={backdropRef}
+          className="k-sheet-backdrop"
+          onClick={() => dismissable && !closing.current && onCloseRef.current()}
+        />
+      )}
       <div
-        ref={backdropRef}
-        className="k-sheet-backdrop"
-        onClick={() => dismissable && !closing.current && onCloseRef.current()}
-      />
-      <div
-        className="k-sheet"
+        className={`k-sheet${dismissable ? "" : " k-sheet--modal"}${dock ? " k-sheet--dock" : ""}${asPanel ? " k-sheet--panel" : ""}`}
         role="dialog"
-        aria-modal="true"
+        aria-modal={asPanel ? undefined : "true"}
         aria-label={ariaLabel ?? title}
         tabIndex={-1}
         ref={sheetRef}
       >
-        <div
-          className="k-sheet__handle-area"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-        >
-          <div className="k-sheet__handle" />
-        </div>
+        {/* No grab handle on a locked sheet: it can't be dragged, so it
+            shouldn't advertise that it can. */}
+        {dismissable && (
+          <div
+            className="k-sheet__handle-area"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          >
+            <div className="k-sheet__handle" />
+          </div>
+        )}
+        {/* Without a backdrop to click, closing has to be somewhere obvious. */}
+        {asPanel && (
+          <button
+            type="button"
+            className="k-sheet__close"
+            onClick={() => onCloseRef.current()}
+            aria-label="Close panel"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden focusable="false">
+              <path
+                d="M3 3l10 10M13 3L3 13"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        )}
         {title && <div className="k-sheet__title">{title}</div>}
         <div className="k-sheet__body konsou-scroll" ref={bodyRef}>
           {children}

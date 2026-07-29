@@ -2,6 +2,7 @@ import Database from "@tauri-apps/plugin-sql";
 import type { AnimeMedia, AnimeSummary, RelationNode } from "@/types/anime";
 import type {
   AnimeListEntry,
+  CompletionEvent,
   DeletionTombstone,
   ListEntryPatch,
 } from "@/types/list";
@@ -30,6 +31,9 @@ const UPDATABLE_COLUMNS: (keyof ListEntryPatch | "updated_at")[] = [
   "plan_rank",
   "updated_at",
 ];
+
+/** A completion_log row as SQLite hands it back: booleans are still integers. */
+type CompletionRow = Omit<CompletionEvent, "estimated"> & { estimated: number };
 
 export class TauriKonsouDb implements KonsouDb {
   readonly backend = "sqlite" as const;
@@ -135,6 +139,48 @@ export class TauriKonsouDb implements KonsouDb {
   async listReplaceAll(entries: AnimeListEntry[]): Promise<void> {
     await this.db.execute("DELETE FROM anime_list");
     for (const e of entries) await this.listUpsert(e);
+  }
+
+  // ── Completion log ────────────────────────────────────────
+  /** `estimated` is a 0/1 column like every other boolean here. */
+  private rowToEvent(row: CompletionRow): CompletionEvent {
+    return { ...row, estimated: row.estimated !== 0 };
+  }
+
+  async completionsAll(): Promise<CompletionEvent[]> {
+    const rows = await this.db.select<CompletionRow[]>(
+      "SELECT * FROM completion_log ORDER BY completed_at DESC",
+    );
+    return rows.map((r) => this.rowToEvent(r));
+  }
+
+  async completionAppend(e: CompletionEvent): Promise<void> {
+    // OR IGNORE, not upsert: a completion is a fact that happened once. The
+    // second arrival of the same (anime, watch number) is the same fact.
+    await this.db.execute(
+      `INSERT OR IGNORE INTO completion_log (
+         anilist_id, rewatch_index, completed_at, episodes_at_completion,
+         episode_duration, total_episodes, title_romaji, title_english,
+         title_native, cover_url, franchise_root_id, estimated
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [
+        e.anilist_id, e.rewatch_index, e.completed_at, e.episodes_at_completion,
+        e.episode_duration, e.total_episodes, e.title_romaji, e.title_english,
+        e.title_native, e.cover_url, e.franchise_root_id, e.estimated ? 1 : 0,
+      ],
+    );
+  }
+
+  async completionsReplaceAll(events: CompletionEvent[]): Promise<void> {
+    await this.db.execute("DELETE FROM completion_log");
+    for (const e of events) await this.completionAppend(e);
+  }
+
+  async completionRemove(anilistId: number, rewatchIndex: number): Promise<void> {
+    await this.db.execute(
+      "DELETE FROM completion_log WHERE anilist_id = $1 AND rewatch_index = $2",
+      [anilistId, rewatchIndex],
+    );
   }
 
   // ── Deletion tombstones ───────────────────────────────────

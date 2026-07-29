@@ -26,10 +26,12 @@ html {
 }
 
 body {
-  font-family: var(--font-sans);
+  /* Field-note voice: EB Garamond reads the guide. Apparatus (numbers, labels,
+     nav, tags, stamps) switches to the mono in each component. */
+  font-family: var(--font-serif);
   font-size: var(--text-base);
   line-height: var(--leading-base);
-  font-weight: 500;
+  font-weight: 400;
   color: var(--color-text-primary);
   background-color: var(--color-base);
   -webkit-font-smoothing: antialiased;
@@ -167,6 +169,27 @@ textarea,
   100% {
     transform: scale(1);
   }
+}
+
+/* The ink stamp: a logged episode presses in from above and settles, like an
+   accession stamp coming down on the mount. Reduced-motion collapses it. */
+@keyframes konsou-stamp {
+  0% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.k-stamped {
+  display: inline-block;
+  animation: konsou-stamp var(--duration-push) var(--ease-out) both;
 }
 
 /* ── Utilities ──────────────────────────────────────────────── */

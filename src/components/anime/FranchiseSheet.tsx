@@ -1,27 +1,21 @@
 import { useMemo, useState } from "react";
-import {
-  Calendar,
-  ChevronDown,
-  ChevronRight,
-  Plus,
-  Trash2,
-  Zap,
-} from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { EpisodeCounter } from "./EpisodeCounter";
-import { BottomSheet } from "@/components/ui/BottomSheet";
+import { ItemSurface } from "@/components/ui/ItemSurface";
 import { HoldButton } from "@/components/ui/HoldButton";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { AnimeCover } from "./AnimeCover";
 import { formatChipMeta, relationChipMeta } from "./relationMeta";
 import { StatusSheet } from "./StatusSheet";
 import { statusMeta } from "./statusMeta";
+import { STAMP_WORD } from "./StatusStamp";
 import { seasonSegment } from "./SeasonBar";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
 import { useFranchiseWalk } from "@/hooks/useAniList";
 import { computeFranchiseLedger, ledgerEpisodeLabel } from "@/lib/franchise/ledger";
-import { mainStoryIds, placementLabel } from "@/lib/franchise/storySplit";
-import { orderForWatching } from "@/lib/franchise/watchOrder";
+import { mainStoryIds } from "@/lib/franchise/storySplit";
+import { orderByRelease } from "@/lib/franchise/watchOrder";
 import {
   formatFuzzyDate,
   formatLabel,
@@ -69,6 +63,8 @@ function relationToSummary(r: RelationNode): AnimeSummary {
 
 interface FranchiseSheetProps {
   group: FranchiseGroup | null;
+  /** The card this was opened from; the popover points at it. */
+  anchor?: HTMLElement | null;
   open: boolean;
   onClose: () => void;
   onNavigate: (anilistId: number) => void;
@@ -82,6 +78,7 @@ interface FranchiseSheetProps {
  */
 export function FranchiseSheet({
   group,
+  anchor = null,
   open,
   onClose,
   onNavigate,
@@ -150,8 +147,10 @@ export function FranchiseSheet({
 
   /**
    * One ordered member list: everything the walk discovered, the anchor, and
-   * any tracked strays the graph missed, interleaved by orderForWatching into
-   * the order you'd actually watch (the aniwave #1..#N presentation).
+   * any tracked strays the graph missed, sorted by RELEASE date. Release is the
+   * honest default — watch order is a curated community call with no source of
+   * truth, so the list shows when things came out and lets the spine + numbering
+   * carry the story shape.
    */
   const orderedIds = useMemo(() => {
     if (!group || anchorId == null) return [] as number[];
@@ -167,7 +166,7 @@ export function FranchiseSheet({
       const n = allRelNodes.get(id);
       return { id, startDate: n?.startDate, seasonYear: n?.seasonYear };
     });
-    return orderForWatching(orderable, walk?.edges ?? []);
+    return orderByRelease(orderable);
   }, [group, anchorId, walk, trackedMap, allRelNodes]);
 
   // Main story vs extras: the same structural split the Related tab uses,
@@ -189,10 +188,6 @@ export function FranchiseSheet({
   const mainSet = useMemo(
     () => mainStoryIds(storyMembers, walk?.edges ?? []),
     [storyMembers, walk],
-  );
-  const mainStory = useMemo(
-    () => storyMembers.filter((m) => mainSet.has(m.id)),
-    [storyMembers, mainSet],
   );
 
   // Franchise-wide completion: how much of this series exists (tracked or
@@ -294,10 +289,11 @@ export function FranchiseSheet({
     orderedIds.find((id) => mainSet.has(id) && untrackedHere(id)) ??
     orderedIds.find(untrackedHere);
 
-  // Rows: main-story members carry their watch-order position (#1..#N, same
-  // numbering as the Related tab); extras carry a placement chip ("after #2")
-  // instead. Format and relation kind stay as chips, year in the meta.
-  const rowFor = (id: number, posNo: number | null, where: string | null) => {
+  // Rows: main-story members carry their position number (#1..#N); extras sit
+  // in release position without one. No thread, no placement chips — the list
+  // is already in order, and saying "after #2" on every extra was noise on top
+  // of an order you can simply read.
+  const rowFor = (id: number, posNo: number | null) => {
     const node = allRelNodes.get(id);
     const kind = kindChipFor(node);
     const year = node?.seasonYear ?? node?.startDate?.year ?? null;
@@ -313,7 +309,6 @@ export function FranchiseSheet({
           entry={onList}
           posNo={posNo}
           kind={kind}
-          where={where}
           year={year}
           dimmed={onList.status === "not_interested"}
           titleLanguage={titleLanguage}
@@ -331,7 +326,7 @@ export function FranchiseSheet({
         key={id}
         rel={node}
         posNo={posNo}
-        where={where}
+        year={year}
         featured={id === frontierId}
         titleLanguage={titleLanguage}
         onAdd={() => setPendingAdd(relationToSummary(node))}
@@ -347,7 +342,7 @@ export function FranchiseSheet({
 
   return (
     <>
-      <BottomSheet open={open} onClose={onClose}>
+      <ItemSurface anchor={anchor} open={open} onClose={onClose} ariaLabel={group ? "Franchise details" : undefined}>
         <div className="k-fhead">
           {art && (
             <div
@@ -393,33 +388,25 @@ export function FranchiseSheet({
           </div>
         ) : (
           (() => {
-            // Pre-filter to renderable ids so position numbers stay
-            // contiguous even when a member has no usable data.
+            // One cohesive list in release order: seasons keep their running
+            // #1..#N, extras drop inline where they aired without one. The
+            // order IS the shape — it doesn't need a drawn thread on top of it.
+            // Filtered to renderable ids so numbers stay contiguous.
             const renderable = orderedIds.filter(
               (id) =>
                 trackedMap.has(id) || listMap[id] != null || allRelNodes.has(id),
             );
-            const mainList = renderable.filter((id) => mainSet.has(id));
-            const extraList = renderable.filter((id) => !mainSet.has(id));
-            const whereOf = (id: number) => {
-              const m = storyMembers.find((s) => s.id === id);
-              return m ? placementLabel(m, mainStory) : null;
-            };
+            let mainNo = 0;
             return (
-              <>
-                <p className="k-fsheet-heading">Main story</p>
-                <div className="k-seasonlist">
-                  {mainList.map((id, i) => rowFor(id, i + 1, null))}
-                </div>
-                {extraList.length > 0 && (
-                  <>
-                    <p className="k-fsheet-heading">Extras & side stories</p>
-                    <div className="k-seasonlist">
-                      {extraList.map((id) => rowFor(id, null, whereOf(id)))}
-                    </div>
-                  </>
-                )}
-              </>
+              <div className="k-seasonlist">
+                {renderable.map((id) => {
+                  if (mainSet.has(id)) {
+                    mainNo += 1;
+                    return rowFor(id, mainNo);
+                  }
+                  return rowFor(id, null);
+                })}
+              </div>
             );
           })()
         )}
@@ -434,7 +421,7 @@ export function FranchiseSheet({
             ? "Hold to remove whole franchise"
             : "Hold to remove from list"}
         </HoldButton>
-      </BottomSheet>
+      </ItemSurface>
 
       {/* Add an untracked entry */}
       <StatusSheet
@@ -486,11 +473,21 @@ interface KindChip {
   label: string;
 }
 
+/**
+ * One tracked member.
+ *
+ * Two lines and one control, deliberately. The old row carried a spine rail, a
+ * sideways year, a number badge, a hover chevron, a status pill with a caret, a
+ * kind chip, a placement chip ("after #2"), an episode counter, a score and
+ * sometimes a "Start here" label — ten things competing on a 72px row, which is
+ * what made a six-season franchise unreadable. What survived is what answers a
+ * question: which one is this (number + name), what is it (year, kind, length),
+ * and where am I with it (status + progress).
+ */
 function SeasonRow({
   entry,
   posNo,
   kind,
-  where,
   year,
   titleLanguage,
   onOpen,
@@ -501,8 +498,6 @@ function SeasonRow({
   /** Watch-order number for main-story rows; null for extras. */
   posNo: number | null;
   kind: KindChip | null;
-  /** Where an extra falls in the story ("after #2"); null for main rows. */
-  where?: string | null;
   year: number | null;
   titleLanguage: string;
   onOpen: (id: number) => void;
@@ -512,80 +507,87 @@ function SeasonRow({
   const meta = statusMeta(entry.status);
   const { color } = seasonSegment(entry);
 
-  const titleParts = {
-    romaji: entry.title_romaji,
-    english: entry.title_english,
-    native: entry.title_native,
-  };
-  const title = preferredTitle(titleParts, titleLanguage as never);
+  const title = preferredTitle(
+    {
+      romaji: entry.title_romaji,
+      english: entry.title_english,
+      native: entry.title_native,
+    },
+    titleLanguage as never,
+  );
 
   const isActive = entry.status === "watching" || entry.status === "rewatching";
-  const epText = `${entry.episodes_watched} / ${entry.total_episodes ?? "?"}`;
 
   return (
     <div
       className={`k-srow k-srow--mine${dimmed ? " k-srow--dimmed" : ""}`}
       style={{ "--card-status": color } as CSSProperties}
     >
+      <span className="k-srow__no">{posNo != null ? posNo : ""}</span>
       <button
         type="button"
         className="k-srow__open"
         onClick={() => onOpen(entry.anilist_id)}
         aria-label={`Open ${title}`}
       >
-        <div className="k-srow__cover">
-          <AnimeCover src={entry.cover_url ?? undefined} alt={title} decorative radius="var(--radius-sm)" />
-          {posNo != null && <span className="k-srow__num">#{posNo}</span>}
-          <span className="k-srow__openhint" aria-hidden>
-            <Icon icon={ChevronRight} size={18} />
-          </span>
-        </div>
+        <span className="k-srow__cover">
+          <AnimeCover
+            src={entry.cover_url ?? undefined}
+            alt={title}
+            decorative
+            radius="var(--radius-plate)"
+          />
+        </span>
       </button>
 
       <div className="k-srow__main">
-        <button type="button" className="k-srow__titlebtn" onClick={() => onOpen(entry.anilist_id)}>
-          <Text size="sm" weight={600} clamp={1}>
-            {title}
-          </Text>
+        <button
+          type="button"
+          className="k-srow__titlebtn"
+          onClick={() => onOpen(entry.anilist_id)}
+        >
+          {title}
         </button>
-        <div className="k-srow__controls">
-          <button
-            type="button"
-            className="k-pill k-srow__statusbtn"
-            onClick={() => onStatusTap(entry.anilist_id)}
-            aria-label={`Change status (currently ${meta.label})`}
-          >
-            <span className="k-pill__icon" style={{ color: meta.color }}>
-              <Icon icon={meta.icon} size={12} weight="fill" />
-            </span>
-            {meta.label}
-            <Icon icon={ChevronDown} size={12} className="k-srow__caret" />
-          </button>
-          {kind && <span className="k-chip-kind">{kind.label}</span>}
-          {where && <span className="k-chip-kind k-chip-kind--where">{where}</span>}
-          {year != null && <span className="k-srow__dim">{year}</span>}
-          {isActive ? (
-            <EpisodeCounter
-              anilistId={entry.anilist_id}
-              watched={entry.episodes_watched}
-              total={entry.total_episodes}
-            />
-          ) : (
-            <span className="k-srow__ep">{epText}</span>
-          )}
-          {entry.score != null && (
-            <span className="k-srow__score">★ {formatScore(entry.score)}</span>
-          )}
-        </div>
+        <p className="k-srow__meta">
+          {year != null && <span>{year}</span>}
+          {kind && <span>{kind.label}</span>}
+          <span>
+            {entry.episodes_watched} / {entry.total_episodes ?? "?"}
+          </span>
+          {entry.score != null && <span>★ {formatScore(entry.score)}</span>}
+        </p>
+      </div>
+
+      <div className="k-srow__act">
+        {isActive && (
+          <EpisodeCounter
+            anilistId={entry.anilist_id}
+            watched={entry.episodes_watched}
+            total={entry.total_episodes}
+          />
+        )}
+        <button
+          type="button"
+          className="k-srow__statusbtn"
+          onClick={() => onStatusTap(entry.anilist_id)}
+          aria-label={`Change status (currently ${meta.label})`}
+          style={{ "--stamp": meta.color } as CSSProperties}
+        >
+          <Icon icon={meta.icon} size={11} className="k-srow__statusglyph" />
+          {STAMP_WORD[entry.status]}
+        </button>
       </div>
     </div>
   );
 }
 
+/** A member of the franchise that isn't on your list. Same two-line shape as a
+ *  tracked row so the list reads as one thing; the difference is the hollow
+ *  treatment and that its one control adds instead of edits. */
 function AddRow({
   rel,
   posNo,
-  where,
+  year,
   featured,
   titleLanguage,
   onAdd,
@@ -594,8 +596,7 @@ function AddRow({
   rel: RelationNode;
   /** Watch-order number for main-story rows; null for extras. */
   posNo: number | null;
-  /** Where an extra falls in the story ("after #2"); null for main rows. */
-  where?: string | null;
+  year: number | null;
   featured: boolean;
   titleLanguage: string;
   onAdd: () => void;
@@ -608,66 +609,50 @@ function AddRow({
   const isAiring = rel.status === "RELEASING";
   const kind = kindChipFor(rel);
   const upcomingDate = isUpcoming ? formatFuzzyDate(rel.startDate) : null;
-
-  // The format moves into its colored chip when it has one; the dim meta text
-  // keeps whatever's left (plain TV formats, the year).
-  const meta = [kind ? null : formatLabel(rel.format), rel.seasonYear?.toString()]
-    .filter(Boolean)
-    .join(" · ");
+  const kindLabel = kind?.label ?? formatLabel(rel.format);
 
   return (
     <div
       className={`k-srow k-srow--add${featured ? " k-srow--next" : ""}${isUpcoming ? " k-srow--unaired" : ""}`}
     >
+      <span className="k-srow__no">{posNo != null ? posNo : ""}</span>
       <button
         type="button"
         className="k-srow__open"
         onClick={onOpen}
         aria-label={`Open ${title}`}
       >
-        <div className="k-srow__cover">
-          <AnimeCover src={cover} alt={title} decorative radius="var(--radius-sm)" />
-          {posNo != null && <span className="k-srow__num">#{posNo}</span>}
-          <span className="k-srow__openhint" aria-hidden>
-            <Icon icon={ChevronRight} size={18} />
-          </span>
-        </div>
+        <span className="k-srow__cover">
+          <AnimeCover src={cover} alt={title} decorative radius="var(--radius-plate)" />
+        </span>
       </button>
       <div className="k-srow__main">
-        {featured && <span className="k-srow__nextlabel">Up next</span>}
         <button type="button" className="k-srow__titlebtn" onClick={onOpen}>
-          <Text size="sm" weight={600} clamp={1}>
-            {title}
-          </Text>
+          {title}
         </button>
-        <div className="k-srow__controls">
-          <span className="k-srow__notin">Not on your list</span>
-          {meta && <span className="k-srow__dim">{meta}</span>}
-          {kind && <span className="k-chip-kind">{kind.label}</span>}
-          {where && <span className="k-chip-kind k-chip-kind--where">{where}</span>}
-          {isAiring && (
-            <span className="k-chip-mini k-chip-mini--accent">
-              <Icon icon={Zap} size={10} weight="fill" />
-              airing
-            </span>
+        <p className="k-srow__meta">
+          {year != null && <span>{year}</span>}
+          {kindLabel && <span>{kindLabel}</span>}
+          {isAiring && <span className="k-srow__airing">airing</span>}
+          {isUpcoming ? (
+            <span>{upcomingDate ? `not aired · ${upcomingDate}` : "not aired yet"}</span>
+          ) : (
+            <span>not on your list</span>
           )}
-          {isUpcoming && (
-            <span className="k-chip-unaired">
-              <Icon icon={Calendar} size={10} />
-              {upcomingDate ? `Not aired yet · ${upcomingDate}` : "Not aired yet · TBA"}
-            </span>
-          )}
-        </div>
+        </p>
       </div>
-      <button
-        type="button"
-        className={`k-srow__add${featured ? " k-srow__add--primary" : ""}`}
-        onClick={onAdd}
-        aria-label={`Add ${title}`}
-      >
-        <Icon icon={Plus} size={16} />
-        {featured && <span>Add</span>}
-      </button>
+      <div className="k-srow__act">
+        {featured && <span className="k-srow__nextlabel">Up next</span>}
+        <button
+          type="button"
+          className={`k-srow__add${featured ? " k-srow__add--primary" : ""}`}
+          onClick={onAdd}
+          aria-label={`Add ${title}`}
+        >
+          <Icon icon={Plus} size={14} />
+          Add
+        </button>
+      </div>
     </div>
   );
 }

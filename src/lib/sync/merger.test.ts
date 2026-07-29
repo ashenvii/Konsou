@@ -3,10 +3,12 @@ import {
   CLOCK_SKEW_TOLERANCE_MS as SKEW,
   higherPriorityStatus,
   mergeAnimeEntry,
+  mergeCompletions,
   mergeLists,
   mergeTombstones,
 } from "./merger";
 import { makeEntry } from "@/test/factories";
+import type { CompletionEvent } from "@/types/list";
 
 /**
  * The merge decides what survives when two devices disagree, so every rule here
@@ -292,5 +294,74 @@ describe("mergeLists", () => {
   it("survives an empty remote list without wiping local", () => {
     const { entries } = mergeLists([makeEntry({ anilist_id: 1 })], []);
     expect(entries).toHaveLength(1);
+  });
+});
+
+/**
+ * The completion log merges by union, not by last-write-wins: rows are facts
+ * about the past, and two devices that both saw the same finish are describing
+ * one event, not competing for it.
+ */
+describe("mergeCompletions", () => {
+  const event = (
+    over: { anilist_id: number } & Partial<CompletionEvent>,
+  ): CompletionEvent => ({
+    rewatch_index: 0,
+    completed_at: T,
+    episodes_at_completion: 12,
+    episode_duration: 24,
+    total_episodes: 12,
+    title_romaji: "Title",
+    title_english: null,
+    title_native: null,
+    cover_url: null,
+    franchise_root_id: null,
+    estimated: false,
+    ...over,
+  });
+
+  it("keeps every event both devices hold, once each", () => {
+    const merged = mergeCompletions(
+      [event({ anilist_id: 1 }), event({ anilist_id: 2 })],
+      [event({ anilist_id: 2 }), event({ anilist_id: 3 })],
+    );
+    expect(merged).toHaveLength(3);
+  });
+
+  it("treats each rewatch of a title as its own event", () => {
+    const merged = mergeCompletions(
+      [event({ anilist_id: 1, rewatch_index: 0 })],
+      [event({ anilist_id: 1, rewatch_index: 1, completed_at: T + 5_000 })],
+    );
+    expect(merged).toHaveLength(2);
+  });
+
+  it("takes the earlier date when both devices recorded the same finish", () => {
+    const merged = mergeCompletions(
+      [event({ anilist_id: 1, completed_at: T + 9_000 })],
+      [event({ anilist_id: 1, completed_at: T })],
+    );
+    expect(merged[0].completed_at).toBe(T);
+  });
+
+  it("lets a recorded date replace one an upgrade had to reconstruct", () => {
+    const merged = mergeCompletions(
+      [event({ anilist_id: 1, completed_at: T, estimated: true })],
+      [event({ anilist_id: 1, completed_at: T + 9_000, estimated: false })],
+    );
+    expect(merged[0]).toMatchObject({ completed_at: T + 9_000, estimated: false });
+  });
+
+  it("takes a whole log from a device that has one, when this one does not", () => {
+    expect(mergeCompletions([], [event({ anilist_id: 1 })])).toHaveLength(1);
+    expect(mergeCompletions([event({ anilist_id: 1 })], [])).toHaveLength(1);
+  });
+
+  it("is idempotent, so a re-pull adds nothing", () => {
+    const once = mergeCompletions(
+      [event({ anilist_id: 1 })],
+      [event({ anilist_id: 2 })],
+    );
+    expect(mergeCompletions(once, once)).toEqual(once);
   });
 });

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Film, Flame, Hourglass, Sparkles, Star, Tv } from "lucide-react";
+import { ChevronRight, Film, Flame, Hourglass, RotateCw, Sparkles, Star, Tv } from "lucide-react";
 import type { CSSProperties } from "react";
 import { AnimeCover } from "@/components/anime/AnimeCover";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -13,6 +13,7 @@ import { groupEntries } from "@/lib/franchise/grouping";
 import { dailyFact } from "@/lib/trivia";
 import { wrappedYears } from "@/lib/wrapped";
 import { getCoverUrl, listStatusLabel, preferredTitle } from "@/lib/format";
+import { useCompletionStore } from "@/lib/store/completionStore";
 import { useListStore } from "@/lib/store/listStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { LIST_STATUSES, WATCH_STATUSES } from "@/types/list";
@@ -107,6 +108,8 @@ function timeSegments(totalMinutes: number): TimeSegment[] {
 
 export function Stats() {
   const entries = useListStore((s) => s.entries);
+  const map = useListStore((s) => s.map);
+  const events = useCompletionStore((s) => s.events);
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
   const navigate = useNavigate();
   const [wrappedOpen, setWrappedOpen] = useState(false);
@@ -118,23 +121,60 @@ export function Stats() {
     // scoreDist[n] = how many entries scored n (1..10).
     const scoreDist = new Array(11).fill(0) as number[];
 
-    // Episodes seen including completed rewatches, and real minutes: each
-    // rewatch replays the full run, each episode counts at the show's own
-    // length where known (movies stop being 24-minute fictions).
-    // Not-interested entries contribute NOTHING here — "won't watch" means
-    // any leftover progress from before the mark stops counting as time
-    // spent, and a muted entry isn't list membership. byStatus still tallies
-    // them but the By Status view renders only WATCH_STATUSES, so they never
-    // appear as a status bar.
-    const effectiveEpisodes = (e: (typeof entries)[number]) =>
-      e.status === "not_interested"
-        ? 0
-        : e.episodes_watched + (e.rewatch_count ?? 0) * (e.total_episodes ?? 0);
-    const entryMinutes = (e: (typeof entries)[number]) =>
-      effectiveEpisodes(e) * (e.episode_duration ?? MINUTES_PER_EP);
+    // Time comes from the completion ledger, one row per finished watch, so a
+    // rewatch is a dated event with its own episode count rather than the old
+    // guess of rewatch_count × total_episodes. Everything still in progress
+    // (or abandoned part-way) adds its own episodes on top, since no event
+    // exists for a run that never finished.
+    //
+    // Not-interested entries contribute NOTHING — "won't watch" means any
+    // leftover progress from before the mark stops counting as time spent.
+    // byStatus still tallies them but the By Status view renders only
+    // WATCH_STATUSES, so they never appear as a status bar.
+    const perEntry = new Map<number, { episodes: number; minutes: number }>();
+    const add = (id: number, eps: number, mins: number) => {
+      const cur = perEntry.get(id) ?? { episodes: 0, minutes: 0 };
+      cur.episodes += eps;
+      cur.minutes += mins;
+      perEntry.set(id, cur);
+    };
 
+    let rewatchMinutes = 0;
+    const logged = new Set<number>();
+    for (const ev of events) {
+      if (map[ev.anilist_id]?.status === "not_interested") continue;
+      logged.add(ev.anilist_id);
+      const mins = ev.episodes_at_completion * (ev.episode_duration ?? MINUTES_PER_EP);
+      add(ev.anilist_id, ev.episodes_at_completion, mins);
+      if (ev.rewatch_index > 0) rewatchMinutes += mins;
+    }
+    for (const e of entries) {
+      if (e.status === "not_interested") continue;
+      // A finished run is already an event. Anything else — watching, paused,
+      // dropped part-way — is progress no event covers yet. A completed entry
+      // with no logged event falls back to its own count so a gap in the
+      // ledger can never quietly erase someone's hours.
+      const covered = e.status === "completed" && logged.has(e.anilist_id);
+      if (covered) continue;
+      add(
+        e.anilist_id,
+        e.episodes_watched,
+        e.episodes_watched * (e.episode_duration ?? MINUTES_PER_EP),
+      );
+    }
+
+    const entryMinutes = (e: (typeof entries)[number]) =>
+      perEntry.get(e.anilist_id)?.minutes ?? 0;
+
+    // Totals come from the ledger's own tally, which includes watches of
+    // titles no longer on the list. Removing something from a collection does
+    // not un-watch it, and this number is the one place that has to say so.
     let episodes = 0;
     let minutes = 0;
+    for (const v of perEntry.values()) {
+      episodes += v.episodes;
+      minutes += v.minutes;
+    }
     let hasRealDurations = false;
     let scoreSum = 0;
     let rated = 0;
@@ -145,8 +185,6 @@ export function Stats() {
       byStatus[e.status]++;
       if (e.status === "not_interested") continue;
       listed++;
-      episodes += effectiveEpisodes(e);
-      minutes += entryMinutes(e);
       if (e.episode_duration != null) hasRealDurations = true;
       if (e.score != null) {
         scoreSum += e.score;
@@ -198,6 +236,11 @@ export function Stats() {
       minutes,
       hasRealDurations,
       hours: Math.round(minutes / 60),
+      // Two real, dated numbers instead of one derived guess: how much of the
+      // total was seeing something for the first time, and how much was going
+      // back to it.
+      rewatchHours: Math.round(rewatchMinutes / 60),
+      firstWatchHours: Math.round((minutes - rewatchMinutes) / 60),
       movies: Math.round(minutes / 120),
       finishRate:
         finishedOrDropped > 0
@@ -209,7 +252,7 @@ export function Stats() {
       backlogCount: byStatus.plan_to_watch,
       backlogHours: Math.round(backlogMinutes / 60),
     };
-  }, [entries]);
+  }, [entries, events, map]);
 
   if (entries.length === 0) {
     return (
@@ -258,6 +301,15 @@ export function Stats() {
               <Icon icon={Film} size={12} />
               like {s.movies.toLocaleString()} movies back to back
             </span>
+            {/* Only worth saying once there is a rewatch to speak of. Both
+                halves come from dated completion events, not an estimate. */}
+            {s.rewatchHours > 0 && (
+              <span className="k-stats__equivchip">
+                <Icon icon={RotateCw} size={12} />
+                {s.firstWatchHours.toLocaleString()} h first time,{" "}
+                {s.rewatchHours.toLocaleString()} h again
+              </span>
+            )}
             <span className="k-stats__equivchip k-stats__equivchip--dim">
               {s.hasRealDurations
                 ? `real episode lengths, ~${MINUTES_PER_EP} min where unknown`

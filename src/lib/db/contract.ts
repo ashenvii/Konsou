@@ -1,6 +1,7 @@
 import type { AnimeMedia, AnimeSummary, RelationNode } from "@/types/anime";
 import type {
   AnimeListEntry,
+  CompletionEvent,
   DeletionTombstone,
   ListEntryPatch,
 } from "@/types/list";
@@ -38,6 +39,18 @@ export interface KonsouDb {
   listRemove(anilistId: number): Promise<void>;
   /** Wipe and re-seed the whole list — used by the "replace" sync strategies. */
   listReplaceAll(entries: AnimeListEntry[]): Promise<void>;
+
+  // ── Completion log (the ledger's source of truth) ──────────
+  /** Every recorded completion, newest first. Rows outlive their entry. */
+  completionsAll(): Promise<CompletionEvent[]>;
+  /** Record one finished watch. A repeat of the same event is ignored, so
+   *  replaying a synced log can never double-count a watch. */
+  completionAppend(event: CompletionEvent): Promise<void>;
+  /** Replace the whole log — used after a sync merge and by "clear list". */
+  completionsReplaceAll(events: CompletionEvent[]): Promise<void>;
+  /** Take one event back out. Only the undo of a just-made completion uses
+   *  this: a mistap is not history, and the ledger must not keep it. */
+  completionRemove(anilistId: number, rewatchIndex: number): Promise<void>;
 
   // ── Deletion tombstones ────────────────────────────────────
   tombstonesAll(): Promise<DeletionTombstone[]>;

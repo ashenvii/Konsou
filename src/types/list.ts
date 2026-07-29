@@ -79,6 +79,46 @@ export interface AnimeListEntry {
 }
 
 /**
+ * One finished watch. Immutable and append-only: finishing a title writes a
+ * row, and every later rewatch writes its own, so the record is a list of dated
+ * events rather than a single `completed_at` column that the first finish
+ * claimed forever.
+ *
+ * The title, cover and episode count are copied in rather than looked up, which
+ * is what lets a completion still render after the entry is removed from the
+ * list (the ledger's ghost records). Identity is (anilist_id, rewatch_index):
+ * the Nth completion of a title is one event whichever device recorded it, so
+ * two devices' logs union cleanly.
+ */
+export interface CompletionEvent {
+  anilist_id: number;
+  /** 0 = first watch, 1 = first rewatch, and so on. */
+  rewatch_index: number;
+  /** When this particular watch was finished (Unix ms). */
+  completed_at: number;
+  episodes_at_completion: number;
+  /** Minutes per episode as known at the time; null falls back to 24 in Stats. */
+  episode_duration: number | null;
+  total_episodes: number | null;
+  title_romaji: string;
+  title_english: string | null;
+  title_native: string | null;
+  cover_url: string | null;
+  franchise_root_id: number | null;
+  /**
+   * True for rows the v12 migration reconstructed from the old single
+   * `completed_at` + `rewatch_count`. The watch happened; the date is the best
+   * available guess, so the ledger marks it instead of presenting it as fact.
+   */
+  estimated: boolean;
+}
+
+/** Derived, not stored: index 0 is the first watch, anything above is a rewatch. */
+export function isRewatchEvent(e: CompletionEvent): boolean {
+  return e.rewatch_index > 0;
+}
+
+/**
  * A deletion record. When an entry is removed locally we keep a tombstone so the
  * deletion can propagate during sync — without it, a delete on one device is
  * resurrected by the merge on the next pull. `deleted_at` is Unix milliseconds.

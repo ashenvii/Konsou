@@ -1,11 +1,12 @@
 import { memo, useState } from "react";
 import type { CSSProperties, MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bookmark, Check, Pause, Play, Plus, RotateCw, Star } from "lucide-react";
+import { Plus, Star } from "lucide-react";
 import { AnimeCover } from "./AnimeCover";
 import { SeasonBar } from "./SeasonBar";
 import { StatusSheet } from "./StatusSheet";
 import { statusMeta } from "./statusMeta";
+import { StatusStamp } from "./StatusStamp";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
 import { useEpisodeIncrement } from "@/hooks/useEpisodeIncrement";
@@ -146,42 +147,8 @@ function AnimeCardImpl({ media, view, showStatus = false }: AnimeCardProps) {
             )}
             <div className="k-card__scrim" />
 
-            {/* Per-status marker — a different shape/position for each state. */}
-            {entry?.status === "watching" && (
-              <span className="k-mark k-mark--left">
-                <span className="k-mark__icon">
-                  <Icon icon={Play} size={13} weight="fill" />
-                </span>
-                Watching
-              </span>
-            )}
-            {entry?.status === "rewatching" && (
-              <span className="k-mark k-mark--left k-mark--spin">
-                <span className="k-mark__icon">
-                  <Icon icon={RotateCw} size={13} weight="fill" />
-                </span>
-                Rewatch
-              </span>
-            )}
-            {entry?.status === "completed" && (
-              <span className="k-seal" aria-label={status?.label} title={status?.label}>
-                <Icon icon={Check} size={17} strokeWidth={3} />
-              </span>
-            )}
-            {entry?.status === "plan_to_watch" && (
-              <span className="k-bookmark" aria-label={status?.label} title={status?.label}>
-                <Icon icon={Bookmark} size={13} fill />
-              </span>
-            )}
-            {entry?.status === "dropped" && <span className="k-ribbon">Dropped</span>}
-            {entry?.status === "on_hold" && (
-              <span className="k-hold" aria-label={status?.label}>
-                <span className="k-hold__circle">
-                  <Icon icon={Pause} size={24} weight="fill" />
-                </span>
-                <span className="k-hold__label">On hold</span>
-              </span>
-            )}
+            {/* One field-note stamp for every state, always the same corner. */}
+            {entry && <StatusStamp status={entry.status} />}
 
             <div className="k-card__footer">
               <Text size="sm" weight={600} clamp={2} color="onCover" className="k-card__title">

@@ -1,6 +1,7 @@
 import type { AnimeMedia, AnimeSummary, RelationNode } from "@/types/anime";
 import type {
   AnimeListEntry,
+  CompletionEvent,
   DeletionTombstone,
   ListEntryPatch,
 } from "@/types/list";
@@ -14,6 +15,7 @@ import type { KonsouDb, ScanScheduleEntry } from "./contract";
  */
 const LS = {
   list: "konsou.web.list",
+  completions: "konsou.web.completions",
   tombstones: "konsou.web.tombstones",
   notifications: "konsou.web.notifications",
   settings: "konsou.web.settings",
@@ -93,6 +95,73 @@ export class WebKonsouDb implements KonsouDb {
 
   async listReplaceAll(entries: AnimeListEntry[]): Promise<void> {
     this.saveList(entries.map((e) => ({ ...e })));
+  }
+
+  // ── Completion log ────────────────────────────────────────
+  /**
+   * Mirrors migration 12's backfill. The real database reconstructs the log
+   * from the list the moment it upgrades; this shim has no migrations, so a
+   * list seeded straight into localStorage would otherwise show an empty
+   * ledger and every dev check against it would be meaningless.
+   *
+   * Runs once: the key existing (even as `[]`) means the log is already owned.
+   */
+  private loadCompletions(): CompletionEvent[] {
+    const stored = read<CompletionEvent[] | null>(LS.completions, null);
+    if (stored) return stored;
+    const built: CompletionEvent[] = [];
+    for (const e of this.loadList()) {
+      const finished = e.status === "completed" || e.completed_at != null;
+      if (!finished && e.status !== "rewatching") continue;
+      const events =
+        e.status === "rewatching" ? (e.rewatch_count ?? 0) : (e.rewatch_count ?? 0) + 1;
+      for (let i = 0; i < events; i++) {
+        built.push({
+          anilist_id: e.anilist_id,
+          rewatch_index: i,
+          completed_at: e.completed_at ?? e.updated_at,
+          episodes_at_completion: e.total_episodes ?? e.episodes_watched ?? 0,
+          episode_duration: e.episode_duration ?? null,
+          total_episodes: e.total_episodes ?? null,
+          title_romaji: e.title_romaji,
+          title_english: e.title_english ?? null,
+          title_native: e.title_native ?? null,
+          cover_url: e.cover_url ?? null,
+          franchise_root_id: e.franchise_root_id ?? null,
+          estimated: true,
+        });
+      }
+    }
+    write(LS.completions, built);
+    return built;
+  }
+
+  async completionsAll(): Promise<CompletionEvent[]> {
+    return [...this.loadCompletions()].sort((a, b) => b.completed_at - a.completed_at);
+  }
+
+  async completionAppend(event: CompletionEvent): Promise<void> {
+    const all = this.loadCompletions();
+    const exists = all.some(
+      (e) =>
+        e.anilist_id === event.anilist_id && e.rewatch_index === event.rewatch_index,
+    );
+    if (exists) return;
+    all.push(event);
+    write(LS.completions, all);
+  }
+
+  async completionsReplaceAll(events: CompletionEvent[]): Promise<void> {
+    write(LS.completions, events);
+  }
+
+  async completionRemove(anilistId: number, rewatchIndex: number): Promise<void> {
+    write(
+      LS.completions,
+      this.loadCompletions().filter(
+        (e) => !(e.anilist_id === anilistId && e.rewatch_index === rewatchIndex),
+      ),
+    );
   }
 
   // ── Deletion tombstones ───────────────────────────────────

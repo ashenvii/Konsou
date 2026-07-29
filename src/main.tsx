@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App } from "./App";
 import { getDb } from "@/lib/db";
 import { useAuthStore } from "@/lib/store/authStore";
+import { useCompletionStore } from "@/lib/store/completionStore";
 import { useListStore } from "@/lib/store/listStore";
 import { useNotificationStore } from "@/lib/store/notificationStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
@@ -64,6 +65,9 @@ async function bootstrap(): Promise<void> {
     await useSettingsStore.getState().load();
     await useListStore.getState().load();
     await useNotificationStore.getState().load();
+    // The completion ledger backs the Completed room and the Stats hours. It
+    // loads after the list because nothing on the first paint needs it.
+    void useCompletionStore.getState().load();
     // Pull from Drive if signed in (non-blocking — failures are logged).
     // Refresh the list store if the pull merged anything, otherwise the merged
     // entries sit in the DB but never reach the already-hydrated UI store.

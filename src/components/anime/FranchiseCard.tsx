@@ -1,16 +1,10 @@
 import { memo } from "react";
 import type { CSSProperties } from "react";
-import {
-  Bookmark,
-  Check,
-  Layers,
-  Pause,
-  Play,
-  RotateCw,
-} from "lucide-react";
+import { Layers } from "lucide-react";
 import { AnimeCover } from "./AnimeCover";
 import { SeasonBar } from "./SeasonBar";
 import { statusMeta } from "./statusMeta";
+import { StatusStamp } from "./StatusStamp";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
 import { formatScore, getCoverUrl, preferredTitle } from "@/lib/format";
@@ -144,45 +138,12 @@ function FranchiseCardImpl({ group, view, onOpen }: FranchiseCardProps) {
             </span>
           )}
 
-          {displayEntry.status === "watching" && (
-            <span className={`k-mark ${isGroup ? "k-mark--right" : "k-mark--left"}`}>
-              <span className="k-mark__icon">
-                <Icon icon={Play} size={13} weight="fill" />
-              </span>
-              Watching
-            </span>
-          )}
-          {displayEntry.status === "rewatching" && (
-            <span className={`k-mark k-mark--spin ${isGroup ? "k-mark--right" : "k-mark--left"}`}>
-              <span className="k-mark__icon">
-                <Icon icon={RotateCw} size={13} weight="fill" />
-              </span>
-              Rewatch
-            </span>
-          )}
-          {displayEntry.status === "completed" && (
-            <span className="k-seal" aria-label={status.label} title={status.label}>
-              <Icon icon={Check} size={17} strokeWidth={3} />
-            </span>
-          )}
-          {displayEntry.status === "plan_to_watch" && (
-            <span className="k-bookmark" aria-label={status.label} title={status.label}>
-              <Icon icon={Bookmark} size={13} fill />
-            </span>
-          )}
-          {displayEntry.status === "dropped" && (
-            <span className="k-ribbon">Dropped</span>
-          )}
-          {displayEntry.status === "on_hold" && (
-            <span className="k-hold" aria-label={status.label}>
-              <span className="k-hold__circle">
-                <Icon icon={Pause} size={24} weight="fill" />
-              </span>
-              <span className="k-hold__label">On hold</span>
-            </span>
-          )}
-          {/* No not_interested marker: muted entries never form a card
-              (groupEntries drops them), so a card never carries that status. */}
+          {/* One field-note stamp for every state, always the same corner.
+              not_interested never reaches a card: groupEntries drops muted
+              entries, so no card can carry that status. */}
+          {/* The season badge above keeps the opposite corner, so a franchise's
+              two facts (how many, where you are) never stack on one another. */}
+          <StatusStamp status={displayEntry.status} />
 
           <div className="k-card__footer">
             <Text size="sm" weight={600} clamp={2} color="onCover" className="k-card__title">

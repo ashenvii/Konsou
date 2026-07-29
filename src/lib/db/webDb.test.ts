@@ -204,3 +204,58 @@ describe("settings", () => {
     expect(await db.settingsGetAll()).toEqual({ theme: "ocean", accent: "coral" });
   });
 });
+
+/**
+ * The real database reconstructs the completion log the moment migration 12
+ * runs. This shim has no migrations, so a list dropped straight into
+ * localStorage (how every dev check seeds data) has to be reconstructed the
+ * same way, or the Completed room reads as empty on the dev build while the
+ * device shows a full ledger.
+ */
+describe("the completion log", () => {
+  it("reconstructs history from a list that arrived without one", async () => {
+    await db.listReplaceAll([
+      makeEntry({ anilist_id: 1, status: "completed", completed_at: 900 }),
+      makeEntry({ anilist_id: 2, status: "completed", completed_at: 800, rewatch_count: 2 }),
+      makeEntry({ anilist_id: 3, status: "watching" }),
+    ]);
+    const events = await db.completionsAll();
+    expect(events).toHaveLength(4);
+    expect(events.filter((e) => e.anilist_id === 2)).toHaveLength(3);
+    expect(events.every((e) => e.estimated)).toBe(true);
+    // Newest first, like the SQLite query's ORDER BY.
+    expect(events[0].completed_at).toBe(900);
+  });
+
+  it("records a new event and refuses the same one twice", async () => {
+    await db.listReplaceAll([]);
+    const event = {
+      anilist_id: 7,
+      rewatch_index: 0,
+      completed_at: 1_000,
+      episodes_at_completion: 12,
+      episode_duration: 24,
+      total_episodes: 12,
+      title_romaji: "Logged",
+      title_english: null,
+      title_native: null,
+      cover_url: null,
+      franchise_root_id: null,
+      estimated: false,
+    };
+    await db.completionAppend(event);
+    await db.completionAppend({ ...event, completed_at: 5_000 });
+    const events = await db.completionsAll();
+    expect(events).toHaveLength(1);
+    expect(events[0].completed_at).toBe(1_000);
+  });
+
+  it("keeps a completion after its entry is deleted", async () => {
+    await db.listReplaceAll([
+      makeEntry({ anilist_id: 1, status: "completed", completed_at: 900 }),
+    ]);
+    await db.completionsAll(); // the reconstruction runs once, here
+    await db.listRemove(1);
+    expect(await db.completionsAll()).toHaveLength(1);
+  });
+});

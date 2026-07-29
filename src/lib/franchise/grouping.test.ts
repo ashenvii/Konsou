@@ -109,6 +109,25 @@ describe("groupEntries — which member represents the card", () => {
     ]);
     expect(groups[0].displayEntry.anilist_id).toBe(3);
   });
+
+  // The reported bug: adding season 2 first made season 2 the card's current
+  // entry, so Start and the loupe acted on it while season 1 sat unwatched.
+  it("picks the first season even when a later one was added first", () => {
+    const groups = groupEntries([
+      makeEntry({ anilist_id: 200, franchise_root_id: 100, added_at: 10, status: "plan_to_watch" }),
+      makeEntry({ anilist_id: 100, franchise_root_id: 100, added_at: 90, status: "plan_to_watch" }),
+    ]);
+    expect(groups[0].displayEntry.anilist_id).toBe(100);
+  });
+
+  it("orders tied members by story position, not by when they were added", () => {
+    const groups = groupEntries([
+      makeEntry({ anilist_id: 300, franchise_root_id: 100, added_at: 10, status: "watching" }),
+      makeEntry({ anilist_id: 200, franchise_root_id: 100, added_at: 90, status: "watching" }),
+      makeEntry({ anilist_id: 100, franchise_root_id: 100, added_at: 50, status: "completed" }),
+    ]);
+    expect(groups[0].displayEntry.anilist_id).toBe(200);
+  });
 });
 
 describe("groupEntries — totals and sort keys", () => {

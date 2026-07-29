@@ -6,23 +6,29 @@ import { TITLE_LANGUAGE_OPTIONS } from "@/lib/format";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import type { AccentName, ColorTheme, SidebarMode, ViewMode } from "@/types/list";
 
-/* Curated to four strong, distinct moods: warm ember dark, brand-violet dark,
- * cool teal dark, and a clean light. The swatch colors are approximations; the
- * CSS vars do the real work. */
+/* The eight plates of the Field Guide: six examination grounds and two printed
+ * pages. The swatch colors are approximations; the CSS vars do the real work.
+ * (ids stay the legacy keys so stored settings keep working.) */
 const COLOR_THEMES: { id: ColorTheme; label: string; surface: string; accent: string }[] = [
-  { id: "ember", label: "Ember", surface: "oklch(16%   0.052 34)",  accent: "oklch(70% 0.20 45)"  },
-  { id: "void",  label: "Void",  surface: "oklch(15%   0.038 280)", accent: "oklch(65% 0.23 350)" },
-  { id: "ocean", label: "Ocean", surface: "oklch(14.5% 0.046 218)", accent: "oklch(71% 0.18 190)" },
-  { id: "paper", label: "Paper", surface: "oklch(98.5% 0.003 280)", accent: "oklch(65% 0.23 350)" },
+  { id: "ember",    label: "Herbarium",     surface: "oklch(20% 0.024 158)", accent: "oklch(58% 0.19 32)"  },
+  { id: "void",     label: "Nocturne",      surface: "oklch(19% 0.046 288)", accent: "oklch(58% 0.18 300)" },
+  { id: "ocean",    label: "Cyanotype",     surface: "oklch(19% 0.058 250)", accent: "oklch(66% 0.13 75)"  },
+  { id: "forest",   label: "Foxing",        surface: "oklch(21% 0.034 55)",  accent: "oklch(60% 0.10 190)" },
+  { id: "midnight", label: "Slate",         surface: "oklch(23% 0.012 250)", accent: "oklch(58% 0.19 32)"  },
+  { id: "crimson",  label: "Oxblood",       surface: "oklch(19% 0.058 20)",  accent: "oklch(66% 0.13 75)"  },
+  { id: "paper",    label: "Vellum",        surface: "oklch(95% 0.020 85)",  accent: "oklch(48% 0.16 25)"  },
+  { id: "ash",      label: "Specimen Card", surface: "oklch(96% 0.005 240)", accent: "oklch(45% 0.15 250)" },
 ];
 
 const ACCENTS: { id: AccentName; label: string; color: string }[] = [
-  { id: "coral",  label: "Coral",  color: "oklch(70% 0.20 45)"  },
-  { id: "violet", label: "Violet", color: "oklch(52% 0.27 290)" },
-  { id: "sakura", label: "Sakura", color: "oklch(65% 0.23 350)" },
-  { id: "cobalt", label: "Cobalt", color: "oklch(58% 0.18 240)" },
-  { id: "amber",  label: "Amber",  color: "oklch(70% 0.18 55)"  },
-  { id: "aqua",   label: "Aqua",   color: "oklch(71% 0.16 190)" },
+  { id: "coral",   label: "Vermilion",  color: "oklch(58% 0.19 32)"  },
+  { id: "crimson", label: "Oxblood",    color: "oklch(50% 0.16 22)"  },
+  { id: "amber",   label: "Ochre",      color: "oklch(66% 0.13 75)"  },
+  { id: "jade",    label: "Sage",       color: "oklch(60% 0.13 155)" },
+  { id: "aqua",    label: "Verdigris",  color: "oklch(60% 0.10 190)" },
+  { id: "cobalt",  label: "Prussian",   color: "oklch(52% 0.16 250)" },
+  { id: "violet",  label: "Ink Violet", color: "oklch(58% 0.18 300)" },
+  { id: "sakura",  label: "Rose",       color: "oklch(62% 0.15 0)"   },
 ];
 
 const VIEWS: ViewMode[] = ["grid", "list", "compact"];

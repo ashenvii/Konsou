@@ -79,7 +79,9 @@ export function AppShell() {
     >
       {isDesktop && !isBackstage && <Sidebar />}
       <main className="k-shell__content">
-        {!isImmersive && !isBackstage && <Header />}
+        {/* Desktop identity + account live in the index rail now, so the top bar
+            is mobile-only; on desktop the content column reclaims that height. */}
+        {!isDesktop && !isImmersive && !isBackstage && <Header />}
         {/* Lazily-loaded routes suspend here, so only the page area waits — the
             nav, header and overlays around it stay put during the chunk fetch. */}
         <Suspense

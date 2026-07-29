@@ -155,7 +155,7 @@ export function CommandPalette() {
         className="k-palette"
         role="dialog"
         aria-modal="true"
-        aria-label="Command palette"
+        aria-label="Catalogue lookup"
         onKeyDown={onKeyDown}
       >
         <div className="k-palette__field">
@@ -163,20 +163,20 @@ export function CommandPalette() {
           <input
             ref={inputRef}
             className="k-palette__input"
-            placeholder="Jump to a show or page…"
+            placeholder="Look up a specimen or section…"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
               setActive(0);
             }}
-            aria-label="Search your list and pages"
+            aria-label="Look up a specimen or section"
           />
           <kbd className="k-palette__kbd">esc</kbd>
         </div>
 
         <div className="k-palette__list konsou-scroll" ref={listRef}>
           {items.length === 0 && (
-            <p className="k-palette__none">Nothing in your list matches.</p>
+            <p className="k-palette__none">Nothing in the catalogue matches.</p>
           )}
           {items.map((item, i) => {
             const isActive = i === active;
@@ -221,7 +221,7 @@ export function CommandPalette() {
                   />
                 </span>
                 <span className="k-palette__body">
-                  <Text size="sm" weight={600} clamp={1}>
+                  <Text size="sm" weight={600} clamp={1} className="k-palette__spec">
                     {preferredTitle(
                       {
                         romaji: e.title_romaji,

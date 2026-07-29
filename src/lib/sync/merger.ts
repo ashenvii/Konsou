@@ -1,5 +1,6 @@
 import type {
   AnimeListEntry,
+  CompletionEvent,
   DeletionTombstone,
   ListStatus,
 } from "@/types/list";
@@ -91,6 +92,36 @@ export function mergeAnimeEntry(
 export interface MergeResult {
   entries: AnimeListEntry[];
   tombstones: DeletionTombstone[];
+}
+
+/**
+ * Union two completion logs.
+ *
+ * Nothing to reconcile field by field: rows are immutable, and identity is
+ * (anime, watch number), so the same finish recorded on two devices is the same
+ * row. When both sides hold it, the earlier date wins (a device that learns
+ * about the event later is echoing it, not witnessing it) and a real recorded
+ * row beats a reconstructed one, so an upgrade's estimated date never
+ * overwrites a date another device actually captured.
+ */
+export function mergeCompletions(
+  a: CompletionEvent[],
+  b: CompletionEvent[],
+): CompletionEvent[] {
+  const byEvent = new Map<string, CompletionEvent>();
+  for (const e of [...a, ...b]) {
+    const key = `${e.anilist_id}:${e.rewatch_index}`;
+    const held = byEvent.get(key);
+    if (!held) {
+      byEvent.set(key, e);
+      continue;
+    }
+    if (held.estimated && !e.estimated) byEvent.set(key, e);
+    else if (held.estimated === e.estimated && e.completed_at < held.completed_at) {
+      byEvent.set(key, e);
+    }
+  }
+  return [...byEvent.values()].sort((x, y) => x.completed_at - y.completed_at);
 }
 
 /** Union two tombstone sets, keeping the latest deletion time per id. */

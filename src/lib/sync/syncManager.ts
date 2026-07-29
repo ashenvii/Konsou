@@ -21,9 +21,14 @@ import {
   DriveAuthError,
   type DriveListFile,
 } from "@/lib/drive/client";
-import { mergeLists } from "./merger";
+import { useCompletionStore } from "@/lib/store/completionStore";
+import { mergeCompletions, mergeLists } from "./merger";
 import type { DriveMeta } from "@/types/sync";
-import type { AnimeListEntry, DeletionTombstone } from "@/types/list";
+import type {
+  AnimeListEntry,
+  CompletionEvent,
+  DeletionTombstone,
+} from "@/types/list";
 
 /** How a sign-in conflict (data on both sides) is resolved. */
 export type ReconcileStrategy = "merge" | "use_drive" | "use_local";
@@ -208,6 +213,7 @@ class SyncManager {
         const n = await this._applyMerge(
           remoteFile.entries,
           remoteFile.tombstones ?? [],
+          remoteFile.completions ?? [],
         );
         changed = true;
         this.record(
@@ -326,6 +332,8 @@ class SyncManager {
         : null;
       await db.listReplaceAll(remoteFile?.entries ?? []);
       await db.tombstonesReplaceAll(remoteFile?.tombstones ?? []);
+      // "Use Drive" means Drive's record, history included.
+      await useCompletionStore.getState().replaceAll(remoteFile?.completions ?? []);
       await db.settingsSet("sync.version", String(remoteVersion));
       this.record(
         "info",
@@ -352,6 +360,7 @@ class SyncManager {
     const n = await this._applyMerge(
       remoteFile?.entries ?? [],
       remoteFile?.tombstones ?? [],
+      remoteFile?.completions ?? [],
     );
     await db.settingsSet("sync.version", String(remoteVersion));
     await this._push();
@@ -364,6 +373,7 @@ class SyncManager {
   private async _applyMerge(
     remoteEntries: AnimeListEntry[],
     remoteTombstones: DeletionTombstone[],
+    remoteCompletions: CompletionEvent[] = [],
   ): Promise<{ entries: number; tombstones: number }> {
     const db = await getDb();
     const localEntries = await db.listAll();
@@ -378,6 +388,13 @@ class SyncManager {
     // Drop any local row a tombstone now wins over.
     for (const t of tombstones) await db.listRemove(t.anilist_id);
     await db.tombstonesReplaceAll(tombstones);
+    // The ledger is append-only, so it takes no part in the tombstone logic:
+    // a deletion removes the entry and leaves the history it earned. Straight
+    // union, no conflict rules needed.
+    const localCompletions = await db.completionsAll();
+    await useCompletionStore
+      .getState()
+      .replaceAll(mergeCompletions(localCompletions, remoteCompletions));
     return { entries: entries.length, tombstones: tombstones.length };
   }
 
@@ -385,6 +402,7 @@ class SyncManager {
     const db = await getDb();
     const entries = await db.listAll();
     const tombstones = await db.tombstonesAll();
+    const completions = await db.completionsAll();
     const settings = await db.settingsGetAll();
     const currentVersion = parseInt(settings["sync.version"] ?? "0", 10);
     const newVersion = currentVersion + 1;
@@ -393,6 +411,7 @@ class SyncManager {
       version: 1,
       entries,
       tombstones,
+      completions,
       exported_at: Date.now(),
     };
 

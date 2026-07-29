@@ -48,6 +48,19 @@ function dateKey(n: OrderableNode): number {
   return Number.MAX_SAFE_INTEGER; // undated (announced) sinks unless edges place it
 }
 
+/**
+ * Release order: the honest default for a franchise list. Ids sorted purely by
+ * air date (undated last), ties broken by id so it's stable. No graph, no
+ * opinion. "Watch order" is a curated community call that has no source of
+ * truth and is often contested, so the list defaults to what's always true and
+ * always available: when things came out. See the redesign research note.
+ */
+export function orderByRelease(nodes: OrderableNode[]): number[] {
+  return [...nodes]
+    .sort((a, b) => dateKey(a) - dateKey(b) || a.id - b.id)
+    .map((n) => n.id);
+}
+
 /** Ids of `nodes` in watch order. Every input id appears exactly once. */
 export function orderForWatching(
   nodes: OrderableNode[],

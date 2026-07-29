@@ -317,6 +317,82 @@ CREATE INDEX IF NOT EXISTS idx_list_franchise ON anime_list(franchise_root_id);
             sql: "ALTER TABLE anime_list ADD COLUMN plan_rank INTEGER;",
             kind: MigrationKind::Up,
         },
+        // One row per completion EVENT, instead of one `completed_at` column per
+        // anime that only ever recorded the first finish. A rewatch used to
+        // overwrite nothing at all: `completed_at` was written once and kept
+        // forever, so a title finished again last week still read as finished
+        // years ago, and Stats could only estimate rewatch hours as
+        // rewatch_count * total_episodes.
+        //
+        // Rows carry their own copy of the title, cover and episode count, so a
+        // completion still renders after the anime_list row is deleted — that is
+        // what makes the ledger's ghost records possible.
+        //
+        // (anilist_id, rewatch_index) is the key rather than a generated id: the
+        // Nth completion of a title is ONE event no matter which device recorded
+        // it, so Drive sync unions the two logs with no duplicate rows and no
+        // conflict rules. Rows are never edited after the fact; the upsert path
+        // exists only to reconcile that same event arriving twice.
+        //
+        // The backfill can only work from what exists: one date per anime. Prior
+        // rewatches are reconstructed from rewatch_count so the record keeps its
+        // count and its hours, and every reconstructed row is flagged
+        // `estimated` so the ledger never presents a guessed date as fact.
+        Migration {
+            version: 12,
+            description: "completion log: one row per completion event",
+            sql: r#"
+CREATE TABLE IF NOT EXISTS completion_log (
+  anilist_id             INTEGER NOT NULL,
+  rewatch_index          INTEGER NOT NULL DEFAULT 0,
+  completed_at           INTEGER NOT NULL,
+  episodes_at_completion INTEGER NOT NULL DEFAULT 0,
+  episode_duration       INTEGER,
+  total_episodes         INTEGER,
+  title_romaji           TEXT NOT NULL,
+  title_english          TEXT,
+  title_native           TEXT,
+  cover_url              TEXT,
+  franchise_root_id      INTEGER,
+  estimated              INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (anilist_id, rewatch_index)
+);
+CREATE INDEX IF NOT EXISTS idx_completion_at ON completion_log(completed_at);
+
+WITH RECURSIVE watches(anilist_id, idx, events) AS (
+  SELECT anilist_id,
+         0,
+         CASE WHEN status = 'rewatching'
+              THEN rewatch_count
+              ELSE rewatch_count + 1
+         END
+    FROM anime_list
+   WHERE status = 'completed' OR status = 'rewatching' OR completed_at IS NOT NULL
+  UNION ALL
+  SELECT anilist_id, idx + 1, events FROM watches WHERE idx + 1 < events
+)
+INSERT OR IGNORE INTO completion_log (
+  anilist_id, rewatch_index, completed_at, episodes_at_completion,
+  episode_duration, total_episodes, title_romaji, title_english, title_native,
+  cover_url, franchise_root_id, estimated
+)
+SELECT a.anilist_id,
+       w.idx,
+       COALESCE(a.completed_at, a.updated_at),
+       COALESCE(a.total_episodes, a.episodes_watched, 0),
+       a.episode_duration,
+       a.total_episodes,
+       a.title_romaji,
+       a.title_english,
+       a.title_native,
+       a.cover_url,
+       a.franchise_root_id,
+       1
+  FROM watches w
+  JOIN anime_list a ON a.anilist_id = w.anilist_id;
+"#,
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

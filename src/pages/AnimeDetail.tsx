@@ -21,6 +21,7 @@ import { EpisodeCounter } from "@/components/anime/EpisodeCounter";
 import { formatChipMeta, relationChipMeta } from "@/components/anime/relationMeta";
 import { statusMeta } from "@/components/anime/statusMeta";
 import { StatusSheet } from "@/components/anime/StatusSheet";
+import { SpineRail, spineStateForStatus } from "@/components/anime/SpineRail";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
@@ -30,8 +31,8 @@ import { useAnimeDetail, useMalScore, useRelationChain } from "@/hooks/useAniLis
 import { segmentHashtags } from "@/lib/hashtags";
 import { computeFranchiseLedger, ledgerEpisodeLabel } from "@/lib/franchise/ledger";
 import { isFranchiseOther } from "@/lib/franchise/relatedness";
-import { isPromoNode, mainStoryIds, placementLabel } from "@/lib/franchise/storySplit";
-import { orderForWatching } from "@/lib/franchise/watchOrder";
+import { isPromoNode, mainStoryIds } from "@/lib/franchise/storySplit";
+import { orderByRelease } from "@/lib/franchise/watchOrder";
 import type { RelationEdge } from "@/lib/franchise/watchOrder";
 import type { RelationChainResult } from "@/lib/franchise/chain";
 import { goBack } from "@/hooks/useAppBack";
@@ -201,18 +202,16 @@ function getSeasonRows(
   // season 3, the movies, everything.
   for (const r of chain?.nodes ?? []) add(r, false);
 
-  // Watch order comes from the relation graph, not the calendar — Fate/Zero
-  // aired after Fate/stay night but is its prequel; Demon Slayer's Mugen
-  // Train movie sits between S1 and S2. Air dates only break ties or place
-  // entries the tags say nothing about. While the deep walk is still
-  // loading, the one-hop edges from the detail payload order what's visible.
+  // Release order is the honest default (watch order is a curated community
+  // call with no source of truth). The relation edges are still needed to tell
+  // main story from extras, they just no longer decide the sequence.
   const edges: RelationEdge[] =
     chain?.edges ??
     (media.relations ?? [])
       .filter((r) => !isMangaNode(r))
       .map((r) => ({ from: media.id, to: r.id, type: r.relationType }));
   const position = new Map(
-    orderForWatching([...byId.values()], edges).map((id, i) => [id, i]),
+    orderByRelease([...byId.values()]).map((id, i) => [id, i]),
   );
 
   const rows = [...byId.values()].sort(
@@ -222,9 +221,9 @@ function getSeasonRows(
 }
 
 function seasonLabel(row: SeasonRow): string {
+  // Year lives on the left rail now, so it's dropped from this meta line.
   const bits = [
     formatLabel(row.format),
-    seasonYearLabel(row),
     airingStatusLabel(row.status),
     row.episodes ? `${row.episodes} eps` : null,
   ].filter(Boolean);
@@ -355,15 +354,9 @@ export function AnimeDetail() {
         : { rows: [] as SeasonRow[], mainIds: new Set<number>() },
     [media, chain],
   );
-  // The story backbone, numbered; everything else is an extra placed by date.
-  const mainRows = useMemo(
-    () => seasonRows.filter((r) => mainIds.has(r.id)),
-    [seasonRows, mainIds],
-  );
-  const extraRows = useMemo(
-    () => seasonRows.filter((r) => !mainIds.has(r.id)),
-    [seasonRows, mainIds],
-  );
+  // (The story backbone used to be kept as its own list purely to anchor the
+  // "after #N" placement labels. Those are gone; mainIds alone still decides
+  // which rows carry a number.)
   // The current title is the hero of this page; don't list it again under
   // "Related Series". Only the other seasons/entries belong there.
   const relatedRows = useMemo(
@@ -891,7 +884,7 @@ export function AnimeDetail() {
                 const renderSeasonRow = (
                   row: SeasonRow,
                   num: number | null,
-                  where: string | null,
+                  spine: { first: boolean; last: boolean },
                 ) => {
                   const rowEntry = listMap[row.id];
                   const isCurrent = row.id === media.id;
@@ -903,15 +896,35 @@ export function AnimeDetail() {
                   const unairedDate = unaired
                     ? formatFuzzyDate(row.startDate)
                     : null;
+                  const year = row.seasonYear ?? row.startDate?.year ?? null;
+                  const spineState = spineStateForStatus(rowEntry?.status);
+                  // Entry point for a newcomer: first season, still unstarted,
+                  // and not the one you're already on.
+                  const startHere =
+                    num === 1 &&
+                    !isCurrent &&
+                    (spineState === "planned" || spineState === "untracked");
+                  const shownTitle = preferredTitle(row.title, titleLanguage);
                   const inner = (
                     <>
-                      <span className="k-seasonrow__num" aria-hidden>
-                        {num ?? "·"}
-                      </span>
-                      <AnimeCover
-                        src={getCoverUrl(row.coverImage)}
-                        alt={preferredTitle(row.title, titleLanguage)}
+                      <SpineRail
+                        year={year}
+                        state={spineState}
+                        variant={num != null ? "main" : "extra"}
+                        first={spine.first}
+                        last={spine.last}
                       />
+                      <span className="k-seasonrow__cover">
+                        <AnimeCover
+                          src={getCoverUrl(row.coverImage)}
+                          alt={preferredTitle(row.title, titleLanguage)}
+                        />
+                        {num != null && (
+                          <span className="k-seasonrow__num" aria-hidden>
+                            #{num}
+                          </span>
+                        )}
+                      </span>
                       <div className="k-seasonrow__body">
                         <Text
                           size="base"
@@ -919,7 +932,7 @@ export function AnimeDetail() {
                           clamp={2}
                           className="k-seasonrow__title"
                         >
-                          {preferredTitle(row.title, titleLanguage)}
+                          {shownTitle}
                         </Text>
                         <Text size="xs" color="secondary" clamp={2}>
                           {seasonLabel(row)}
@@ -930,17 +943,22 @@ export function AnimeDetail() {
                               You are here
                             </span>
                           )}
+                          {startHere && (
+                            <span className="k-seasonrow__type k-seasonrow__type--start">
+                              Start here
+                            </span>
+                          )}
                           {!isCurrent && relChip && (
                             <span className="k-chip-kind">{relChip.label}</span>
                           )}
                           {fmtChip && (
                             <span className="k-chip-kind">{fmtChip.label}</span>
                           )}
-                          {where && (
-                            <span className="k-chip-kind k-chip-kind--where">
-                              {where}
-                            </span>
-                          )}
+                          {/* No "after #2" placement chip. The list is already
+                              in order; restating each extra's position against
+                              a season number was noise on top of an order you
+                              can simply read, and it is the same label the
+                              quick menu dropped. */}
                           {unaired && (
                             <span className="k-chip-unaired">
                               {unairedDate
@@ -982,25 +1000,24 @@ export function AnimeDetail() {
                     </button>
                   );
                 };
+                // One interleaved list in release order, threaded on the spine:
+                // seasons carry a running #1..#N and sit on the line, extras
+                // branch off where they aired with an "after #N" chip.
+                let mainNo = 0;
                 return (
-                  <>
-                    <div className="k-seasonrows">
-                      {extraRows.length > 0 && (
-                        <p className="k-seasonrows__subhead">Main story</p>
-                      )}
-                      {mainRows.map((row, i) => renderSeasonRow(row, i + 1, null))}
-                    </div>
-                    {extraRows.length > 0 && (
-                      <div className="k-seasonrows k-seasonrows--extras">
-                        <p className="k-seasonrows__subhead">
-                          Extras & side stories
-                        </p>
-                        {extraRows.map((row) =>
-                          renderSeasonRow(row, null, placementLabel(row, mainRows)),
-                        )}
-                      </div>
-                    )}
-                  </>
+                  <div className="k-seasonrows">
+                    {seasonRows.map((row, i) => {
+                      const spine = {
+                        first: i === 0,
+                        last: i === seasonRows.length - 1,
+                      };
+                      if (mainIds.has(row.id)) {
+                        mainNo += 1;
+                        return renderSeasonRow(row, mainNo, spine);
+                      }
+                      return renderSeasonRow(row, null, spine);
+                    })}
+                  </div>
                 );
               })()}
               {chainLoading && (

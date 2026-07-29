@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { MutableRefObject } from "react";
+import type { MutableRefObject, PointerEvent as ReactPointerEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { FranchiseCard } from "@/components/anime/FranchiseCard";
 import { FranchiseSheet } from "@/components/anime/FranchiseSheet";
 import { HeroCard } from "@/components/anime/HeroBinge";
 import { QueueCard } from "@/components/anime/QueueSlider";
-import { ShelfItem } from "@/components/anime/DigitalShelf";
 import { useBreakpoint } from "@/hooks/useMediaQuery";
 import { getUiState, setUiState } from "@/lib/uiState";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
@@ -17,7 +16,7 @@ import type { ViewMode } from "@/types/list";
  * drilling in from the overview stays visually continuous, while still riding
  * this component's virtualizer (rooms have to survive 4000+ entries).
  */
-export type RoomVariant = "hero" | "poster" | "shelf";
+export type RoomVariant = "hero" | "poster";
 
 interface FranchiseCollectionProps {
   groups: FranchiseGroup[];
@@ -51,11 +50,9 @@ const ROW_HEIGHT = { list: 84, compact: 54 };
 const VARIANT_COL: Record<RoomVariant, { min: number; max: number }> = {
   hero: { min: 400, max: 2 },
   poster: { min: 150, max: 8 },
-  shelf: { min: 116, max: 10 },
 };
 const HERO_ROW_H = 140;
 const POSTER_TITLE_H = 38;
-const SHELF_TITLE_H = 26;
 
 export function FranchiseCollection({
   groups,
@@ -81,6 +78,20 @@ export function FranchiseCollection({
     typeof window !== "undefined" ? window.innerWidth : 360,
   );
   const [activeRootId, setActiveRootId] = useState<number | null>(null);
+  // The popover points at the card you clicked, so the collection has to know
+  // WHICH element that was. Recording it on the way down (capture) keeps every
+  // card's onOpen signature as it is — they only ever knew their rootId.
+  const pressedCard = useRef<HTMLElement | null>(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const notePressedCard = (e: ReactPointerEvent) => {
+    const el = e.target as HTMLElement | null;
+    pressedCard.current =
+      (el?.closest(".k-qcard, .k-card, .k-hero") as HTMLElement | null) ?? null;
+  };
+  const openCard = (rootId: number) => {
+    setAnchorEl(pressedCard.current);
+    setActiveRootId(rootId);
+  };
 
   useEffect(() => {
     const el = parentRef.current;
@@ -117,7 +128,6 @@ export function FranchiseCollection({
     // art plus their title line.
     if (variant === "hero") return HERO_ROW_H + gap;
     if (variant === "poster") return cardW * 1.5 + POSTER_TITLE_H + gap;
-    if (variant === "shelf") return cardW * 1.5 + SHELF_TITLE_H + gap;
     if (view === "grid") return cardW * 1.5 + gap;
     return ROW_HEIGHT[view];
   }, [variant, view, width, columns, gap]);
@@ -166,12 +176,12 @@ export function FranchiseCollection({
     dimmedIds && !dimmedIds.has(rootId) ? 0.2 : 1;
 
   const renderGroup = (group: FranchiseGroup, index: number) => {
-    if (variant === "hero") return <HeroCard group={group} onOpen={setActiveRootId} />;
+    if (variant === "hero") return <HeroCard group={group} onOpen={openCard} />;
     if (variant === "poster") {
       return (
         <QueueCard
           group={group}
-          onOpen={setActiveRootId}
+          onOpen={openCard}
           onMove={onMove}
           canMoveEarlier={index > 0}
           canMoveLater={index < groups.length - 1}
@@ -181,15 +191,18 @@ export function FranchiseCollection({
         />
       );
     }
-    if (variant === "shelf") return <ShelfItem group={group} onOpen={setActiveRootId} />;
-    return <FranchiseCard group={group} view={view} onOpen={setActiveRootId} />;
+    return <FranchiseCard group={group} view={view} onOpen={openCard} />;
   };
 
   const virtualRows = virtualizer.getVirtualItems();
 
   return (
     <>
-      <div ref={parentRef} className="k-collection konsou-scroll">
+      <div
+        ref={parentRef}
+        className="k-collection konsou-scroll"
+        onPointerDownCapture={notePressedCard}
+      >
         <div
           className="k-collection__inner"
           style={{ height: virtualizer.getTotalSize() }}
@@ -248,6 +261,7 @@ export function FranchiseCollection({
 
       <FranchiseSheet
         group={activeGroup}
+        anchor={anchorEl}
         open={activeGroup != null}
         onClose={() => setActiveRootId(null)}
         onNavigate={(id) => navigate(`/anime/${id}`, { replace: true })}

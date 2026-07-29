@@ -113,6 +113,35 @@ export function alternateTitles(
 }
 
 /**
+ * Drop the franchise name from a member's title so a franchise list reads the
+ * way a curated site's cards do: the root keeps its full name, and every later
+ * entry shows only what sets it apart. A Seven Deadly Sins sheet stops being a
+ * wall of "The Seven Deadly Sins: …" and becomes "Revival of the Commandments",
+ * "Dragon's Judgement", "Four Knights of the Apocalypse".
+ *
+ * Conservative on purpose: it only strips when the title literally begins with
+ * the base (case-insensitive) AND a real boundary follows — a colon, a dash, or
+ * a space. No boundary, nothing left, or a title no longer than the base (the
+ * root itself, or an unrelated name) all keep the full title, so the worst it
+ * can do is leave a title untouched. `base` should be in the same title
+ * language as `title`, so their prefixes line up.
+ */
+export function stripFranchisePrefix(title: string, base: string): string {
+  const t = title.trim();
+  const b = base.trim();
+  if (!b || t.length <= b.length) return t;
+  if (t.slice(0, b.length).toLowerCase() !== b.toLowerCase()) return t;
+  const rest = t.slice(b.length);
+  // Separator between the franchise name and its subtitle: ": ", " - ", "- ",
+  // an en/em dash, or plain whitespace ("… OVA", "… Movie: …"). A "/" is not a
+  // boundary, so "Fate/Zero" under base "Fate" is left whole.
+  const m = rest.match(/^\s*[:\-–—]\s*(.+)$/) ?? rest.match(/^\s+(.+)$/);
+  if (!m) return t;
+  const sub = m[1].trim();
+  return sub.length >= 2 ? sub : t;
+}
+
+/**
  * Normalize text for forgiving local matching: lowercase, fold diacritics and
  * macrons (ō→o, é→e), drop combining marks, and collapse runs of whitespace.
  * Used for My List search and to clean query input before it hits the network.
