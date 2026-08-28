@@ -83,7 +83,6 @@ export function CompletedBoard({
   hours,
   thisYear,
   rewatched,
-  dropped,
   since,
   onOpenRoom,
 }: {
@@ -93,7 +92,6 @@ export function CompletedBoard({
   hours: number;
   thisYear: number;
   rewatched: number;
-  dropped: number;
   since: number | null;
   onOpenRoom: () => void;
 }) {
@@ -390,15 +388,14 @@ export function CompletedBoard({
       onPointerLeave={onLeave}
       /* THE WHOLE RECORD, because aria-label REPLACES the contents it is put
          on. The card holds seven figures and the old label announced one of
-         them; hours, days, kept-since, this year, rewatched and dropped were
-         all inside the button and unreachable. Grouped here, unlike the
+         them; hours, days, kept-since, this year and rewatched were all
+         inside the button and unreachable. Grouped here, unlike the
          serial on the face, because this one is being read aloud as a
          quantity. */
       aria-label={[
         `Completed, ${archived.toLocaleString()} titles.`,
         `${hours.toLocaleString()} hours, ${days.toLocaleString()} days.`,
-        `${thisYear.toLocaleString()} this year, ${rewatched.toLocaleString()} rewatched,`,
-        `${dropped.toLocaleString()} dropped.`,
+        `${thisYear.toLocaleString()} this year, ${rewatched.toLocaleString()} rewatched.`,
         sinceLabel ? `Kept since ${sinceLabel}.` : "",
         "Open the room.",
       ]
@@ -424,7 +421,6 @@ export function CompletedBoard({
         <span className="nm-board__lines" />
         <span className="nm-board__slats" />
         <span className="nm-board__stub" />
-        <span className="nm-board__tear" />
       </span>
 
       <span className="nm-board__head">
@@ -465,10 +461,6 @@ export function CompletedBoard({
         <span>
           <em>Rewatched</em>
           {rewatched.toLocaleString()}
-        </span>
-        <span>
-          <em>Dropped</em>
-          {dropped.toLocaleString()}
         </span>
       </span>
     </button>

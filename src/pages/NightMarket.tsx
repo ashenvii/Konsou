@@ -459,7 +459,6 @@ export function NightMarket() {
   const counts = useMemo(() => {
     let planned = 0;
     let watchingTitles = 0;
-    let dropped = 0;
     let airing = 0;
     let tracked = 0;
     let since = Number.POSITIVE_INFINITY;
@@ -476,12 +475,10 @@ export function NightMarket() {
         watchingTitles++;
         if (e.airing_status === "RELEASING") airing++;
       }
-      if (e.status === "dropped") dropped++;
     }
     return {
       planned,
       watchingTitles,
-      dropped,
       airing,
       tracked,
       since: since === Number.POSITIVE_INFINITY ? null : since,
@@ -702,7 +699,6 @@ export function NightMarket() {
       hours={finishedStats.hours}
       thisYear={finishedStats.thisYear}
       rewatched={finishedStats.rewatched}
-      dropped={counts.dropped}
       since={counts.since ?? null}
       onOpenRoom={() => go("/list/completed")}
     />

@@ -22,7 +22,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * Open it with `?tune=board` on the URL.
  */
 
-type Group = "Chit" | "Veil and hole" | "Wall" | "Turn" | "Shutter (Neon)";
+type Group = "Chit" | "Paper (Lantern)" | "Veil and hole" | "Wall" | "Turn" | "Shutter (Neon)";
 
 interface Knob {
   group: Group;
@@ -43,6 +43,14 @@ const KNOBS: Knob[] = [
   { group: "Chit", key: "stubMax", label: "Chit ceiling", min: 320, max: 720, step: 10, unit: "px" },
   { group: "Chit", key: "countSize", label: "Count size", min: 48, max: 132, step: 2, unit: "px", from: "--count-size" },
 
+  { group: "Paper (Lantern)", key: "paperWarm", label: "Stock warmth", min: 0, max: 22, step: 1, unit: "%", from: "--paper-warm" },
+  { group: "Paper (Lantern)", key: "paperGrain", label: "Grain", min: 0, max: 0.12, step: 0.005, unit: "", from: "--paper-grain" },
+  { group: "Paper (Lantern)", key: "paperEdge", label: "Lit cut edge", min: 0, max: 0.7, step: 0.02, unit: "", from: "--paper-edge" },
+  { group: "Paper (Lantern)", key: "paperLift", label: "Shadow throw", min: 0, max: 24, step: 1, unit: "px", from: "--paper-lift" },
+  { group: "Paper (Lantern)", key: "paperBlur", label: "Shadow blur", min: 0, max: 34, step: 1, unit: "px", from: "--paper-blur" },
+  { group: "Paper (Lantern)", key: "paperShade", label: "Shadow depth", min: 0, max: 1, step: 0.02, unit: "", from: "--paper-shade" },
+  { group: "Paper (Lantern)", key: "lip", label: "Top lip (both worlds)", min: 0, max: 0.5, step: 0.01, unit: "", from: "--lip" },
+
   { group: "Veil and hole", key: "veilRest", label: "Veil at rest", min: 0.1, max: 0.95, step: 0.01, unit: "", from: "--veil-rest" },
   { group: "Veil and hole", key: "veilHover", label: "Veil on hover", min: 0.05, max: 0.9, step: 0.01, unit: "", from: "--veil-hover" },
   { group: "Veil and hole", key: "holeR", label: "Hole radius", min: 80, max: 400, step: 5, unit: "px", from: "--hole-r" },
@@ -58,7 +66,7 @@ const KNOBS: Knob[] = [
   { group: "Shutter (Neon)", key: "shutDense", label: "Shutter density", min: 30, max: 100, step: 1, unit: "%" },
 ];
 
-const GROUPS: Group[] = ["Chit", "Veil and hole", "Wall", "Turn", "Shutter (Neon)"];
+const GROUPS: Group[] = ["Chit", "Paper (Lantern)", "Veil and hole", "Wall", "Turn", "Shutter (Neon)"];
 
 /* A poster's own light region against its own dark one. The same pair both
    review passes used, so the numbers here are comparable to theirs. */
@@ -163,6 +171,13 @@ export default function BoardTuner() {
       stubPct: m ? parseFloat(m[2]) : 44,
       stubMax: m ? parseFloat(m[3]) : 460,
       countSize: num("--count-size", 98),
+      paperWarm: num("--paper-warm", 5),
+      paperGrain: num("--paper-grain", 0.035),
+      paperEdge: num("--paper-edge", 0.3),
+      paperLift: num("--paper-lift", 7),
+      paperBlur: num("--paper-blur", 10),
+      paperShade: num("--paper-shade", 0.7),
+      lip: num("--lip", 0.22),
       veilRest: num("--veil-rest", 0.5),
       veilHover: num("--veil-hover", 0.38),
       holeR: num("--hole-r", 200),
@@ -189,6 +204,13 @@ export default function BoardTuner() {
 
     el.style.setProperty("--stub-w", `clamp(${s.stubFloor}px, ${s.stubPct}%, ${s.stubMax}px)`);
     el.style.setProperty("--count-size", `${s.countSize}px`);
+    el.style.setProperty("--paper-warm", `${s.paperWarm}%`);
+    el.style.setProperty("--paper-grain", String(s.paperGrain));
+    el.style.setProperty("--paper-edge", String(s.paperEdge));
+    el.style.setProperty("--paper-lift", `${s.paperLift}px`);
+    el.style.setProperty("--paper-blur", `${s.paperBlur}px`);
+    el.style.setProperty("--paper-shade", String(s.paperShade));
+    el.style.setProperty("--lip", String(s.lip));
     el.style.setProperty("--veil-rest", String(s.veilRest));
     el.style.setProperty("--veil-hover", String(s.veilHover));
     el.style.setProperty("--hole-r", `${s.holeR}px`);
@@ -212,9 +234,19 @@ export default function BoardTuner() {
     /* The ground the head's type lands on, worst case: a bright cover, and in
        Neon the thinnest band of the shutter. */
     const brightWall = veiled(COVER_HI, s.veilRest);
+    /* The head's ground in Lantern is the PAPER, and the paper's stock is a
+       color-mix in oklab, which is not an alpha blend and cannot be rebuilt
+       from `over`. So it is read back off the pseudo-element that paints it:
+       the same principle as the rest of this file, measure what the component
+       produced rather than what it was asked for. */
+    const stubEl = el.querySelector(".nm-board__stub");
+    const paperRaw = stubEl
+      ? getComputedStyle(stubEl, "::before").backgroundColor
+      : "";
+    const paper = (paperRaw && solve(paperRaw)?.rgb) || sunk;
     const ground = neon
       ? over(whi, 0.09, over(wbase, s.shutDense / 100, brightWall))
-      : over(sunk, 0.94, brightWall);
+      : over(paper, 0.94, brightWall);
 
     const inkOn = (sel: string): number | null => {
       const node = el.querySelector(sel);
@@ -242,6 +274,15 @@ export default function BoardTuner() {
     push("Cover at rest", `${rest.toFixed(2)}:1`, grade(rest, 4, 3));
     push("Cover on hover", `${hover.toFixed(2)}:1`, grade(hover, 4, 3));
     push("Cover in the hole", `${hole.toFixed(2)}:1`, grade(hole, 8, 6));
+
+    if (!neon) {
+      /* Not an AA bar, a character reading: the stock against the brightest
+         thing behind it, which is a lit cover under the resting veil. It says
+         whether the paper still reads as its own object where the wall is
+         loudest. Turning the warmth up closes this gap. */
+      const standoff = contrast(ground, brightWall);
+      push("Paper against the wall", `${standoff.toFixed(2)}:1`);
+    }
 
     const iss = inkOn(".nm-board__issuer");
     const cnt = inkOn(".nm-board__n");
@@ -276,6 +317,13 @@ export default function BoardTuner() {
     setLines(out);
     setDump(
       [
+        `--paper-warm:  ${s.paperWarm}%;`,
+        `--paper-grain: ${s.paperGrain.toFixed(3)};`,
+        `--paper-edge:  ${s.paperEdge.toFixed(2)};`,
+        `--paper-lift:  ${s.paperLift}px;`,
+        `--paper-blur:  ${s.paperBlur}px;`,
+        `--paper-shade: ${s.paperShade.toFixed(2)};`,
+        `--lip:         ${s.lip.toFixed(2)};`,
         `--veil-rest:   ${s.veilRest.toFixed(2)};`,
         `--veil-hover:  ${s.veilHover.toFixed(2)};`,
         `--hole-r:      ${s.holeR}px;`,
@@ -316,6 +364,8 @@ export default function BoardTuner() {
     for (const p of [
       "--stub-w", "--count-size", "--veil-rest", "--veil-hover", "--hole-r",
       "--hole-depth", "--par", "--line-reach", "--line-w", "--turn-takes",
+      "--paper-warm", "--paper-grain", "--paper-edge", "--paper-lift",
+      "--paper-blur", "--paper-shade", "--lip",
     ]) {
       el.style.removeProperty(p);
     }
@@ -329,6 +379,13 @@ export default function BoardTuner() {
         stubPct: m ? parseFloat(m[2]) : 44,
         stubMax: m ? parseFloat(m[3]) : 460,
         countSize: parseFloat(cs.getPropertyValue("--count-size")) || 98,
+        paperWarm: parseFloat(cs.getPropertyValue("--paper-warm")) || 5,
+        paperGrain: parseFloat(cs.getPropertyValue("--paper-grain")) || 0.035,
+        paperEdge: parseFloat(cs.getPropertyValue("--paper-edge")) || 0.3,
+        paperLift: parseFloat(cs.getPropertyValue("--paper-lift")) || 7,
+        paperBlur: parseFloat(cs.getPropertyValue("--paper-blur")) || 10,
+        paperShade: parseFloat(cs.getPropertyValue("--paper-shade")) || 0.7,
+        lip: parseFloat(cs.getPropertyValue("--lip")) || 0.22,
         veilRest: parseFloat(cs.getPropertyValue("--veil-rest")) || 0.5,
         veilHover: parseFloat(cs.getPropertyValue("--veil-hover")) || 0.38,
         holeR: parseFloat(cs.getPropertyValue("--hole-r")) || 200,

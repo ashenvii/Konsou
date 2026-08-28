@@ -1778,6 +1778,16 @@
   --line-op:     1;
   --line-w:      3px;
   --par:         7px;
+  /* THE PAPER, built 2026-08-29 from direction A of the character round.
+     Opening values, not tuned ones: these are the first four sliders in
+     ?tune=board and they are meant to be moved. */
+  --paper-warm:  5%;      /* highlight mixed into the stock */
+  --paper-grain: 0.035;   /* fibre */
+  --paper-edge:  0.30;    /* light along the cut */
+  --paper-lift:  7px;     /* how far the shadow is thrown */
+  --paper-blur:  10px;
+  --paper-shade: 0.70;
+  --lip:         0.22;    /* the case's one lit edge */
   /* The chit was a flat 300px, which is 55% of the card at 1280 and half that
      share on a wide monitor: the same object reading as two proportions. The
      comp's is 41% of its stage.
@@ -1816,6 +1826,13 @@
   inset: 0;
   border-radius: inherit;
   overflow: hidden;
+  /* THE TOP LIP, and it is the whole of the Case direction that survived the
+     round. One lit edge where the page's own lamp reaches the top of the card
+     is enough to say the wall is set INSIDE something; shading all four inner
+     edges was the rest of that direction and it ate the wall, which is the one
+     thing this card exists to show. Unlike the paper it costs nothing in Neon,
+     so both worlds get it. */
+  box-shadow: inset 0 2px 0 oklch(90% 0.02 88 / var(--lip));
 }
 
 /* The wall. Oversized on every side so the parallax never exposes a corner. */
@@ -2034,34 +2051,104 @@
   );
 }
 
-/* ── LANTERN: the chit ────────────────────────────────────────────
-   A stub torn off a market roll, which is a transaction that is DONE. The tear
-   is the point, not the decoration. */
+/* ── LANTERN: the chit ──────────────────────────────────
+   A stub torn off a market roll, which is a transaction that is DONE.
+
+   It used to be a flat rectangle of --w-sunk with a dashed line beside it, so
+   the whole idea lived in the code and in none of the pixels: the one thing on
+   this card claiming to be an object read as a darker region of the card. It
+   is paper now, and the four things that make it paper are a torn edge, the
+   shadow that edge throws, grain in the stock, and a ground warmer than the
+   wall behind it. The dashed tear is gone; a real tear does not need a line
+   drawn next to it to say where it is. */
 .nm-board__stub {
   position: absolute;
   inset: 0 auto 0 0;
   width: var(--stub-w);
-  background: var(--w-sunk);
-  opacity: 0.94;
   pointer-events: none;
+  /* THE SHADOW GOES HERE AND THE PAPER GOES ON THE ::before, and the order is
+     not arbitrary. clip-path is applied AFTER filter, so a drop-shadow on the
+     clipped box is generated off the square edge and then clipped away with
+     it. Filtering the PARENT of the clipped box is what makes the shadow
+     follow the torn silhouette. */
+  filter: drop-shadow(var(--paper-lift) 2px var(--paper-blur) oklch(0% 0 0 / var(--paper-shade)));
 }
-.nm-board__tear {
+.nm-board__stub::before {
+  content: "";
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: var(--stub-w);
-  width: 0;
-  border-left: 2px dashed var(--w-highlight);
-  opacity: 0.55;
-  pointer-events: none;
-  /* The notches, drawn as a repeating radial rather than as ten elements. */
-  background-image: radial-gradient(
-    circle 8px at 0 15px,
-    var(--plate-bg) 98%,
-    transparent 100%
+  inset: 0;
+  opacity: 0.94;
+  background:
+    /* The cut edge, catching the light along the fibre. It follows the tear
+       because it is painted inside the same clipped box. */
+    linear-gradient(
+      to right,
+      transparent calc(100% - 3px),
+      oklch(90% 0.02 88 / var(--paper-edge)) calc(100% - 3px)
+    ),
+    /* Grain, on two periods so it reads as stock rather than as stripes. */
+    repeating-linear-gradient(96deg, transparent 0 2px, oklch(90% 0.02 88 / var(--paper-grain)) 2px 3px),
+    repeating-linear-gradient(4deg, transparent 0 5px, oklch(0% 0 0 / calc(var(--paper-grain) * 1.4)) 5px 6px),
+    radial-gradient(130% 90% at 16% 6%, oklch(90% 0.02 88 / 0.08), transparent 62%),
+    /* Warmer than the wall: paper under a lantern, not a hole in the card. */
+    color-mix(in oklab, var(--w-highlight) var(--paper-warm), var(--w-sunk));
+  /* The tear itself. Authored once, deterministic, in px off the right edge so
+     the bite stays a physical size when --stub-w grows on a wide card. */
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8.8px) 0%,
+    calc(100% - 1.6px) 2.5%,
+    calc(100% - 4.3px) 5%,
+    calc(100% - 3.0px) 7.5%,
+    calc(100% - 2.9px) 10%,
+    calc(100% - 4.4px) 12.5%,
+    calc(100% - 0.7px) 15%,
+    calc(100% - 3.4px) 17.5%,
+    calc(100% - 2.8px) 20%,
+    calc(100% - 4.4px) 22.5%,
+    calc(100% - 2.7px) 25%,
+    calc(100% - 4.2px) 27.5%,
+    calc(100% - 4.6px) 30%,
+    calc(100% - 2.6px) 32.5%,
+    calc(100% - 4.6px) 35%,
+    calc(100% - 0.8px) 37.5%,
+    calc(100% - 5.2px) 40%,
+    calc(100% - 4.0px) 42.5%,
+    calc(100% - 4.2px) 45%,
+    calc(100% - 3.3px) 47.5%,
+    calc(100% - 6.0px) 50%,
+    calc(100% - 0.1px) 52.5%,
+    calc(100% - 6.9px) 55%,
+    calc(100% - 1.2px) 57.5%,
+    calc(100% - 4.1px) 60%,
+    calc(100% - 1.9px) 62.5%,
+    calc(100% - 4.3px) 65%,
+    calc(100% - 2.0px) 67.5%,
+    calc(100% - 6.6px) 70%,
+    calc(100% - 1.6px) 72.5%,
+    calc(100% - 2.8px) 75%,
+    calc(100% - 2.3px) 77.5%,
+    calc(100% - 4.0px) 80%,
+    calc(100% - 6.9px) 82.5%,
+    calc(100% - 2.9px) 85%,
+    calc(100% - 4.1px) 87.5%,
+    calc(100% - 2.7px) 90%,
+    calc(100% - 0.3px) 92.5%,
+    calc(100% - 4.4px) 95%,
+    calc(100% - 0.4px) 97.5%,
+    calc(100% - 4.4px) 100%,
+    0 100%
   );
-  background-size: 1px 30px;
-  background-repeat: repeat-y;
+}
+/* The lite tier keeps the paper and drops the blur. A drop-shadow is a real
+   per-frame paint cost on a layer the height of the card, and the card already
+   moves under it. A hard offset still says the paper is lying on something. */
+.perf-lite .nm-board__stub {
+  filter: none;
+  box-shadow: none;
+}
+.perf-lite .nm-board__stub::before {
+  box-shadow: 3px 0 0 oklch(0% 0 0 / 0.5);
 }
 .nm-board__slats {
   display: none;
@@ -2070,8 +2157,7 @@
 /* ── NEON: the shutter ────────────────────────────────────────────
    The stall front half down, slats running over the count as well, so the
    number sits inside the stall rather than on a picture of one. */
-[data-theme="neon"] .nm-board__stub,
-[data-theme="neon"] .nm-board__tear {
+[data-theme="neon"] .nm-board__stub {
   display: none;
 }
 /* HALF DRAWN, which is what this was always described as and never was.
@@ -2363,8 +2449,7 @@
   .nm-board {
     --stub-w: 100%;
   }
-  .nm-board__stub,
-  .nm-board__tear {
+  .nm-board__stub {
     display: none;
   }
   .nm-board__head {
