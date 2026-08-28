@@ -1,14 +1,16 @@
 import { useRef, useState } from "react";
 import type { FocusEvent, MouseEvent } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { UserRound } from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { RefreshCw, UserRound } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
+import { SparkIcon } from "@/components/ui/SparkIcon";
+import { UpdateMark } from "./UpdateMark";
 import { useNotificationStore } from "@/lib/store/notificationStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useNavStacks } from "@/lib/navStacks";
 import { useTabPress } from "@/hooks/useTabPress";
-import { NAV_ITEMS } from "./navConfig";
+import { NAV_ITEMS, UTILITY_ITEMS } from "./navConfig";
 import { APP_VERSION } from "@/lib/updater";
 
 /**
@@ -24,6 +26,7 @@ const CLOSE_DELAY = 160;
 
 export function Sidebar() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const alertCount = useNotificationStore((s) => s.items.length);
   const sidebarMode = useSettingsStore((s) => s.sidebarMode);
   const currentTab = useNavStacks((s) => s.currentTab);
@@ -127,30 +130,77 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="k-sidebar__footer">
+      {/* The same rail items as the primary nav, in a second group ruled off
+          below it — the way DIM keeps About / What's New / Reload as ordinary
+          menu entries rather than a separate cluster of bare glyphs. They
+          collapse to icons and expand to labels on exactly the same rules,
+          because they ARE the same control. */}
+      <nav className="k-sidebar__nav k-sidebar__nav--utility" aria-label="App">
+        {UTILITY_ITEMS.map((item) => {
+          const active = pathname === item.to;
+          return (
+            <button
+              key={item.to}
+              type="button"
+              title={item.label}
+              className={`k-sidebar__item${active ? " k-sidebar__item--active" : ""}`}
+              onClick={() => navigate(item.to, { replace: true })}
+            >
+              {/* Same 22px glyph in the same 22px well as the destinations
+                  above: these were drawn a size down, which read as a
+                  different kind of control rather than a quieter one. */}
+              <span className="k-sidebar__icon">
+                {item.spark ? (
+                  <SparkIcon icon={item.icon} size={22} />
+                ) : (
+                  <Icon icon={item.icon} size={22} weight={active ? "fill" : "regular"} />
+                )}
+                {item.update && <UpdateMark side="rail" />}
+              </span>
+              <span className="k-sidebar__label">{item.label}</span>
+            </button>
+          );
+        })}
+        {/* Reload is an action, not a destination, so it never lights up. */}
         <button
           type="button"
-          className="k-sidebar__account"
-          onClick={() => navigate("/settings", { replace: true })}
-          aria-label="Settings and account"
+          title="Reload app"
+          className="k-sidebar__item"
+          onClick={() => window.location.reload()}
         >
-          <span className="k-sidebar__avatar">
-            {account?.avatarUrl ? (
-              <img src={account.avatarUrl} alt="" />
-            ) : account ? (
-              <span>{account.name.charAt(0).toUpperCase()}</span>
-            ) : (
-              <Icon icon={UserRound} size={15} />
-            )}
+          <span className="k-sidebar__icon">
+            <Icon icon={RefreshCw} size={22} />
           </span>
-          <span className="k-sidebar__accountinfo">
-            <span className="k-sidebar__accountname">{account?.name ?? "Settings"}</span>
-            <span className="k-sidebar__accountmeta">
-              {account ? "Account & settings" : "Local only"}
-            </span>
-          </span>
+          <span className="k-sidebar__label">Reload</span>
         </button>
-        <span className="k-sidebar__version">v{APP_VERSION}</span>
+      </nav>
+
+      <div className="k-sidebar__footer">
+        <div className="k-sidebar__accountrow">
+          <button
+            type="button"
+            className="k-sidebar__account"
+            onClick={() => navigate("/settings", { replace: true })}
+            aria-label="Settings and account"
+          >
+            <span className="k-sidebar__avatar">
+              {account?.avatarUrl ? (
+                <img src={account.avatarUrl} alt="" />
+              ) : account ? (
+                <span>{account.name.charAt(0).toUpperCase()}</span>
+              ) : (
+                <Icon icon={UserRound} size={15} />
+              )}
+            </span>
+            <span className="k-sidebar__accountinfo">
+              <span className="k-sidebar__accountname">{account?.name ?? "Settings"}</span>
+              <span className="k-sidebar__accountmeta">
+                {account ? "Account & settings" : "Local only"}
+              </span>
+            </span>
+          </button>
+          <span className="k-sidebar__version">v{APP_VERSION}</span>
+        </div>
       </div>
     </aside>
   );

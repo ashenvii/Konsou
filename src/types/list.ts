@@ -162,9 +162,15 @@ export interface SortSpec {
 /** "all" is the no-filter pseudo-tab on My List. */
 export type ListFilter = ListStatus | "all";
 
-export type AccentName = "coral" | "violet" | "cobalt" | "crimson" | "sakura" | "amber" | "aqua" | "jade";
 export type ThemeMode = "dark" | "light" | "system"; // reserved for future brightness toggle
-export type ColorTheme = "void" | "ocean" | "ember" | "forest" | "midnight" | "crimson" | "paper" | "ash";
+
+/**
+ * The worlds. Two, and only two: a theme is a filled-in set of the role
+ * tokens in `src/styles/tokens.css` (layer 2), nothing more. The eight
+ * Field Guide plates and the per-user accent inks they carried are gone;
+ * the world owns its own two hues now, so there is no second axis to pick.
+ */
+export type ColorTheme = "lantern" | "neon";
 
 /**
  * Which title a user sees first. Mirrors AniList's title-language setting:
@@ -181,3 +187,7 @@ export type TitleLanguage = "romaji" | "english" | "native";
  *  - expanded → permanently open; the page reflows to sit beside it
  */
 export type SidebarMode = "rail" | "hover" | "expanded";
+
+/** How much motion the app is allowed. "system" resolves from the device;
+ *  see lib/motion.ts for why the other two exist. */
+export type MotionMode = "full" | "lite" | "system";

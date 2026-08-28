@@ -1,44 +1,51 @@
-import { useNavigate } from "react-router-dom";
-import { UserRound } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@/components/ui/Icon";
-import { useAuthStore } from "@/lib/store/authStore";
+import { SparkIcon } from "@/components/ui/SparkIcon";
+import { UpdateMark } from "./UpdateMark";
+import { UTILITY_ITEMS } from "./navConfig";
 
 /**
- * The app's single persistent header: identity on the left, account on the
- * right. Present on every primary page, desktop and mobile. Search deliberately
- * lives on the Discover surface, not here.
+ * Mobile-only brand strip: the wordmark, and the app's own pages beside it.
  *
- * On desktop it spans the content column to the right of the sidebar: the
- * sidebar owns navigation, this owns identity + account, so the logo and avatar
- * live in exactly one place across both platforms. It folds away on scroll-down
- * and returns on scroll-up (useScrollElevation), and stays pinned under reduced
- * motion.
+ * The account button used to live here and now sits in the tab ledger with the
+ * rest of primary navigation. What replaced it is the set the desktop rail
+ * already carries in its second group — What's new, Support, About — which
+ * existed on desktop and simply had no home on a phone, where they were buried
+ * two taps deep behind Settings. Same three destinations, same order, both
+ * platforms; only the shell differs (rows on the rail, marks on the strip).
+ *
+ * Pure chrome, so it stays put rather than folding away on scroll.
  */
 export function Header() {
   const navigate = useNavigate();
-  const account = useAuthStore((s) => s.account);
+  const { pathname } = useLocation();
 
   return (
     <header className="k-header">
-      <div className="k-header__brand">
-        <img className="k-header__logo" src="/konsou.svg" alt="" width={26} height={26} />
-        <span className="k-header__word">Konsou</span>
-      </div>
-      <button
-        type="button"
-        className="k-header__avatar"
-        onClick={() => navigate("/settings", { replace: true })}
-        aria-label="Settings and account"
-      >
-        {account?.avatarUrl ? (
-          <img src={account.avatarUrl} alt="" />
-        ) : account ? (
-          <span>{account.name.charAt(0).toUpperCase()}</span>
-        ) : (
-          // A person glyph, not "?": the question mark reads as a help button.
-          <Icon icon={UserRound} size={16} />
-        )}
-      </button>
+      <span className="k-header__word">Konsou</span>
+
+      <nav className="k-header__utility" aria-label="App">
+        {UTILITY_ITEMS.map((item) => {
+          const active = pathname === item.to;
+          return (
+            <button
+              key={item.to}
+              type="button"
+              className={`k-header__util${active ? " k-header__util--active" : ""}`}
+              aria-label={item.label}
+              aria-current={active ? "page" : undefined}
+              onClick={() => navigate(item.to, { replace: true })}
+            >
+              {item.spark ? (
+                <SparkIcon icon={item.icon} size={17} />
+              ) : (
+                <Icon icon={item.icon} size={17} weight={active ? "fill" : "regular"} />
+              )}
+              {item.update && <UpdateMark side="strip" />}
+            </button>
+          );
+        })}
+      </nav>
     </header>
   );
 }

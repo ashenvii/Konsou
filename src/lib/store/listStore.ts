@@ -781,7 +781,32 @@ export const useListStore = create<ListState>((set, get) => {
       const prev = get().map[anilistId];
       if (!prev) return;
       const max = prev.total_episodes ?? Number.MAX_SAFE_INTEGER;
-      const clamped = Math.max(0, Math.min(episodes, max));
+      // A still-airing show can't be logged past what has actually released,
+      // whatever its eventual total promises. aired_episodes is the real
+      // ceiling while RELEASING; it only refreshes on a detail visit or the
+      // background airing scan, so it can lag between the two the same way
+      // airing_status itself already can -- the accepted tradeoff elsewhere
+      // in this file, not a new one. Without this ceiling, watched could be
+      // pushed straight to the eventual total while only a handful of
+      // episodes existed, which also silently defeated the RELEASING ->
+      // completed guard below (it treats watched >= total as "genuinely
+      // finished, AniList's status just lagged").
+      const airedCeiling =
+        prev.airing_status === "RELEASING" && prev.aired_episodes != null
+          ? prev.aired_episodes
+          : max;
+      const ceiling = Math.min(max, airedCeiling);
+      const clamped = Math.max(0, Math.min(episodes, ceiling));
+      if (episodes > ceiling && ceiling < max) {
+        // A long-runner with no fixed episode count yet (One Piece and the
+        // like) has no real "of N" to report — `max` is the
+        // Number.MAX_SAFE_INTEGER placeholder above, not a total anyone set.
+        toast.error(
+          prev.total_episodes != null
+            ? `Only ${ceiling} of ${max} episodes have aired so far.`
+            : `Only ${ceiling} episodes have aired so far.`,
+        );
+      }
       await patchEntry(anilistId, { episodes_watched: clamped });
       if (clamped > prev.episodes_watched) haptic("light");
 

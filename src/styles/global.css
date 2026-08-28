@@ -20,20 +20,18 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
-[data-theme="paper"],
-[data-theme="ash"] {
-  color-scheme: light;
-}
-
 body {
-  /* Field-note voice: EB Garamond reads the guide. Apparatus (numbers, labels,
-     nav, tags, stamps) switches to the mono in each component. */
-  font-family: var(--font-serif);
+  /* The world's reading voice. Apparatus (counts, labels, nav, tags, chips)
+     switches to the mono in each component. */
+  font-family: var(--w-face-body);
   font-size: var(--text-base);
   line-height: var(--leading-base);
   font-weight: 400;
-  color: var(--color-text-primary);
-  background-color: var(--color-base);
+  color: var(--page-ink);
+  background-color: var(--page-bg);
+  /* The world's own light, spilling in from above. Painted on the body so
+     every surface sits in it rather than each page redrawing its own. */
+  background-image: var(--page-wash);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -63,7 +61,7 @@ button {
 }
 
 a {
-  color: var(--color-text-accent, var(--color-accent));
+  color: var(--filed-ink);
   text-decoration: none;
 }
 
@@ -85,32 +83,39 @@ textarea,
 }
 
 /* ── Focus rings (keyboard / switch-access only) ────────────── */
-:focus-visible {
-  outline: 2px solid var(--color-accent);
+/* :where() zeroes this rule's own specificity, so any component that wants
+   its own focus treatment (a field's border thickening to accent, a card's
+   inset ring) always wins outright rather than depending on which stylesheet
+   happens to load later — a bare `.some-class { outline: none }` used to be
+   able to tie with this rule on specificity alone and the winner came down to
+   source order, not intent. This is the fallback for anything that doesn't
+   opt into its own treatment, nothing more. */
+:where(:focus-visible) {
+  outline: 2px solid var(--filed-ink);
   outline-offset: 3px;
   border-radius: var(--radius-sm);
 }
-:focus:not(:focus-visible) {
+:where(:focus:not(:focus-visible)) {
   outline: none;
 }
 
 /* ── Scrollbars ─────────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-surface-3) transparent;
+  scrollbar-color: var(--plate-bg-3) transparent;
 }
 *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--color-surface-3);
+  background: var(--plate-bg-3);
   border-radius: var(--radius-full);
   border: 3px solid transparent;
   background-clip: content-box;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-strong);
+  background: var(--plate-line-strong);
   background-clip: content-box;
 }
 
@@ -207,6 +212,13 @@ textarea,
 
 .konsou-scroll {
   overflow-y: auto;
+  /* Load-bearing, not tidiness. CSS computes a `visible` axis to `auto` as soon
+     as the other axis is not visible, so declaring only overflow-y gave every
+     one of these scrollers a horizontal scrollbar the moment any child spilled
+     a pixel sideways — the phantom bar along the bottom of the quick menu. A
+     vertical scroller should never scroll sideways; if something inside is too
+     wide, that is a layout bug to fix, not an axis to pan. */
+  overflow-x: hidden;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   /* The scroll-away header resizes these scrollers as it folds. Scroll
@@ -215,6 +227,82 @@ textarea,
      each other into a per-frame fold/unfold seesaw. The app manages its own
      scroll restoration, so anchoring buys nothing here. */
   overflow-anchor: none;
+}
+/* Inside a panel the bar is furniture: the panel is short, its content is
+   obviously cut off at the fold, and a 15px gutter down the edge of a plate
+   reads as a seam in the plate. Per the scroll law nothing here touches how
+   wheel or touch scrolling behaves. */
+.k-pop__body,
+.k-sheet__body {
+  scrollbar-width: none;
+}
+.k-pop__body::-webkit-scrollbar,
+.k-sheet__body::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── The scroller ────────────────────────────────────────────
+   Styles for the Scroller component (components/ui/Scroller.tsx), the ONE
+   scroll surface in this app. Anything still on a bare .konsou-scroll behaves
+   exactly as it did; a surface picks this up when it is reworked.
+
+   This SKINS the native scrollbar rather than replacing it. Everything that
+   makes a scrollbar feel like a scrollbar — dragging the thumb, clicking the
+   track to page, the platform's sizing curve, keyboard paging, momentum, the
+   fade timing — is the browser's, and a hand-drawn thumb has to re-implement
+   every one of them to be merely as good. An earlier version of this did draw
+   its own and it read as invented, because it was.
+
+   The reserved width is fine. It only ever mattered because the header bar was
+   positioned against the page and overhung the content by exactly that much;
+   the bar lives inside the scroller now, so it is measured against the same
+   content box as everything else and the gutter costs nothing.
+
+   The look is the standard transparent-border trick: a wide track for an easy
+   target, with the thumb inset inside it by a transparent border and painted
+   only in its content box. That is how a thin rounded thumb sits in a roomy
+   gutter, and it is what Spotify's looks like. */
+.k-scroller {
+  scrollbar-width: thin;
+  /* Firefox's two-colour form: thumb, then track. Both transparent at rest so
+     the resting state matches the hover-reveal below. */
+  scrollbar-color: transparent transparent;
+}
+.k-scroller:hover {
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+.k-scroller::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+/* No track, ever. The observed behaviour is a thumb appearing on its own over
+   the content — there is no groove for it to run in, at rest or on hover. */
+.k-scroller::-webkit-scrollbar-track,
+.k-scroller::-webkit-scrollbar-corner {
+  background: transparent;
+}
+.k-scroller::-webkit-scrollbar-thumb {
+  /* Invisible until the pointer is over the scrolling region. The gutter is
+     still reserved either way, so nothing reflows when it appears — which is
+     what makes a reveal read as a reveal rather than as the page twitching. */
+  background-color: transparent;
+  /* 3px of transparent border each side leaves a 6px thumb in a 12px gutter,
+     and background-clip keeps the border genuinely clear rather than painted.
+     Without the clip the thumb fills the whole gutter and reads as a slab. */
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 99px;
+}
+/* Hovering anywhere in the scrolling region brings the thumb up — not just
+   hovering the gutter itself, which would be a 12px target nobody aims at. */
+.k-scroller:hover::-webkit-scrollbar-thumb {
+  background-color: var(--scroll-thumb);
+}
+/* And the thumb itself brightens under the pointer, so grabbing it confirms
+   you have it before you press. */
+.k-scroller::-webkit-scrollbar-thumb:hover,
+.k-scroller::-webkit-scrollbar-thumb:active {
+  background-color: var(--scroll-thumb-hover);
 }
 
 /* Live mouse grab-pan (useViewportDragScroll): no accidental text selection
@@ -239,14 +327,6 @@ body.is-grab-scrolling * {
   .crossfade {
     transition-duration: 150ms !important;
   }
-  /* The Support hero heartbeat is a 7% scale pulse over 2.8s, gentle enough
-     to keep. Windows reports reduce whenever "Animation effects" is off in
-     Accessibility settings, which is common on desktops; without this
-     exception the icon just sits still. */
-  .k-support__heroicon {
-    animation-duration: 2.8s !important;
-    animation-iteration-count: infinite !important;
-  }
   /* The hold-to-confirm fill is progress feedback, not decoration: flattening
      it makes the button read "done" 650ms before the action actually fires. */
   .k-holdbtn--holding .k-holdbtn__fill {
@@ -259,5 +339,43 @@ body.is-grab-scrolling * {
   .k-icon-btn--spin svg {
     animation-duration: 0.8s !important;
     animation-iteration-count: infinite !important;
+  }
+  /* The Support mark keeps drawing attention, without the travel.
+     Windows reports `reduce` whenever "Animation effects" is off, which is a
+     common desktop default rather than a request for stillness — the spinners
+     above already ship on that reasoning. The beat and the ink stay (they
+     scale in place; nothing crosses the screen) and the rings swap their
+     expansion for a plain opacity pulse, the same substitution `.crossfade`
+     above makes: presence without spatial motion. */
+  .k-spark__glyph,
+  .k-spark__ink {
+    animation-duration: 6s !important;
+    animation-iteration-count: infinite !important;
+  }
+  .k-spark__ring {
+    animation-name: konsou-spark-fade !important;
+    animation-duration: 6s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
+
+/* The reduced-motion stand-in for the rings: they appear and fade where they
+   are, at the size they already were, so nothing travels.
+
+   Top level, not inside the query above. The query was never closed, so this
+   block and everything after it were swallowed by it and the stylesheet ended
+   mid-rule; a keyframes list also has no business being scoped to the media
+   query that happens to reference it. */
+@keyframes konsou-spark-fade {
+  0%,
+  58%,
+  100% {
+    opacity: 0;
+  }
+  68% {
+    opacity: 0.6;
+  }
+  84% {
+    opacity: 0;
   }
 }

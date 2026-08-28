@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { SlidersHorizontal } from "lucide-react";
 import { AnimeCover } from "@/components/anime/AnimeCover";
-import { RoomFilters } from "@/components/list/RoomFilters";
 import { RoomHeader } from "@/components/list/RoomHeader";
+import { YearPicker } from "@/components/list/YearPicker";
 import { Button } from "@/components/ui/Button";
-import { Icon } from "@/components/ui/Icon";
+import { FilterMenu } from "@/components/ui/FilterMenu";
+import type { FilterSection } from "@/components/ui/FilterMenu";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useBreakpoint } from "@/hooks/useMediaQuery";
-import { getCoverUrl, preferredTitle } from "@/lib/format";
+import { getCoverUrl, normalizeForSearch, preferredTitle } from "@/lib/format";
 import { collectHashtags, hasHashtag } from "@/lib/hashtags";
 import { useCompletionStore } from "@/lib/store/completionStore";
 import { useListStore } from "@/lib/store/listStore";
@@ -41,6 +43,9 @@ import type { AnimeListEntry, TitleLanguage } from "@/types/list";
 const MIN_TILE = 104;
 const TILE_LABEL_H = 60;
 const GAP = 12;
+/** Row heights for the two ledger renditions (see the view switch). */
+const LEDGER_ROW_H = 72;
+const INDEX_ROW_H = 44;
 
 interface Watch {
   key: string;
@@ -68,6 +73,12 @@ function dayLabel(ms: number): string {
   return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
 }
 
+/** Carries the year too, for the all-years views where a bare day is ambiguous. */
+function fullDayLabel(ms: number): string {
+  const d = new Date(ms);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 /** The live entry's title wins so the room follows the language setting; the
  *  event's own snapshot is what keeps a ghost readable. */
 function watchTitle(
@@ -88,14 +99,21 @@ export function CompletedRoom() {
   const events = useCompletionStore((s) => s.events);
   const loaded = useCompletionStore((s) => s.loaded);
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
+  // The ledger honours the app's rendition setting like every other room, so
+  // the view switch in the header works here too.
+  const view = useSettingsStore((s) => s.defaultView);
   const { isDesktop } = useBreakpoint();
 
   const [showDropped, setShowDropped] = useState(false);
   const [activeTags, setActiveTags] = useState<string[]>([]);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [year, setYear] = useState<number | null>(null);
+  // `null` = nothing chosen yet, which resolves to the newest year; "all" is
+  // the deliberate choice to stop slicing by year at all.
+  const [year, setYear] = useState<number | "all" | null>(null);
+  const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const parentRef = useRef<HTMLDivElement>(null);
   const [paneWidth, setPaneWidth] = useState(600);
+  const query = normalizeForSearch(useDebounce(search, 200));
 
   const goDiscoverSearch = () =>
     navigate("/discover", { replace: true, state: { fromSearchIntent: true } });
@@ -160,15 +178,21 @@ export function CompletedRoom() {
         });
       }
     }
-    const filtered =
+    let filtered =
       effectiveTags.length === 0
         ? out
         : out.filter((w) => {
             const live = map[w.anilistId];
             return live ? effectiveTags.every((t) => hasHashtag(live.notes, t)) : false;
           });
+    // Searching the ledger searches the record, not the collection: a ghost row
+    // for a title you removed is still findable, which is the whole point of
+    // keeping it.
+    if (query) {
+      filtered = filtered.filter((w) => normalizeForSearch(w.title).includes(query));
+    }
     return filtered.sort((a, b) => b.at - a.at);
-  }, [events, map, dropped, showDropped, effectiveTags, titleLanguage]);
+  }, [events, map, dropped, showDropped, effectiveTags, query, titleLanguage]);
 
   /** The index: every year that has anything in it, newest first. */
   const years = useMemo(() => {
@@ -180,24 +204,18 @@ export function CompletedRoom() {
   }, [watches]);
 
   // Open on the most recent year, and never sit on a year the filters emptied.
-  const activeYear =
-    year != null && years.some((y) => y.year === year) ? year : (years[0]?.year ?? null);
+  const showingAll = year === "all";
+  const activeYear = showingAll
+    ? null
+    : typeof year === "number" && years.some((y) => y.year === year)
+      ? year
+      : (years[0]?.year ?? null);
 
+  /** Every watch when showing all years, otherwise just the chosen year's. */
   const shown = useMemo(
-    () => watches.filter((w) => w.year === activeYear),
-    [watches, activeYear],
+    () => (showingAll ? watches : watches.filter((w) => w.year === activeYear)),
+    [watches, activeYear, showingAll],
   );
-
-  /** What this year alone amounts to — the reason a bounded view beats a feed. */
-  const yearCensus = useMemo(() => {
-    let rewatches = 0;
-    let titles = new Set<number>();
-    for (const w of shown) {
-      titles.add(w.anilistId);
-      if (w.rewatchIndex > 0) rewatches++;
-    }
-    return { finished: shown.length, titles: titles.size, rewatches };
-  }, [shown]);
 
   useEffect(() => {
     const el = parentRef.current;
@@ -208,9 +226,18 @@ export function CompletedRoom() {
     return () => ro.disconnect();
   }, []);
 
-  const columns = Math.max(2, Math.floor((paneWidth + GAP) / (MIN_TILE + GAP)));
+  // The wall is a grid of plates; the two ledger renditions are single-column
+  // rows, so the same virtualizer serves all three by varying these two.
+  const isWall = view === "grid";
+  const columns = isWall
+    ? Math.max(2, Math.floor((paneWidth + GAP) / (MIN_TILE + GAP)))
+    : 1;
   const tileWidth = (paneWidth - GAP * (columns - 1)) / columns;
-  const rowHeight = tileWidth * 1.5 + TILE_LABEL_H + GAP;
+  const rowHeight = isWall
+    ? tileWidth * 1.5 + TILE_LABEL_H + GAP
+    : view === "list"
+      ? LEDGER_ROW_H
+      : INDEX_ROW_H;
   const rowCount = Math.ceil(shown.length / columns);
 
   const virtualizer = useVirtualizer({
@@ -221,7 +248,7 @@ export function CompletedRoom() {
   });
   useEffect(() => {
     virtualizer.measure();
-  }, [rowHeight, columns, virtualizer]);
+  }, [rowHeight, columns, view, virtualizer]);
 
   // Changing year starts that year at the top: you asked for a different view,
   // not for the same scroll position in a different year.
@@ -231,44 +258,97 @@ export function CompletedRoom() {
 
   // Coming back from a detail page lands where the reading left off.
   useEffect(() => {
-    setYear(getUiState<number | null>("room.completed.year", null));
+    setYear(getUiState<number | "all" | null>("room.completed.year", null));
   }, []);
-  const pickYear = (y: number) => {
+  const pickYear = (y: number | "all") => {
     setYear(y);
     setUiState("room.completed.year", y);
   };
 
   const filterCount = effectiveTags.length + (showDropped ? 1 : 0);
-  const totalRewatches = useMemo(
-    () => watches.reduce((n, w) => n + (w.rewatchIndex > 0 ? 1 : 0), 0),
-    [watches],
-  );
+
+  const filterSections: FilterSection[] = [
+    ...(dropped.length > 0
+      ? [
+          {
+            kind: "switch" as const,
+            id: "dropped",
+            group: "Also show",
+            label: "Dropped",
+            on: showDropped,
+            count: dropped.length,
+            onToggle: () => setShowDropped((v) => !v),
+          },
+        ]
+      : []),
+    ...(tagFacets.length > 0
+      ? [
+          {
+            kind: "toggles" as const,
+            id: "tags",
+            label: "Tags",
+            options: tagFacets.map((t) => ({ key: t.key, label: t.label, count: t.count })),
+            active: effectiveTags,
+            onToggle: (key: string) =>
+              setActiveTags((prev) =>
+                prev.includes(key) ? prev.filter((t) => t !== key) : [...prev, key],
+              ),
+            onClear: () => setActiveTags([]),
+            searchPlaceholder: `Find one of ${tagFacets.length} tags…`,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="k-page k-page--room k-page--years">
       <RoomHeader
         title="Completed"
-        census={[
-          `${watches.length.toLocaleString()} finished`,
-          totalRewatches > 0 ? `${totalRewatches.toLocaleString()} rewatches` : null,
-          years.length > 0 ? `${years.length} years` : null,
-        ]}
-        purpose="Every watch you have finished, kept by the year you finished it."
+        search={{
+          value: search,
+          onChange: setSearch,
+          open: searchOpen,
+          onOpen: () => setSearchOpen(true),
+          onClose: () => {
+            setSearch("");
+            setSearchOpen(false);
+          },
+          placeholder: "Search everything you have finished",
+        }}
         actions={
-          <button
-            type="button"
-            className={`k-roomhead__filter${filterCount > 0 ? " k-roomhead__filter--on" : ""}`}
-            onClick={() => setFiltersOpen(true)}
-            aria-label={filterCount > 0 ? `Filter, ${filterCount} active` : "Filter"}
-          >
-            <Icon icon={SlidersHorizontal} size={17} />
-            {filterCount > 0 && <span className="k-roomhead__badge">{filterCount}</span>}
-          </button>
+          <>
+            {years.length > 0 && (
+              <YearPicker
+                years={years}
+                active={activeYear}
+                showingAll={showingAll}
+                total={watches.length}
+                onPick={pickYear}
+              />
+            )}
+            <ViewSwitch />
+            {filterSections.length > 0 && (
+              <FilterMenu
+                sections={filterSections}
+                activeCount={filterCount}
+                label="Filter"
+                onClearAll={() => {
+                  setActiveTags([]);
+                  setShowDropped(false);
+                }}
+              />
+            )}
+          </>
         }
       />
 
       {watches.length === 0 ? (
-        effectiveTags.length > 0 ? (
+        query ? (
+          <EmptyState
+            title={`Nothing finished matches “${search.trim()}”`}
+            subtitle="This searches the whole record, including watches of titles you have since removed."
+          />
+        ) : effectiveTags.length > 0 ? (
           <EmptyState
             title="Nothing matches those tags"
             subtitle="Try removing one, or clear the filter to see the whole record."
@@ -291,32 +371,7 @@ export function CompletedRoom() {
         )
       ) : (
         <div className="k-years">
-          {/* The index. On a phone it lies down as a row of year chips: the
-              same list, turned a quarter turn, because a narrow screen has no
-              column to spare. */}
-          <nav className="k-years__index konsou-scroll" aria-label="Choose a year">
-            {years.map((y) => (
-              <button
-                key={y.year}
-                type="button"
-                className={`k-years__year${y.year === activeYear ? " k-years__year--on" : ""}`}
-                aria-current={y.year === activeYear ? "true" : undefined}
-                onClick={() => pickYear(y.year)}
-              >
-                <span className="k-years__num">{y.year}</span>
-                <span className="k-years__count">{y.count}</span>
-              </button>
-            ))}
-          </nav>
-
           <div className="k-years__pane">
-            <p className="k-years__census">
-              {yearCensus.finished} finished
-              {yearCensus.rewatches > 0 && ` · ${yearCensus.rewatches} rewatched`}
-              {yearCensus.titles !== yearCensus.finished &&
-                ` · ${yearCensus.titles} titles`}
-            </p>
-
             <div ref={parentRef} className="k-years__wall konsou-scroll">
               <div
                 className="k-years__inner"
@@ -328,51 +383,128 @@ export function CompletedRoom() {
                   return (
                     <div
                       key={v.key}
-                      className="k-years__row"
+                      className={`k-years__row${isWall ? "" : " k-years__row--flat"}`}
                       style={{
                         transform: `translateY(${v.start}px)`,
-                        gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-                        gap: GAP,
-                        paddingBottom: GAP,
+                        gridTemplateColumns: isWall
+                          ? `repeat(${columns}, minmax(0, 1fr))`
+                          : "1fr",
+                        gap: isWall ? GAP : 0,
+                        paddingBottom: isWall ? GAP : 0,
+                        // A ledger row has to BE the height the virtualizer
+                        // placed it at. Left to size itself it collapses to its
+                        // content and drifts out of step with the offsets, so
+                        // the rows creep apart down a long year.
+                        height: isWall ? undefined : rowHeight,
                       }}
                     >
-                      {row.map((w) => (
-                        <button
-                          key={w.key}
-                          type="button"
-                          className={`k-tile${w.ghost ? " k-tile--ghost" : ""}`}
-                          onClick={() =>
-                            navigate(`/anime/${w.anilistId}`, { replace: true })
-                          }
-                        >
-                          <span className="k-tile__art">
-                            <AnimeCover
-                              src={w.cover}
-                              alt=""
-                              decorative
-                              radius="var(--radius-plate)"
-                            />
-                            {w.rewatchIndex > 0 && (
-                              <span className="k-tile__rewatch">
-                                ×{w.rewatchIndex + 1}
+                      {row.map((w) => {
+                        const open = () =>
+                          navigate(`/anime/${w.anilistId}`, { replace: true });
+
+                        /* Plates: the covers ARE the record, so the wall stays
+                           the default, and the two ledger renditions below are
+                           for the times you are looking something UP. */
+                        if (isWall) {
+                          return (
+                            <button
+                              key={w.key}
+                              type="button"
+                              className={`k-tile${w.ghost ? " k-tile--ghost" : ""}`}
+                              onClick={open}
+                            >
+                              <span className="k-tile__art">
+                                <AnimeCover
+                                  src={w.cover}
+                                  alt=""
+                                  decorative
+                                  radius="var(--plate-radius)"
+                                />
+                                {w.rewatchIndex > 0 && (
+                                  <span className="k-tile__rewatch">
+                                    ×{w.rewatchIndex + 1}
+                                  </span>
+                                )}
+                                {w.kind === "dropped" && (
+                                  <span className="k-tile__dropped">Dropped</span>
+                                )}
                               </span>
+                              <span className="k-tile__date">
+                                {w.estimated && (
+                                  <span className="k-tile__approx" aria-hidden>
+                                    ~
+                                  </span>
+                                )}
+                                {dayLabel(w.at)}
+                                {w.ghost && <span className="k-tile__gone"> · removed</span>}
+                              </span>
+                              <span className="k-tile__title">{w.title}</span>
+                            </button>
+                          );
+                        }
+
+                        /* Index: one ruled line each — the densest way to scan
+                           a few thousand finished watches for a single name. */
+                        if (view === "compact") {
+                          return (
+                            <button
+                              key={w.key}
+                              type="button"
+                              className={`k-ledge k-ledge--index${w.ghost ? " k-ledge--ghost" : ""}`}
+                              onClick={open}
+                            >
+                              <span className="k-ledge__date">
+                                {w.estimated && <span aria-hidden>~</span>}
+                                {showingAll ? fullDayLabel(w.at) : dayLabel(w.at)}
+                              </span>
+                              <span className="k-ledge__title">{w.title}</span>
+                              {w.rewatchIndex > 0 && (
+                                <span className="k-ledge__tag">×{w.rewatchIndex + 1}</span>
+                              )}
+                              {w.kind === "dropped" && (
+                                <span className="k-ledge__tag k-ledge__tag--dropped">
+                                  Dropped
+                                </span>
+                              )}
+                            </button>
+                          );
+                        }
+
+                        /* Ledger: the accession row — plate, name, date. */
+                        return (
+                          <button
+                            key={w.key}
+                            type="button"
+                            className={`k-ledge${w.ghost ? " k-ledge--ghost" : ""}`}
+                            onClick={open}
+                          >
+                            <span className="k-ledge__cover">
+                              <AnimeCover
+                                src={w.cover}
+                                alt=""
+                                decorative
+                                radius="var(--plate-radius)"
+                              />
+                            </span>
+                            <span className="k-ledge__main">
+                              <span className="k-ledge__title">{w.title}</span>
+                              <span className="k-ledge__meta">
+                                {w.estimated && <span aria-hidden>~</span>}
+                                {showingAll ? fullDayLabel(w.at) : dayLabel(w.at)}
+                                {w.ghost && <span className="k-ledge__gone">removed</span>}
+                              </span>
+                            </span>
+                            {w.rewatchIndex > 0 && (
+                              <span className="k-ledge__tag">×{w.rewatchIndex + 1}</span>
                             )}
                             {w.kind === "dropped" && (
-                              <span className="k-tile__dropped">Dropped</span>
-                            )}
-                          </span>
-                          <span className="k-tile__date">
-                            {w.estimated && (
-                              <span className="k-tile__approx" aria-hidden>
-                                ~
+                              <span className="k-ledge__tag k-ledge__tag--dropped">
+                                Dropped
                               </span>
                             )}
-                            {dayLabel(w.at)}
-                            {w.ghost && <span className="k-tile__gone"> · removed</span>}
-                          </span>
-                          <span className="k-tile__title">{w.title}</span>
-                        </button>
-                      ))}
+                          </button>
+                        );
+                      })}
                     </div>
                   );
                 })}
@@ -381,27 +513,6 @@ export function CompletedRoom() {
           </div>
         </div>
       )}
-
-      <RoomFilters
-        open={filtersOpen}
-        onClose={() => setFiltersOpen(false)}
-        // The year index is the sort; there is nothing left for a sort control
-        // to say that picking a year does not already say.
-        sorts={[]}
-        activeSort=""
-        onSort={() => {}}
-        tags={tagFacets}
-        activeTags={effectiveTags}
-        onToggleTag={(key) =>
-          setActiveTags((prev) =>
-            prev.includes(key) ? prev.filter((t) => t !== key) : [...prev, key],
-          )
-        }
-        onClearTags={() => setActiveTags([])}
-        droppedCount={dropped.length}
-        showDropped={showDropped}
-        onToggleDropped={() => setShowDropped((v) => !v)}
-      />
     </div>
   );
 }

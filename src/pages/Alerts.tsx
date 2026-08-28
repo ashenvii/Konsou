@@ -32,7 +32,7 @@ import type { AlertBucket, KonsouNotification } from "@/types/notification";
 const BUCKET_ORDER: { id: AlertBucket; label: string; tone: string }[] = [
   { id: "airing_now", label: "Airing Now", tone: "var(--color-status-watching)" },
   { id: "announced", label: "Upcoming", tone: "var(--color-status-plan_to_watch)" },
-  { id: "already_aired", label: "Already Aired", tone: "var(--color-text-tertiary)" },
+  { id: "already_aired", label: "Already Aired", tone: "var(--ink-label)" },
 ];
 
 const REL_LABEL: Record<string, string> = {
@@ -253,7 +253,7 @@ function AlertCard({ n, bucket, tone, variant }: AlertCardProps) {
             <Icon
               icon={altStatus === "watching" ? Play : BookmarkPlus}
               size={20}
-              color="var(--color-text-secondary)"
+              color="var(--ink-meta)"
               fill={altStatus === "watching"}
             />
             {altStatus === "watching" ? "Add to Watching" : "Add to Plan to watch"}
@@ -266,7 +266,7 @@ function AlertCard({ n, bucket, tone, variant }: AlertCardProps) {
               setMenuOpen(false);
             }}
           >
-            <Icon icon={EyeOff} size={20} color="var(--color-text-secondary)" />
+            <Icon icon={EyeOff} size={20} color="var(--ink-meta)" />
             Not interested
           </button>
           <button
@@ -277,7 +277,7 @@ function AlertCard({ n, bucket, tone, variant }: AlertCardProps) {
               setMenuOpen(false);
             }}
           >
-            <Icon icon={X} size={20} color="var(--color-text-tertiary)" />
+            <Icon icon={X} size={20} color="var(--ink-label)" />
             Dismiss
           </button>
         </div>

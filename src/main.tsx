@@ -9,10 +9,9 @@ import { useListStore } from "@/lib/store/listStore";
 import { useNotificationStore } from "@/lib/store/notificationStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useStorageStore } from "@/lib/store/storageStore";
-import { openExternal } from "@/lib/openExternal";
 import { syncManager } from "@/lib/sync/syncManager";
 import { autoCheckAndDownload } from "@/lib/updater";
-import { toast } from "@/lib/store/toastStore";
+import { useUpdateStore } from "@/lib/store/updateStore";
 
 import "./styles/tokens.css";
 import "./styles/global.css";
@@ -22,12 +21,15 @@ import "./styles/list.css";
 import "./styles/layout.css";
 import "./styles/pages.css";
 import "./styles/perf.css";
+import { applyMotionMode } from "@/lib/motion";
 
-// Backdrop blurs and glow shadows re-rasterize every scroll frame; that paint
-// cost stole frames from the scroll on desktop WebViews too, not just phone
-// GPUs. perf.css swaps them for static, near-identical equivalents under this
-// class — applied everywhere now, since the win outweighs the flourish.
-document.documentElement.classList.add("perf-lite");
+// Backdrop blurs and glow shadows re-rasterize every scroll frame, and perf.css
+// swaps them for static equivalents under `perf-lite`. That class used to be
+// added here unconditionally, which meant no device could ever run the full
+// build. It is a resolved tier now: this is the device-sniffed default, applied
+// synchronously so the first paint is already correct, and settingsStore.load()
+// replaces it a moment later with whatever the person actually chose.
+applyMotionMode("system");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,25 +87,18 @@ async function bootstrap(): Promise<void> {
         .runScheduledScan(useListStore.getState().entries);
     scheduledScan();
     setInterval(scheduledScan, 15 * 60 * 1000);
-    // Check for app updates silently. Desktop downloads in the background and
-    // offers the install; Android can only be told (no updater plugin there),
-    // so it links to the release instead.
+    // Check for app updates silently. Desktop downloads in the background so
+    // the install is instant when it is asked for; Android can only be told
+    // (no updater plugin there), so What's New links to the release instead.
+    //
+    // This used to raise a `duration: 0` toast, which is a banner sitting over
+    // the app until it is dismissed and then gone for good — the two outcomes
+    // were "in your way" and "never mentioned again". The fact goes into the
+    // store now, the What's New door wears a dot for as long as it is true, and
+    // the sentence opens itself a rationed few times (see updateStore).
     void autoCheckAndDownload((update) => {
-      if (update.kind === "install") {
-        toast.action({
-          message: `Konsou v${update.version} downloaded, ready to install`,
-          actionLabel: "Update Now",
-          duration: 0, // persist until dismissed
-          onAction: () => void update.install(),
-        });
-      } else {
-        toast.action({
-          message: `Konsou v${update.version} is available`,
-          actionLabel: "View",
-          duration: 0,
-          onAction: () => void openExternal(update.releaseUrl),
-        });
-      }
+      useUpdateStore.getState().found(update);
+      useUpdateStore.getState().nudge();
     });
   } catch (err) {
     console.error("Konsou bootstrap failed:", err);

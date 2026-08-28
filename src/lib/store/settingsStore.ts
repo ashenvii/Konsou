@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { getDb } from "@/lib/db";
+import { applyMotionMode, normalizeMotionMode } from "@/lib/motion";
 import type {
-  AccentName,
   ColorTheme,
+  MotionMode,
   SidebarMode,
   SortSpec,
   TitleLanguage,
@@ -11,25 +12,38 @@ import type {
 
 const RECENT_SEARCH_LIMIT = 5;
 
-/** Each color theme ships with a paired accent. Picking a theme auto-sets it;
- *  the user can override the accent independently afterwards. */
-/* Each plate ships with a paired ink of record. (Keys are the legacy theme ids;
- * the labels — Herbarium, Nocturne, … — live in the Settings UI.) */
-export const THEME_DEFAULT_ACCENTS: Record<ColorTheme, AccentName> = {
-  ember:    "coral",   // Herbarium     → Vermilion
-  void:     "violet",  // Nocturne      → Ink Violet
-  ocean:    "amber",   // Cyanotype     → Ochre
-  forest:   "aqua",    // Foxing        → Verdigris
-  midnight: "coral",   // Slate         → Vermilion
-  crimson:  "amber",   // Oxblood       → Ochre
-  paper:    "crimson", // Vellum        → Oxblood
-  ash:      "cobalt",  // Specimen Card → Prussian
+/**
+ * The eight Field Guide plates and the two Night Market prototypes all
+ * collapse onto the two real worlds. Anyone who has run this app before has
+ * one of the old keys sitting in their settings row, so it is migrated on
+ * read rather than left to fall through to a default and silently reset a
+ * choice they made.
+ */
+const THEME_MIGRATION: Record<string, ColorTheme> = {
+  market: "lantern",
+  marketneon: "neon",
+  // The Field Guide plates split by temperature: the warm grounds land on
+  // Lantern, the cold ones on Neon. Nobody gets moved to a world that reads
+  // nothing like the one they picked.
+  ember: "lantern",
+  forest: "lantern",
+  crimson: "lantern",
+  paper: "lantern",
+  ash: "lantern",
+  void: "neon",
+  ocean: "neon",
+  midnight: "neon",
 };
+
+function normalizeColorTheme(raw: string | undefined): ColorTheme {
+  if (raw === "lantern" || raw === "neon") return raw;
+  if (raw && raw in THEME_MIGRATION) return THEME_MIGRATION[raw];
+  return "lantern";
+}
 
 interface SettingsState {
   loaded: boolean;
   colorTheme: ColorTheme;
-  accent: AccentName;
   defaultView: ViewMode;
   defaultSort: SortSpec;
   titleLanguage: TitleLanguage;
@@ -38,10 +52,10 @@ interface SettingsState {
   recentSearches: string[];
   devMode: boolean;
   sidebarMode: SidebarMode;
+  motionMode: MotionMode;
 
   load: () => Promise<void>;
   setColorTheme: (t: ColorTheme) => void;
-  setAccent: (a: AccentName) => void;
   setDefaultView: (v: ViewMode) => void;
   setDefaultSort: (s: SortSpec) => void;
   setTitleLanguage: (l: TitleLanguage) => void;
@@ -51,14 +65,11 @@ interface SettingsState {
   removeRecentSearch: (q: string) => void;
   enableDevMode: () => void;
   setSidebarMode: (m: SidebarMode) => void;
+  setMotionMode: (m: MotionMode) => void;
 }
 
 function applyColorTheme(theme: ColorTheme): void {
   document.documentElement.setAttribute("data-theme", theme);
-}
-
-function applyAccent(accent: AccentName): void {
-  document.documentElement.setAttribute("data-accent", accent);
 }
 
 /** Validate the persisted sidebar mode, migrating the old "always-open" value. */
@@ -79,8 +90,7 @@ async function persist(key: string, value: string): Promise<void> {
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   loaded: false,
-  colorTheme: "ember",
-  accent: "coral",
+  colorTheme: "lantern",
   defaultView: "grid",
   defaultSort: { key: "updated", order: "desc" },
   titleLanguage: "romaji",
@@ -89,19 +99,20 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   recentSearches: [],
   devMode: false,
   sidebarMode: "hover",
+  motionMode: "system",
 
   load: async () => {
     const db = await getDb();
     const s = await db.settingsGetAll();
-    const colorTheme = (s.color_theme as ColorTheme) ?? "ember";
-    const accent =
-      (s.accent as AccentName) ?? THEME_DEFAULT_ACCENTS[colorTheme];
+    const colorTheme = normalizeColorTheme(s.color_theme);
     applyColorTheme(colorTheme);
-    applyAccent(accent);
+    /* main.tsx already stamped the device-sniffed default so the first
+       paint was right; this is where a stored choice takes over. */
+    const motionMode = normalizeMotionMode(s.motion_mode);
+    applyMotionMode(motionMode);
     set({
       loaded: true,
       colorTheme,
-      accent,
       defaultView: (s.default_view as ViewMode) ?? "grid",
       defaultSort: s.default_sort
         ? (JSON.parse(s.default_sort) as SortSpec)
@@ -113,24 +124,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         ? (JSON.parse(s.recent_searches) as string[])
         : [],
       sidebarMode: normalizeSidebarMode(s.sidebar_mode),
+      motionMode,
     });
   },
 
-  /** Picking a theme updates both the surface palette and resets accent to
-   *  the theme's paired default. User can override accent afterwards. */
+  /** A world owns its own two hues, so picking one is the whole choice. */
   setColorTheme: (colorTheme) => {
-    const accent = THEME_DEFAULT_ACCENTS[colorTheme];
     applyColorTheme(colorTheme);
-    applyAccent(accent);
-    set({ colorTheme, accent });
+    set({ colorTheme });
     void persist("color_theme", colorTheme);
-    void persist("accent", accent);
-  },
-
-  setAccent: (accent) => {
-    applyAccent(accent);
-    set({ accent });
-    void persist("accent", accent);
   },
   setDefaultView: (defaultView) => {
     set({ defaultView });
@@ -171,5 +173,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setSidebarMode: (sidebarMode) => {
     set({ sidebarMode });
     void persist("sidebar_mode", sidebarMode);
+  },
+  /* Stamped on the document as well as stored, because every rule that
+     reads it is CSS. See lib/motion.ts for what each value means. */
+  setMotionMode: (motionMode) => {
+    applyMotionMode(motionMode);
+    set({ motionMode });
+    void persist("motion_mode", motionMode);
   },
 }));

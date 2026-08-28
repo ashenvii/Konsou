@@ -29,10 +29,10 @@ interface TextProps {
 }
 
 const colorVar: Record<TextColor, string> = {
-  primary: "var(--color-text-primary)",
-  secondary: "var(--color-text-secondary)",
-  tertiary: "var(--color-text-tertiary)",
-  accent: "var(--color-accent)",
+  primary: "var(--ink-body)",
+  secondary: "var(--ink-meta)",
+  tertiary: "var(--ink-label)",
+  accent: "var(--filed-ink)",
   // Fixed light for text sitting over cover art / a dark scrim on any theme.
   onCover: "oklch(100% 0 0 / 96%)",
 };

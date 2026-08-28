@@ -41,16 +41,10 @@ export function AppShell() {
     return () => cleanup?.();
   }, []);
 
-  // Landing on a new page always starts with full chrome; the folded state is a
-  // property of the reading session, not of the app. Reset the header offset and
-  // elevation so a fresh page never inherits the last one's shift or shadow.
+  // Landing on a new page always starts with full chrome; the scrolled state
+  // is a property of the reading session, not of the app.
   useEffect(() => {
-    const root = document.documentElement;
-    delete root.dataset.chromeHidden;
-    delete root.dataset.pageScrolled;
-    // The scroll-away offset lives inline on the header (see useScrollElevation);
-    // clear it so a fresh page starts with the header fully shown.
-    document.querySelector<HTMLElement>(".k-header")?.style.removeProperty("margin-top");
+    delete document.documentElement.dataset.pageScrolled;
   }, [location.pathname]);
 
   // Desktop: keys 1–5 jump to each tab (ignored while typing in a field).

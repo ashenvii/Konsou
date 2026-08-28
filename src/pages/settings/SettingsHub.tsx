@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, CircleUserRound, Database, Heart, Info, Palette } from "lucide-react";
+import { Bell, CircleUserRound, Database, Heart, Info, Palette, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { HubRow } from "@/components/settings/parts";
 import { useAuthStore } from "@/lib/store/authStore";
@@ -24,13 +24,6 @@ export function SettingsHub() {
             onClick={() => go("account")}
           />
           <HubRow
-            icon={Heart}
-            label="Support Konsou"
-            hint="Free, no ads. Your support keeps it that way."
-            accent
-            onClick={() => go("support")}
-          />
-          <HubRow
             icon={Palette}
             label="Appearance"
             hint="Theme, accent, titles, layout"
@@ -50,6 +43,20 @@ export function SettingsHub() {
             hint="Sequel radar alerts"
             tone="notifications"
             onClick={() => go("notifications")}
+          />
+          <HubRow
+            icon={Sparkles}
+            label="What's new"
+            hint="Release notes for this version"
+            tone="whatsnew"
+            onClick={() => go("whats-new")}
+          />
+          <HubRow
+            icon={Heart}
+            label="Support Konsou"
+            hint="Free, no ads. Ways to help keep it that way."
+            tone="support"
+            onClick={() => go("support")}
           />
           <HubRow
             icon={Info}

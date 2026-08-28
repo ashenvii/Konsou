@@ -7,7 +7,9 @@ import reactHooks from "eslint-plugin-react-hooks";
 export default [
   // devdata/ and the root generator are Node-only dev tooling (they run under
   // `node`, use console/process), not part of the browser app the rules target.
-  { ignores: ["dist", "src-tauri", "node_modules", "devdata", "gen-stress-list.mjs"] },
+  // reference/ is a third-party clone kept for design/code study (see
+  // .gitignore) — someone else's codebase, not Konsou's, never linted here.
+  { ignores: ["dist", "src-tauri", "node_modules", "devdata", "gen-stress-list.mjs", "reference"] },
   js.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],

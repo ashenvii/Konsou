@@ -14,10 +14,15 @@ export function HoldButton({
   onConfirm,
   children,
   className,
+  ariaLabel,
 }: {
   onConfirm: () => void;
   children: ReactNode;
   className?: string;
+  /** Required when `children` is a bare glyph. In the verb rail this button is
+   *  an icon and nothing else, which leaves it with no accessible name at all
+   *  unless one is passed here. */
+  ariaLabel?: string;
 }) {
   const [holding, setHolding] = useState(false);
   const timer = useRef(0);
@@ -50,6 +55,8 @@ export function HoldButton({
       type="button"
       className={`k-holdbtn${holding ? " k-holdbtn--holding" : ""}${className ? ` ${className}` : ""}`}
       style={{ "--hold-ms": `${HOLD_MS}ms` } as CSSProperties}
+      aria-label={ariaLabel}
+      title={ariaLabel}
       onPointerDown={start}
       onPointerUp={cancel}
       onPointerLeave={cancel}

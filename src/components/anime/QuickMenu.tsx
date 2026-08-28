@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, Minus, Plus, Star, Trash2 } from "lucide-react";
-import { AnimeCover } from "./AnimeCover";
+import { ChevronRight, Star, Trash2 } from "lucide-react";
 import { EpisodeCounter } from "./EpisodeCounter";
+import { QuickHead } from "./QuickHead";
+import { ScorePicker } from "./ScorePicker";
+import { StatusSheet } from "./StatusSheet";
 import { TagPicker } from "./TagPicker";
+import { nextAct } from "./nextAct";
 import { statusMeta } from "./statusMeta";
-import { BottomSheet } from "@/components/ui/BottomSheet";
-import { Icon } from "@/components/ui/Icon";
-import { getCoverUrl, preferredTitle } from "@/lib/format";
+import { ItemSurface } from "@/components/ui/ItemSurface";
+import { Verb, VerbRule } from "@/components/ui/Verb";
+import { preferredTitle } from "@/lib/format";
 import { collectHashtags } from "@/lib/hashtags";
 import { getDisabledStatuses } from "@/lib/statusValidation";
 import { useListStore } from "@/lib/store/listStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
-import { LIST_STATUSES } from "@/types/list";
+import type { ListStatus } from "@/types/list";
 
 interface QuickMenuProps {
   open: boolean;
@@ -19,41 +22,70 @@ interface QuickMenuProps {
   anilistId: number;
   /** Opens the full detail page. Omitted when already there. */
   onOpenDetails?: () => void;
+  /** What the popover points at on a desktop width. Null falls back to a
+   *  centred panel, which is right when the opener is a whole page section. */
+  anchor?: HTMLElement | null;
 }
 
 /**
- * One sheet for everything you do to a tracked entry.
+ * One surface for everything you do to a tracked entry.
  *
- * Before this, the same job was split across four sheets that looked and
- * behaved differently depending on where you tapped: StatusSheet for status,
- * EditSheet (reachable only through a control labelled "Edit score") for score,
- * dates and notes, FranchiseSheet for franchise members. Same intent, three
- * different answers, which is why the app felt like several iterations stitched
- * together.
+ * Split in two, along the line DIM draws through its own item popup: the panel
+ * is what you READ, the rail beside it is what you PRESS.
  *
- * Everything here commits immediately, so there is no Save button to hunt for
- * and no draft to lose: status, episodes and score are single taps that the
- * store already guards and can undo. The note is the one exception, because
- * writing prose one keystroke at a time would mean a write per character; it
- * commits when the field loses focus or the sheet closes.
+ * What that removed. This was six stacked sections — Progress, Status, Score,
+ * Tags, Notes, Remove — each announced by its own heading, all at the same
+ * weight, opened by a 56px thumbnail that was the same object weight as the
+ * sections under it. Five headings of chrome before a single fact, and no start
+ * to the panel at all. Status was a six-button grid of icons and words; score
+ * was a minus, a value, a plus and a Clear to set a number with ten possible
+ * values, where reaching 9 from nothing took five taps.
+ *
+ * Now: a head that is the thing you opened at the size that says so, the one
+ * control that is genuinely a reading AND an act (the episode counter), and the
+ * one field that cannot be a mark because it holds prose. Status and score
+ * became peer surfaces opened from the rail, which is what they always were —
+ * pickers — rather than grids inlined into a panel that had to be scrolled past
+ * to reach the notes.
+ *
+ * Everything still commits immediately, so there is no Save button to hunt for
+ * and no draft to lose. The note is the one exception, because writing prose one
+ * keystroke at a time would mean a write per character; it commits when the
+ * field loses focus or the surface closes.
  */
-export function QuickMenu({ open, onClose, anilistId, onOpenDetails }: QuickMenuProps) {
+export function QuickMenu({
+  open,
+  onClose,
+  anilistId,
+  onOpenDetails,
+  anchor = null,
+}: QuickMenuProps) {
   const entry = useListStore((s) => s.map[anilistId]);
   const entries = useListStore((s) => s.entries);
   const patch = useListStore((s) => s.patch);
   const updateStatus = useListStore((s) => s.updateStatus);
-  const setScore = useListStore((s) => s.setScore);
+  const incrementEpisodes = useListStore((s) => s.incrementEpisodes);
   const remove = useListStore((s) => s.remove);
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
 
   const [noteDraft, setNoteDraft] = useState("");
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [scoreOpen, setScoreOpen] = useState(false);
 
-  // Re-seed whenever the sheet opens or the stored note changes underneath us
+  // Re-seed whenever the surface opens or the stored note changes underneath us
   // (a tag added through the picker commits and flows back through here).
   useEffect(() => {
     if (!open) return;
     setNoteDraft(entry?.notes ?? "");
   }, [open, anilistId, entry?.notes]);
+
+  // Closing the parent has to close what it opened. These are peer overlays
+  // rather than children, so nothing else takes them down with it.
+  useEffect(() => {
+    if (open) return;
+    setStatusOpen(false);
+    setScoreOpen(false);
+  }, [open]);
 
   const tagVocabulary = useMemo(
     () => collectHashtags(entries.map((e) => e.notes)),
@@ -70,8 +102,8 @@ export function QuickMenu({ open, onClose, anilistId, onOpenDetails }: QuickMenu
     },
     titleLanguage,
   );
-  const cover = getCoverUrl({ medium: entry.cover_url ?? undefined });
-  const disabled = getDisabledStatuses(entry.airing_status);
+  const meta = statusMeta(entry.status);
+  const act = nextAct(entry, title);
 
   const commitNote = (text: string) => {
     const value = text.trim() || null;
@@ -88,83 +120,103 @@ export function QuickMenu({ open, onClose, anilistId, onOpenDetails }: QuickMenu
     onClose();
   };
 
-  const score = entry.score;
-  const stepScore = (delta: number) => {
-    const next = Math.max(1, Math.min(10, (score ?? 5) + delta));
-    void setScore(anilistId, next);
+  const onAct = () => {
+    if (act.kind === "log") void incrementEpisodes(anilistId, 1);
+    else if (act.status) void updateStatus(anilistId, act.status);
   };
 
+  const onStatusPick = (status: ListStatus) => {
+    void updateStatus(anilistId, status);
+    setStatusOpen(false);
+  };
+
+  /* The rail. Four marks, in the order you reach for them: out of here, what
+     it is, what you thought of it, and — below a rule, because a press down
+     there must not feel like the same gesture as a press up top — gone. */
+  const verbs = (
+    <>
+      {onOpenDetails && (
+        <Verb
+          icon={ChevronRight}
+          label={`Open the full page for ${title}`}
+          onClick={() => {
+            commitNote(noteDraft);
+            onOpenDetails();
+          }}
+        />
+      )}
+      <Verb
+        icon={meta.icon}
+        label={`Change status, currently ${meta.label}`}
+        onClick={() => setStatusOpen(true)}
+        tint={meta.color}
+      />
+      <Verb
+        icon={Star}
+        label={entry.score != null ? `Score, currently ${entry.score}` : "Set a score"}
+        onClick={() => setScoreOpen(true)}
+        active={entry.score != null}
+        tint={entry.score != null ? "var(--color-warning)" : undefined}
+      />
+      <VerbRule />
+      <Verb
+        icon={Trash2}
+        label={`Remove ${title} from your list`}
+        onClick={() => {
+          remove(anilistId);
+          onClose();
+        }}
+        danger
+      />
+    </>
+  );
+
   return (
-    // The sheet's title feeds the dialog's aria-label; an empty one leaves the
-    // modal with no accessible name. The heading inside is the cover + title
-    // block, so name it after the entry rather than showing a second header.
-    <BottomSheet open={open} onClose={close} title="" ariaLabel={title} dock modeless>
-      <div className="k-qm">
-        <header className="k-qm__head">
-          <div className="k-qm__cover">
-            <AnimeCover src={cover} alt={title} decorative radius="var(--radius-md)" />
-          </div>
-          <div className="k-qm__ident">
-            <h2 className="k-qm__title">{title}</h2>
-            {onOpenDetails && (
-              <button
-                type="button"
-                className="k-qm__details"
-                onClick={() => {
-                  commitNote(noteDraft);
-                  onOpenDetails();
-                }}
-              >
-                Open details
-                <Icon icon={ChevronRight} size={14} />
-              </button>
-            )}
-          </div>
-        </header>
-
-        <section className="k-qm__section">
-          <h3 className="k-qm__label">Progress</h3>
-          <EpisodeCounter
-            anilistId={anilistId}
-            watched={entry.episodes_watched}
-            total={entry.total_episodes}
-            size="lg"
+    <>
+      {/* Through ItemSurface, like every other quick menu: the popover-or-sheet
+          call belongs in one place, and this component used to be the one
+          exception that reached past it straight to a docked sheet. That is why
+          the two quick menus behaved differently on the same screen width. */}
+      <ItemSurface
+        anchor={anchor}
+        open={open}
+        onClose={close}
+        ariaLabel={title}
+        verbs={verbs}
+      >
+        <div className="k-qm">
+          <QuickHead
+            cover={entry.cover_url}
+            // The status word, not the act's own kicker: the head says what
+            // this IS, the seal says what to do about it. They agree most of
+            // the time and diverge exactly where it matters — a paused show
+            // reads "Paused" with a resume seal.
+            kicker={meta.label}
+            title={title}
+            state={`${entry.episodes_watched} / ${entry.total_episodes ?? "?"} episodes`}
+            seal={{
+              icon: act.icon,
+              label: act.label,
+              onAct,
+              fill: act.fill,
+              disabled: act.disabled,
+            }}
           />
-        </section>
 
-        <section className="k-qm__section">
-          <h3 className="k-qm__label">Status</h3>
-          <div className="k-status-grid">
-            {LIST_STATUSES.map((s) => {
-              const meta = statusMeta(s);
-              const active = s === entry.status;
-              const off = disabled.has(s);
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  className={`k-status-option${active ? " k-status-option--active" : ""}${off ? " k-status-option--disabled" : ""}`}
-                  style={active ? { borderColor: meta.color } : undefined}
-                  disabled={off}
-                  aria-disabled={off}
-                  aria-pressed={active}
-                  title={off ? "Not available — hasn't aired yet" : undefined}
-                  onClick={() => {
-                    if (off) return;
-                    void updateStatus(anilistId, s);
-                  }}
-                >
-                  <Icon
-                    icon={meta.icon}
-                    size={24}
-                    weight={active ? "fill" : "regular"}
-                    color={meta.color}
-                  />
-                  <span>{meta.label}</span>
-                </button>
-              );
-            })}
-          </div>
+          {/* The one control in the body, because it is the one thing here that
+              is a reading and an act at the same time: the seal above logs the
+              next episode, this is for saying which episode you are actually
+              on. */}
+          <section className="k-qm__section">
+            <EpisodeCounter
+              anilistId={anilistId}
+              watched={entry.episodes_watched}
+              total={entry.total_episodes}
+              airedCeiling={entry.aired_episodes}
+              size="lg"
+            />
+          </section>
+
           {entry.status === "not_interested" && (
             <p className="k-status-lockhint">
               Muted, so it won't show on your list or in schedules and alerts.
@@ -172,85 +224,44 @@ export function QuickMenu({ open, onClose, anilistId, onOpenDetails }: QuickMenu
               un-mute.
             </p>
           )}
-        </section>
 
-        <section className="k-qm__section">
-          {/* Score stays optional: adding a title never requires rating it. */}
-          <h3 className="k-qm__label">Score</h3>
-          <div className="k-qm__score">
-            <button
-              type="button"
-              className="k-qm__stepbtn"
-              onClick={() => stepScore(-1)}
-              disabled={score == null || score <= 1}
-              aria-label="Lower score"
-            >
-              <Icon icon={Minus} size={18} />
-            </button>
-            <span className="k-qm__scoreval">
-              <Icon
-                icon={Star}
-                size={16}
-                weight={score != null ? "fill" : "regular"}
-                color="var(--color-warning)"
-              />
-              {score ?? "—"}
-            </span>
-            <button
-              type="button"
-              className="k-qm__stepbtn"
-              onClick={() => stepScore(1)}
-              disabled={score != null && score >= 10}
-              aria-label="Raise score"
-            >
-              <Icon icon={Plus} size={18} />
-            </button>
-            {score != null && (
-              <button
-                type="button"
-                className="k-qm__clear"
-                onClick={() => void setScore(anilistId, null)}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        </section>
+          {/* Tags and notes are one field, because a tag IS a hashtag in the
+              note — that is how the app stores it (collectHashtags). They were
+              two sections with two headings over one string. */}
+          <section className="k-qm__section">
+            <h3 className="k-qm__label">Notes</h3>
+            <TagPicker
+              note={noteDraft}
+              onChange={onTagsChange}
+              suggestions={tagVocabulary}
+            />
+            <textarea
+              className="k-qm__notes"
+              rows={3}
+              value={noteDraft}
+              placeholder="Why you stopped, who recommended it, where to pick up…"
+              onChange={(e) => setNoteDraft(e.target.value)}
+              onBlur={() => commitNote(noteDraft)}
+              aria-label="Notes"
+            />
+          </section>
+        </div>
+      </ItemSurface>
 
-        <section className="k-qm__section">
-          <h3 className="k-qm__label">Tags</h3>
-          <TagPicker
-            note={noteDraft}
-            onChange={onTagsChange}
-            suggestions={tagVocabulary}
-          />
-        </section>
-
-        <section className="k-qm__section">
-          <h3 className="k-qm__label">Notes</h3>
-          <textarea
-            className="k-qm__notes"
-            rows={3}
-            value={noteDraft}
-            placeholder="Why you stopped, who recommended it, where to pick up…"
-            onChange={(e) => setNoteDraft(e.target.value)}
-            onBlur={() => commitNote(noteDraft)}
-            aria-label="Notes"
-          />
-        </section>
-
-        <button
-          type="button"
-          className="k-status-remove"
-          onClick={() => {
-            remove(anilistId);
-            onClose();
-          }}
-        >
-          <Icon icon={Trash2} size={18} color="var(--color-error)" />
-          Remove from list
-        </button>
-      </div>
-    </BottomSheet>
+      <StatusSheet
+        open={statusOpen}
+        onClose={() => setStatusOpen(false)}
+        title={title}
+        current={entry.status}
+        onPick={onStatusPick}
+        disabledStatuses={getDisabledStatuses(entry.airing_status)}
+      />
+      <ScorePicker
+        open={scoreOpen}
+        onClose={() => setScoreOpen(false)}
+        anilistId={anilistId}
+        title={title}
+      />
+    </>
   );
 }

@@ -36,72 +36,76 @@
 .k-shell--desktop[data-sidebar="expanded"] .k-shell__content {
   margin-left: var(--sidebar-width);
 }
-/* Backstage (settings): no sidebar is rendered, so no offset. The whole
-   surface becomes one centered, focused column instead of a page hugging the
-   left edge where the sidebar used to be. 768px = the 720px settings column
-   plus its 24px content padding per side. */
+/* Backstage (settings): no sidebar is rendered, so no offset.
+   The content column is NOT capped here. Capping the shell meant the settings
+   scroller was itself only 768px wide, so its scrollbar ran down the middle of
+   the window a few pixels from the text — a second bar beside the content that
+   made an already narrow column feel narrower. The cap belongs on the content
+   inside the scroller (see .k-settings), which puts the bar back on the window
+   edge where a scrollbar belongs. */
 .k-shell--desktop.k-shell--backstage .k-shell__content {
   margin-left: 0;
-  max-width: 768px;
-  margin-inline: auto;
 }
 
-/* ── Bottom navigation (mobile) — floating pill ─────────────── */
+/* ── Bottom navigation (mobile) — the tab ledger ─────────────────
+   DESIGN.md's own spec for this surface: a flat mount surface with a top
+   keyline, not a floating boxed pill with a border and a glow-shadow — the
+   previous implementation was still the pre-Field-Guide "pills and bloom"
+   device this app committed to retiring everywhere else. Icons sit directly
+   on the app's own chrome instead of competing with a second box drawn on
+   top of it. */
 .k-bottomnav {
   flex: none;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  /* transparent outer shell — just provides the spacing below content */
-  padding: var(--space-2) var(--space-4);
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-2));
-  background: transparent;
+  background: var(--chrome-bg);
+  border-top: 1px solid var(--chrome-line-strong);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
-/* The actual floating pill */
 .k-bottomnav__rail {
+  position: relative;
   display: flex;
   align-items: stretch;
-  height: 60px;
-  padding: var(--space-1);
-  gap: 0;
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-strong);
-  box-shadow:
-    0 8px 32px oklch(0% 0 0 / 40%),
-    0 2px 8px oklch(0% 0 0 / 20%);
-  /* No backdrop-filter here: --color-surface is opaque in every theme, so a
-     blur behind it is invisible — but the WebView still re-blurs the scrolling
-     content under the pill every frame, which tanks scroll on Android. */
+  height: 56px;
   width: 100%;
-  max-width: 360px;
+}
+/* The one moving mark: a filled pill that slides to whichever tab is
+   current, sized and positioned purely from the item count and index (both
+   set inline as custom properties) so it never has to be redrawn per item.
+   It stays one element for that reason; only its shape changed from the
+   2px underscore this used to be. Insets keep it clear of the rail's own
+   keyline instead of sitting flush against it. */
+.k-bottomnav__underscore {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: calc(var(--active-index, 0) * (100% / var(--nav-count, 5)));
+  width: calc(100% / var(--nav-count, 5));
+  /* The horizontal inset cannot come from left/width (both are driven by the
+     index maths above), so it comes from a transform-free border-box trim. */
+  border-inline: 6px solid transparent;
+  background: var(--navpill-bg);
+  background-clip: padding-box;
+  border-radius: var(--navpill-radius);
+  transition: left var(--duration-normal) var(--ease-out);
+  pointer-events: none;
 }
 .k-bottomnav__item {
   position: relative;
+  /* Above the pill, which is an absolutely positioned sibling earlier in the
+     DOM and would otherwise paint over the icon and label. */
+  z-index: 1;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-tertiary);
+  color: var(--ink-label);
   transition: color var(--duration-fast) var(--ease-out);
   min-width: 0;
 }
-/* Active reads as a marked tab: a vermilion rule across the top edge (shape)
-   plus the ink. Not a filled pill. */
+/* The active item sits ON the pill, so it takes the ink-on-fill. */
 .k-bottomnav__item[aria-current="page"] {
-  color: var(--color-accent-glow);
-}
-.k-bottomnav__item[aria-current="page"]::before {
-  content: "";
-  position: absolute;
-  top: 3px;
-  left: 24%;
-  right: 24%;
-  height: 3px;
-  background: var(--color-accent);
+  color: var(--navpill-ink);
 }
 .k-bottomnav__icon {
   position: relative;
@@ -110,7 +114,7 @@
   flex: none;
 }
 .k-bottomnav__label {
-  font-family: var(--font-mono);
+  font-family: var(--w-face-mono);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -130,7 +134,7 @@
   place-items: center;
   border-radius: var(--radius-full);
   background: var(--color-error);
-  color: #fff;
+  color: var(--ink-on-semantic);
   font-size: var(--text-2xs);
   font-weight: 700;
   line-height: 1;
@@ -151,8 +155,8 @@
   width: var(--sidebar-width-collapsed); /* 64px */
   display: flex;
   flex-direction: column;
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
+  background: var(--chrome-bg);
+  border-right: 1px solid var(--chrome-line);
   padding: var(--space-4) 0;
   overflow: hidden;
   /* CLOSING: JS fires the state change; CSS just animates it fast */
@@ -183,8 +187,8 @@
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow:
-    0 0 0 1px color-mix(in oklch, var(--color-accent) 30%, transparent),
-    0 2px 8px color-mix(in oklch, var(--color-accent) 20%, transparent);
+    0 0 0 1px color-mix(in oklch, var(--w-signage) 30%, transparent),
+    0 2px 8px color-mix(in oklch, var(--w-signage) 20%, transparent);
 }
 .k-sidebar__logomark img {
   width: 100%;
@@ -192,12 +196,12 @@
   display: block;
 }
 .k-sidebar__wordmark {
-  font-family: var(--font-serif);
+  font-family: var(--w-face-display);
   font-size: 19px;
   font-style: italic;
-  font-weight: 500;
+  font-weight: var(--w-weight-title);
   letter-spacing: normal;
-  color: var(--color-text-primary);
+  color: var(--ink-body);
   white-space: nowrap;
   flex: none;
   max-width: 0;
@@ -227,14 +231,40 @@
   flex: 1;
   padding: 0 var(--space-2); /* 8px each side */
 }
+/* The app's own pages (What's new, Support, About, Reload) as a second group
+   of the same rail items, ruled off from the library's destinations above.
+   They take the primary nav's whole vocabulary — collapse, expand, hover,
+   active notch — because they are the same control, only pointing at the app
+   instead of at the collection. */
+.k-sidebar__nav--utility {
+  flex: none;
+  padding-top: var(--space-2);
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--chrome-line);
+}
+/* Quieter than the library's rail: these are where you go occasionally, not
+   the four places the app is actually for. */
+/* The utility rail reads quieter than the destinations above it, and it does
+   that with ink rather than with height. 38px undercut the touch floor on the
+   Windows and Linux laptops that ship with a touchscreen, and the 2px gap
+   between items leaves no room to buy it back with hit-slop. */
+.k-sidebar__nav--utility .k-sidebar__item {
+  color: var(--ink-label);
+}
+.k-sidebar__nav--utility .k-sidebar__item:hover {
+  color: var(--ink-body);
+}
+.k-sidebar__nav--utility .k-sidebar__item--active {
+  color: var(--navpill-ink);
+}
 .k-sidebar__item {
   position: relative;
   display: flex;
   align-items: center;
   height: 44px;
   border-radius: var(--radius-md);
-  color: var(--color-text-secondary);
-  font-family: var(--font-mono);
+  color: var(--ink-meta);
+  font-family: var(--w-face-mono);
   font-size: var(--text-xs);
   font-weight: 700;
   text-transform: uppercase;
@@ -253,23 +283,19 @@
     padding 220ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 .k-sidebar__item:hover {
-  background: var(--color-surface-2);
-  color: var(--color-text-primary);
+  background: var(--plate-bg-2);
+  color: var(--ink-body);
 }
 /* Active reads as a filed tab: a vermilion notch on the rail edge (shape, so
    it survives color-blindness) plus the ink and a faint mount tint. Not a pill. */
+/* The active tab is a filled pill in the world's highlight hue, not the
+   3px notch this used to carry. One device, shared with the bottom nav
+   through --navpill-*: turning the mark down is one token, not two rules
+   in two files that drift. */
 .k-sidebar__item--active {
-  background: var(--color-accent-dim);
-  color: var(--color-accent-glow);
-}
-.k-sidebar__item--active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 7px;
-  bottom: 7px;
-  width: 3px;
-  background: var(--color-accent);
+  background: var(--navpill-bg);
+  border-radius: var(--navpill-radius);
+  color: var(--navpill-ink);
 }
 .k-sidebar__icon {
   position: relative;
@@ -303,16 +329,21 @@
 /* Footer */
 .k-sidebar__footer {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: var(--space-2);
   padding: var(--space-3) var(--space-2) var(--space-3) 18px;
   margin-top: var(--space-2);
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--chrome-line);
   overflow: hidden;
   transition: padding 150ms cubic-bezier(0.4, 0, 1, 1);
 }
 .k-sidebar[data-expanded="true"] .k-sidebar__footer {
   padding: var(--space-3);
   transition: padding 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.k-sidebar__accountrow {
+  display: flex;
+  align-items: center;
 }
 .k-sidebar__account {
   display: flex;
@@ -326,24 +357,25 @@
   transition: background-color var(--duration-fast) var(--ease-out);
 }
 .k-sidebar__account:hover {
-  background: var(--color-surface-2);
+  background: var(--plate-bg-2);
 }
 .k-sidebar__account--active {
-  background: var(--color-accent-dim);
+  background: var(--navpill-bg);
+  border-radius: var(--navpill-radius);
 }
 .k-sidebar__account--active .k-sidebar__accountname {
-  color: var(--color-accent-glow);
+  color: var(--navpill-ink);
 }
 .k-sidebar__avatar {
   width: 28px;
   height: 28px;
   flex: none;
   border-radius: var(--radius-full);
-  background: var(--color-surface-3);
+  background: var(--plate-bg-3);
   display: grid;
   place-items: center;
   overflow: hidden;
-  color: var(--color-text-secondary);
+  color: var(--ink-meta);
   font-size: var(--text-xs);
   font-weight: 600;
 }
@@ -378,7 +410,7 @@
 /* Mono, matching the nav labels above it: the account row is another item on
    the index edge, and it was the one entry set in the reading serif. */
 .k-sidebar__accountname {
-  font-family: var(--font-mono);
+  font-family: var(--w-face-mono);
   font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: var(--track-label);
@@ -389,14 +421,14 @@
 }
 .k-sidebar__accountmeta {
   font-size: var(--text-2xs);
-  color: var(--color-text-tertiary);
+  color: var(--ink-label);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .k-sidebar__version {
   font-size: var(--text-2xs);
-  color: var(--color-text-tertiary);
+  color: var(--ink-label);
   flex: none;
   white-space: nowrap;
   max-width: 0;
@@ -418,23 +450,22 @@
    Identity (logo + wordmark) on the left, account avatar on the right. Present
    on every primary page; on desktop it spans the content column to the right of
    the sidebar. Height uses --topbar-height plus the safe-area strip. */
+/* Just the wordmark now — identity + account used to share this bar and it
+   scroll-folded to reclaim space, but that fought with a page's own pinned
+   header for the same inch and duplicated what the page below it already
+   said. Account moved to BottomNav; this stays a thin, always-visible strip. */
 .k-header {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
   height: calc(var(--topbar-height) + env(safe-area-inset-top, 0px));
   padding: env(safe-area-inset-top, 0px) var(--space-4) 0;
-  background: var(--color-base);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--page-bg);
+  border-bottom: 1px solid var(--chrome-line);
   position: relative;
   z-index: 5;
-  /* Scroll-away offset. useScrollElevation writes margin-top INLINE on this
-     element (0 → -56px) as you scroll, so the header reclaims its space on the
-     way down and returns on the way up. It's set on the header alone — never a
-     root custom property, which would recompute the whole document every frame.
-     No transition on margin-top: the value already tracks scroll frame-by-frame,
-     which stays smooth even under reduced motion. Only the shadow eases. */
   transition: box-shadow var(--duration-normal) var(--ease-out);
 }
 @media (min-width: 1024px) {
@@ -449,12 +480,6 @@ html[data-page-scrolled="true"] .k-header {
   box-shadow: 0 14px 28px -16px oklch(0% 0 0 / 75%);
 }
 
-.k-header__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 /* ── Search pill (DIM-style; lives on the Discover page) ───── */
 .k-hsearch {
   display: flex;
@@ -465,11 +490,11 @@ html[data-page-scrolled="true"] .k-header {
   height: 40px;
   padding: 0 var(--space-3);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-strong);
+  background: var(--chrome-bg);
+  border: 1px solid var(--chrome-line-strong);
 }
 .k-hsearch:focus-within {
-  border-color: var(--color-accent);
+  border-color: var(--field-ring);
 }
 .k-hsearch__input {
   flex: 1;
@@ -477,13 +502,13 @@ html[data-page-scrolled="true"] .k-header {
   height: 100%;
   background: transparent;
   border: none;
-  color: var(--color-text-primary);
-  font-family: var(--font-mono);
+  color: var(--ink-body);
+  font-family: var(--w-face-mono);
   font-size: var(--text-sm);
 }
 .k-hsearch__input::placeholder {
-  /* Same rule as .k-ovsearch__input: tertiary placeholders fail AA. */
-  color: var(--color-text-secondary);
+  /* Tertiary placeholders fail AA. */
+  color: var(--ink-meta);
 }
 .k-hsearch__input::-webkit-search-cancel-button {
   display: none;
@@ -496,7 +521,7 @@ html[data-page-scrolled="true"] .k-header {
   width: 22px;
   height: 22px;
   border-radius: var(--radius-full);
-  color: var(--color-text-tertiary);
+  color: var(--ink-label);
   cursor: pointer;
 }
 /* Keep the glyph small but give the finger a full 44px target. */
@@ -506,43 +531,169 @@ html[data-page-scrolled="true"] .k-header {
   inset: -11px;
 }
 .k-hsearch__clear:hover {
-  color: var(--color-text-primary);
-}
-.k-header__logo {
-  border-radius: var(--radius-sm);
+  color: var(--ink-body);
 }
 .k-header__word {
-  font-family: var(--font-serif);
-  font-size: var(--text-xl);
+  font-family: var(--w-face-display);
+  font-size: var(--text-base);
   font-style: italic;
-  font-weight: 500;
+  font-weight: var(--w-weight-title);
   letter-spacing: normal;
-  color: var(--color-text-primary);
+  color: var(--ink-meta);
 }
-.k-header__avatar {
+
+/* The app's own pages, as marks beside the wordmark — the phone's answer to
+   the desktop rail's second nav group. Icon-only by necessity at this height,
+   so every one carries its name for a screen reader and a long-press tooltip. */
+.k-header__utility {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: calc(-1 * var(--space-2));
+}
+.k-header__util {
+  position: relative;
   display: grid;
   place-items: center;
   width: 34px;
   height: 34px;
-  flex: none;
+  border-radius: var(--plate-radius);
+  color: var(--ink-label);
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+/* The mark stays 34px so the header keeps its height and these read as the
+   quiet utilities they are; the target does not. 34 + 5 either side = 44. The
+   slop falls into the 2px gap between them and the header's own padding, so
+   they still cannot be hit by mistake, and it costs no layout. */
+.k-header__util::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+}
+.k-header__util:hover {
+  color: var(--ink-body);
+  background: var(--plate-bg-2);
+}
+.k-header__util--active {
+  color: var(--live-ink);
+}
+
+/* Account, folded into the tab bar as a peer of the other destinations. Same
+   avatar treatment the old header button wore, sized to sit among 22px
+   glyphs instead of standing out as a bigger control. */
+.k-bottomnav__avatar {
+  width: 22px;
+  height: 22px;
   overflow: hidden;
   border-radius: var(--radius-full);
-  background: var(--color-surface-3);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm);
+  background: var(--plate-bg-3);
+  border: var(--w-line-width) solid var(--chrome-line);
+  color: inherit;
+  font-family: var(--w-face-mono);
+  font-size: 10px;
   font-weight: 700;
-  cursor: pointer;
-  transition: border-color 150ms var(--ease-out), transform 100ms var(--ease-out);
 }
-.k-header__avatar img {
+.k-bottomnav__avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-.k-header__avatar:hover {
-  border-color: var(--color-accent);
+.k-bottomnav__item[aria-current="page"] .k-bottomnav__avatar {
+  border-color: var(--navpill-ink);
 }
-.k-header__avatar:active {
-  transform: scale(0.92);
+
+/* ── The update mark ─────────────────────────────────────────
+   One dot on the What's New door, and a sentence that opens itself a rationed
+   few times. See UpdateMark.tsx for why the permanent part is the dot and the
+   rationed part is the sentence.
+
+   The dot rides the icon well in both shells, so it needs the well to be a
+   positioning context — `.k-sidebar__icon` and `.k-header__util` both get
+   `position: relative` below rather than the dot getting a shell-specific
+   parent. */
+.k-sidebar__icon,
+.k-header__util {
+  position: relative;
+}
+.k-updot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: var(--radius-full);
+  background: var(--live-ink);
+  /* A ring in the shell's own colour, so the dot reads as sitting ON the glyph
+     rather than merging into whatever it happens to overlap. */
+  box-shadow: 0 0 0 2px var(--chrome-bg);
+  pointer-events: none;
+}
+/* It arrives, then holds. Three pulses is enough to catch an eye crossing the
+   rail; an indefinite pulse is a thing you learn to stop seeing, and it costs
+   a compositor layer for the life of the session. Reduced motion gets the end
+   state immediately (global.css). */
+.k-updot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--live-ink);
+  animation: konsou-updot 1.6s var(--ease-out) 3;
+}
+@keyframes konsou-updot {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+/* The notice. Positioned off the door it belongs to rather than floated at a
+   screen corner, because the whole point is to say WHERE to go, and a message
+   in the corner of the screen says only that something happened. */
+.k-upnote {
+  position: absolute;
+  z-index: 40;
+  width: max-content;
+  max-width: 15rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--w-signage-line);
+  border-radius: var(--plate-radius);
+  background: var(--chrome-bg);
+  box-shadow: var(--overlay-shadow);
+  color: var(--ink-body);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  text-align: left;
+  white-space: normal;
+  pointer-events: none;
+  animation: konsou-upnote 220ms var(--ease-out);
+}
+/* On the desktop rail it comes out sideways, because the rail's own neighbours
+   are above and below it. */
+.k-upnote--rail {
+  top: 50%;
+  left: calc(100% + 12px);
+  transform: translateY(-50%);
+}
+/* On the phone strip the neighbours are left and right, so it drops. Pinned to
+   the right edge: this mark sits in a row of three at the end of the strip, and
+   anchoring the panel's left edge to the icon would put most of it off-screen. */
+.k-upnote--strip {
+  top: calc(100% + 10px);
+  right: 0;
+}
+@keyframes konsou-upnote {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

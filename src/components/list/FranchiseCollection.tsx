@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { MutableRefObject, PointerEvent as ReactPointerEvent } from "react";
+import type { MutableRefObject } from "react";
 import { useNavigate } from "react-router-dom";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { FranchiseCard } from "@/components/anime/FranchiseCard";
@@ -7,6 +7,7 @@ import { FranchiseSheet } from "@/components/anime/FranchiseSheet";
 import { HeroCard } from "@/components/anime/HeroBinge";
 import { QueueCard } from "@/components/anime/QueueSlider";
 import { useBreakpoint } from "@/hooks/useMediaQuery";
+import { usePressAnchor } from "@/hooks/usePressAnchor";
 import { getUiState, setUiState } from "@/lib/uiState";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
 import type { ViewMode } from "@/types/list";
@@ -23,14 +24,14 @@ interface FranchiseCollectionProps {
   view: ViewMode;
   /** The room's themed card, used while `view` is "grid"; list/compact win. */
   variant?: RoomVariant;
-  /** Up Next only: rerank a card one slot either way. */
-  onMove?: (rootId: number, dir: -1 | 1) => void;
-  /** Plan room: open the watch-order number picker for a card. */
-  onNumber?: (rootId: number) => void;
+  /** Plan room: open the watch-order number picker for a numbered card. */
+  onNumber?: (rootId: number, anchor: HTMLElement) => void;
   /** rootId -> stamped number, for the cards that carry one. */
   planNumbers?: Map<number, number>;
-  /** Press-and-hold a card to append it to the watch order. */
-  onQuickAdd?: (rootId: number) => boolean;
+  /** Plan room: put an unnumbered card into the watch order. */
+  onAdd?: (rootId: number) => void;
+  /** The watch order is at its cap, so an empty slot can say so. */
+  orderFull?: boolean;
   dimmedIds?: Set<number> | null;
   showStatus?: boolean;
   /** Save/restore the scroll offset under this key across unmounts. */
@@ -58,10 +59,10 @@ export function FranchiseCollection({
   groups,
   view,
   variant: roomVariant,
-  onMove,
   onNumber,
   planNumbers,
-  onQuickAdd,
+  onAdd,
+  orderFull,
   dimmedIds,
   restoreKey,
   jumpRef,
@@ -79,18 +80,21 @@ export function FranchiseCollection({
   );
   const [activeRootId, setActiveRootId] = useState<number | null>(null);
   // The popover points at the card you clicked, so the collection has to know
-  // WHICH element that was. Recording it on the way down (capture) keeps every
-  // card's onOpen signature as it is — they only ever knew their rootId.
-  const pressedCard = useRef<HTMLElement | null>(null);
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const notePressedCard = (e: ReactPointerEvent) => {
-    const el = e.target as HTMLElement | null;
-    pressedCard.current =
-      (el?.closest(".k-qcard, .k-card, .k-hero") as HTMLElement | null) ?? null;
-  };
+  // WHICH element that was. See usePressAnchor: recorded on the way down, in
+  // capture, so every card's onOpen signature stays as it is.
+  const {
+    anchor: anchorEl,
+    opener: openerEl,
+    notePress: notePressedCard,
+    commitAnchor,
+  } = usePressAnchor(".k-qcard, .k-card, .k-hero", ".k-row__poster, .k-compact__thumb");
   const openCard = (rootId: number) => {
-    setAnchorEl(pressedCard.current);
-    setActiveRootId(rootId);
+    // Clicking the card whose panel is already open closes it, the way a
+    // menu button toggles its own menu. The popover deliberately ignores
+    // clicks on its anchor (it can't know whether the caller means "toggle"
+    // or "switch to the next card"), so the decision lives here.
+    setActiveRootId((prev) => (prev === rootId ? null : rootId));
+    commitAnchor();
   };
 
   useEffect(() => {
@@ -175,19 +179,17 @@ export function FranchiseCollection({
   const dimOf = (rootId: number) =>
     dimmedIds && !dimmedIds.has(rootId) ? 0.2 : 1;
 
-  const renderGroup = (group: FranchiseGroup, index: number) => {
+  const renderGroup = (group: FranchiseGroup) => {
     if (variant === "hero") return <HeroCard group={group} onOpen={openCard} />;
     if (variant === "poster") {
       return (
         <QueueCard
           group={group}
           onOpen={openCard}
-          onMove={onMove}
-          canMoveEarlier={index > 0}
-          canMoveLater={index < groups.length - 1}
           onNumber={onNumber}
           planNumber={planNumbers?.get(group.rootId) ?? null}
-          onQuickAdd={onQuickAdd}
+          onAdd={onAdd}
+          orderFull={orderFull}
         />
       );
     }
@@ -226,7 +228,7 @@ export function FranchiseCollection({
                     paddingBottom: gap,
                   }}
                 >
-                  {rowGroups.map((group, i) => (
+                  {rowGroups.map((group) => (
                     <div
                       key={group.rootId}
                       style={{
@@ -234,7 +236,7 @@ export function FranchiseCollection({
                         transition: "opacity 200ms var(--ease-out)",
                       }}
                     >
-                      {renderGroup(group, startIdx + i)}
+                      {renderGroup(group)}
                     </div>
                   ))}
                 </div>
@@ -252,7 +254,7 @@ export function FranchiseCollection({
                   transition: "opacity 200ms var(--ease-out)",
                 }}
               >
-                {renderGroup(group, vRow.index)}
+                {renderGroup(group)}
               </div>
             );
           })}
@@ -262,6 +264,7 @@ export function FranchiseCollection({
       <FranchiseSheet
         group={activeGroup}
         anchor={anchorEl}
+        opener={openerEl}
         open={activeGroup != null}
         onClose={() => setActiveRootId(null)}
         onNavigate={(id) => navigate(`/anime/${id}`, { replace: true })}

@@ -91,7 +91,14 @@ function pickDisplayEntry(
 
   // All completed or dropped: revert to the franchise root artwork (S1).
   const root = sortedEntries.find((e) => e.anilist_id === rootId);
-  return root ?? sortedEntries[0];
+  if (root) return root;
+  // The root itself was never tracked (never added, or muted not_interested,
+  // which drops it from this bucket the same way). Falling back to array
+  // position 0 would revert to whichever member was added to the list
+  // first — the exact added_at-over-story-order bug this function's own
+  // tie-break exists to prevent, just reintroduced in this one branch. Use
+  // the same story-rank pick `earliest` already applies above.
+  return earliest(() => true) ?? sortedEntries[0];
 }
 
 /**

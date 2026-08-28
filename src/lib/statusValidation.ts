@@ -38,6 +38,6 @@ export function statusBlockReason(
 ): string | null {
   if (!getDisabledStatuses(airingStatus).has(status)) return null;
   return airingStatus === "NOT_YET_RELEASED"
-    ? "This show hasn't aired yet — plan it, put it on hold, or drop it."
+    ? "This show hasn't aired yet. Plan it, put it on hold, or drop it."
     : "This show is still airing, so it can't be marked completed.";
 }

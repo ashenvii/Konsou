@@ -53,7 +53,22 @@ function HeroCardImpl({
   const watched = displayEntry.episodes_watched;
   const total = displayEntry.total_episodes;
   const pct = total ? Math.min(100, (watched / total) * 100) : 0;
-  const atMax = total != null && watched >= total;
+  // The real ceiling right now, not the eventual one — a still-airing show
+  // can't be logged past what exists yet (setEpisodes already enforces this;
+  // this keeps the button's disabled state agreeing with what a tap would do).
+  const ceiling =
+    displayEntry.airing_status === "RELEASING" && displayEntry.aired_episodes != null
+      ? Math.min(total ?? displayEntry.aired_episodes, displayEntry.aired_episodes)
+      : total;
+  const atMax = ceiling != null && watched >= ceiling;
+  // Airing-limited (nothing new yet) stays clickable so the tap can say why —
+  // through setEpisodes' own toast, since incrementEpisodes already routes
+  // there. A genuinely finished run (atMax for its own total, not the aired
+  // ceiling) has nothing left to explain and stays truly disabled.
+  const airingLimited =
+    atMax &&
+    displayEntry.aired_episodes != null &&
+    (total == null || displayEntry.aired_episodes < total);
   // A paused entry sits quieter and offers to resume: +Ep would be a dead
   // button, since episode tracking only applies while actively watching.
   const paused = displayEntry.status === "on_hold";
@@ -126,9 +141,11 @@ function HeroCardImpl({
           <button
             type="button"
             className="k-hero__log"
-            disabled={atMax}
+            disabled={atMax && !airingLimited}
+            aria-disabled={airingLimited || undefined}
             onClick={() => void incrementEpisodes(displayEntry.anilist_id, 1)}
-            aria-label={`Log episode ${watched + 1} of ${title}`}
+            aria-label={airingLimited ? `${title}: no new episode yet` : `Log episode ${watched + 1} of ${title}`}
+            title={airingLimited ? "No new episode yet" : undefined}
           >
             <Icon icon={Plus} size={20} />
             <span>Ep</span>

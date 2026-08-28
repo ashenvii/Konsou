@@ -1,0 +1,3048 @@
+/* ═══════════════════════════════════════════════════════════════════
+   NIGHT MARKET — My List.
+
+   Reads the library (src/styles/tokens.css) and states no colour of its
+   own. It used to carry a private copy of every hue, corner and ground,
+   transcribed from the approved comp, which made the comp the app's
+   ruler instead of its look: this page could not inherit a decision made
+   anywhere else, and nothing else could inherit one made here.
+
+   What is still local: geometry. The sizes below were measured off
+   `docs/mockups/overview_skin_wide.html` element by element, and the
+   type isolation on `.nm` exists only to make those measurements match a
+   bare 16px document. Both come out when the page stops being a
+   one-screen composition and starts carrying the real list.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.nm {
+  /* Completed is not a third hue: it is the same signage register as
+     Planned, spent with far more presence (a real wash instead of a
+     hairline). Derived here rather than in the library because "the
+     finished register" is this page's own idea, not the app's. */
+  --nm-done-bg: color-mix(in oklab, var(--w-highlight) 20%, var(--plate-bg));
+
+  font-family: var(--w-face-display);
+  color: var(--ink-body);
+  /* THE GUTTER LIVES ON THE STAGE, NOT HERE. It used to sit on this element,
+     which put every page layer inside it: .nm__room hangs off .nm__stage, so
+     the grain, the wash and the pointer's own mousemove target all stopped at
+     the padding and left a dead band around the whole page. Moving the gutter
+     down one level makes the stage the full painted area, the room covers it
+     at inset:0, and the light reaches the edge of the window.
+
+     Fluid, not stepped: the comp's 40/24/64 was one fixed value for every
+     width above the phone line. Scaled continuously between the phone break
+     (719) and a generous desktop ceiling instead, so the gutter grows with
+     the window rather than jumping at a breakpoint or sitting fixed while
+     the stage floats in a widening sea of padding beyond it. */
+  min-height: 100%;
+
+  /* No type isolation. This block used to re-state `16px / normal` so the
+     page would measure exactly as the comp's bare document did; every size
+     in this file was transcribed against that ruler. They are all on the
+     app's ramp now, so the page inherits like every other surface. */
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+
+  /* THE PAGE SCROLLS. It never did: `.nm` sat at `overflow: visible` inside
+     `.k-shell__content`, which is `overflow: hidden`, so anything past the
+     window height was clipped rather than reachable. Nothing noticed because
+     every block on the page was capped to a comp-sized sample. */
+  flex: 1;
+  min-height: 0;
+}
+.nm *,
+.nm *::before,
+.nm *::after {
+  box-sizing: border-box;
+}
+/* Controls do not inherit type by default, and the app's own button rules
+   must not reach in either. Everything here states its own.
+
+   Wrapped in :where() so this whole reset carries ZERO specificity. As a
+   plain `.nm button` it scored 0,1,1 and beat every single-class rule in
+   this file, silently stripping .nm-act's and .nm-order__row's padding,
+   which measured as a 37px button rendering at 21px. A reset must never
+   outrank the rules it exists to support. */
+:where(.nm button) {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+.nm__stage {
+  /* See .nm above: the gutter belongs here so that the page's own layers can
+     paint across it instead of stopping at its inner edge.
+
+     The side gutter is named because moving it here made this box the
+     containing block for anything absolutely positioned in the page, and
+     `left: 0` on such a child now means the window edge rather than the
+     content edge. Anything that wants to line up with the content insets by
+     this instead of restating the clamp. */
+  --nm-gutter-x: clamp(14px, 2.57px + 1.59vw, 28px);
+  padding: clamp(20px, 16.74px + 0.45vw, 24px) var(--nm-gutter-x)
+    clamp(40px, 20.41px + 2.72vw, 64px);
+  min-height: 100%;
+  /* No max-width. The comp's stage was a fixed 1080px document that centered
+     itself in dead side-gutters at any wider window — even after raising
+     that ceiling, a cap is still a cap, and it read as a narrower, boxed-in
+     composition next to Discover, which has no cap at all: `.k-page` fills
+     whatever width `.k-shell__content` gives it, gutter only. This stage
+     does the same, so My List reads with the same presence as every other
+     room instead of sitting inside its own inset document. */
+  position: relative;
+}
+
+/* ── THE ROOM ────────────────────────────────────────────────────
+   The art, the pointer light and the dot grid used to be three layers inside
+   Tonight. They are three layers of the PAGE now, and that one move is what
+   makes Tonight part of the surface instead of a card sitting on it.
+
+   It works because every other block on this page paints an opaque
+   --plate-bg. The room shows through Tonight, which has no plate, and through
+   the ground between the plates, and nowhere else. The dots deliberately do
+   NOT cross a plate: a dot pattern over the cover thumbnails in the Watching
+   strip reads as a screen door.
+
+   Content sits above all three. `:where()` gives that rule zero specificity on
+   purpose, so any child stating its own positioning (the search overlay states
+   `absolute`) still wins, which is the same trap this file already documents
+   for [data-fx]. */
+.nm__room {
+  position: absolute;
+  /* The stage carries the page gutter now, so its padding box IS the whole
+     painted area and inset:0 already reaches the window edge. No bleed
+     needed, and none wanted: a negative inset here would push the room past
+     the scroll container and into its own clip for nothing. */
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* The clip that keeps the wash's blurred edge out of sight. Everything in
+     here is overscanned well past this box on purpose. */
+  overflow: hidden;
+}
+:where(.nm__stage > *) {
+  position: relative;
+  z-index: 1;
+}
+
+/* THE WASH. The show's own art thrown across the top of the page, blurred to
+   a light source rather than a picture.
+
+   IT STOPS. Measured against carrying it to the bottom: colour that reaches
+   the foot of the page stops reading as THIS SHOW'S light and starts reading
+   as a theme, it puts a warm cast under Completed and Planned which are the
+   calm end of the surface, and it makes every scroll position look lit, which
+   removes the reason to have a top-of-page light at all. The height clears
+   Tonight and the Watching strip and then goes out.
+
+   Anchored to the stage, so it scrolls away with the subject it belongs to. */
+.nm__wash {
+  position: absolute;
+  /* Overscan sized to the blur, not to taste. `blur(46px)` spreads its edge
+     transition over roughly two sigma either way, so anything less than about
+     90px of margin leaves the art's own fade inside the visible area and the
+     wash gets a dark rim down both sides. The vertical edges need no such
+     margin: the mask below already holds the top and bottom at transparent
+     well inside the box. */
+  left: -180px;
+  right: -180px;
+  top: -40px;
+  /* Measured, not guessed. On a 1440 desktop the census sits at 0, Tonight
+     runs 42 to 262 and the Watching strip runs 276 to 564. The plateau has to
+     cover Tonight and the tail has to die past the strip, so: 660 tall from
+     -40, full strength to 264, a third of the way out at 448, gone at 620.
+
+     Flat pixels rather than vh. The strip's position is set by content, not by
+     the window, so scaling this with viewport height would drift away from the
+     thing it is supposed to clear. The falloff is soft enough that being fifty
+     pixels out either way is invisible. */
+  height: 700px;
+  background-image: var(--nm-bg-art, none);
+  background-size: cover;
+  background-position: 50% 24%;
+  /* Far dimmer than the in-card cast this replaces, and it has to be: there
+     is no plate-wide scrim over it any more. Only the head keeps a local one,
+     so the ambient level is what every other piece of ink on the page reads
+     against. */
+  filter: blur(46px) saturate(135%) contrast(106%) brightness(0.6);
+  opacity: 0.4;
+  /* IT RISES FROM THE SUBJECT, NOT FROM THE PAGE EDGE. The census line sits at
+     the top of the stage in the faintest ink on the page, and measured against
+     a cover blown to white it read 3.50 on a lit ground, which fails AA. The
+     fix is not to dim the whole wash for one label: the light simply starts
+     below that line, ramping up over the gap and reaching full strength inside
+     Tonight. It also composes better, because the room is then lit by the show
+     rather than by the top of the scroll area.
+
+     On a 1440 desktop, against a 700px box hung at -40, in stage coordinates:
+     clear through the census row (ends y51), full by y140, holding to y355
+     which clears Tonight, a third left at y500, gone at y660 which clears the
+     Watching strip (ends y623).
+
+     These stops are stage-relative, and the stage carries the page gutter, so
+     they move if that gutter changes. Re-measure rather than nudging. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 13%,
+    black 26%,
+    black 56%,
+    oklch(0% 0 0 / 32%) 77%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 13%,
+    black 26%,
+    black 56%,
+    oklch(0% 0 0 / 32%) 77%,
+    transparent 100%
+  );
+}
+/* The subject's own colour, over the art rather than under it, same as the
+   band scrim used to stack them. */
+.nm__wash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    58% 120% at 32% 34%,
+    var(--nm-subject-light, transparent),
+    transparent 74%
+  );
+}
+
+/* THE LAMP. The room brightens where you point. It is only ever MOVED, never
+   redrawn: see usePointerLamp for why that distinction is the whole design.
+   It sits under the grain with the wash, because everything the show emits
+   belongs under the particle layer. */
+.nm__lamp {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 640px;
+  height: 640px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--w-highlight) 22%, transparent),
+    color-mix(in oklab, var(--w-highlight) 8%, transparent) 46%,
+    transparent 72%
+  );
+  opacity: 0;
+  transition: opacity 240ms var(--ease-out);
+  will-change: transform, opacity;
+}
+
+/* THE GRAIN. The room's own material, so it belongs to no show: it runs the
+   full height and never fades with the wash. Lifted out of Tonight, where as
+   a card background-image it painted under every child by definition and any
+   art was always on top of it. */
+.nm__grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--ink-body) 9%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 11px 11px;
+}
+@media (hover: none) {
+  .nm__lamp {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nm__lamp {
+    display: none;
+  }
+}
+/* Phone widths keep the plate, and the plate keeps the art inside it, so the
+   page has no second copy to cast. */
+@media (max-width: 719px) {
+  .nm__wash {
+    display: none;
+  }
+}
+
+/* ── The cursor mechanism (§5a, LOCKED) ──────────────────────────────
+   LINE INVERT: a duplicate of the element's own outline in the OPPOSITE
+   hue, radially masked so only the stretch of line near the cursor is
+   visible. LOCAL by design: the border recolours where the mouse is, not
+   all at once. Do not "simplify" this to a plain border-color — the mask
+   is what makes it local (that was round 15's regression).
+
+   mask-repeat MUST be no-repeat and the mask painting area MUST be grown
+   past the element's own box. Default mask-repeat is `repeat` and default
+   mask-size is the border box, so anything painted OUTSIDE the box (an
+   outer box-shadow, i.e. the glow) gets masked by the neighbouring tile,
+   whose bright spot is a whole element-width away.
+
+   mask-clip:no-clip is the one that actually mattered. It defaults to
+   border-box, which clips the element's ENTIRE painted output to its own
+   box — an outer box-shadow included — before the mask image is even
+   consulted. That is why the border invert rendered for a dozen rounds
+   while the glow never did once: the border paints inside the box, the
+   glow paints outside it. */
+/* Zero specificity on purpose. As a plain `.nm [data-fx]` this scored
+   0,2,0 and beat every single-class rule in this file — it forced the
+   search overlay from `absolute` back to `relative`, so the panel took 92px
+   of layout and shoved the page down instead of floating over it. A host
+   that states its own positioning must always win; one that says nothing
+   still gets `relative` so the pseudos have a box to hang on. */
+:where(.nm [data-fx]) {
+  position: relative;
+}
+.nm [data-fx]::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  border-radius: inherit;
+  border: 3px solid var(--fx-opp, transparent);
+  -webkit-mask-clip: no-clip;
+  mask-clip: no-clip;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: calc(100% + 120px) calc(100% + 120px);
+  mask-size: calc(100% + 120px) calc(100% + 120px);
+  -webkit-mask-position: -60px -60px;
+  mask-position: -60px -60px;
+  -webkit-mask-image: radial-gradient(
+    150px circle at calc(var(--gx, -9999px) + 60px) calc(var(--gy, -9999px) + 60px),
+    black 0%,
+    black 55%,
+    transparent 82%
+  );
+  mask-image: radial-gradient(
+    150px circle at calc(var(--gx, -9999px) + 60px) calc(var(--gy, -9999px) + 60px),
+    black 0%,
+    black 55%,
+    transparent 82%
+  );
+}
+/* Background wash in the element's OWN hue, same cursor position. */
+.nm [data-fx]::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    230px circle at var(--gx, -999px) var(--gy, -999px),
+    var(--fx-own, transparent) 0%,
+    transparent 88%
+  );
+  opacity: 0.11;
+}
+@media (hover: none) {
+  .nm [data-fx]::after,
+  .nm [data-fx]::before {
+    display: none;
+  }
+}
+
+/* ── Census + search ─────────────────────────────────────────────── */
+.nm-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* A fixed line so the row does not change height when the field takes
+     the census line's place — the whole point of the reveal is that
+     nothing below it moves. */
+  min-height: 26px;
+  margin-bottom: 14px;
+}
+.nm-census {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0;
+}
+.nm-top__find {
+  margin-left: auto;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-meta);
+  cursor: pointer;
+  padding: 4px 2px;
+  transition: color 120ms ease-out;
+}
+.nm-top__find:hover {
+  color: var(--w-highlight);
+}
+.nm-find {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border-bottom: 1px solid var(--w-signage-line);
+  padding-bottom: 4px;
+}
+.nm-find:focus-within {
+  border-bottom-color: var(--w-highlight);
+}
+.nm-find__input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-sm);
+  color: var(--ink-body);
+}
+.nm-find__input::placeholder {
+  color: var(--ink-label);
+}
+.nm-find__close {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-sm);
+  color: var(--ink-meta);
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.nm-find__close:hover {
+  color: var(--ink-body);
+}
+
+/* Results overlay. Signage-bordered like every other membership surface,
+   and floated over the page rather than inserted into it so the layout
+   underneath never shifts. */
+.nm-results {
+  position: absolute;
+  z-index: 5;
+  /* The page gutter, not zero. The stage carries the gutter now and is this
+     panel's containing block, so `left: 0` would hang it out over the window
+     edge while the field it belongs to stayed inset. */
+  left: var(--nm-gutter-x);
+  right: var(--nm-gutter-x);
+  max-height: 60vh;
+  overflow-y: auto;
+  border: 2px solid var(--w-signage-line);
+  border-radius: var(--plate-radius);
+  background: var(--plate-bg);
+  box-shadow: 0 18px 40px oklch(0% 0 0 / 55%);
+  --fx-opp: var(--w-highlight);
+  --fx-own: var(--w-signage);
+}
+.nm-results__count {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-label);
+  margin: 0;
+  padding: 10px 14px 6px;
+}
+.nm-results__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 14px;
+  cursor: pointer;
+  text-align: left;
+  border-top: 1px solid var(--w-line);
+}
+.nm-results__row:hover {
+  background: var(--plate-bg-2);
+}
+.nm-results__cov {
+  display: block;
+  width: 24px;
+  height: 34px;
+  flex: none;
+  border-radius: calc(var(--plate-radius) * 0.6);
+  background: var(--plate-bg-2);
+  overflow: hidden;
+}
+.nm-results__cov img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.nm-results__tt {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The room the title is filed in, which is also directions to it. */
+.nm-results__status {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--w-highlight);
+  flex: none;
+}
+.nm-results__none {
+  padding: 16px 14px;
+}
+.nm-results__none p {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-meta);
+  margin: 0 0 12px;
+}
+
+/* Announced, never drawn. */
+.nm-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Tonight ─────────────────────────────────────────────────────── */
+.nm-tonight {
+  /* Its own container, so the band lays itself out from ITS width rather than
+     the window's — the same rule the watching billboard follows. */
+  container-type: inline-size;
+  container-name: tonight;
+  /* Stated here, not left to the shared [data-fx] rule: the layers below hang
+     off this box and need it to be the containing block.
+
+     NO overflow:hidden. It has been added twice now and it breaks the same two
+     things both times: the cursor line invert paints at inset:-2px and the
+     glow is an OUTER box-shadow, so both live outside this box and a clip on
+     the card erases them. Every layer that needs a clip carries its own
+     (.nmb-1__frame), which is the only place a clip belongs. */
+  position: relative;
+  border-radius: var(--plate-radius);
+  /* No border and no ground by default. Both come back below 720px, where
+     Tonight is still a plate; see THE PLATE below. */
+  /* --nm-cov-w drives both the grid track and .nm-cov's own width, so the
+     column and the art it holds never disagree as it scales. */
+  --nm-cov-w: clamp(96px, 66.62px + 4.09vw, 132px);
+  padding: clamp(18px, 14.74px + 0.45vw, 22px) clamp(18px, 13.1px + 0.68vw, 24px);
+  display: grid;
+  grid-template-columns: var(--nm-cov-w) 1fr;
+  gap: clamp(16px, 11.1px + 0.68vw, 22px);
+  margin-bottom: 14px;
+}
+/* THE PLATE, AND WHERE IT STILL EXISTS.
+   Everything below the phone breakpoint is Tonight as a card: highlight ring,
+   plate ground, ambient glow. Above it Tonight has no plate at all and the
+   page carries the show instead (see THE ROOM). That split is deliberate and
+   not a leftover: on a phone the card already fills the screen, so the card
+   IS the room. On a desktop it was a box in the middle of one. */
+@media (max-width: 719px) {
+  .nm-tonight {
+    border: 2px solid var(--w-highlight);
+    background: var(--plate-bg);
+  }
+  /* The always-on ambient glow stays STATIC in its resting hue. This is NOT
+     where a hover effect lives — driving the whole shadow off a single scalar
+     made the entire halo flip at once (round 16's mistake). */
+  [data-theme="lantern"] .nm .nm-tonight {
+    box-shadow:
+      0 1px 2px oklch(0% 0 0 / 40%),
+      0 14px 30px oklch(0% 0 0 / 34%),
+      0 0 26px 4px color-mix(in oklab, var(--w-highlight) 38%, transparent);
+    animation: nm-flicker 4.4s ease-in-out infinite;
+  }
+  [data-theme="neon"] .nm .nm-tonight {
+    box-shadow:
+      0 1px 2px oklch(0% 0 0 / 40%),
+      0 14px 30px oklch(0% 0 0 / 34%),
+      0 0 20px 2px color-mix(in oklab, var(--w-signage) 28%, transparent),
+      0 0 30px 5px color-mix(in oklab, var(--w-highlight) 22%, transparent);
+  }
+}
+@keyframes nm-flicker {
+  0%,
+  100% {
+    box-shadow:
+      0 1px 2px oklch(0% 0 0 / 40%),
+      0 14px 30px oklch(0% 0 0 / 34%),
+      0 0 26px 4px color-mix(in oklab, var(--w-highlight) 38%, transparent);
+  }
+  45% {
+    box-shadow:
+      0 1px 2px oklch(0% 0 0 / 40%),
+      0 14px 30px oklch(0% 0 0 / 34%),
+      0 0 20px 2px color-mix(in oklab, var(--w-highlight) 22%, transparent);
+  }
+  70% {
+    box-shadow:
+      0 1px 2px oklch(0% 0 0 / 40%),
+      0 14px 30px oklch(0% 0 0 / 34%),
+      0 0 30px 5px color-mix(in oklab, var(--w-highlight) 44%, transparent);
+  }
+}
+@media (max-width: 719px) and (prefers-reduced-motion: reduce) {
+  [data-theme="lantern"] .nm .nm-tonight {
+    animation: none;
+    box-shadow:
+      0 1px 2px oklch(0% 0 0 / 40%),
+      0 14px 30px oklch(0% 0 0 / 34%),
+      0 0 28px 4px color-mix(in oklab, var(--w-highlight) 40%, transparent);
+  }
+}
+
+/* THE LOCALIZED GLOW SHIFT. Every rule below copies its blur/spread/alpha
+   numbers EXACTLY from the matching real glow, substituting only the colour
+   (--fx-opp instead of the resting hue). An invented shape here reads as a
+   second glow stacked on top instead of the same glow taking the other colour
+   near the cursor.
+
+   Tonight is no longer in this list. It has no border to invert and no ring to
+   shift, so §5a's scope is now the strip, the order rail and the cards; what
+   the pointer does on Tonight is .nm__lamp instead. */
+.nm-card--completed::after {
+  box-shadow: 0 0 18px 2px color-mix(in oklab, var(--fx-opp) 32%, transparent);
+}
+
+.nm-tonight__title {
+  font-weight: 400;
+  font-size: clamp(var(--text-xl), 14.7px + 0.74vw, var(--text-2xl));
+  margin: 10px 0 4px;
+  color: var(--ink-body);
+}
+/* The committing action, filled in SIGNAGE on a highlight-bordered plate —
+   §2's one-borrowed-accent rule at its most load-bearing. */
+.nm-act {
+  margin-top: 12px;
+  display: inline-block;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  border-radius: var(--plate-radius);
+  border: 2px solid var(--w-signage);
+  background: var(--w-signage);
+  color: oklch(12% 0 0);
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+}
+/* The art link already got a ring in the card's own highlight; without a
+   rule here this button fell through to the app-wide accent, a third hue
+   outside the two-hue system and only 3.68:1 on the plate. Matching the
+   art link keeps the one keyboard-visible state on-system (11.49:1), and
+   the offset keeps it clear of the signage fill it surrounds. */
+.nm-act:focus-visible {
+  outline: 2px solid var(--w-highlight);
+  outline-offset: 3px;
+}
+
+/* Tonight, density read: a fine grain fills the plate instead of a flat
+   surface, and the watched count stands as the loud mono subject next to
+   the title. Picked in live mode over a wider poster crop and a backdrop
+   art bleed.
+
+   The grain itself moved out of here twice: first to .nmb-1__grain, because
+   as a background-image it painted under every child and the art always
+   covered it, and then to .nm__grain, because the art moved to the page.
+
+   The GROUND is phone-only for the same reason. Above 720px an opaque colour
+   here is exactly what would hide the room behind the one block that is
+   supposed to show it. */
+.nm-tonight.nmv-3 {
+  grid-template-columns: calc(var(--nm-cov-w) * 0.72) 1fr;
+}
+@media (max-width: 719px) {
+  .nm-tonight.nmv-3 {
+    background-color: var(--plate-bg);
+  }
+}
+.nmv-3__num {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--w-highlight);
+  line-height: 1;
+  margin: 4px 0 0;
+}
+/* A fixed ten-pip track reads the same width at 3 episodes or 300, unlike
+   the horizontal bar it replaces. */
+/* ── THE RECORD ──────────────────────────────────────────────────
+   One cell per episode, replacing ten pips scaled to a percentage. The pips
+   said what the bar said, only coarser; these say which episodes you have,
+   which one the button is about to log, which have aired and are sitting
+   there waiting, and which have not aired at all. That last distinction is
+   the one a percentage can never make, and on a currently-airing show it is
+   the whole question. */
+.nm-cells {
+  display: flex;
+  gap: 2px;
+  width: 100%;
+}
+.nm-cells__cell {
+  flex: 1 1 0;
+  min-width: 3px;
+  height: 12px;
+  border-radius: var(--radius-tag);
+  background: var(--meter-track);
+}
+.nm-cells__cell[data-state="done"] {
+  background: var(--w-highlight);
+}
+/* The one the action will log: filled AND outlined, so it reads as a target
+   rather than as the next of a run. */
+.nm-cells__cell[data-state="next"] {
+  background: var(--w-highlight-wash);
+  box-shadow: inset 0 0 0 1.5px var(--w-highlight);
+}
+/* Aired and waiting for you: outlined, not filled, because it is on the record
+   without being yours yet. The outline is ink rather than signage. Signage at
+   60% measures 2.50 on the plate and 2.09 once a bright cover lifts the ground
+   under the scrim, both under the 3:1 a graphic needs, and the desktop rule
+   had already swapped it out for exactly that reason on the lit page. One
+   hairline for both grounds now instead of two that disagree. */
+.nm-cells__cell[data-state="waiting"] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--record-wait);
+}
+/* Not broadcast. Nothing to claim, but there IS an episode there, and that is
+   the one thing the cells say that a percentage cannot. It was drawn in the
+   meter TRACK at half opacity, which is a ground colour: 1.06 on the plate and
+   1.10 on the lit page, i.e. the background with extra steps, so the show's
+   real length never read at all. It stays a fill against waiting's outline —
+   the two states differ in shape, not in weight — and sits a clear tier below
+   it on every ground. */
+.nm-cells__cell[data-state="unaired"] {
+  /* A BAR INSIDE THE SLOT, NOT A FILLED SLOT. Contrast is not the whole of
+     "fainter": a full-height fill at 50% clears 3:1 but carries more visual
+     mass than the 1px hairline beside it, so on screen the record read
+     done > unaired > waiting while the meaning runs done > waiting > unaired.
+     Holding the colour and cutting the height to a third puts the mass back in
+     the right order, and it is still a fill against waiting's outline. */
+  background: linear-gradient(var(--record-void), var(--record-void)) 50% 50% /
+    100% 4px no-repeat;
+}
+/* Too many episodes for one cell each. */
+.nm-cells--bar {
+  height: 6px;
+  border-radius: var(--meter-radius);
+  background: var(--meter-track);
+  overflow: hidden;
+}
+.nm-cells--bar > i {
+  display: block;
+  height: 100%;
+  background: var(--w-highlight);
+}
+
+/* ── THE THREAD ──────────────────────────────────────────────────
+   The rest of the franchise you keep. Labelled by STATE, not sequenced:
+   release dates are not stored locally and a watch order this surface cannot
+   verify would be a confident lie. What is true either way is how many you
+   have finished, which one is running, and how many are still ahead. */
+.nm-thread {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.nm-thread__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  max-width: 260px;
+  padding: 5px 9px;
+  border: 1px solid var(--w-line);
+  border-radius: var(--radius-sm);
+  background: var(--plate-bg-2);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+.nm-thread__item:hover,
+.nm-thread__item:focus-visible {
+  border-color: var(--w-highlight-line);
+  background: var(--plate-bg-3);
+}
+/* The entry the subject already is. It stays in the row because removing it
+   would break the run, and it is marked rather than made loud: the plate
+   above it is already saying this one. */
+.nm-thread__item[data-current] {
+  border-color: var(--w-highlight);
+}
+.nm-thread__name {
+  font-size: var(--text-xs);
+  color: var(--ink-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nm-thread__state {
+  flex: none;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+}
+
+/* Tonight, backdrop-bleed read: the cover fills the whole plate instead of
+   a boxed thumbnail, with a scrim carrying the title and stamp over it.
+   Picked in live mode over a blurred-echo tile, a diagonal art overlap, and
+   a circular medallion. The clip lives on .nmb-1__frame, not on the card
+   itself — the card's own [data-fx] cursor glow paints outside its box via
+   box-shadow, and overflow:hidden here clipped that bleed off (the reported
+   "lineshift" break). */
+.nm-tonight.nmb-1 {
+  display: block;
+  position: relative;
+  padding: 0;
+  min-height: 220px;
+}
+.nmb-1__frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.nmb-1__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background-color: var(--plate-bg-2);
+}
+/* This button is flush with .nmb-1__frame's own clipping edges, so a
+   standard outline (drawn outside the border box) has nowhere to render
+   and gets cut off by the frame's overflow:hidden — invisible to a
+   keyboard user despite a technically-correct computed style. An inset
+   box-shadow stays inside the button's own box, so it's never clipped,
+   and it uses the card's own highlight hue instead of the generic
+   app-wide focus color. */
+.nmb-1__art:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 3px var(--w-highlight);
+}
+.nmb-1__art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Anime covers usually frame the character in the top third; centering
+     the crop cut heads off on a short, wide card. Biasing up keeps the
+     main subject in frame without needing per-cover data. */
+  object-position: 50% 18%;
+}
+/* The strong band has to cover where the text ACTUALLY sits, not where
+   the box bottoms out. The body packs its content upward off the bottom
+   edge (justify-content: flex-end, plus its own padding and the button's
+   height), so the old stops put the title around 11-17% opacity — near
+   1:1 contrast over a pale cover. Holding near-full opacity through the
+   whole lower half, and fading only above it, protects the real text
+   band instead of the empty strip under the button. */
+.nmb-1__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    color-mix(in oklab, var(--plate-bg) 92%, transparent) 0%,
+    color-mix(in oklab, var(--plate-bg) 88%, transparent) 46%,
+    color-mix(in oklab, var(--plate-bg) 72%, transparent) 80%,
+    transparent 100%
+  );
+}
+/* At mobile widths this sits on top of the full-bleed art button
+   (.nmb-1__frame is absolutely positioned underneath), and its own box
+   fills nearly the whole card even though its content clusters at the
+   bottom via justify-content — so it was silently eating every tap on
+   the art, the card's stated primary gesture. Letting clicks fall
+   through to whatever's underneath, and re-enabling them just on the
+   one real control inside, fixes the dead zone without touching layout. */
+.nmb-1__body {
+  position: relative;
+  min-height: 190px;
+  padding: clamp(18px, 14px + 1vw, 26px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.nmb-1__body .nm-act {
+  pointer-events: auto;
+}
+/* The chip and title read as one line over the backdrop art, picked in
+   live mode over stacking them and over a de-emphasized title. */
+.nmb-1__body--head {
+  gap: 6px;
+}
+.nmb-1__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.nmb-1__head .nm-tonight__title {
+  margin: 0;
+}
+/* A tighter stack plus a soft text shadow, picked in live mode over a
+   leaner single-line stat row and over a dedicated scrim plate, as the
+   way to keep the title legible when the art crop shifts underneath it. */
+.nmb-1__body--tight {
+  gap: 4px;
+}
+/* A single soft shadow reads fine against a dark region of cover art but
+   drops toward 1:1 contrast against a bright one, since it doesn't add
+   real opacity right at the glyph edge. A tight, near-opaque shadow plus
+   the original soft one holds legibility regardless of what's behind it. */
+.nmb-1__body--tight .nm-tonight__title {
+  text-shadow:
+    0 1px 2px oklch(0% 0 0 / 85%),
+    0 1px 8px oklch(0% 0 0 / 55%);
+}
+/* .nme-3__meta's styling lives entirely inside the 720px block, so below
+   that width this line fell back to inherited 16px opaque ink sitting on
+   raw cover art with no shadow at all — the least-protected text on the
+   card. It gets the same treatment as the title here. */
+.nmb-1__body--tight .nme-3__meta {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-body);
+  margin: 4px 0 0;
+  text-shadow:
+    0 1px 2px oklch(0% 0 0 / 85%),
+    0 1px 8px oklch(0% 0 0 / 55%);
+}
+.nmb-1__body--tight .nme-3__meta b {
+  color: var(--w-highlight);
+  font-weight: 600;
+}
+/* Natural case: the rest of the line is a tracked mono label, but this
+   clause is a sentence explaining the state, and uppercasing an
+   explanation makes it read as shouting rather than as an aside. */
+.nme-3__note {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: var(--ink-meta);
+}
+/* At the mobile width the backdrop bleed keeps its natural portrait-ish
+   ratio and reads fine; past 720px the card widens far more than it
+   grows tall, so the same full-bleed crop was reduced to a stretched
+   sliver. Picked in live mode over scaling the backdrop's height with
+   viewport width, and over an inset bounded art panel. */
+@media (min-width: 720px) {
+  .nm-tonight.nmd-1 {
+    display: grid;
+    grid-template-columns: minmax(200px, 32%) 1fr;
+  }
+  .nmd-1 .nmb-1__frame {
+    position: relative;
+    inset: auto;
+    overflow: hidden;
+    border-radius: inherit;
+    /* Its layer changes at this width too, but that declaration lives with the
+       rest of the stack (see TONIGHT'S LAYER STACK): stated here it would tie
+       on specificity with the layer rule further down the file and lose. */
+  }
+  .nmd-1 .nmb-1__scrim {
+    display: none;
+  }
+  .nmd-1 .nmb-1__body {
+    position: relative;
+    min-height: 0;
+    justify-content: center;
+  }
+  /* The status word folds into one meta line with the episode count
+     instead of standing alone as a chip; a highlight rule on the left
+     edge carries the "in progress" signal that the word used to.
+     Picked in live mode over an eyebrow label and over a lighter inline
+     chip, both explored because the standalone chip's wording wasn't
+     landing right at desktop width. */
+  .nme-3 {
+    gap: 6px;
+    justify-content: center;
+    border-left: 2px solid var(--w-highlight);
+    padding-left: 16px;
+  }
+  .nme-3__meta {
+    font-family: var(--w-face-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-meta);
+    margin: 4px 0 0;
+  }
+  .nme-3__meta b {
+    color: var(--w-highlight);
+    font-weight: 600;
+  }
+  /* The title takes the system's own largest display step instead of a
+     bespoke size, the scale already reserved elsewhere for the one thing
+     a surface is about. Picked in live mode over amplifying the meta
+     line to the tracked-label treatment and over enlarging the pips.
+
+     44px is the size a SHORT name wants. Long titles step DOWN the same
+     scale (see titleStep in NightMarket.tsx) rather than wrapping into a
+     tower: a 96-character title at 44px measured twelve lines and a 694px
+     plate. Newspapers have set long headlines smaller for two hundred
+     years; the only new part is that the length is known at render. */
+  .nme-3 .nm-tonight__title {
+    font-size: var(--text-4xl);
+    line-height: var(--leading-4xl);
+    margin: 0 0 6px;
+  }
+  .nme-3 .nm-tonight__title[data-step="long"] {
+    font-size: var(--text-3xl);
+    line-height: var(--leading-3xl);
+  }
+  .nme-3 .nm-tonight__title[data-step="xlong"] {
+    font-size: var(--text-2xl);
+    line-height: var(--leading-2xl);
+  }
+}
+
+/* ── THE WATCHING DRAWER ──────────────────────────────────────────
+   Everything running that Tonight is not, hanging off the bottom of it.
+
+   IT HAS NO PLATE, AND THAT IS THE WHOLE IDEA. The block it replaces was an
+   opaque ground with a 2px signage border on all four sides, dropped into the
+   middle of the light Tonight throws: `.nm__wash` is at full strength through
+   y352 and does not die until y660, and that block ran y300 to y588, so it hid
+   the brightest remaining third of the room's own light. Three moves undo it:
+
+     no gap        it starts where Tonight ends, so it belongs to Tonight
+     inset sides   96px in from both page edges, so it reads as subordinate
+     open top      no top border, and a ground that starts at zero opacity,
+                   so the wash keeps falling through the top of it
+
+   The cards have no ground of their own either. Measured on the way here: a
+   plate at `--plate-bg-2` sat 2.4 L* above this one, under the point where a
+   flat area registers as a separate surface at all, so it was three surfaces
+   deep on paper and two in the eye. What holds a card together is its title at
+   14.19 and its meta at 4.87, not a box. The only edge a card ever gets is the
+   one the wave draws on it. */
+.nm-draw {
+  position: relative;
+  /* Its own container, so the rail below sizes from the width this block
+     actually has rather than from the window's. */
+  container-type: inline-size;
+  container-name: drawer;
+  /* FLUSH, and the negative top is not a hack. Tonight carries the same 14px
+     bottom margin every block on this page carries, and that 14px is exactly
+     what would make this one read as the next thing along rather than as part
+     of the thing above it. Cancelling it here rather than removing it from
+     Tonight keeps Tonight correct on the surfaces where nothing follows it.
+
+     The inset is what says "subordinate". It does the job the border used to
+     attempt, without stopping the light. */
+  margin: -14px clamp(0px, 5vw, 96px) 14px;
+  /* The bottom is mostly fade, which is empty, so the box measures taller
+     than it reads. It still has to MEASURE shorter than Tonight's 220 or the
+     page has two subjects: 8 top, 36 bottom, of which the last 32 is the
+     fade. */
+  padding: 8px 16px 36px;
+  /* NO BORDER, ON ANY SIDE. Three edges was still a box, and worse than that
+     it was a box that surfaced from underneath the poster: at 1280 the art
+     panel spans x87-458 and the inset put this block's left edge at x151, so
+     307px of its top ran under the art and the side borders came out from
+     below it like something tucked in badly.
+        A border is also the one thing that cannot fade, which is the whole
+     problem: this block is supposed to be a place the light pools, not an
+     object with an outline. The ground alone defines it now, and it fades in
+     at the top AND back out at the bottom, so there is no hard edge anywhere
+     for the art to collide with and none for the page to end against. */
+  border: 0;
+  border-radius: 0;
+  /* Both fades are stated in PIXELS, not percentages, and that is the whole
+     reason this is stable: the block's height moves with its content (a
+     two-line title, a record that is present or not), so percentage stops
+     would slide the fade up into the cards on a tall row and down off the
+     bottom on a short one. In pixels the top fade always finishes above the
+     first card and the bottom one always starts below the last. */
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--plate-bg) 0%, transparent) 0,
+    color-mix(in oklab, var(--plate-bg) 82%, transparent) 28px,
+    var(--plate-bg) 52px,
+    var(--plate-bg) calc(100% - 32px),
+    color-mix(in oklab, var(--plate-bg) 0%, transparent) 100%
+  );
+}
+/* The light Tonight leaves pooling in the top of it. Not an animation: the page
+   already carries one heartbeat and this is a resting state, not a second. */
+.nm-draw::before {
+  content: "";
+  position: absolute;
+  inset: -26px 0 auto;
+  height: 140px;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    72% 100% at 50% 0%,
+    color-mix(in oklab, var(--w-highlight) 13%, transparent),
+    transparent 72%
+  );
+}
+.nm-draw > * {
+  position: relative;
+  z-index: 1;
+}
+/* Below the phone breakpoint Tonight is a plate again and the page wash is off
+   entirely (see THE ROOM). */
+@media (max-width: 719px) {
+  .nm-draw {
+    /* ONE TREATMENT AT EVERY WIDTH. This used to become an ordinary bordered
+       card down here, reasoning that a phone has no wash to let through so a
+       fade had nothing to fade into. True, and it still looked wrong: the
+       desktop lost its boxes and the phone kept them, so the same block read
+       as two different things depending on the device. A fade works against
+       the page ground as well as it works against the wash.
+
+       What does change: no inset, because a phone has no width to give away,
+       and no flush join, because down here Tonight is a bordered plate with a
+       glow and hanging a borderless ground off its rounded bottom edge reads
+       as a mistake rather than as a join. */
+    margin: 0 0 14px;
+    padding: 10px 14px 34px;
+  }
+  /* All four, stacked or paired. The container steps below exist to keep ONE
+     ROW under Tonight on a desktop; a phone scrolls, so there is no row count
+     to protect and hiding cards here would just be losing them.
+
+     These carry an extra class on purpose. The container rules that hide the
+     third and fourth card score the same as a bare `.nm-draw__slot:nth-child`
+     and are written later in the file, so source order would hand them the
+     win; matching through .nm-draw settles it on specificity instead, which
+     does not care where either rule sits. */
+  .nm-draw .nm-draw__rail {
+    /* 240 rather than 200, so a tablet lands on 2 x 2 instead of an unbalanced
+       3 + 1, and a phone lands on a single column. */
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  .nm-draw .nm-draw__slot:nth-child(n + 3),
+  .nm-draw .nm-draw__slot:nth-child(n + 4) {
+    display: block;
+  }
+  .nm-draw::before {
+    display: none;
+  }
+}
+
+/* ── The door ─────────────────────────────────────────────────────
+   The whole header is the button. Hit-slop grows a 22px line of text to a
+   44px target without growing the type. */
+.nm-draw__head {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  width: 100%;
+  margin-bottom: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+.nm-draw__head::after {
+  content: "";
+  position: absolute;
+  inset: -11px 0;
+}
+.nm-draw__name {
+  font-size: var(--text-lg);
+  font-weight: var(--w-weight-title);
+  color: var(--ink-body);
+}
+.nm-draw__n {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--track-label);
+  color: var(--ink-meta);
+}
+/* A bounded shape, not a bare chevron: a chevron at the end of a line is
+   punctuation, and what says there is somewhere to go is an edge. */
+.nm-draw__door {
+  margin-left: auto;
+  align-self: center;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 5px 8px 5px 10px;
+  /* Full signage, not the 60% line token, and that is measured rather than
+     preferred. The door sits at the TOP of the drawer, which is the most
+     translucent part of it and therefore the closest thing here to the raw
+     page wash: its ground measures [62,50,51], the brightest in the block. The
+     line token reads 1.86 there. This block's own comment says the bounded
+     shape is what carries the way in, so the shape has to clear the 3:1 a
+     graphic needs. At full opacity it reads 3.21 in Lantern and 3.44 in Neon.
+
+     The text inside it clears AA on its own (4.57), so the edge is
+     reinforcement rather than the only signal, but a design that says the edge
+     carries it should have an edge you can see. */
+  border: 1px solid var(--filed-ink);
+  border-radius: var(--radius-sm);
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-meta);
+  white-space: nowrap;
+}
+.nm-draw__chev {
+  font-size: 1.15em;
+  line-height: 1;
+}
+.nm-draw__head:hover .nm-draw__name,
+.nm-draw__head:focus-visible .nm-draw__name {
+  color: var(--w-highlight);
+}
+/* Filled in the OPPOSITE hue. The door is framed in signage at rest, because
+   this block is filed in Watching; pointing at it flips to highlight, the hue
+   that means right now. Ink on a filled hue is dark, per the library. */
+.nm-draw__head:hover .nm-draw__door,
+.nm-draw__head:focus-visible .nm-draw__door {
+  background: var(--w-highlight);
+  border-color: var(--w-highlight);
+  color: var(--w-ink-on-highlight);
+}
+@media (max-width: 419px) {
+  .nm-draw__doorword {
+    display: none;
+  }
+  .nm-draw__door {
+    padding: 5px 7px;
+  }
+}
+
+/* ── The rail ─────────────────────────────────────────────────────
+   Four, and only ever four. Not a scroller: everything here is on screen, and
+   the door carries the rest. `auto-fit` rather than a breakpoint, per the
+   app-wide law that breakpoints are for structural reveals only. */
+.nm-draw__rail {
+  display: grid;
+  /* ALWAYS ONE ROW above the phone breakpoint, and this is not a preference.
+     `auto-fit` with a 220px floor wrapped to 3 + 1 at 1024, which put a lone
+     card on a second row and took the block to 330px tall against Tonight's
+     220 — the drawer became the taller of the two and the page had two
+     subjects. The count of cards drops instead of the row count rising, and
+     the door already carries the remainder either way. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* Measured, not guessed: a card needs about 200px before the poster and a
+   two-line title stop coexisting, and 208px is the narrowest these steps
+   allow, which is also what sets the record's 13-cell cap. These are CONTAINER
+   queries because the
+   sidebar changes how much width this block actually gets, and a viewport
+   breakpoint cannot see that. The container is .nm-draw, because an element
+   cannot answer its own container query. */
+@container drawer (max-width: 900px) {
+  .nm-draw__rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .nm-draw__slot:nth-child(n + 4) {
+    display: none;
+  }
+}
+@container drawer (max-width: 680px) {
+  .nm-draw__rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .nm-draw__slot:nth-child(n + 3) {
+    display: none;
+  }
+}
+.nm-draw__slot {
+  position: relative;
+  min-width: 0;
+}
+.nm-draw__card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: var(--space-2);
+  width: 100%;
+  padding: 8px;
+  /* No ground. See the note at the top of this block. */
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink-body);
+}
+.nm-draw__card:focus-visible {
+  outline: none;
+}
+/* The edge the wave draws, and the only edge a card has. Its own element rather
+   than a pseudo, because the fault animates the CARD and the rim has to be able
+   to fault on its own timing without the two fighting over one box-shadow. */
+.nm-draw__rim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: var(--radius-md);
+}
+.nm-draw__art {
+  display: block;
+  position: relative;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--plate-bg-2);
+  /* The ring and glow Tonight's own poster already carries. Nothing in this app
+     lifts or scales on hover, and one thing that did would be the odd one out. */
+  transition: box-shadow var(--duration-fast) var(--ease-out);
+}
+.nm-draw__card:hover .nm-draw__art,
+.nm-draw__card:focus-visible .nm-draw__art {
+  box-shadow:
+    0 0 0 2px var(--w-highlight),
+    0 0 20px 2px color-mix(in oklab, var(--w-highlight) 40%, transparent);
+}
+.nm-draw__text {
+  display: block;
+  min-width: 0;
+}
+.nm-draw__title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--w-weight-title);
+  color: var(--ink-body);
+}
+.nm-draw__ep {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.06em;
+  color: var(--ink-label);
+}
+
+/* The same four states Tonight's record uses, at drawer scale, from the same
+   tokens, so the two can never drift into different vocabularies. */
+.nm-draw__cells {
+  display: flex;
+  gap: 2px;
+  margin-top: 7px;
+}
+.nm-draw__cells i {
+  flex: 1 1 0;
+  min-width: 2px;
+  max-width: 16px;
+  height: 8px;
+  border-radius: var(--radius-tag);
+}
+.nm-draw__cells i[data-state="done"] {
+  background: var(--w-highlight);
+}
+.nm-draw__cells i[data-state="next"] {
+  background: var(--w-highlight-wash);
+  box-shadow: inset 0 0 0 1.5px var(--w-highlight);
+}
+.nm-draw__cells i[data-state="waiting"] {
+  box-shadow: inset 0 0 0 1px var(--record-wait);
+}
+.nm-draw__cells i[data-state="unaired"] {
+  background: linear-gradient(var(--record-void), var(--record-void)) 50% 50% /
+    100% 3px no-repeat;
+}
+/* Past the cell cap. Same device as Tonight's own overflow bar: once one cell
+   per episode stops being countable, a proportion is the honest thing to draw
+   instead of a row of specks. */
+.nm-draw__bar {
+  display: block;
+  margin-top: 7px;
+  height: 4px;
+  border-radius: var(--meter-radius);
+  background: var(--meter-track);
+  overflow: hidden;
+}
+.nm-draw__bar i {
+  display: block;
+  height: 100%;
+  background: var(--meter-fill);
+}
+.nm-draw__waiting {
+  display: inline-block;
+  margin-top: 7px;
+  padding: 3px 7px;
+  border-radius: var(--radius-tag);
+  background: var(--chip-bg);
+  color: var(--chip-ink);
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+/* Its own control, outside the card, because a button inside a button is not a
+   thing. Sits over the card's top-right, where it never covers the title. */
+.nm-draw__log {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 3;
+  min-width: 30px;
+  height: 26px;
+  padding: 0 7px;
+  border: 1px solid var(--live-line);
+  border-radius: var(--radius-sm);
+  background: var(--plate-bg-2);
+  color: var(--live-ink);
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+/* Revealed by pointing at the card, and permanently present for touch and for
+   the keyboard, where there is no hover to reveal it with. */
+.nm-draw__slot:hover .nm-draw__log,
+.nm-draw__log:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .nm-draw__log {
+    opacity: 1;
+  }
+}
+.nm-draw__log:hover {
+  background: var(--w-highlight);
+  color: var(--w-ink-on-highlight);
+}
+/* It draws 30x26 because a bigger chip would compete with the card it sits on,
+   and 30x26 is under the 44px target floor. The slop grows the target without
+   growing the mark, the same trick the header door uses. */
+.nm-draw__log::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+}
+
+/* ── THE WAVE ─────────────────────────────────────────────────────
+   The room's own pulse, passing along the row. Pure CSS, identical in both
+   worlds, and it always completes: what Neon adds is a fault, not a different
+   wave. Timings come from the world (see --w-wave-* in tokens.css), so a third
+   world inherits a rhythm slot rather than inheriting Lantern's rhythm by
+   accident.
+
+   It animates the RIM, the ART and the DOOR, which between them are real
+   surface area. An earlier round put this on the block's 1px hairline, which
+   sits at 1.18:1 and peaked at 2.85 — under the 3:1 a graphic needs even at its
+   brightest, so the motion was there and invisible, which is the same mistake
+   as drawing the unaired cell in a ground colour. */
+@media (min-width: 720px) {
+  .nm-draw__rim {
+    animation: nm-draw-wave var(--w-wave-lap) var(--ease-out) infinite;
+  }
+  .nm-draw__art {
+    animation: nm-draw-wave-art var(--w-wave-lap) var(--ease-out) infinite;
+  }
+  .nm-draw__door {
+    animation: nm-draw-wave-door var(--w-wave-lap) var(--ease-out) infinite;
+  }
+  .nm-draw__slot:nth-child(2) .nm-draw__rim,
+  .nm-draw__slot:nth-child(2) .nm-draw__art {
+    animation-delay: var(--w-wave-step-1);
+  }
+  .nm-draw__slot:nth-child(3) .nm-draw__rim,
+  .nm-draw__slot:nth-child(3) .nm-draw__art {
+    animation-delay: var(--w-wave-step-2);
+  }
+  .nm-draw__slot:nth-child(4) .nm-draw__rim,
+  .nm-draw__slot:nth-child(4) .nm-draw__art {
+    animation-delay: var(--w-wave-step-3);
+  }
+}
+@keyframes nm-draw-wave {
+  0%,
+  30%,
+  100% {
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--w-highlight) 0%, transparent);
+  }
+  6% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--w-highlight) 52%, transparent),
+      0 0 22px 1px color-mix(in oklab, var(--w-highlight) 26%, transparent);
+  }
+}
+@keyframes nm-draw-wave-art {
+  0%,
+  30%,
+  100% {
+    box-shadow: none;
+  }
+  8% {
+    box-shadow: 0 0 16px 0 color-mix(in oklab, var(--w-highlight) 34%, transparent);
+  }
+}
+@keyframes nm-draw-wave-door {
+  0%,
+  22%,
+  100% {
+    border-color: var(--filed-ink);
+  }
+  6% {
+    border-color: color-mix(in oklab, var(--w-highlight) 80%, transparent);
+  }
+}
+
+/* ── THE FAULT ────────────────────────────────────────────────────
+   Neon only, and scheduled in WatchDrawer rather than here, because CSS cannot
+   be random: a keyframe loop repeats identically and nth-child delays are
+   fixed, so the same card would fault at the same instant forever. JS picks the
+   card, the moment, the shape and the amplitude, and writes the amplitude as a
+   whole length — `calc(9px * var(--n))` is silently inert in the target
+   webviews, so never reach for a multiplier here.
+
+   Rest is signage and the strike is highlight, and that is measured rather than
+   chosen: on the Neon card ground signage tops out at 5.40:1 at full opacity
+   while highlight reaches 11.75, so a magenta flicker has nowhere to go. */
+.nm-draw--split {
+  animation: nm-draw-split var(--nm-gdur, 420ms) steps(1, end) 1;
+}
+@keyframes nm-draw-split {
+  0% {
+    transform: translate3d(var(--nm-gx), 0, 0);
+    box-shadow:
+      var(--nm-gx2) 0 0 color-mix(in oklab, var(--w-signage) 62%, transparent),
+      var(--nm-gx) 0 0 color-mix(in oklab, var(--w-highlight) 62%, transparent);
+  }
+  30% {
+    transform: translate3d(var(--nm-gx2), 0, 0);
+    box-shadow:
+      var(--nm-gx) 0 0 color-mix(in oklab, var(--w-signage) 46%, transparent),
+      var(--nm-gx2) 0 0 color-mix(in oklab, var(--w-highlight) 46%, transparent);
+  }
+  58% {
+    transform: translate3d(var(--nm-gx3), 0, 0);
+    box-shadow:
+      var(--nm-gx3) 0 0 color-mix(in oklab, var(--w-signage) 30%, transparent),
+      var(--nm-gx2) 0 0 color-mix(in oklab, var(--w-highlight) 30%, transparent);
+  }
+  100% {
+    transform: none;
+    box-shadow: none;
+  }
+}
+.nm-draw--slip {
+  animation: nm-draw-slip var(--nm-gdur, 380ms) steps(1, end) 1;
+}
+@keyframes nm-draw-slip {
+  0% {
+    clip-path: inset(0 0 58% 0);
+    transform: translate3d(var(--nm-gx), 0, 0);
+  }
+  26% {
+    clip-path: inset(44% 0 0 0);
+    transform: translate3d(var(--nm-gx2), 0, 0);
+  }
+  52% {
+    clip-path: inset(0 0 22% 0);
+    transform: translate3d(var(--nm-gx3), 0, 0);
+  }
+  74% {
+    clip-path: inset(66% 0 0 0);
+    transform: translate3d(var(--nm-gx2), 0, 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    transform: none;
+  }
+}
+.nm-draw--drop {
+  animation: nm-draw-drop var(--nm-gdur, 460ms) steps(1, end) 1;
+}
+@keyframes nm-draw-drop {
+  0% {
+    opacity: 0.18;
+  }
+  22% {
+    opacity: 1;
+    filter: brightness(1.9) saturate(0);
+  }
+  38% {
+    opacity: 0.3;
+  }
+  56% {
+    opacity: 1;
+    filter: brightness(1.5) saturate(0.4);
+  }
+  72% {
+    opacity: 0.62;
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+  }
+}
+/* The rim faults WITH the card, so the wave visibly drops a frame rather than
+   the card sliding out from under a wave that carries on regardless. */
+.nm-draw--split .nm-draw__rim,
+.nm-draw--slip .nm-draw__rim,
+.nm-draw--drop .nm-draw__rim {
+  animation: nm-draw-fault-rim var(--nm-gdur, 420ms) steps(1, end) 1;
+}
+@keyframes nm-draw-fault-rim {
+  0% {
+    box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--w-signage) 78%, transparent);
+  }
+  30% {
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--w-highlight) 6%, transparent);
+  }
+  58% {
+    box-shadow:
+      inset 0 0 0 1.5px color-mix(in oklab, var(--w-highlight) 88%, transparent),
+      0 0 20px 1px color-mix(in oklab, var(--w-highlight) 34%, transparent);
+  }
+  100% {
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--w-highlight) 0%, transparent);
+  }
+}
+
+/* Reduced motion takes the wave and the fault away and leaves the drawer
+   exactly as legible, because neither of them ever carried information: the
+   count, the record and the waiting chip say all of it standing still. The
+   fault is additionally never scheduled at all (see WatchDrawer). */
+@media (prefers-reduced-motion: reduce) {
+  .nm-draw__rim,
+  .nm-draw__art,
+  .nm-draw__door,
+  .nm-draw--split,
+  .nm-draw--slip,
+  .nm-draw--drop {
+    animation: none !important;
+  }
+}
+/* On the reduced tier the wave stops but the pointer response stays: a ring on
+   focus is feedback, not an ambient effect, and it is the one thing here a
+   keyboard depends on. */
+.perf-lite .nm-draw__rim,
+.perf-lite .nm-draw__art,
+.perf-lite .nm-draw__door {
+  animation: none !important;
+}
+.nm-backdrop {
+  background: var(--sunk-bg);
+  border-radius: var(--plate-radius);
+  padding: 16px;
+  min-width: 0;
+}
+.nm-backdrop__label {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-label);
+  margin: 0 0 10px;
+}
+.nm-bd__row {
+  display: flex;
+  /* The two anchors end on the same edge even though neither has a fixed
+     height any more: whichever is taller sets the row, the other stretches
+     to meet it. */
+  align-items: stretch;
+  gap: 12px;
+}
+.nm-card {
+  flex: 1;
+  border-radius: var(--plate-radius);
+  padding: 14px;
+  /* MIN-height, not height. This was a fixed clamp transcribed off the comp,
+     where the card only ever held a name, a count and four covers. The moment
+     it had to hold anything else — the order, folded in on a phone — the
+     content ran straight out of the box and whatever came next painted over
+     it. A card sizes to what is in it; the clamp is a floor so a nearly empty
+     one still reads as a card. */
+  min-height: clamp(120px, 95.52px + 3.41vw, 150px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.nm-card--planned {
+  background: var(--plate-bg);
+  border: 2px solid var(--w-signage-line);
+  --fx-opp: var(--w-highlight);
+  --fx-own: var(--w-signage);
+}
+/* Completed's static glow stays static in its resting hue; the localized
+   hover shift lives on .nm-card--completed::after above. */
+.nm-card--completed {
+  background: var(--nm-done-bg);
+  border: 2px solid var(--w-highlight);
+  box-shadow: 0 0 18px 2px color-mix(in oklab, var(--w-highlight) 32%, transparent);
+  --fx-opp: var(--w-signage);
+  --fx-own: var(--w-highlight);
+  /* This card is the one surface in the app that does not sit on a plate:
+     its wash puts it a full tier lighter, and ink tuned for a plate goes
+     under AA on it (the label tier measured 4.27). Every tier steps up one
+     HERE rather than in the library, which is what a local exception is
+     for: the rest of the app keeps its own ramp. Measured on the real
+     ground, both worlds: 5.02 Lantern / 5.10 Neon. */
+  --ink-label: var(--w-ink-dim);
+  --ink-meta: var(--w-ink);
+}
+.nm-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+/* Planned's header is a door, so it needs the row treatment the watching
+   block's header has: the name leads, the count sits with it, the arrow
+   holds the right edge. */
+.nm-card__head--door {
+  position: relative;
+  width: 100%;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.nm-card__go {
+  margin-left: auto;
+  align-self: center;
+  flex: none;
+  color: var(--ink-meta);
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.nm-card__head--door:hover .nm-card__name,
+.nm-card__head--door:focus-visible .nm-card__name {
+  color: var(--w-highlight);
+}
+.nm-card__head--door:hover .nm-card__go {
+  color: var(--w-highlight);
+  transform: translateX(3px);
+}
+
+/* The order, living inside Planned on a phone. Ruled off rather than boxed:
+   it is part of this card, not a card sitting in it. */
+.nm-card__order {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--w-line);
+}
+/* ── COMPLETED, AS A BOARD ────────────────────────────────────────
+   A wall of the covers you have finished, turning on its own, lit where your
+   hand is. Every number below was tuned by the owner in a live rig rather than
+   picked here, which is why they are stated once at the top and used by name.
+
+   WHY A WALL AT ALL. CompletedRoom.tsx already threw away a threaded spine and
+   a sortable table, and wrote down why: both "made a few thousand finished
+   shows into rows of text, when the covers ARE the record and the thing you
+   recognise." The room is a year index beside a wall of covers, a card
+   previews its room, so this card is the wall. It also has no natural height,
+   which is what lets it absorb whatever height Planned's order demands instead
+   of needing filler measured against it. */
+.nm-board {
+  /* OPENED, on measurement, 2026-08-23. At 0.80 a cover's own internal
+     contrast behind the resting veil measured 1.59:1 in Lantern and 1.58 in
+     Neon, against 13.77 unveiled: the wall was hiding the one thing this card
+     exists to show, and it only ever came back inside a fully-thinned core
+     about 44px across, which is smaller than a single 68x92 tile. 0.50 puts
+     the resting wall at 4.17 / 4.15, the hole at 9.10, and the hover step
+     between them at 5.7. Hover keeps the same proportional drop it was tuned
+     with (0.61/0.80). */
+  --veil-rest:   0.50;
+  --veil-hover:  0.38;
+  --hole-r:      200px;
+  --hole-depth:  0.40;
+  --line-reach:  130px;
+  --line-op:     1;
+  --line-w:      3px;
+  --par:         7px;
+  /* The chit was a flat 300px, which is 55% of the card at 1280 and half that
+     share on a wide monitor: the same object reading as two proportions. The
+     comp's is 41% of its stage.
+
+     FLOOR SET TO 240 on the tuner, 2026-08-23. At 300 the floor won at every
+     width up to about 1400 and the chit was still reading as two proportions:
+     55.1% at 1280, 63.6% at 1130, 43.8% at 1920. At 240 the SHARE wins from
+     1280 up, so the chit holds one proportion across the range the card is
+     actually used at, and the floor only takes over on the narrow end where the
+     head would otherwise have nothing to sit on. The count steps down to suit,
+     which is what the fit routine in CompletedBoard is for. */
+  --stub-w:      clamp(240px, 44%, 460px);
+  --count-size:  98px;
+  /* Kept in sync with TURN_TAKES_MS in CompletedBoard.tsx. */
+  --turn-takes:  800ms;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  /* NO overflow HERE. §5a's line invert paints at inset:-2px, outside this
+     box, so a clip on the host erases the component's own edge — which is
+     exactly the fault that keeps reappearing whenever one of these cards is
+     reworked, and exactly what Tonight's own comment warns about. The clip
+     belongs to .nm-board__clip and nowhere else. */
+  /* §5a needs a hue pair. Completed is the one card framed in the highlight
+     rather than in signage, because it is the lit one, so its pair is the
+     inverse of every other block on the page. */
+  --fx-opp: var(--w-signage);
+  --fx-own: var(--w-highlight);
+}
+.nm-board__clip {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/* The wall. Oversized on every side so the parallax never exposes a corner. */
+.nm-board__wall {
+  position: absolute;
+  inset: calc(-1 * var(--par) - 12px);
+  display: grid;
+  /* --nm-cols and --nm-row-h are published by the component from the wall's
+     real box, because fourteen columns was a constant lifted off a 1040px comp
+     stage and this card is 544px wide at 1280: every tile came out 37 x 95, a
+     sliver of a cover rather than a cover. The cell is the constant now and the
+     column count falls out of it. */
+  grid-template-columns: repeat(var(--nm-cols, 8), minmax(0, 1fr));
+  grid-auto-rows: var(--nm-row-h, 96px);
+  gap: 4px;
+  padding: 4px;
+  /* ONE viewpoint for the whole wall, and it is close. A board of flaps is a
+     single physical object seen from a single point, so a shared vanishing
+     point is the correct model rather than a per-tile one. 900px on a 544px
+     card is far enough away to be effectively orthographic, which is most of
+     why the turn read as a flat card-flip; 560px is the distance the
+     documented split-flap component uses, and it is the difference between a
+     hinge and a spin. */
+  perspective: 560px;
+  /* --nm-px/--nm-py are the pointer's offset from the card's centre, already
+     normalised to -1..1 by the component, so the drift is exactly --par at the
+     edges at ANY card size. The earlier version multiplied raw --gx by a fixed
+     factor, which was only right at one width and swung 25px vertically where
+     7 was intended — which is what put the linework badly out of register
+     rather than marginally. */
+  transform: translate3d(
+    calc(var(--nm-px, 0) * var(--par)),
+    calc(var(--nm-py, 0) * var(--par)),
+    0
+  );
+  transition: transform 160ms var(--ease-out);
+}
+/* THE TURN.
+
+   TWO FACES, TURNED THROUGH 180. The first version rotated one face to 90deg,
+   swapped the picture at the midpoint and came back, which is where the snap
+   came from: something changes while you are looking at it edge-on. A real
+   flap has a front and a back and the incoming picture is already on the
+   hidden face before anything moves.
+
+   THAT FIXED THE SNAP AND STILL LOOKED LIKE A CSS CARD-FLIP, because three
+   things a real flap does were all missing and none of them is the easing:
+
+     1. IT FALLS. A flap is released and accelerates under gravity. The curve
+        was easeOutCubic, which is the opposite shape: fastest at the start,
+        drifting into the stop. The fall segment below is
+        cubic-bezier(0.33333, 0, 0.66667, 0.33333), the cubic approximation of
+        a half parabola proposed for exactly this on www-style
+        (lists.w3.org/Archives/Public/www-style/2015Aug/0267.html).
+     2. IT ARRESTS AND REBOUNDS. It hits a stop, it does not glide to rest. The
+        fall lands at 70%, rebounds nine degrees, and settles. That short
+        rebound is most of what reads as mass.
+     3. IT GOES DARK. A face rotating away from the light loses it, and the
+        incoming face arrives out of it. Ours stayed evenly lit through the
+        whole rotation, which is a picture turning rather than an object
+        moving.
+
+   And it takes 800ms, not 500. That is the documented default for a split-flap
+   component, and 500 is simply too fast to read as anything with weight.
+
+   A REAL FLAP ONLY FALLS ONE WAY, so there is no "up" that runs backwards:
+   is-up runs 180 to 360, which lands on the same face 0 does. */
+.nm-board__wall i {
+  display: block;
+  position: relative;
+  transform-style: preserve-3d;
+}
+.nm-board__wall i.is-back {
+  transform: rotateX(180deg);
+}
+.nm-board__wall i.is-turning.is-down {
+  animation: nm-flap-down var(--turn-takes) both;
+}
+.nm-board__wall i.is-turning.is-up {
+  animation: nm-flap-up var(--turn-takes) both;
+}
+/* The shading rides on the FACES, never on the flap: a filter on the element
+   carrying transform-style: preserve-3d flattens it, which would throw away
+   the whole rotation. Both faces run it and only the one pointing at you is
+   visible, so one curve covers the hand-off. */
+.nm-board__wall i.is-turning > b {
+  animation: nm-flap-shade var(--turn-takes) both;
+}
+@keyframes nm-flap-down {
+  0% {
+    transform: rotateX(0deg);
+    animation-timing-function: cubic-bezier(0.33333, 0, 0.66667, 0.33333);
+  }
+  70% {
+    transform: rotateX(180deg);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1);
+  }
+  84% {
+    transform: rotateX(171deg);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.25, 1);
+  }
+  100% { transform: rotateX(180deg); }
+}
+@keyframes nm-flap-up {
+  0% {
+    transform: rotateX(180deg);
+    animation-timing-function: cubic-bezier(0.33333, 0, 0.66667, 0.33333);
+  }
+  70% {
+    transform: rotateX(360deg);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1);
+  }
+  84% {
+    transform: rotateX(351deg);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.25, 1);
+  }
+  100% { transform: rotateX(360deg); }
+}
+/* The trough sits at 50% rather than at the halfway angle because the fall is
+   parabolic: the flap passes edge-on at about 70% of the fall segment, which
+   is just under half of the whole turn. */
+@keyframes nm-flap-shade {
+  0%   { filter: brightness(1); }
+  50%  { filter: brightness(0.34); }
+  78%  { filter: brightness(1); }
+  100% { filter: brightness(1); }
+}
+.nm-board__wall i > b {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-tag);
+  background-color: var(--plate-bg-2);
+  background-size: cover;
+  background-position: 50% 22%;
+  backface-visibility: hidden;
+}
+.nm-board__wall i > b:last-child {
+  transform: rotateX(180deg);
+}
+
+/* The veil, and the whole of the pointer idea in one property: it is MASKED,
+   so it thins where your hand is rather than only thinning all at once. That
+   is not a new device, it is the locality principle §5a states for the line
+   invert, applied to the layer that was already there. */
+.nm-board__veil {
+  position: absolute;
+  inset: 0;
+  background: var(--plate-bg);
+  pointer-events: none;
+  opacity: var(--veil-rest);
+  /* --duration-med has never existed in tokens.css. One undefined var makes
+     the whole shorthand invalid, so the veil has been snapping between its two
+     opacities all along rather than fading. */
+  transition: opacity var(--duration-normal) var(--ease-out);
+  -webkit-mask-image: radial-gradient(
+    var(--hole-r) circle at var(--gx, -999px) var(--gy, -999px),
+    rgb(0 0 0 / var(--hole-depth)) 0%,
+    rgb(0 0 0 / var(--hole-depth)) 22%,
+    #000 78%
+  );
+  mask-image: radial-gradient(
+    var(--hole-r) circle at var(--gx, -999px) var(--gy, -999px),
+    rgb(0 0 0 / var(--hole-depth)) 0%,
+    rgb(0 0 0 / var(--hole-depth)) 22%,
+    #000 78%
+  );
+}
+.nm-board:hover .nm-board__veil {
+  opacity: var(--veil-hover);
+}
+/* There is deliberately NO touch override here any more. The hole follows
+   --gx/--gy, which NightMarket only publishes on mousemove, so a touch device
+   never opens it; that needed answering while the resting veil sat at 0.80 and
+   hid the covers outright. The resting state is legible on its own now, so the
+   pointer hole is a reward rather than the only way to see the wall, and touch
+   needs no special case. */
+
+/* THE LINEWORK, and it is linework rather than a glow on purpose: a radial
+   bloom was tried and read as decoration stuck on top. This draws the tiles'
+   own grid as hairlines and masks it to a radius at the cursor, which is
+   exactly what §5a does to the component's outer edge — a line that appears as
+   your hand approaches. Proximity, never hover: it does not need to be over a
+   tile.
+
+   IT DELIBERATELY DOES NOT PARALLAX. The wall drifts under it and this stays
+   put, and that mismatch is the depth cue. Moving them together would be one
+   flat picture sliding. */
+.nm-board__lines {
+  position: absolute;
+  inset: calc(-1 * var(--par) - 12px);
+  pointer-events: none;
+  opacity: var(--line-op);
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--fx-opp) 0 var(--line-w),
+      transparent var(--line-w) var(--nm-cell-w, 76px)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--fx-opp) 0 var(--line-w),
+      transparent var(--line-w) var(--nm-cell-h, 100px)
+    );
+  background-position: 4px 4px;
+  -webkit-mask-image: radial-gradient(
+    var(--line-reach) circle at
+      calc(var(--gx, -9999px) + var(--par) + 12px)
+      calc(var(--gy, -9999px) + var(--par) + 12px),
+    #000 0%, #000 46%, transparent 84%
+  );
+  mask-image: radial-gradient(
+    var(--line-reach) circle at
+      calc(var(--gx, -9999px) + var(--par) + 12px)
+      calc(var(--gy, -9999px) + var(--par) + 12px),
+    #000 0%, #000 46%, transparent 84%
+  );
+}
+
+/* ── LANTERN: the chit ────────────────────────────────────────────
+   A stub torn off a market roll, which is a transaction that is DONE. The tear
+   is the point, not the decoration. */
+.nm-board__stub {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--stub-w);
+  background: var(--w-sunk);
+  opacity: 0.94;
+  pointer-events: none;
+}
+.nm-board__tear {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--stub-w);
+  width: 0;
+  border-left: 2px dashed var(--w-highlight);
+  opacity: 0.55;
+  pointer-events: none;
+  /* The notches, drawn as a repeating radial rather than as ten elements. */
+  background-image: radial-gradient(
+    circle 8px at 0 15px,
+    var(--plate-bg) 98%,
+    transparent 100%
+  );
+  background-size: 1px 30px;
+  background-repeat: repeat-y;
+}
+.nm-board__slats {
+  display: none;
+}
+
+/* ── NEON: the shutter ────────────────────────────────────────────
+   The stall front half down, slats running over the count as well, so the
+   number sits inside the stall rather than on a picture of one. */
+[data-theme="neon"] .nm-board__stub,
+[data-theme="neon"] .nm-board__tear {
+  display: none;
+}
+/* HALF DRAWN, which is what this was always described as and never was.
+
+   It ran as uniform bands at inset:0, and that was survivable only while the
+   veil sat at 0.80 and the wall was dark everywhere. With the veil open, Neon
+   has no chit under its head, so the type was sitting straight on lit cover
+   art: measured over a bright cover, the issuer fell from 5.32 to 3.36 and the
+   overprint from 4.33 to 2.23. No single veil value fixes that, because the
+   two things the number needs are opposites: a dark ground under the head and
+   a light one under the wall.
+
+   A shutter solves it by being a shutter. It is DOWN over the stall front,
+   where the head is, and open below it, where the goods are. The slats still
+   run the full height so the whole card reads as one object. */
+[data-theme="neon"] .nm-board__slats {
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--w-base) 76%, transparent) 0 4px,
+      color-mix(in oklab, var(--w-base) 32%, transparent) 4px 8px,
+      color-mix(in oklab, var(--w-highlight) 9%, transparent) 8px 9px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--w-base) 92%, transparent) 0 58%,
+      color-mix(in oklab, var(--w-base) 66%, transparent) 74%,
+      transparent 88%
+    );
+}
+
+/* ── The head ─────────────────────────────────────────────────────
+   The whole thing is the door. Its presence never came from the number's
+   size: a count says how many, not that anything finished. */
+.nm-board__head {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: var(--stub-w);
+  /* The right pad is what keeps the type off the tear. Without it the count
+     and the two meta lines ran to within a pixel of the perforation. */
+  padding: 20px var(--space-3) 0 var(--plate-pad);
+}
+[data-theme="neon"] .nm-board__head {
+  width: auto;
+}
+/* Both of these answer the same thing: with no chit the head runs the full
+   width, so it shares its box with the ledger strip and with the Open chip.
+   The head is centred in the card, and a centred head walks straight into a
+   full-width ledger (measured at a 7.5px overlap once the overprint was
+   added), so the strip is reserved and the head centres in what is left. That
+   lifts it into the chip's band, hence the lane on the right.
+
+   Both are scoped above the phone breakpoint on purpose: below it the ledger
+   is in flow rather than pinned, so there is nothing to reserve and nothing to
+   centre around. */
+@media (min-width: 1130px) {
+  [data-theme="neon"] .nm-board__head {
+    padding-right: calc(var(--plate-pad) + 104px);
+    margin-bottom: 78px;
+  }
+}
+.nm-board__issuer {
+  display: block;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-label);
+}
+.nm-board__rule {
+  display: block;
+  height: 2px;
+  margin: 10px calc(var(--plate-pad) + 8px) 0 0;
+  background: var(--w-highlight);
+  opacity: 0.85;
+}
+.nm-board__n {
+  display: block;
+  /* --count-size is the tuned ceiling. --count-px is what the component works
+     out it can actually afford, and it only ever comes in under. Written as a
+     whole length rather than as calc(var(--count-size) * var(--fit)), because
+     a var multiplier inside calc is silently inert in the target webviews. */
+  font-family: var(--w-face-mono);
+  font-size: var(--count-px, var(--count-size));
+  /* Both are for the fit measurement: as a full-width block its scrollWidth is
+     the column, not the digits, so it could never report an overflow. */
+  width: fit-content;
+  max-width: 100%;
+  white-space: nowrap;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1.02;
+  color: var(--w-highlight);
+  font-variant-numeric: tabular-nums;
+}
+/* THE OVERPRINT. It crosses the lower rule, which is what a stamp does to a
+   chit, and it is deliberately not laid over the digits: in the comp it sat on
+   them and the two read as a collision rather than as ink over paper. Signage,
+   because a stamp says filed; the count is in highlight, because a count says
+   live. That pairing is the only place on this card the two hues meet. */
+.nm-board__closed {
+  display: block;
+  width: fit-content;
+  /* Placed by ink, not by box. Measured, the digits' ink stops at y 212.5 and
+     the lower rule sits at 233.5, so the stamp is centred on the rule: it
+     crosses the printed line, which is what a stamp does, and it clears the
+     count by 12px instead of the 3.4px it had when it was set by eye. */
+  margin: -6px 0 7px;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-xl);
+  /* 700, because 600 is semibold and WCAG's large-text allowance wants BOLD at
+     18.66px or over. As normal text at 20/600 the Neon stamp measured 3.59:1
+     where it crosses a slat hairline, against a 4.5 bar. At 700 it is large
+     text, the bar is 3.0, and it clears in every band. Lantern was never close
+     to failing: 5.37 on the chit. */
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--w-signage);
+  transform: rotate(-2.6deg);
+  transform-origin: left center;
+}
+
+.nm-board__sub {
+  display: block;
+  margin-top: 10px;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-meta);
+}
+.nm-board__since {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-label);
+}
+/* Against the CARD, not the head. It used to be positioned inside the head,
+   whose width is the stub, so `right` resolved 300px in and it sat on the
+   left. */
+.nm-board__go {
+  position: absolute;
+  z-index: 2;
+  top: var(--plate-pad);
+  right: var(--plate-pad);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 5px 8px 5px 10px;
+  border: 1px solid var(--filed-ink);
+  border-radius: var(--radius-sm);
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-meta);
+  white-space: nowrap;
+}
+/* The card is the button now, so the chip answers the CARD's hover and focus,
+   the same way the drawer's door answers its header's. */
+.nm-board:hover .nm-board__go,
+.nm-board:focus-visible .nm-board__go {
+  background: var(--w-highlight);
+  border-color: var(--w-highlight);
+  color: var(--w-ink-on-highlight);
+}
+.nm-board:focus-visible {
+  outline: 2px solid var(--w-highlight);
+  outline-offset: 3px;
+}
+.nm-board__goword {
+  white-space: nowrap;
+}
+@media (max-width: 419px) {
+  .nm-board__goword {
+    display: none;
+  }
+}
+
+/* The ledger sits past the tear, on its own ground, because the linework was
+   running straight through the words when it did not. */
+.nm-board__ledger {
+  position: absolute;
+  z-index: 1;
+  right: var(--plate-pad);
+  bottom: var(--plate-pad);
+  left: calc(var(--stub-w) + var(--plate-pad));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 22px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--w-sunk) 88%, transparent);
+}
+[data-theme="neon"] .nm-board__ledger {
+  left: var(--plate-pad);
+}
+.nm-board__ledger > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-body);
+  font-variant-numeric: tabular-nums;
+}
+.nm-board__ledger em {
+  font-style: normal;
+  font-size: var(--text-2xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-label);
+}
+.nm-board__ledger b {
+  font-weight: 500;
+  color: var(--w-highlight);
+}
+
+/* ── Where the board stops ────────────────────────────────────────
+   A tile flipping every second is the most autonomous motion anywhere in this
+   app, more than Tonight's own heartbeat, so it is the first thing that should
+   go still. Under reduced motion the wall holds a fixed draw and everything
+   the pointer does stops travelling; the veil's hole stays, because a response
+   to your hand is feedback rather than an animation. */
+@media (prefers-reduced-motion: reduce) {
+  .nm-board__wall,
+  .nm-board__veil {
+    transition: none !important;
+    transform: none !important;
+  }
+  .nm-board__wall i,
+  .nm-board__wall i > b {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+/* The reduced tier keeps the card and drops what costs frames: the parallax is
+   a transform on a layer the size of the card, and the turn is a 3D flip. */
+.perf-lite .nm-board__wall {
+  transform: none;
+}
+/* !important, and it is not decoration. This used to be a transition, which
+   the tier could cancel with a plain rule. It is an animation now, and
+   `.nm-board__wall i.is-turning.is-down` scores (0,3,1) against this
+   selector's (0,2,1), so the plain version lost the cascade and the 3D
+   rotation kept running on the tier built to drop it. Measured: the tile
+   still reported animationName nm-flap-down under .perf-lite while the faces,
+   which happened to tie on specificity and win on source order, correctly
+   reported none. Half a turn is worse than either whole. */
+.perf-lite .nm-board__wall i,
+.perf-lite .nm-board__wall i > b {
+  animation: none !important;
+}
+
+/* Below the phone breakpoint Completed reduces to a door whenever anything is
+   planned, so the board mostly never renders there. When it does, it is one
+   column with no room for a stub, so the chit folds away and the head takes
+   the width. */
+/* WHERE THE CHIT STOPS FITTING.
+
+   The chit and the ledger stand side by side, so they need a card wide enough
+   for both, and below about 480px of card there is no such arrangement. What
+   happened instead, measured: at a 720px viewport the card is 310px, the
+   clamp pins to its 300px floor, and the chit is 96.8% of the card. The
+   ledger is positioned off that floor, so its box collapsed to 28px holding
+   75px of content, and its stat groups rendered up to 83px OUTSIDE the card,
+   over the Planned card beside it, unbacked, with nothing to clip them
+   because this card refuses overflow:hidden by design. It was still wrong at
+   820 and only came right at 960.
+
+   The card tracks the viewport at roughly 0.425, so 480px of card is 1130px
+   of viewport. Below that the card takes the structure the phone already
+   uses, which is the same answer to the same problem: no chit, the head takes
+   the width, and the ledger drops into flow underneath. The card has no fixed
+   height there, so it simply gets taller.
+
+   Only the COUNT is a phone decision, and it stays at the phone breakpoint. */
+@media (max-width: 1129px) {
+  .nm-board {
+    --stub-w: 100%;
+  }
+  .nm-board__stub,
+  .nm-board__tear {
+    display: none;
+  }
+  .nm-board__head {
+    width: auto;
+    padding-right: var(--plate-pad);
+  }
+  .nm-board__ledger {
+    position: static;
+    inset: auto;
+    margin: 14px var(--plate-pad) var(--plate-pad);
+  }
+}
+@media (max-width: 719px) {
+  .nm-board {
+    --count-size: 62px;
+  }
+}
+
+/* The header row is the door and the seal is a second control beside it, which
+   is exactly why this card was never made one big button. */
+.nm-card__order {
+  position: relative;
+}
+.nm-card__orderseal {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--w-highlight);
+  color: var(--w-highlight);
+  background: color-mix(in oklab, var(--w-highlight) 12%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+.nm-card__orderseal:hover,
+.nm-card__orderseal:focus-visible {
+  background: var(--w-highlight);
+  color: var(--w-ink-on-highlight);
+}
+/* It draws 26px because it is a mark beside a label, not a button in its own
+   right, and 26 is under the 44px floor. The header beside it is already held
+   to calc(100% - 34px), so this slop has room to grow into without the two
+   controls sharing hit pixels — which is a control you can hit neither of. */
+.nm-card__orderseal::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+}
+.nm-card__orderhead {
+  display: flex;
+  align-items: baseline;
+  /* Clear of the seal. */
+  width: calc(100% - 34px);
+  margin-bottom: 6px;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-meta);
+  cursor: pointer;
+}
+.nm-card__ordergo {
+  margin-left: auto;
+  align-self: center;
+  flex: none;
+  color: var(--ink-label);
+}
+.nm-card__orderhead:hover,
+.nm-card__orderhead:focus-visible {
+  color: var(--w-highlight);
+}
+
+.nm-card__name {
+  display: block;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--ink-body);
+}
+/* The name was signage on a highlight wash, which measured 3.73 and is the
+   one place the two-hue crossover asked for a colour the ground could not
+   carry. The crossover still happens on this card, on the parts that can
+   hold it: highlight border and count, signage on the cursor ring. */
+/* Planned's header is a door, so it needs the row treatment the watching
+   block's header has: the name leads, the count sits with it, the arrow
+   holds the right edge.
+
+   The orphan that used to sit here: a `.nm-card--completed` selector was left
+   behind when its declarations were deleted, and CSS reads a comment as
+   whitespace, so the two fused into `.nm-card--completed .nm-card__head--door`
+   and this rule stopped matching anything at all. Planned's door header was
+   getting its layout from elsewhere by luck. */
+.nm-card__head--door {
+  position: relative;
+  width: 100%;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.nm-card__go {
+  margin-left: auto;
+  align-self: center;
+  flex: none;
+  color: var(--ink-meta);
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.nm-card__head--door:hover .nm-card__name,
+.nm-card__head--door:focus-visible .nm-card__name {
+  color: var(--w-highlight);
+}
+.nm-card__head--door:hover .nm-card__go {
+  color: var(--w-highlight);
+  transform: translateX(3px);
+}
+
+.nm-card__name {
+  color: var(--ink-body);
+}
+.nm-card__n {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+.nm-card--planned .nm-card__n {
+  color: var(--w-signage);
+}
+.nm-card--completed .nm-card__n {
+  color: var(--w-highlight);
+}
+.nm-card__meta {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  color: var(--ink-label);
+}
+.nm-card__covers {
+  display: flex;
+  gap: 5px;
+}
+.nm-card__cover {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  border-radius: calc(var(--plate-radius) * 0.6);
+  background: var(--plate-bg-2);
+  border: 1px solid var(--w-line);
+  overflow: hidden;
+}
+.nm-card__cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 28%;
+}
+.nm-card--completed .nm-card__cover {
+  border-color: color-mix(in oklab, var(--w-highlight) 30%, transparent);
+}
+
+/* ── My Order rows ─────────────────────────────────────────────────
+   The standing .nm-order panel is gone: the order lives inside Planned at
+   every width now. These rows are what it left behind and what the folded
+   version renders. */
+.nm-order__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  font-size: var(--text-sm);
+  color: var(--ink-meta);
+  padding: 8px 16px;
+  border-top: 1px solid var(--w-line);
+  cursor: pointer;
+  background: none;
+  text-align: left;
+}
+.nm-order__row:hover {
+  background: var(--plate-bg-2);
+}
+.nm-order__n {
+  color: var(--w-signage);
+  font-family: var(--w-face-mono);
+  font-weight: 600;
+  width: 14px;
+  flex: none;
+}
+/* Photo-corner marks, drawn on the cover slot's own pseudo-elements. */
+.nm-order__cov {
+  display: block;
+  width: 26px;
+  height: 36px;
+  border-radius: calc(var(--plate-radius) * 0.6);
+  background: var(--plate-bg-2);
+  flex: none;
+  position: relative;
+}
+.nm-order__cov img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.nm-order__cov::before,
+.nm-order__cov::after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-color: var(--w-signage-line);
+}
+.nm-order__cov::before {
+  top: 0;
+  left: 0;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+.nm-order__cov::after {
+  bottom: 0;
+  right: 0;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
+.nm-order__tt {
+  flex: 1;
+  color: var(--ink-body);
+  min-width: 0;
+}
+
+/* ── The sequel band ─────────────────────────────────────────────────
+   From overview_structure_v2.html's wide frame, which the skin comp does
+   not draw: a band of tiles below the backdrop row whose width tracks the
+   backdrop's column (flex 2.4) with an empty flex:1 beside it, so it never
+   runs on under My Order. Skinned in the comp's own vocabulary since the
+   structure doc is greyboxed.
+
+   One hue for both tiles. structure_v2 gives each tile a different border
+   colour, but that is the per-tile hue idea from §6.3, which was resolved
+   SKIPPED this round — so they share the signage treatment the strip and
+   Planned already use. */
+.nm-seqband {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+.nm-tile {
+  flex: 1;
+  /* Floor, not a fixed size. Same reason as the anchor cards: these hold a
+     name and a meta line, and a name that wraps has to be able to push the
+     tile rather than run out of it. */
+  min-height: clamp(56px, 46.21px + 1.36vw, 68px);
+  min-width: 0;
+  padding: 12px 14px;
+  border: 2px solid var(--w-signage-line);
+  border-radius: var(--plate-radius);
+  background: var(--plate-bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  text-align: left;
+  cursor: pointer;
+  --fx-opp: var(--w-highlight);
+  --fx-own: var(--w-signage);
+}
+.nm-tile__name {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--ink-body);
+}
+.nm-tile__meta {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  color: var(--ink-label);
+}
+
+/* ── States ──────────────────────────────────────────────────────────
+   Caught up is a real state, not a broken button: the action stays
+   visible and says what it is, washed out rather than removed. WCAG
+   exempts disabled-control text for exactly this reason, and washing it
+   out IS the signal. */
+.nm-act:disabled {
+  background: transparent;
+  border-color: var(--w-signage-line);
+  color: var(--ink-meta);
+  cursor: default;
+}
+
+.nm-empty {
+  border: 2px solid var(--w-signage-line);
+  border-radius: var(--plate-radius);
+  background: var(--plate-bg);
+  padding: 40px 24px;
+  text-align: center;
+  --fx-opp: var(--w-highlight);
+  --fx-own: var(--w-signage);
+}
+.nm-empty__title {
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  margin: 0 0 8px;
+  color: var(--ink-body);
+}
+.nm-empty__line {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-meta);
+  margin: 0 0 18px;
+}
+.nm-empty .nm-act {
+  margin: 0 auto;
+}
+
+/* First paint, before the store has answered. Shapes only, in the
+   surface's own colour — a spinner would say less and cost a frame. */
+.nm-skel {
+  border-radius: var(--plate-radius);
+  background: var(--plate-bg);
+  border: 2px solid var(--w-signage-line);
+  opacity: 0.5;
+}
+.nm-skel--tonight {
+  height: 228px;
+  margin-bottom: 14px;
+}
+.nm-skel--strip {
+  height: 242px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────
+   One structural line, and it is a real reveal (the app's responsive law: a
+   breakpoint exists only where the tree genuinely changes shape). There used
+   to be a second at 1099 for the order column; the order is inside Planned
+   now, so there is no column to drop.
+
+   719: no backdrop at all. It cannot hold two full cards at phone
+   width, so Planned stands in place, the order folds under it, and
+   Completed reduces to a door. */
+
+@media (max-width: 719px) {
+  .nm__stage {
+    --nm-gutter-x: 14px;
+    padding: 20px var(--nm-gutter-x) 48px;
+  }
+  /* The scrim is the frame's own legibility layer and has to stay above the
+     art it protects, but it belongs under the texture like everything else in
+     layer 0. Both are inside the frame, so this is ordering within the layer,
+     not an escape from it. */
+  .nmb-1__scrim {
+    z-index: 1;
+  }
+  .nm-tonight__title {
+    font-size: var(--text-xl);
+  }
+  .nm-seqband {
+    margin-top: 14px;
+    gap: 8px;
+  }
+  .nm-order {
+    margin-top: 14px;
+  }
+  /* Outside the backdrop's row there is no flex parent to stretch against,
+     so the anchor has to claim the column itself. Without this it collapsed
+     to its own content width (measured: 120px in a 347px column). */
+  .nm-card {
+    width: 100%;
+    margin-top: 14px;
+  }
+}
+
+/* Completed as a door (phone only). A real entry button that navigates,
+   deliberately not an in-place toggle: on a phone a control that changes
+   what is under it costs you the thing you were reading. It keeps the
+   fill-and-glow that says "the fuller register" everywhere else. */
+.nm-cdoor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 2px solid var(--w-highlight);
+  border-radius: var(--plate-radius);
+  background: var(--nm-done-bg);
+  box-shadow: 0 0 18px 2px color-mix(in oklab, var(--w-highlight) 32%, transparent);
+  /* Same ground as .nm-card--completed and therefore the same exception: the
+     wash puts this a tier lighter than a plate, so every ink tier steps up
+     one here. */
+  --ink-label: var(--w-ink-dim);
+  --ink-meta: var(--w-ink);
+  cursor: pointer;
+  text-align: left;
+  --fx-opp: var(--w-signage);
+  --fx-own: var(--w-highlight);
+}
+.nm-cdoor::after {
+  box-shadow: 0 0 18px 2px color-mix(in oklab, var(--fx-opp) 32%, transparent);
+}
+.nm-cdoor__name {
+  font-size: var(--text-base);
+  font-weight: 600;
+  /* Was signage on a highlight wash, which measured 3.73. The crossover on
+     this door lives on the parts that can hold it: highlight border and
+     count, signage on the cursor ring. */
+  color: var(--ink-body);
+}
+.nm-cdoor__n {
+  font-family: var(--w-face-mono);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--w-highlight);
+  margin-left: auto;
+}
+.nm-cdoor__go {
+  flex: none;
+  color: var(--ink-label);
+}
+
+
+/* ── TONIGHT, LAID ACROSS THE BAND ───────────────────────────────
+   Stacked in a column, every element of the subject sat in the left third of
+   a very wide plate and the rest was void. The width is not a place to put
+   more air: the name, the record and the action are three separate things and
+   a wide band can hold them side by side, which is what a band is FOR.
+
+   Below this width the column is right, and it stays.
+
+   THE THRESHOLD IS 1200, NOT 900. At 900 the switch made the plate WORSE:
+   measured on a 96-character title, the column layout at a 844px card gave
+   the head 508px and four lines (360px tall), and the grid at a 944px card
+   gave it 220px and twelve lines (694px tall). A wider window producing a
+   taller, worse plate is the bug; the grid only earns the switch once the
+   head column can beat what the full body width was already giving it.
+
+   THE SHARE IS THE TITLE'S. The record used to take 1.7fr against the head's
+   1fr, which is how the head stayed pinned to its 220px minimum from 944px
+   all the way to about 1400px. A meter is a bar: it reads at any width and
+   wants none of them. The name is the thing that needs room.
+
+   1.4 and not more. The share trades directly against the art, because what
+   the head does not take is what the cast backdrop has left to show. Measured
+   on a 96-character title at 1280/1920: 1fr:1.7fr gives a 374/294px plate,
+   1.15 gives 334/254, 1.4 gives 294/220, and 1.9 gives 254/220. Past 1.4 the
+   plate stops getting shorter and the head just eats another 5% of the band
+   for nothing. */
+@container tonight (min-width: 1200px) {
+  .nm-tonight__head {
+    min-width: 0;
+  }
+  .nmb-1__body--head {
+    display: grid;
+    grid-template-columns: minmax(280px, 1.4fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+      "head record act"
+      "thread thread thread";
+    align-items: center;
+    column-gap: clamp(20px, 1.6vw, 36px);
+    row-gap: 12px;
+  }
+  .nm-tonight__head { grid-area: head; }
+  .nm-cells { grid-area: record; }
+  .nm-thread { grid-area: thread; margin-top: 0; }
+  .nmb-1__body--head > .nm-act {
+    grid-area: act;
+    margin-top: 0 !important;
+  }
+}
+
+/* One cell per episode has to still read as an episode. Left to fill a
+   1600px band, thirteen of them became 80px slabs and the row stopped
+   looking like a count of anything. */
+.nm-cells__cell {
+  max-width: 34px;
+}
+
+
+/* ── TONIGHT'S LAYER STACK ───────────────────────────────────────
+   Bottom to top, inside the plate:
+
+     0  .nmb-1__frame   the poster (phone: full bleed, so it IS layer 0)
+     1  .nmb-1__grain   the particle layer, phone only
+     2  .nmb-1__frame   the poster (desktop: a real panel)
+     3  .nmb-1__body    every word and control
+
+   Above 720px the art, the light and the grain all live on the page instead
+   (see THE ROOM), so this stack shrinks to the poster and the body, and the
+   page's own layers show through everything they leave empty.
+
+   Do NOT collapse these into `.nm-tonight > * { position: relative }`. It has
+   the same specificity as `.nmb-1__frame`'s own `position: absolute` and comes
+   later, so it wins, and the phone backdrop collapses to a zero-height element
+   in flow — Tonight simply loses its art. Desktop stays fine, because
+   `.nmd-1 .nmb-1__frame` already makes the frame relative, which is exactly
+   why that bug once passed every desktop check. */
+.nm-tonight > .nmb-1__frame {
+  z-index: 0;
+}
+.nm-tonight > .nmb-1__grain {
+  z-index: 1;
+}
+@media (min-width: 720px) {
+  /* At this width the frame stops being the backdrop and becomes a real
+     panel: the crisp poster is the one piece of art on the plate that should
+     NOT have the grain sitting over it. */
+  .nm-tonight > .nmb-1__frame {
+    z-index: 2;
+  }
+  /* The page grain covers this ground now, and two dot layers at slightly
+     different origins moiré. */
+  .nm-tonight > .nmb-1__grain {
+    display: none;
+  }
+}
+.nm-tonight > .nmb-1__body,
+.nm-tonight > .nm-tonight__none {
+  z-index: 3;
+}
+
+/* ── WHERE "LIVE" LIVES NOW ──────────────────────────────────────
+   The ring was doing two jobs at once, and that is why the plate read as a
+   box: it said THIS IS HAPPENING NOW, and it also drew the plate's boundary.
+   Taking the boundary away means the first job has to go somewhere, and it
+   goes to the two things that are actually live rather than to a frame around
+   them: the action you would press, and the episode it would log.
+
+   Small and bright beats large and polite. Spread over four sides of a plate
+   the glow had to stay quiet or it would have lit the whole page; on a button
+   and a 12px cell it can be twice as strong and still read as a detail. */
+@media (min-width: 720px) {
+  .nme-3 .nm-act {
+    box-shadow: 0 0 22px 3px color-mix(in oklab, var(--w-signage) 54%, transparent);
+    animation: nm-act-pulse 4.4s ease-in-out infinite;
+  }
+  /* The waiting hairline used to be lifted a tier here, because the record is
+     the one graphic sitting on unprotected lit ground and an outline sized for
+     a dark plate did not survive the move. It is the base rule now: the plate
+     ground needed the same lift and was not getting it (see THE RECORD), so
+     there is nothing left for this breakpoint to change. */
+  .nme-3 .nm-cells__cell[data-state="next"] {
+    box-shadow:
+      inset 0 0 0 1.5px var(--w-highlight),
+      0 0 9px 1px color-mix(in oklab, var(--w-highlight) 62%, transparent);
+    animation: nm-cell-pulse 4.4s ease-in-out infinite;
+  }
+  /* The poster is the plate's other control and the only large object left in
+     it, so it takes the pointer the way an object does: a ring in the live
+     hue. It replaces the inset focus shadow that existed because the old
+     frame clipped a normal outline; there is no clip on this side any more. */
+  .nmd-1 .nmb-1__art:hover,
+  .nmd-1 .nmb-1__art:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--w-highlight),
+      0 0 24px 2px color-mix(in oklab, var(--w-highlight) 44%, transparent);
+  }
+}
+/* Same 4.4s as the plate glow it replaces, so the room keeps one heartbeat
+   rather than gaining a second one out of step with the phone's. */
+@keyframes nm-act-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 22px 3px color-mix(in oklab, var(--w-signage) 54%, transparent);
+  }
+  45% {
+    box-shadow: 0 0 16px 2px color-mix(in oklab, var(--w-signage) 34%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 26px 4px color-mix(in oklab, var(--w-signage) 64%, transparent);
+  }
+}
+@keyframes nm-cell-pulse {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 1.5px var(--w-highlight),
+      0 0 9px 1px color-mix(in oklab, var(--w-highlight) 62%, transparent);
+  }
+  45% {
+    box-shadow:
+      inset 0 0 0 1.5px var(--w-highlight),
+      0 0 6px 1px color-mix(in oklab, var(--w-highlight) 38%, transparent);
+  }
+  70% {
+    box-shadow:
+      inset 0 0 0 1.5px var(--w-highlight),
+      0 0 12px 2px color-mix(in oklab, var(--w-highlight) 74%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nme-3 .nm-act,
+  .nme-3 .nm-cells__cell[data-state="next"] {
+    animation: none;
+  }
+}
+
+/* ── THE HEAD'S OWN LEGIBILITY ───────────────────────────────────
+   The one piece of the old plate worth keeping. With no plate there is no
+   plate-wide scrim, so the wash is set dim enough for every other piece of
+   ink on the page to read against it directly. The title and the meta line
+   are the exception: they are the largest text on the surface and they sit on
+   the brightest part of the wash, so they get a local one.
+
+   It is an ellipse feathered to nothing, not a panel. The moment it has an
+   edge it is a plate again, which is the thing this whole change removed. */
+@media (min-width: 720px) {
+  .nm-tonight__head {
+    position: relative;
+  }
+  .nm-tonight__head::before {
+    content: "";
+    position: absolute;
+    inset: -34px -74px -30px -64px;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      56% 60% at 46% 50%,
+      color-mix(in oklab, var(--w-base) 62%, transparent) 0%,
+      color-mix(in oklab, var(--w-base) 55%, transparent) 44%,
+      transparent 100%
+    );
+  }
+}
+
+/* ── THE PARTICLE LAYER, PHONE ONLY ──────────────────────────────
+   Above 720px this is .nm__grain and it belongs to the page. Down here
+   Tonight is still a plate with the art full-bleed inside it, so the plate
+   needs its own copy to sit over that art. */
+.nmb-1__grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--ink-body) 9%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 11px 11px;
+}
+
+/* ── NOTHING RUNNING ─────────────────────────────────────────────
+   The subject-shaped invitation. It keeps the plate rather than letting the
+   surface open on a register: a page whose subject can disappear has no
+   subject, it has a first item. */
+/* An empty subject is not a LIVE one, so it does not wear what live means.
+   The highlight border and the glow both say "this is happening now", which
+   is exactly what an empty slot is not: it keeps the signage frame (this is
+   still the subject's place) on the recessed ground, and the light goes out.
+   No art, deliberately — there is no show to show. */
+.nm-tonight--none {
+  display: flex;
+  align-items: center;
+  min-height: 160px;
+  padding: clamp(20px, 16.7px + 0.45vw, 24px);
+  /* The width as well as the colour. The live plate's border is phone-only
+     now, so stating only a colour here left the empty state with nothing to
+     colour: an empty subject that is supposed to keep its frame had a 0px
+     one at desktop. */
+  border: 2px solid var(--filed-line);
+  background: var(--sunk-bg);
+  box-shadow: none;
+}
+[data-theme="lantern"] .nm .nm-tonight--none,
+[data-theme="neon"] .nm .nm-tonight--none {
+  box-shadow: none;
+  animation: none;
+}
+.nm-tonight__none {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: 52ch;
+}
+.nm-tonight--none .nm-tonight__title {
+  margin-bottom: 6px;
+}

@@ -102,12 +102,17 @@ describe("groupEntries — which member represents the card", () => {
     expect(franchise({ 2: "completed", 1: "completed", 3: "dropped" })).toBe(1);
   });
 
-  it("falls back to the earliest member when the root is not tracked", () => {
+  it("falls back to story position, not added_at, when the root is not tracked", () => {
+    // id 3 was added to the list first, but id 2 is the story-earlier season.
+    // This used to pick 3 (added_at order) — the real-data repro is
+    // Kyoukaisenjou no Horizon II's cover representing the card instead of
+    // Horizon I's, because II happened to be added first. See the resurface
+    // plan §3a-1.
     const groups = groupEntries([
       makeEntry({ anilist_id: 2, franchise_root_id: 1, added_at: 50, status: "completed" }),
       makeEntry({ anilist_id: 3, franchise_root_id: 1, added_at: 10, status: "completed" }),
     ]);
-    expect(groups[0].displayEntry.anilist_id).toBe(3);
+    expect(groups[0].displayEntry.anilist_id).toBe(2);
   });
 
   // The reported bug: adding season 2 first made season 2 the card's current

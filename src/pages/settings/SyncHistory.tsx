@@ -11,7 +11,7 @@ import { RefreshCw } from "lucide-react";
 const LEVEL_COLOR: Record<SyncLogEntry["level"], string> = {
   info: "var(--color-success, #4ade80)",
   warn: "var(--color-warning, #fbbf24)",
-  error: "var(--color-danger, #f87171)",
+  error: "var(--color-error)",
 };
 
 function formatWhen(at: number): string {
@@ -61,7 +61,7 @@ export function SyncHistory() {
                   gap: "var(--space-3, 12px)",
                   alignItems: "flex-start",
                   padding: "var(--space-3, 12px) 0",
-                  borderTop: i === 0 ? "none" : "1px solid var(--color-border, rgba(255,255,255,0.08))",
+                  borderTop: i === 0 ? "none" : "1px solid var(--plate-line)",
                 }}
               >
                 <span

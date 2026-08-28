@@ -16,18 +16,33 @@ interface EpisodeIncrementOptions {
    *  already has its own -1 and a cancel affordance. Matches the Hero +Ep
    *  path so accidental logging is reversible everywhere. */
   undoToast?: boolean;
+  /** The real stopping point for a rapid-tap batch, when it differs from the
+   *  show's eventual total — a still-airing show can't be tapped past what
+   *  has actually released. Deliberately separate from `total`: `total` still
+   *  drives the "reached the finale" prompt below, which must only fire once
+   *  the real run is over, not once the batch catches up to today's episode. */
+  ceiling?: number | null;
+  /** Fires when a tap is blocked by `ceiling` (not by `total` — reaching the
+   *  real finale has its own toast below). `increment` guards BEFORE calling
+   *  `setEpisodes` at all, which is what makes the accumulator safe against a
+   *  burst of taps — but it also means the store's own "only N have aired"
+   *  toast never gets a chance to run, since the store never sees the tap.
+   *  Without this callback a blocked tap on a still-airing show did nothing
+   *  visible whatsoever. */
+  onBlocked?: () => void;
 }
 
 export function useEpisodeIncrement(
   anilistId: number,
   currentEp: number,
   total?: number | null,
-  { undoToast = false }: EpisodeIncrementOptions = {},
+  { undoToast = false, ceiling, onBlocked }: EpisodeIncrementOptions = {},
 ) {
   const setEpisodes = useListStore((s) => s.setEpisodes);
   const pendingRef = useRef(0);
   const [pending, setPending] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cap = ceiling ?? total;
 
   const flush = useCallback(async () => {
     if (timerRef.current) {
@@ -43,7 +58,8 @@ export function useEpisodeIncrement(
     await setEpisodes(anilistId, after);
     // Reaching the finale hands the toast to setEpisodes' mark-complete action;
     // a stacked Undo would fight it, so only offer undo short of the finale
-    // (same rule the Hero +Ep path already uses).
+    // (same rule the Hero +Ep path already uses). Keyed to the real total,
+    // not the aired ceiling -- catching up to today's episode is not a finale.
     const reachedFinale = total != null && after >= total;
     if (undoToast && !reachedFinale) {
       recordEpisodeLog(anilistId, before, after);
@@ -51,12 +67,15 @@ export function useEpisodeIncrement(
   }, [anilistId, currentEp, setEpisodes, total, undoToast]);
 
   const increment = useCallback(() => {
-    if (total != null && currentEp + pendingRef.current >= total) return;
+    if (cap != null && currentEp + pendingRef.current >= cap) {
+      onBlocked?.();
+      return;
+    }
     pendingRef.current += 1;
     setPending(pendingRef.current);
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => void flush(), ACCUMULATE_MS);
-  }, [flush, total, currentEp]);
+  }, [flush, cap, currentEp, onBlocked]);
 
   const cancel = useCallback(() => {
     if (timerRef.current) {

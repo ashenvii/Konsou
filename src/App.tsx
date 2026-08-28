@@ -1,12 +1,34 @@
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 import type { ReactNode } from "react";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { Onboarding } from "@/components/Onboarding";
-// Overview is the landing route, so it stays in the main chunk — splitting it
-// would only trade a smaller bundle for a spinner on the very first paint.
-import { Overview } from "@/pages/Overview";
+// The landing route stays in the main chunk — splitting it would only trade a
+// smaller bundle for a spinner on the very first paint.
+import { NightMarket } from "@/pages/NightMarket";
+
+/* THE BOARD TUNER, and the two guards that keep it out of the product.
+
+   import.meta.env.DEV is compile-time, so a production build drops the
+   branch and never emits the chunk; the dynamic import keeps it out of the
+   first paint even in dev. It only mounts when the URL asks for it, which
+   for a HashRouter app can be either side of the hash:
+     http://localhost:5199/?tune=board
+     http://localhost:5199/#/?tune=board
+   It drives the real card by writing real custom properties on it, so
+   unlike a standalone rig it cannot drift from what ships. */
+const BoardTuner = import.meta.env.DEV ? lazy(() => import("@/dev/BoardTuner")) : null;
+
+function tunerRequested(): boolean {
+  if (typeof window === "undefined") return false;
+  const hash = window.location.hash;
+  const afterHash = hash.includes("?") ? hash.slice(hash.indexOf("?")) : "";
+  return (
+    new URLSearchParams(window.location.search).get("tune") === "board" ||
+    new URLSearchParams(afterHash).get("tune") === "board"
+  );
+}
 
 // Everything else loads on navigation. These pages pull in the heavy weight —
 // the Discover filter graph, the stats canvas, the whole detail view and the
@@ -34,6 +56,7 @@ const LibrarySettings = lazy(() => import("@/pages/settings/LibrarySettings").th
 const SyncHistory = lazy(() => import("@/pages/settings/SyncHistory").then((m) => ({ default: m.SyncHistory })));
 const NotificationsSettings = lazy(() => import("@/pages/settings/NotificationsSettings").then((m) => ({ default: m.NotificationsSettings })));
 const SupportSettings = lazy(() => import("@/pages/settings/SupportSettings").then((m) => ({ default: m.SupportSettings })));
+const WhatsNewSettings = lazy(() => import("@/pages/settings/WhatsNewSettings").then((m) => ({ default: m.WhatsNewSettings })));
 const AboutSettings = lazy(() => import("@/pages/settings/AboutSettings").then((m) => ({ default: m.AboutSettings })));
 
 function Wrap({ name, children }: { name: string; children: ReactNode }) {
@@ -44,9 +67,14 @@ export function App() {
   return (
     <HashRouter>
       <Onboarding />
+      {BoardTuner && tunerRequested() && (
+        <Suspense fallback={null}>
+          <BoardTuner />
+        </Suspense>
+      )}
       <Routes>
         <Route element={<AppShell />}>
-          <Route index element={<Wrap name="My List"><Overview /></Wrap>} />
+          <Route index element={<Wrap name="My List"><NightMarket /></Wrap>} />
           {/* Dedicated status rooms, pushed onto the My List tab's back stack.
               The two bespoke rooms match first; watching and on-hold keep the
               generic one. */}
@@ -68,7 +96,11 @@ export function App() {
             <Route path="library" element={<Wrap name="Library & Sync"><LibrarySettings /></Wrap>} />
             <Route path="sync-history" element={<Wrap name="Sync history"><SyncHistory /></Wrap>} />
             <Route path="notifications" element={<Wrap name="Notifications"><NotificationsSettings /></Wrap>} />
+            {/* Three separate doors: what this app is, what changed, and how to
+                help. They were briefly one page, which made a single scroll
+                answer three unrelated questions. */}
             <Route path="support" element={<Wrap name="Support"><SupportSettings /></Wrap>} />
+            <Route path="whats-new" element={<Wrap name="What's new"><WhatsNewSettings /></Wrap>} />
             <Route path="about" element={<Wrap name="About"><AboutSettings /></Wrap>} />
           </Route>
           <Route path="stats" element={<Wrap name="Stats"><Stats /></Wrap>} />

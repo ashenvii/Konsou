@@ -2,9 +2,9 @@ import { useState } from "react";
 import type { CSSProperties, MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Plus, Star } from "lucide-react";
-import { AnimeCover } from "@/components/anime/AnimeCover";
 import { StatusSheet } from "@/components/anime/StatusSheet";
 import { statusMeta } from "@/components/anime/statusMeta";
+import { HeroPlate } from "@/components/ui/HeroPlate";
 import { Icon } from "@/components/ui/Icon";
 import { getDisabledStatuses } from "@/lib/statusValidation";
 import { useListStore } from "@/lib/store/listStore";
@@ -26,10 +26,12 @@ const AIRING_LABEL: Record<string, string> = {
 };
 
 /**
- * The landing's one committed moment: a single featured title. Cover art stays
- * the hero — the poster floats sharp over a darkened banner, so the art reads
- * even when the banner is busy. Everything below it on the page is quieter.
- * One title, never a rotating carousel (carousels bury the art and test poorly).
+ * The landing's one committed moment: a single featured title, on the shared
+ * HeroPlate. Everything below it on the page is quieter. One title, never a
+ * rotating carousel: this is a RECOMMENDATION, and rotating recommendations
+ * bury the art and test poorly. (The Watching room's billboard does rotate,
+ * and the difference is that every slide there is something you already
+ * chose, so there is no "which one is the pick" question to bury.)
  */
 export function DiscoverSpotlight({ media }: DiscoverSpotlightProps) {
   const navigate = useNavigate();
@@ -65,24 +67,15 @@ export function DiscoverSpotlight({ media }: DiscoverSpotlightProps) {
 
   return (
     <>
-      <article
+      <HeroPlate
         className="k-spotlight"
+        banner={banner}
+        cover={cover}
+        alt={title}
         onClick={open}
         style={media.coverImage?.color ? ({ "--spot-tint": media.coverImage.color } as CSSProperties) : undefined}
       >
-        <div
-          className={`k-spotlight__bg${banner ? "" : " k-spotlight__bg--cover"}`}
-          style={{ backgroundImage: banner ? `url("${banner}")` : cover ? `url("${cover}")` : undefined }}
-          aria-hidden
-        />
-        <div className="k-spotlight__scrim" aria-hidden />
-
-        <div className="k-spotlight__body">
-          <div className="k-spotlight__poster">
-            <AnimeCover src={cover} alt={title} decorative radius="var(--radius-md)" />
-          </div>
-
-          <div className="k-spotlight__text">
+        <>
             <h2 className="k-spotlight__title">{title}</h2>
 
             <div className="k-spotlight__meta">
@@ -125,9 +118,8 @@ export function DiscoverSpotlight({ media }: DiscoverSpotlightProps) {
                 Details
               </button>
             </div>
-          </div>
-        </div>
-      </article>
+        </>
+      </HeroPlate>
 
       <StatusSheet
         open={sheetOpen}
@@ -145,10 +137,10 @@ export function DiscoverSpotlight({ media }: DiscoverSpotlightProps) {
 /** Placeholder shown while the spotlight source query is still loading. */
 export function SpotlightSkeleton() {
   return (
-    <div className="k-spotlight k-spotlight--skel" aria-hidden>
-      <div className="k-spotlight__body">
-        <div className="k-spotlight__poster k-lane__skel" />
-        <div className="k-spotlight__text">
+    <div className="k-heroplate k-spotlight k-spotlight--skel" aria-hidden>
+      <div className="k-heroplate__body">
+        <div className="k-heroplate__poster k-lane__skel" />
+        <div className="k-heroplate__text">
           <div className="k-spotlight__skelline k-spotlight__skelline--title" />
           <div className="k-spotlight__skelline k-spotlight__skelline--meta" />
           <div className="k-spotlight__skelline k-spotlight__skelline--btn" />

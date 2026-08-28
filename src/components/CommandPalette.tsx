@@ -159,7 +159,7 @@ export function CommandPalette() {
         onKeyDown={onKeyDown}
       >
         <div className="k-palette__field">
-          <Icon icon={Search} size={16} color="var(--color-text-tertiary)" />
+          <Icon icon={Search} size={16} color="var(--ink-label)" />
           <input
             ref={inputRef}
             className="k-palette__input"

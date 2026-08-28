@@ -20,7 +20,7 @@ export function EmptyState({ icon, title, subtitle, action, showTip }: EmptyStat
     <div className="k-empty">
       {icon && (
         <div className="k-empty__icon">
-          <Icon icon={icon} size={40} color="var(--color-text-tertiary)" />
+          <Icon icon={icon} size={40} color="var(--ink-label)" />
         </div>
       )}
       <p className="k-empty__title">{title}</p>

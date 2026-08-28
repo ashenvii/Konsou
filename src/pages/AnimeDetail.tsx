@@ -316,6 +316,7 @@ export function AnimeDetail() {
   const [topbarSolid, setTopbarSolid] = useState(false);
   const [tab, setTab] = useState<DetailTab>("overview");
   const bannerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
 
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
   const title = media ? preferredTitle(media.title, titleLanguage) : "";
@@ -642,7 +643,7 @@ export function AnimeDetail() {
             /* One panel for your relationship to this title: state, score,
                progress, tags and note together, instead of three unrelated
                controls that each opened a different sheet. */
-            <div className="k-track">
+            <div className="k-track" ref={trackRef}>
               <button
                 type="button"
                 className="k-track__top"
@@ -670,13 +671,26 @@ export function AnimeDetail() {
 
               {/* Logging stays inline: it is the frequent act, and making it
                   cost a sheet would be a step backwards. The reached-finale
-                  prompt lives in listStore.setEpisodes, so it fires here too. */}
+                  prompt lives in listStore.setEpisodes, so it fires here too.
+                  Editable only while actively watching — the same gate
+                  FranchiseSheet's SeasonRow already applies. Without this a
+                  completed entry's count could be dragged below its total
+                  from this one screen (the "-" button has no status check of
+                  its own), leaving status and count disagreeing with nothing
+                  else in the app able to produce that combination. */}
               <div className="k-track__progress">
-                <EpisodeCounter
-                  anilistId={animeId!}
-                  watched={entry.episodes_watched}
-                  total={entry.total_episodes}
-                />
+                {entry.status === "watching" || entry.status === "rewatching" ? (
+                  <EpisodeCounter
+                    anilistId={animeId!}
+                    watched={entry.episodes_watched}
+                    total={entry.total_episodes}
+                    airedCeiling={entry.aired_episodes}
+                  />
+                ) : (
+                  <span className="k-track__epstatic">
+                    {entry.episodes_watched} / {entry.total_episodes ?? "?"}
+                  </span>
+                )}
               </div>
 
               <button
@@ -1067,6 +1081,8 @@ export function AnimeDetail() {
           open={editOpen}
           onClose={() => setEditOpen(false)}
           anilistId={animeId}
+          // Anchored to the tracking panel, which is the thing this menu edits.
+          anchor={trackRef.current}
         />
       )}
     </div>

@@ -57,7 +57,7 @@ export function WhatsNew() {
     <BottomSheet open onClose={dismiss} title={`What's new in v${entry.version}`}>
       <div className="k-whatsnew">
         <div className="k-whatsnew__lede">
-          <Icon icon={Sparkles} size={16} color="var(--color-accent)" />
+          <Icon icon={Sparkles} size={16} color="var(--live-ink)" />
           <Text size="sm" color="secondary">
             Konsou updated{entry.date ? ` on ${entry.date}` : ""}. Here is what changed.
           </Text>

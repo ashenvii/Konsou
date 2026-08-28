@@ -12,6 +12,14 @@ const pkg = JSON.parse(
   readFileSync(new URL("./package.json", import.meta.url), "utf-8"),
 ) as { version: string };
 
+// And for the app's display NAME: the Tauri manifest, which is what the
+// installer, the window title and the OS all use. Injected the same way so a
+// rename lands everywhere at once instead of leaving "Konsou" written into a
+// notification string somewhere.
+const tauri = JSON.parse(
+  readFileSync(new URL("./src-tauri/tauri.conf.json", import.meta.url), "utf-8"),
+) as { productName?: string };
+
 // https://vite.dev/config/, tailored for Tauri development.
 export default defineConfig(() => ({
   plugins: [react()],
@@ -38,6 +46,7 @@ export default defineConfig(() => ({
 
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_NAME__: JSON.stringify(tauri.productName ?? "Konsou"),
   },
 
   // Env vars with these prefixes are exposed via import.meta.env in the app.

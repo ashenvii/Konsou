@@ -30,7 +30,7 @@
   background: oklch(0% 0 0 / 72%);
 }
 .perf-lite .k-rail {
-  background: color-mix(in oklch, var(--color-surface-1) 92%, transparent);
+  background: color-mix(in oklch, var(--plate-bg) 92%, transparent);
 }
 
 /* Soft glows: invisible at phone size, expensive to composite. Keep the

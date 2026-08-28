@@ -111,7 +111,7 @@ export function Discover() {
     <div className="k-page k-discover">
       <div className="k-search__bar">
         <div className="k-hsearch">
-          <Icon icon={SearchIcon} size={18} color="var(--color-text-tertiary)" />
+          <Icon icon={SearchIcon} size={18} color="var(--ink-label)" />
           <input
             ref={inputRef}
             className="k-hsearch__input"

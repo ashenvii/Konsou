@@ -1,109 +1,97 @@
-/* === KONSOU DESIGN TOKENS === */
-/* Color format: oklch(lightness% chroma hue). */
+/* ═══════════════════════════════════════════════════════════════════
+   THE KONSOU LIBRARY
+
+   One place the whole app draws from. Three layers, and the rule for
+   which layer a value belongs in is the only rule you need to hold:
+
+     LAYER 1  PRIMITIVES   measurements that are true in every world.
+                           Space, the type ramp, motion, layout. A
+                           theme never touches these.
+
+     LAYER 2  WORLD        what a theme actually is. A world is nothing
+                           but a filled-in set of these roles: grounds,
+                           ink, its two hues, its line, its corner, its
+                           faces. Adding a world = copying this block
+                           and changing the values. Nothing else.
+
+     LAYER 3  PARTS        what components read. A plate, a row, a rail,
+                           a chip, a meter, a seal, a door. Components
+                           NEVER reach past this layer for a colour:
+                           they ask for `--plate-bg`, not for a hue.
+
+   The point of the split: changing what a plate looks like is one line
+   in layer 3 and every plate in the app moves. Changing the world is
+   one block in layer 2 and the whole app moves. A component that needs
+   to break the rule overrides a layer-3 token on itself, locally, and
+   the exception stays visible where it happens instead of becoming a
+   hardcoded colour buried 4000 lines into a stylesheet.
+
+   Sources: docs/OVERVIEW_NIGHT_MARKET_PLAN.md is the direction. The hue
+   and corner values are lifted from the built Night Market surface,
+   which is where they were tuned live and confirmed.
+   ═══════════════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   LAYER 1 — PRIMITIVES
+   Structure. No world owns these.
+   ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ═══ THE FIELD GUIDE — default world (Herbarium plate) ════════════════
-     A naturalist's catalogue: deep herbarium examination table, warm ivory
-     ink, one vermilion stamp of record, crisp ruled plates. The full 8-theme
-     rebuild lands in /impeccable extract; this :root is the canonical
-     default. World contract lives in DESIGN.md. ═════════════════════════ */
+  /* ── Type ramp ────────────────────────────────────────────────────
+     Nine steps, and every one of them earns its place by being used at
+     both ends: a scale is not a hierarchy until something reaches the
+     top of it. Retuned for Space Grotesk and IBM Plex Mono, which have
+     a much larger x-height than the faces this ramp was originally cut
+     for (EB Garamond, Courier Prime) and so read the same at 1-2px
+     smaller. The built Night Market surface had drifted to twelve ad
+     hoc sizes (9.5 / 10.5 / 11 / 11.5 / 12 / 12.5 / 14 / 16 / 19 / 20 /
+     22 / 28.8) because each was transcribed off a mockup one at a time.
+     They collapse onto these steps. */
+  --text-2xs:  10px;    --leading-2xs:  14px;   /* mono labels, eyebrow chips */
+  --text-xs:   11.5px;  --leading-xs:   16px;   /* meta lines, counts */
+  --text-sm:   12.5px;  --leading-sm:   18px;   /* secondary body */
+  --text-base: 14px;    --leading-base: 20px;   /* body, the default voice */
+  --text-lg:   16px;    --leading-lg:   23px;   /* lead-in body, card names */
+  --text-xl:   20px;    --leading-xl:   26px;   /* section subjects */
+  --text-2xl:  26px;    --leading-2xl:  32px;   /* page titles */
+  --text-3xl:  34px;    --leading-3xl:  40px;
+  /* The display step. Reserved for the ONE subject of a surface, never a
+     section heading. It exists because a measured audit of the old My
+     List found 94.5% of on-screen characters sitting in a 12-14px band
+     with nothing above 17: that is what "everything looks the same"
+     measures as. */
+  --text-4xl:  44px;    --leading-4xl:  50px;
 
-  /* ── Herbarium table: deep desaturated botanical green-black ───────── */
-  --color-base:          oklch(16% 0.020 158);
-  --color-surface:       oklch(20% 0.024 158);
-  --color-surface-2:     oklch(25% 0.026 158);
-  --color-surface-3:     oklch(30% 0.028 158);
-  /* Keyline: the ruled frame, warm ivory at low alpha. Depth is drawn, not lit. */
-  --color-border:        oklch(90% 0.030 90 / 24%);
-  --color-border-strong: oklch(90% 0.035 88 / 46%);
-  --color-keyline:        var(--color-border);
-  --color-keyline-strong: var(--color-border-strong);
+  --track-label: 0.08em;   /* tracking for mono small-caps labels */
+  --track-tight: -0.01em;  /* display sizes only, where default is loose */
 
-  /* ── Ink: warm ivory, an aged label — never pure white ─────────────── */
-  --color-text-primary:   oklch(93% 0.020 88 / 92%);
-  --color-text-secondary: oklch(93% 0.018 88 / 66%);
-  --color-text-tertiary:  oklch(93% 0.016 88 / 54%);  /* held at AA (4.5:1) on the table */
-
-  /* ── The one ink of record: vermilion (the collector's stamp) ──────────
-     Means "catalogued / in your collection" / active. Never decoration;
-     under 10% of any screen. Overridable per user via [data-accent], carried
-     decomposed so stamps rebuild at any opacity. */
-  --color-accent:      oklch(55% 0.19 32);
-  --color-accent-glow: oklch(67% 0.19 34);
-  --color-accent-dim:  oklch(55% 0.19 32 / 16%);
-  --color-accent-h: 32;
-  --color-accent-l: 55%;
-  --color-accent-c: 0.19;
-  /* Text/glyph that sits ON an accent fill (the primary button, the stamp).
-     Ivory by default (reads on the darker inks); light inks override to dark. */
-  --color-on-accent: oklch(97% 0.02 88);
-
-  /* ── Field-note stamps — semantic state ───────────────────────────────
-     Each state = a distinct hue AND a glyph AND a word (colorblind-safe),
-     inked toward paper (never neon):
-       watching   → field blue      (observing)
-       completed  → catalogued green
-       plan       → ochre           (to collect)
-       on_hold    → pressed violet
-       dropped    → released oxblood (browner/deeper than the accent so the
-                                      two reds never collide)
-       rewatching → re-observed teal                                        */
-  --color-status-watching:      oklch(62% 0.12 240);
-  --color-status-completed:     oklch(68% 0.14 150);
-  --color-status-plan_to_watch: oklch(75% 0.13 80);
-  --color-status-on_hold:       oklch(58% 0.12 300);
-  --color-status-dropped:       oklch(52% 0.13 25);
-  --color-status-rewatching:    oklch(68% 0.10 195);
-  /* Not collecting: a quiet muted grey-green, never louder than a real stamp. */
-  --color-status-not_interested: oklch(52% 0.012 158);
-
-  /* ── Semantic ─────────────────────────────────────────────── */
-  --color-success: oklch(68% 0.12 150);
-  --color-warning: oklch(74% 0.14 75);
-  --color-error:   oklch(54% 0.18 25);
-  --color-info:    oklch(62% 0.12 240);
-
-  /* ── Typography — the two voices of a specimen plate ───────────────────
-     Serif (EB Garamond): species names (italic), titles, field-note reading.
-     Mono (Courier Prime): accession numbers, labels, nav, tags, stamps. */
-  --font-serif: "EB Garamond", "Noto Serif JP", Georgia, "Times New Roman", serif;
-  --font-mono:  "Courier Prime", ui-monospace, "Courier New", monospace;
-  --font-sans:  var(--font-serif); /* legacy alias: default reading voice */
-  --track-label: 0.08em;           /* letterpress tracking for mono small-caps */
-
-  /* The scale is set for THESE two faces, not for a UI sans. EB Garamond has a
-     small x-height and Courier Prime is a light, wide typewriter: both need
-     roughly 1-2px more than a grotesque to read the same, and both suffer most
-     at the bottom of the scale. An on-screen audit found Garamond at 12px was
-     the most common text in the app and mono at 11px the second — which is
-     exactly what "cool but hard to read" means. Every step below 16px moved up
-     one notch; leadings moved with them so the extra size buys real space. */
-  --text-2xs:  12px;  --leading-2xs:  16px;
-  --text-xs:   13px;  --leading-xs:   18px;
-  --text-sm:   14px;  --leading-sm:   20px;
-  --text-base: 15px;  --leading-base: 22px;
-  --text-lg:   17px;  --leading-lg:   25px;
-  --text-xl:   21px;  --leading-xl:   29px;
-  --text-2xl:  27px;  --leading-2xl:  35px;
-  --text-3xl:  34px;  --leading-3xl:  42px;
-
-  /* ── Spacing (4px base unit) ──────────────────────────────── */
+  /* ── Space (4px base) ─────────────────────────────────────────── */
   --space-1:   4px;   --space-2:   8px;   --space-3:  12px;
   --space-4:  16px;   --space-5:  20px;   --space-6:  24px;
   --space-8:  32px;   --space-10: 40px;   --space-12: 48px;
   --space-16: 64px;   --space-20: 80px;
 
-  /* ── Radius — crisp plates and ruled tags, not pills ──────────────── */
-  --radius-sm:     2px;
-  --radius-md:     2px;
-  --radius-lg:     3px;
-  --radius-xl:     4px;
-  --radius-sheet:  6px;
-  --radius-full:  9999px;   /* seals / avatars / spinner rings only */
-  --radius-plate:  2px;
-  --radius-tag:    1px;
+  /* Page-level spacing grows with the window; component-internal spacing
+     does not. A button has no business getting bigger because the
+     monitor is wider. Only page and section rules reach for these. */
+  --gutter:      clamp(16px, 1.96vw + 8.65px, 40px);
+  --gap-section: clamp(20px, 1.63vw + 13.88px, 40px);
 
-  /* ── Motion ───────────────────────────────────────────────── */
+  /* ── Corner steps ─────────────────────────────────────────────────
+     Multipliers of the world's own corner unit (layer 2), NOT fixed px.
+     This is what lets a world be hard-cornered everywhere by setting one
+     value: Neon sets --w-corner to 0 and every radius below collapses
+     with it, with no per-component exceptions to chase down. */
+  --radius-sm:    calc(var(--w-corner) * 0.5);
+  --radius-md:    var(--w-corner);
+  --radius-lg:    calc(var(--w-corner) * 1.5);
+  --radius-xl:    calc(var(--w-corner) * 2);
+  --radius-sheet: calc(var(--w-corner) * 3);
+  --radius-tag:   calc(var(--w-corner) * 0.25);
+  --radius-full:  9999px;   /* seals, avatars, spinner rings only */
+
+  /* ── Motion ───────────────────────────────────────────────────── */
   --duration-instant: 100ms;
   --duration-fast:    150ms;
   --duration-normal:  200ms;
@@ -115,249 +103,386 @@
   --ease-in:       cubic-bezier(0.4, 0.0, 1.0, 1.0);
   --ease-standard: cubic-bezier(0.2, 0.0, 0.0, 1.0);
   --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1.0);
-  --ease-stamp:    cubic-bezier(0.22, 0.9, 0.28, 1.0);  /* the ink-stamp press: fast-in, firm settle */
+  --ease-stamp:    cubic-bezier(0.22, 0.9, 0.28, 1.0);
 
-  /* ── Layout ───────────────────────────────────────────────── */
-  --sidebar-width:      220px;
+  /* ── Layout ───────────────────────────────────────────────────── */
+  --sidebar-width:           220px;
   --sidebar-width-collapsed: 64px;
-  --panel-width:        320px;
-  --nav-height:         76px;
-  --topbar-height:      56px;
-  --content-padding-sm: 16px;
-  --content-padding-lg: 24px;
-
-  /* ── Elevation — paper on felt, not bloom ─────────────────────────────
-     A specimen rests on the table via a contact shadow; raised chrome lifts.
-     Nothing glows: membership is the keyline + accession + stamp. */
-  --shadow-card:    0 1px 2px oklch(0% 0 0 / 40%), 0 8px 20px oklch(0% 0 0 / 26%);
-  --shadow-card-hi: 0 2px 5px oklch(0% 0 0 / 44%), 0 14px 30px oklch(0% 0 0 / 34%);
-  --shadow-sheet:   0 -8px 40px oklch(0% 0 0 / 55%);
-  --shadow-pop:     0 12px 40px oklch(0% 0 0 / 50%);
-  --shadow-contact: var(--shadow-card);
-  --shadow-lifted:  var(--shadow-pop);
-
-  /* "In collection" is the keyline frame + accession + stamp, NOT a bloom.
-     Kept as a subtle keyline ring so anything still referencing it degrades
-     to a ruled edge instead of colored light. */
-  --glow-in-list:
-    0 0 0 1px var(--color-border-strong),
-    var(--shadow-card);
-  --glow-in-list-hover:
-    0 0 0 1px color-mix(in oklch, var(--color-accent) 55%, transparent),
-    var(--shadow-card-hi);
+  --panel-width:             320px;
+  --nav-height:              76px;
+  --topbar-height:           40px;
+  --content-padding-sm:      16px;
+  --content-padding-lg:      24px;
+  --settings-col:            880px;
 }
+
 
 /* ═══════════════════════════════════════════════════════════════════
-   THE EIGHT PLATES
-   Every theme is a rendition of the Field Guide: a deep tinted examination
-   ground (or, for the two light plates, the printed page), warm ivory ink,
-   ruled keylines, one ink of record. All derive from the :root Herbarium
-   world. Internal keys stay stable (ember/ocean/void/…); the Settings UI
-   shows the plate names. Accent overrides ([data-accent]) win in the cascade.
+   LAYER 2 — THE WORLDS
+
+   A world fills exactly these roles and nothing else. Two of them ship:
+   Lantern (warm, lit, small real corner) and Neon (cold, electric, hard
+   corner). They are the same structure wearing different values, which
+   is the whole point: nothing below this block knows which world is on.
+
+   The two-hue rule: SIGNAGE says "this is filed here", HIGHLIGHT says
+   "this is open right now". Every surface borrows exactly one accent of
+   the hue it is not, and that single crossover is what stops a two-colour
+   system reading flat. There is no third hue and no per-user accent.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── DARK PLATES ─────────────────────────────────────────────────────── */
+/* ── LANTERN (default) ───────────────────────────────────────────── */
+:root,
+[data-theme="lantern"] {
+  /* Ink, stated raw first so the grounds below can mix with it. */
+  --w-ink-raw:   oklch(90% 0.02 88);
 
-/* Herbarium (key: ember) — the default green-black table, defined on :root.
-   data-theme="ember" carries no overrides so it inherits the Field Guide. */
+  /* Grounds. Surfaces are mixed FROM the base rather than written as
+     literals, so a world only ever states its base and the whole stack
+     stays in tune with it. */
+  --w-base:      oklch(13% 0.035 18);
+  --w-surface:   color-mix(in oklab, var(--w-ink-raw) 3.5%, var(--w-base));
+  --w-surface-2: color-mix(in oklab, var(--w-ink-raw) 6%,   var(--w-base));
+  --w-surface-3: color-mix(in oklab, var(--w-ink-raw) 9%,   var(--w-base));
+  /* The recessed ground: darker than the base, used to family several
+     distinct tiles without merging them into one card. */
+  --w-sunk:      color-mix(in oklab, black 22%, var(--w-base));
 
-/* Nocturne (key: void) — deep indigo-violet examination table at night. */
-[data-theme="void"] {
-  --color-base:      oklch(15%   0.038 288);
-  --color-surface:   oklch(19%   0.046 288);
-  --color-surface-2: oklch(24%   0.052 288);
-  --color-surface-3: oklch(29%   0.058 288);
+  --w-ink:       var(--w-ink-raw);
+  /* The three ink tiers, and the floor under them. Measured on the real
+     grounds with a canvas probe (getComputedStyle hands back oklab, which
+     breaks naive contrast maths): full ink reads 14.6:1 on a plate, 62%
+     reads 5.96:1, and the old faint tier at 40% read 3.08:1 — under AA for
+     body text, which is what every "meta" and "label" line in the app is.
+     52.5% is the exact point where it clears 4.5:1; 55% is that plus
+     headroom for the lighter grounds. */
+  --w-ink-dim:   oklch(90% 0.02 88 / 62%);
+  --w-ink-faint: oklch(90% 0.02 88 / 55%);
+  /* Ink that sits ON a filled hue, and the measurement that decides it.
+     Both hues are BRIGHT fills (signage L 64-66, highlight L 82-83), so a
+     near-white label on them reads 3.52:1 and 1.57:1 — the second is barely
+     visible. The world's own ground reads 5.26 and 11.8. Ink on a fill is
+     dark in both worlds, and the old ivory-on-accent habit came from an
+     accent that used to sit ten points darker. */
+  --w-ink-on-signage:   var(--w-base);
+  --w-ink-on-highlight: var(--w-base);
+
+  /* The two hues. */
+  --w-signage:        oklch(64% 0.25 16);
+  --w-signage-line:   oklch(64% 0.25 16 / 60%);
+  --w-signage-wash:   oklch(64% 0.25 16 / 10%);
+  --w-highlight:      oklch(83% 0.17 84);
+  --w-highlight-line: oklch(83% 0.17 84 / 60%);
+  --w-highlight-wash: oklch(83% 0.17 84 / 12%);
+
+  /* Line. Structural edges that belong to neither hue. */
+  --w-line:        oklch(90% 0.02 88 / 10%);
+  --w-line-strong: oklch(90% 0.02 88 / 22%);
+  --w-line-width:  1px;
+
+  /* Ink and plate that sit ON cover art, as bare "L C H" triplets so call
+     sites can rebuild them at any alpha. Art is the one ground the world
+     does not control, so these are near-white and near-black rather than
+     the world's own surfaces. */
+  --w-on-art-ink:   97% 0.02 88;
+  --w-on-art-plate:  8% 0.012 18;
+
+  /* Corner. Every radius step in layer 1 is a multiple of this. */
+  --w-corner: 4px;
+
+  /* Faces. */
+  --w-face-display: "Space Grotesk", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+  --w-face-body:    var(--w-face-display);
+  --w-face-mono:    "IBM Plex Mono", ui-monospace, "Courier New", monospace;
+  --w-weight-title: 500;
+
+  /* Rhythm. A world states its own, the same way it states its hue and its
+     corner, so a third world inherits a slot rather than inheriting these
+     numbers by accident. The wave passes along a row of cards; the step is
+     how far behind the previous card each one runs.
+
+     Lantern's wave completes every time. Neon runs the SAME wave and
+     additionally faults, and the fault cannot live here because CSS cannot be
+     random: see WatchDrawer for the scheduler and why. */
+  --w-wave-lap:    6s;
+  --w-wave-step-1: 0.34s;
+  --w-wave-step-2: 0.68s;
+  --w-wave-step-3: 1.02s;
+
+  /* Light. Lantern is lit and it flickers; Neon is static and burns.
+     --w-lit is the ambient glow a live element carries. */
+  --w-lit: 0 0 24px -4px oklch(83% 0.17 84 / 30%);
+  /* The page's own wash: light spilling in from above. */
+  --w-page-wash: radial-gradient(
+    120% 90% at 50% -10%,
+    color-mix(in oklab, var(--w-signage) 10%, transparent),
+    transparent 55%
+  );
 }
 
-/* Cyanotype (key: ocean) — Prussian-blue blueprint plate. */
-[data-theme="ocean"] {
-  --color-base:      oklch(15%   0.050 250);
-  --color-surface:   oklch(19%   0.058 250);
-  --color-surface-2: oklch(24%   0.066 250);
-  --color-surface-3: oklch(29%   0.074 250);
+/* ── NEON ────────────────────────────────────────────────────────── */
+[data-theme="neon"] {
+  --w-ink-raw:   oklch(90% 0.02 88);
+
+  --w-base:      oklch(11% 0.025 262);
+  --w-sunk:      color-mix(in oklab, black 26%, var(--w-base));
+
+
+  --w-signage:        oklch(66% 0.29 346);
+  --w-signage-line:   oklch(66% 0.29 346 / 60%);
+  --w-signage-wash:   oklch(66% 0.29 346 / 10%);
+  --w-highlight:      oklch(82% 0.15 196);
+  --w-highlight-line: oklch(82% 0.15 196 / 60%);
+  --w-highlight-wash: oklch(82% 0.15 196 / 12%);
+
+  --w-on-art-ink:   97% 0.01 300;
+  --w-on-art-plate:  7% 0.012 262;
+
+  /* Hard corners, no exceptions. Layer 1's steps all collapse with it. */
+  --w-corner: 0px;
+
+  --w-lit: 0 0 26px -4px oklch(82% 0.15 196 / 34%);
+
+  /* Neon takes the same lap and the same steps. The difference between the
+     two worlds is not the wave, it is that this one occasionally drops it. */
+  --w-wave-lap:    6s;
+  --w-wave-step-1: 0.34s;
+  --w-wave-step-2: 0.68s;
+  --w-wave-step-3: 1.02s;
 }
 
-/* Foxing (key: forest) — warm tobacco-sepia, the age-spots on old paper. */
-[data-theme="forest"] {
-  --color-base:      oklch(17%   0.028 55);
-  --color-surface:   oklch(21%   0.034 55);
-  --color-surface-2: oklch(26%   0.042 55);
-  --color-surface-3: oklch(31%   0.050 55);
-}
-
-/* Slate (key: midnight) — the quiet plate: near-neutral cool graphite. */
-[data-theme="midnight"] {
-  --color-base:      oklch(19%   0.010 250);
-  --color-surface:   oklch(23%   0.012 250);
-  --color-surface-2: oklch(28%   0.016 250);
-  --color-surface-3: oklch(33%   0.020 250);
-}
-
-/* Oxblood (key: crimson) — deep carmine specimen board. */
-[data-theme="crimson"] {
-  --color-base:      oklch(15%   0.050 20);
-  --color-surface:   oklch(19%   0.058 20);
-  --color-surface-2: oklch(24%   0.066 20);
-  --color-surface-3: oklch(29%   0.074 20);
-}
-
-/* ── LIGHT PLATES ────────────────────────────────────────────────────────
-   The printed guide page: ink text on paper, dark ruled keylines, membership
-   as a keyline ring instead of a bloom. ─────────────────────────────────── */
-
-/* Vellum (key: paper) — aged ivory field-guide page. */
-[data-theme="paper"] {
-  --color-base:          oklch(95%   0.020 85);    /* warm aged ivory page */
-  --color-surface:       oklch(91%   0.026 82);    /* tinted margin / nav */
-  --color-surface-2:     oklch(98.5% 0.012 85);    /* mounted cards, near-white */
-  --color-surface-3:     oklch(88%   0.032 80);    /* hover, deeper into the paper */
-  --color-border:        oklch(32% 0.045 60 / 24%); /* sepia ruled keyline */
-  --color-border-strong: oklch(32% 0.050 58 / 46%);
-
-  --color-text-primary:   oklch(24% 0.030 55);     /* sepia ink */
-  --color-text-secondary: oklch(38% 0.026 55);
-  --color-text-tertiary:  oklch(47% 0.020 58);     /* ~4.5:1 on the ivory */
-
-  --shadow-card:    0 1px 2px oklch(30% 0.04 55 / 14%), 0 6px 16px oklch(30% 0.04 55 / 10%);
-  --shadow-card-hi: 0 2px 5px oklch(30% 0.04 55 / 16%), 0 12px 26px oklch(30% 0.04 55 / 14%);
-  --shadow-sheet:   0 -4px 28px oklch(20% 0.03 55 / 16%);
-  --shadow-pop:     0 8px 26px oklch(20% 0.03 55 / 18%);
-
-  /* Light membership: a keyline ring, never a bloom. */
-  --glow-in-list:
-    0 0 0 1px var(--color-border-strong),
-    var(--shadow-card);
-  --glow-in-list-hover:
-    0 0 0 1px color-mix(in oklch, var(--color-accent) 55%, transparent),
-    var(--shadow-card-hi);
-
-  --color-accent:      oklch(48% 0.16 25);
-  --color-accent-glow: oklch(42% 0.16 25);
-  --color-accent-dim:  oklch(48% 0.16 25 / 16%);
-  --color-accent-h: 25; --color-accent-l: 48%; --color-accent-c: 0.16;
-}
-
-/* Specimen Card (key: ash) — cool museum index card. */
-[data-theme="ash"] {
-  --color-base:          oklch(92%  0.008 240);    /* cool bone card stock */
-  --color-surface:       oklch(96%  0.005 240);
-  --color-surface-2:     oklch(100% 0 0);           /* pure white mounts */
-  --color-surface-3:     oklch(87%  0.014 240);
-  --color-border:        oklch(22% 0.035 250 / 22%); /* ink-blue ruled keyline */
-  --color-border-strong: oklch(22% 0.040 250 / 44%);
-
-  --color-text-primary:   oklch(22% 0.032 250);    /* ink blue-black */
-  --color-text-secondary: oklch(36% 0.024 250);
-  --color-text-tertiary:  oklch(46% 0.018 250);
-
-  --shadow-card:    0 1px 2px oklch(22% 0.03 250 / 12%), 0 6px 16px oklch(22% 0.03 250 / 9%);
-  --shadow-card-hi: 0 2px 5px oklch(22% 0.03 250 / 15%), 0 12px 26px oklch(22% 0.03 250 / 12%);
-  --shadow-sheet:   0 -4px 28px oklch(22% 0.03 250 / 14%);
-  --shadow-pop:     0 8px 26px oklch(22% 0.03 250 / 16%);
-
-  --glow-in-list:
-    0 0 0 1px var(--color-border-strong),
-    var(--shadow-card);
-  --glow-in-list-hover:
-    0 0 0 1px color-mix(in oklch, var(--color-accent) 55%, transparent),
-    var(--shadow-card-hi);
-
-  --color-accent:      oklch(45% 0.15 250);
-  --color-accent-glow: oklch(40% 0.15 250);
-  --color-accent-dim:  oklch(45% 0.15 250 / 16%);
-  --color-accent-h: 250; --color-accent-l: 45%; --color-accent-c: 0.15;
-}
-
-/* On the light plates the mid-lightness stamp inks are pulled darker so a
-   field-note reads at AA on paper. */
-[data-theme="paper"],
-[data-theme="ash"] {
-  --color-status-watching:      oklch(48% 0.14 240);
-  --color-status-completed:     oklch(46% 0.14 150);
-  --color-status-plan_to_watch: oklch(52% 0.13 70);
-  --color-status-on_hold:       oklch(46% 0.13 300);
-  --color-status-dropped:       oklch(48% 0.15 25);
-  --color-status-rewatching:    oklch(48% 0.11 195);
-  --color-status-not_interested: oklch(48% 0.010 250);
-}
 
 /* ═══════════════════════════════════════════════════════════════════
-   ACCENT INKS
-   The user's pickable ink of record. Come after all plate blocks so they win.
-   Keys stay stable; the Settings UI shows the ink names. All are inked
-   (saturated but not neon) so the stamp reads as a stamp on any plate.
+   LAYER 3 — THE PARTS
+
+   What components read. Every value here points at layer 2; none of them
+   states a colour. To restyle every plate in the app, edit --plate-bg
+   once. To make one plate different, override --plate-bg on that plate.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* Vermilion (key: coral) — the default, the collector's seal. */
-[data-accent="coral"] {
-  --color-accent:      oklch(55% 0.19 32);
-  --color-accent-glow: oklch(67% 0.19 34);
-  --color-accent-dim:  oklch(55% 0.19 32 / 16%);
-  --color-accent-h: 32; --color-accent-l: 55%; --color-accent-c: 0.19;
+:root {
+  /* ── Page ─────────────────────────────────────────────────────── */
+  --page-bg:   var(--w-base);
+  --page-wash: var(--w-page-wash);
+  --page-ink:  var(--w-ink);
+
+  /* ── Plate: the standard raised surface (cards, panels, sheets) ── */
+  --plate-bg:     var(--w-surface);
+  --plate-bg-2:   var(--w-surface-2);
+  --plate-bg-3:   var(--w-surface-3);
+  --plate-line:        var(--w-line);
+  /* A boundary that has to carry its own weight (a modal edge, an input) as
+     opposed to a hairline between two things already separated by ground. */
+  --plate-line-strong: var(--w-line-strong);
+  --plate-radius:      var(--radius-md);
+  --plate-pad:         var(--space-4);
+  --plate-shadow:      0 1px 2px oklch(0% 0 0 / 40%), 0 8px 20px oklch(0% 0 0 / 26%);
+  --plate-shadow-hi:   0 2px 5px oklch(0% 0 0 / 44%), 0 14px 30px oklch(0% 0 0 / 34%);
+
+  /* ── Sunk: the recessed ground that families tiles together ───── */
+  --sunk-bg:     var(--w-sunk);
+  --sunk-line:   var(--w-signage-line);
+  --sunk-radius: var(--radius-lg);
+  --sunk-pad:    var(--space-4);
+
+  /* ── Live: the one open element on a surface. Highlight border,
+        real glow. Only ever one per screen. ────────────────────── */
+  --live-line: var(--w-highlight-line);
+  --live-glow: var(--w-lit);
+  --live-wash: var(--w-highlight-wash);
+  /* An unfilled mark that means "this one, now": an active utility icon, an
+     unread dot, a focus ring. Ink, not a fill, so it needs no dark partner. */
+  --live-ink:  var(--w-highlight);
+
+  /* ── Chrome: the app shell's own surfaces (sidebar, header, nav rail).
+        Named apart from --plate-* because chrome is not content: it can be
+        re-grounded without touching a single card. ──────────────── */
+  --chrome-bg:          var(--w-surface);
+  --chrome-line:        var(--w-line);
+  --chrome-line-strong: var(--w-line-strong);
+
+  /* ── Filed: "this is in your collection / of record". The counterpart to
+        --live-*: one says it is here, the other says it is happening. ── */
+  --filed-ink:  var(--w-signage);
+  --filed-line: var(--w-signage-line);
+  --filed-wash: var(--w-signage-wash);
+
+  /* ── Row: a line item in a list ───────────────────────────────── */
+  --row-bg:       transparent;
+  --row-bg-hover: var(--w-surface-2);
+  --row-line:     var(--w-line);
+  --row-pad-y:    var(--space-2);
+  --row-pad-x:    var(--space-3);
+
+  /* ── Rail: a horizontally panned strip (see the scroll law) ───── */
+  --rail-gap: var(--space-2);
+  --rail-pad: var(--space-1);
+
+  /* ── Chip: the tracked mono eyebrow / tag ─────────────────────── */
+  --chip-bg:     var(--w-highlight-wash);
+  --chip-ink:    var(--w-highlight);
+  --chip-radius: var(--radius-tag);
+  --chip-size:   var(--text-2xs);
+  --chip-track:  var(--track-label);
+
+  /* ── Meter: progress. Always highlight, because progress is motion. */
+  --meter-track:  oklch(90% 0.02 88 / 8%);
+  --meter-fill:   var(--w-highlight);
+  --meter-height: 3px;
+  --meter-radius: 2px;
+
+  /* ── Record: one cell per episode, where a meter would say a percentage.
+        Two of the four states are unowned, and both of them are marks rather
+        than grounds, which is what --meter-track above is: at 8% it measures
+        1.06 on a plate and 1.10 on the lit page, so anything drawn in it is
+        not drawn at all. These are the two tiers under the highlight fill,
+        and they hold their order on every ground the record sits on (bare
+        plate / scrim over a bright cover / the lit page):
+
+          --record-wait  5.98 / 5.10 / 4.02   aired, not yours yet
+          --record-void  4.21 / 3.83 / 3.17   not broadcast
+
+        --record-void is the faintest fill that still clears the 3:1 graphics
+        bar on the lit page, the thinnest of the three grounds. Lighter loses
+        the cell; heavier starts competing with the amber it sits under. ── */
+  --record-wait: var(--w-ink-dim);
+  --record-void: oklch(90% 0.02 88 / 50%);
+
+  /* ── Seal: the committing action. Filled signage on a highlight
+        plate: the two-hue crossover, built. ────────────────────── */
+  --seal-bg:     var(--w-signage);
+  --seal-ink:    var(--w-ink-on-signage);
+  /* The same pairing for anything filled in the live hue (badges, pills). */
+  --live-fill-bg:  var(--w-highlight);
+  --live-fill-ink: var(--w-ink-on-highlight);
+  --seal-radius: var(--radius-sm);
+  --seal-pad:    var(--space-2) var(--space-4);
+
+  /* ── Nav pill: the mark on the active tab, one device used by both the
+        sidebar and the bottom nav. Built once here so the two can never
+        drift apart, and so dialling the mark down is one edit rather than
+        two. A filled mark means dark ink on it, per the ink-on-fill rule
+        in layer 2. ─────────────────────────────────────────────────── */
+  --navpill-bg:     var(--w-highlight);
+  --navpill-ink:    var(--w-ink-on-highlight);
+  --navpill-radius: var(--radius-lg);
+
+  /* ── Door: an entry into a room ───────────────────────────────── */
+  --door-bg:     var(--w-surface);
+  --door-line:   var(--w-signage-line);
+  --door-ink:    var(--w-ink);
+  --door-radius: var(--radius-md);
+
+  /* ── Field: text input ────────────────────────────────────────── */
+  --field-bg:     var(--w-surface-2);
+  --field-line:   var(--w-line-strong);
+  --field-ring:   var(--w-highlight);
+  --field-radius: var(--radius-sm);
+
+  /* ── Overlay: popovers, sheets, anything that floats ──────────── */
+  --overlay-bg:     var(--w-surface-2);
+  --overlay-line:   var(--w-line-strong);
+  --overlay-radius: var(--radius-sheet);
+  --overlay-shadow: 0 12px 40px oklch(0% 0 0 / 50%);
+  /* A sheet rises from the bottom edge, so its shadow throws upward. */
+  --sheet-shadow:   0 -8px 40px oklch(0% 0 0 / 55%);
+  --overlay-scrim:  oklch(0% 0 0 / 55%);
+
+  /* ── On art: anything laid over a cover image ─────────────────── */
+  --on-art-ink:   var(--w-on-art-ink);
+  --on-art-plate: var(--w-on-art-plate);
+  /* The same ink as a ready-to-use colour, for the common case that does not
+     need to rebuild it at a custom alpha. */
+  --ink-on-art:   oklch(var(--w-on-art-ink));
+
+  /* ── Ink roles ────────────────────────────────────────────────── */
+  --ink-title: var(--w-ink);
+  --ink-body:  var(--w-ink);
+  --ink-meta:  var(--w-ink-dim);
+  --ink-label: var(--w-ink-faint);
+
+  /* ── Scrollbar ────────────────────────────────────────────────── */
+  --scroll-thumb:       var(--w-line-strong);
+  --scroll-thumb-hover: var(--w-ink-faint);
 }
-/* Ink Violet (key: violet) */
-[data-accent="violet"] {
-  --color-accent:      oklch(55% 0.18 300);
-  --color-accent-glow: oklch(68% 0.15 300);
-  --color-accent-dim:  oklch(55% 0.18 300 / 16%);
-  --color-accent-h: 300; --color-accent-l: 55%; --color-accent-c: 0.18;
-}
-/* Prussian (key: cobalt) */
-[data-accent="cobalt"] {
-  --color-accent:      oklch(52% 0.16 250);
-  --color-accent-glow: oklch(64% 0.15 250);
-  --color-accent-dim:  oklch(52% 0.16 250 / 16%);
-  --color-accent-h: 250; --color-accent-l: 52%; --color-accent-c: 0.16;
-}
-/* Oxblood (key: crimson) — the browner, deeper red, distinct from vermilion. */
-[data-accent="crimson"] {
-  --color-accent:      oklch(50% 0.16 22);
-  --color-accent-glow: oklch(60% 0.16 24);
-  --color-accent-dim:  oklch(50% 0.16 22 / 16%);
-  --color-accent-h: 22; --color-accent-l: 50%; --color-accent-c: 0.16;
-}
-/* Rose (key: sakura) */
-[data-accent="sakura"] {
-  --color-accent:      oklch(62% 0.15 0);
-  --color-accent-glow: oklch(72% 0.13 2);
-  --color-accent-dim:  oklch(62% 0.15 0 / 16%);
-  --color-accent-h: 0; --color-accent-l: 62%; --color-accent-c: 0.15;
-  --color-on-accent: oklch(20% 0.03 10);  /* dark ink: rose is light */
-}
-/* Ochre (key: amber) — the gilt annotation ink. */
-[data-accent="amber"] {
-  --color-accent:      oklch(66% 0.13 75);
-  --color-accent-glow: oklch(76% 0.13 78);
-  --color-accent-dim:  oklch(66% 0.13 75 / 16%);
-  --color-accent-h: 75; --color-accent-l: 66%; --color-accent-c: 0.13;
-  --color-on-accent: oklch(20% 0.03 70);  /* dark ink: the ochre fill is light */
-}
-/* Verdigris (key: aqua) — aged copper-green patina. */
-[data-accent="aqua"] {
-  --color-accent:      oklch(60% 0.10 190);
-  --color-accent-glow: oklch(72% 0.10 192);
-  --color-accent-dim:  oklch(60% 0.10 190 / 16%);
-  --color-accent-h: 190; --color-accent-l: 60%; --color-accent-c: 0.10;
-  --color-on-accent: oklch(20% 0.03 200);  /* dark ink: verdigris is light */
-}
-/* Herbarium Green (key: jade) */
-[data-accent="jade"] {
-  --color-accent:      oklch(60% 0.13 155);
-  --color-accent-glow: oklch(70% 0.12 155);
-  --color-accent-dim:  oklch(60% 0.13 155 / 16%);
-  --color-accent-h: 155; --color-accent-l: 60%; --color-accent-c: 0.13;
-  --color-on-accent: oklch(20% 0.03 155);  /* dark ink: sage is light */
-}
+
 
 /* ═══════════════════════════════════════════════════════════════════
-   LIGHT-PLATE ACCENT-TEXT CORRECTION  (must stay last)
-   accent-glow is a LIGHTER accent, meant as accent TEXT on a dark ground.
-   On the two printed pages that light glow fails contrast on paper, so darken
-   accent text there instead — whatever ink is active. Placed after the accent
-   blocks so it wins the cascade; on the darker inks the fill stays dark enough
-   for ivory, so on-accent needs no light-plate override.
+   STATUS COLOURS
+
+   The one place the two-hue rule does not reach, and deliberately so:
+   status is data, not decoration, and it has to stay distinguishable by
+   hue AND glyph AND word for the same reason it always did. Chroma is
+   the second axis: hue says WHICH state, chroma says how live it is, so
+   a show finished four years ago does not shout as loud as tonight's
+   episode.
+
+   LIGHTNESS FLOOR, added 2026-08-15. The three quietest states were tuned
+   as ink on the old plates and measured 3.24 / 3.32 / 4.19 against this
+   world's lightest ground: under AA, and the Stats bar labels were the
+   surface that showed it. All three lift to L 62%, which clears 4.5 on
+   every ground in both worlds (4.88-5.15). Hue and CHROMA are untouched,
+   so the ladder still ranks them exactly as designed: chroma carries "how
+   live is this", lightness only has to carry legibility.
+
+   OPEN: these seven hues predate the two-hue world and have not been
+   retuned against it. See the note at the end of this file.
    ═══════════════════════════════════════════════════════════════════ */
-[data-theme="paper"],
-[data-theme="ash"] {
-  --color-accent-glow: color-mix(in oklch, var(--color-accent) 84%, black);
+
+:root {
+  --color-status-watching:       oklch(62% 0.17  240);
+  --color-status-completed:      oklch(68% 0.055 150);
+  --color-status-plan_to_watch:  oklch(75% 0.10  80);
+  --color-status-on_hold:        oklch(64% 0.06  300);
+  --color-status-dropped:        oklch(64% 0.05  25);
+  --color-status-rewatching:     oklch(68% 0.11  195);
+  --color-status-not_interested: oklch(64% 0.012 158);
+
+  /* Ink that sits ON a semantic fill. These fills are darker than the
+     world's two hues (error is L 54 against signage's L 64), so the answer
+     flips back to white: near-white measures 4.14 on the error fill and
+     white measures 5.57. */
+  --ink-on-semantic: oklch(100% 0 0);
+
+  --color-success: oklch(68% 0.12 150);
+  --color-warning: oklch(74% 0.14 75);
+  --color-error:   oklch(54% 0.18 25);
+  --color-info:    oklch(62% 0.12 240);
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   WHAT IS LEFT OF THE BRIDGE
+
+   This block used to alias every old token name onto the library so the
+   app could render in the new world before a single stylesheet had been
+   rewritten. All 837 of those call sites have since been moved onto real
+   layer-3 names, and the aliases are gone with them.
+
+   What remains is not scaffolding. These two are bare "L C H" triplets
+   rather than colours, because the rules that use them rebuild the value
+   at their own alpha (`oklch(var(--ink-on-art-c) / 38%)`), and a colour
+   token cannot be re-alphaed that way.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --ink-on-art-c:   var(--on-art-ink);
+  --plate-on-art-c: var(--on-art-plate);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   NEXT DECISIONS, recorded here because this file is where they land:
+
+   1. STATUS HUES vs THE TWO-HUE RULE. Seven status hues sit beside a
+      world that claims two. On the Night Market surface this has not
+      bitten yet because that page shows status as a word, not a swatch.
+      Every room does show swatches. Either status keeps its own hue set
+      as a deliberate exception (it is data), or it moves to shape and
+      chroma within the world's hues. Not decided.
+
+   2. LIGHT. Both worlds are dark. The old set had two light plates
+      (paper, ash) which are now gone. If a light world is wanted it is a
+      third layer-2 block, and the ink-on-fill roles are the only part
+      that needs real thought.
+   ═══════════════════════════════════════════════════════════════════ */

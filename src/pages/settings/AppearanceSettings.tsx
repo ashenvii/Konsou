@@ -4,34 +4,44 @@ import { Text } from "@/components/ui/Text";
 import { useBreakpoint } from "@/hooks/useMediaQuery";
 import { TITLE_LANGUAGE_OPTIONS } from "@/lib/format";
 import { useSettingsStore } from "@/lib/store/settingsStore";
-import type { AccentName, ColorTheme, SidebarMode, ViewMode } from "@/types/list";
+import type { ColorTheme, MotionMode, SidebarMode, ViewMode } from "@/types/list";
 
-/* The eight plates of the Field Guide: six examination grounds and two printed
- * pages. The swatch colors are approximations; the CSS vars do the real work.
- * (ids stay the legacy keys so stored settings keep working.) */
-const COLOR_THEMES: { id: ColorTheme; label: string; surface: string; accent: string }[] = [
-  { id: "ember",    label: "Herbarium",     surface: "oklch(20% 0.024 158)", accent: "oklch(58% 0.19 32)"  },
-  { id: "void",     label: "Nocturne",      surface: "oklch(19% 0.046 288)", accent: "oklch(58% 0.18 300)" },
-  { id: "ocean",    label: "Cyanotype",     surface: "oklch(19% 0.058 250)", accent: "oklch(66% 0.13 75)"  },
-  { id: "forest",   label: "Foxing",        surface: "oklch(21% 0.034 55)",  accent: "oklch(60% 0.10 190)" },
-  { id: "midnight", label: "Slate",         surface: "oklch(23% 0.012 250)", accent: "oklch(58% 0.19 32)"  },
-  { id: "crimson",  label: "Oxblood",       surface: "oklch(19% 0.058 20)",  accent: "oklch(66% 0.13 75)"  },
-  { id: "paper",    label: "Vellum",        surface: "oklch(95% 0.020 85)",  accent: "oklch(48% 0.16 25)"  },
-  { id: "ash",      label: "Specimen Card", surface: "oklch(96% 0.005 240)", accent: "oklch(45% 0.15 250)" },
-];
-
-const ACCENTS: { id: AccentName; label: string; color: string }[] = [
-  { id: "coral",   label: "Vermilion",  color: "oklch(58% 0.19 32)"  },
-  { id: "crimson", label: "Oxblood",    color: "oklch(50% 0.16 22)"  },
-  { id: "amber",   label: "Ochre",      color: "oklch(66% 0.13 75)"  },
-  { id: "jade",    label: "Sage",       color: "oklch(60% 0.13 155)" },
-  { id: "aqua",    label: "Verdigris",  color: "oklch(60% 0.10 190)" },
-  { id: "cobalt",  label: "Prussian",   color: "oklch(52% 0.16 250)" },
-  { id: "violet",  label: "Ink Violet", color: "oklch(58% 0.18 300)" },
-  { id: "sakura",  label: "Rose",       color: "oklch(62% 0.15 0)"   },
+/* The two worlds. Each swatch shows the world's ground and both of its hues,
+ * because a world IS its two hues: signage on the left, highlight on the
+ * right. Approximations for the picker only; tokens.css does the real work. */
+const COLOR_THEMES: {
+  id: ColorTheme;
+  label: string;
+  hint: string;
+  surface: string;
+  signage: string;
+  highlight: string;
+}[] = [
+  {
+    id: "lantern",
+    label: "Lantern",
+    hint: "Warm, lit, soft corners",
+    surface: "oklch(13% 0.035 18)",
+    signage: "oklch(64% 0.25 16)",
+    highlight: "oklch(83% 0.17 84)",
+  },
+  {
+    id: "neon",
+    label: "Neon",
+    hint: "Cold, electric, hard corners",
+    surface: "oklch(11% 0.025 262)",
+    signage: "oklch(66% 0.29 346)",
+    highlight: "oklch(82% 0.15 196)",
+  },
 ];
 
 const VIEWS: ViewMode[] = ["grid", "list", "compact"];
+
+const MOTION_MODES: { id: MotionMode; label: string; hint: string }[] = [
+  { id: "system", label: "Follow system", hint: "Full on a desktop, reduced on a phone" },
+  { id: "full",   label: "Full",          hint: "Every glow, blur and ambient animation" },
+  { id: "lite",   label: "Reduced",       hint: "Static equivalents, for a weaker GPU" },
+];
 
 const SIDEBAR_MODES: { id: SidebarMode; label: string; hint: string }[] = [
   { id: "rail",     label: "Icon rail",   hint: "Just icons — never expands" },
@@ -47,8 +57,10 @@ export function AppearanceSettings() {
     <SettingsSubPage title="Appearance">
       <Section title="Theme">
         <div className="k-settings__row k-settings__row--col">
-          <Text size="base" weight={500}>Color theme</Text>
-          <Text size="xs" color="tertiary">Picking a theme also sets its paired accent. Change Accent below to mix.</Text>
+          <Text size="base" weight={500}>World</Text>
+          <Text size="xs" color="tertiary">
+            Each world carries its own pair of colours, so there is nothing else to pick.
+          </Text>
           <div className="k-colorthemes">
             {COLOR_THEMES.map((t) => (
               <button
@@ -59,27 +71,15 @@ export function AppearanceSettings() {
                 aria-pressed={settings.colorTheme === t.id}
               >
                 <span className="k-colortheme__preview" style={{ background: t.surface } as CSSProperties}>
-                  <span className="k-colortheme__strip" style={{ background: t.accent } as CSSProperties} />
+                  <span className="k-colortheme__strip" style={{ background: t.signage } as CSSProperties} />
+                  <span className="k-colortheme__strip" style={{ background: t.highlight } as CSSProperties} />
                 </span>
                 <span className="k-colortheme__label">{t.label}</span>
+                <span className="k-colortheme__hint">{t.hint}</span>
               </button>
             ))}
           </div>
         </div>
-        <Row label="Accent" hint="Override the theme's paired color" stack>
-          <div className="k-swatches">
-            {ACCENTS.map((a) => (
-              <button
-                key={a.id}
-                className={`k-swatch${settings.accent === a.id ? " k-swatch--active" : ""}`}
-                style={{ background: a.color }}
-                onClick={() => settings.setAccent(a.id)}
-                aria-label={a.label}
-                aria-pressed={settings.accent === a.id}
-              />
-            ))}
-          </div>
-        </Row>
       </Section>
 
       <Section title="Layout">
@@ -136,6 +136,24 @@ export function AppearanceSettings() {
             </div>
           </Row>
         )}
+        <Row
+          label="Motion"
+          hint={MOTION_MODES.find((m) => m.id === settings.motionMode)?.hint ?? ""}
+          stack
+        >
+          <div className="k-segmented">
+            {MOTION_MODES.map((m) => (
+              <button
+                key={m.id}
+                className={`k-segmented__btn${settings.motionMode === m.id ? " k-segmented__btn--active" : ""}`}
+                onClick={() => settings.setMotionMode(m.id)}
+                title={m.hint}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </Row>
       </Section>
     </SettingsSubPage>
   );

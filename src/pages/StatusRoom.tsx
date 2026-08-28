@@ -1,17 +1,20 @@
 import { useMemo, useRef, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { ArrowUpDown, ChevronLeft, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import { FranchiseCollection } from "@/components/list/FranchiseCollection";
 import type { RoomVariant } from "@/components/list/FranchiseCollection";
 import { LetterRail } from "@/components/list/LetterRail";
 import type { RailSection } from "@/components/list/LetterRail";
-import { RoomFilters } from "@/components/list/RoomFilters";
+import { RoomHeader } from "@/components/list/RoomHeader";
 import { Button } from "@/components/ui/Button";
+import { FilterMenu } from "@/components/ui/FilterMenu";
+import type { FilterSection } from "@/components/ui/FilterMenu";
 import { Icon } from "@/components/ui/Icon";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { goBack } from "@/hooks/useAppBack";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useFrozenOrder } from "@/hooks/useFrozenOrder";
-import { preferredTitle } from "@/lib/format";
+import { normalizeForSearch, preferredTitle } from "@/lib/format";
 import { collectHashtags, hasHashtag } from "@/lib/hashtags";
 import { groupEntries } from "@/lib/franchise/grouping";
 import type { FranchiseGroup } from "@/lib/franchise/grouping";
@@ -89,8 +92,10 @@ export function StatusRoom() {
   const titleLanguage = useSettingsStore((s) => s.titleLanguage);
   const [sort, setSort] = useState<RoomSort>("recent");
   const [activeTags, setActiveTags] = useState<string[]>([]);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const jumpRef = useRef<((groupIndex: number) => void) | null>(null);
+  const query = normalizeForSearch(useDebounce(search, 200));
 
   const goDiscoverSearch = () =>
     navigate("/discover", { replace: true, state: { fromSearchIntent: true } });
@@ -114,17 +119,36 @@ export function StatusRoom() {
     return activeTags.filter((t) => available.has(t));
   }, [activeTags, tagFacets]);
 
+  // Grouping is the expensive step and none of the narrowing below changes it,
+  // so it gets its own memo rather than being redone per keystroke.
+  const built = useMemo(() => groupEntries(scopedEntries), [scopedEntries]);
+
+  /** Search text per card, precomputed once instead of per keystroke. */
+  const haystacks = useMemo(() => {
+    const m = new Map<FranchiseGroup, string>();
+    for (const g of built) {
+      let s = "";
+      for (const e of g.entries) {
+        s += `${e.title_romaji} ${e.title_english ?? ""} ${e.title_native ?? ""} `;
+      }
+      m.set(g, normalizeForSearch(s));
+    }
+    return m;
+  }, [built]);
+
   const groups = useMemo(() => {
     if (!room) return [];
-    const built = groupEntries(scopedEntries);
     // A card matches a tag when any of its entries carries it, so filtering
     // never shows a franchise with seasons mysteriously missing.
-    const filtered =
+    let filtered =
       effectiveTags.length === 0
         ? built
         : built.filter((g) =>
             effectiveTags.every((t) => g.entries.some((e) => hasHashtag(e.notes, t))),
           );
+    if (query) {
+      filtered = filtered.filter((g) => (haystacks.get(g) ?? "").includes(query));
+    }
 
     if (sort === "alpha") {
       return [...filtered].sort((a, b) =>
@@ -137,12 +161,12 @@ export function StatusRoom() {
       if (paused !== 0) return paused;
       return b.sortUpdated - a.sortUpdated;
     });
-  }, [scopedEntries, effectiveTags, room, sort, titleLanguage]);
+  }, [built, haystacks, effectiveTags, query, room, sort, titleLanguage]);
 
   const frozen = useFrozenOrder(
     groups,
     groupKey,
-    `${status}|${sort}|${effectiveTags.join(",")}`,
+    `${status}|${sort}|${effectiveTags.join(",")}|${query}`,
   );
   const displayGroups = frozen.items;
 
@@ -166,51 +190,88 @@ export function StatusRoom() {
   // room's default, so the button alone tells you the list is not "everything".
   const filterCount = effectiveTags.length + (sort !== SORTS[0] ? 1 : 0);
 
+  const filterSections: FilterSection[] = [
+    {
+      kind: "choice",
+      id: "sort",
+      label: "Sort",
+      value: sort,
+      options: SORTS.map((key) => ({ key, label: SORT_LABELS[key] })),
+      onPick: (key) => setSort(key as RoomSort),
+    },
+    ...(tagFacets.length > 0
+      ? [
+          {
+            kind: "toggles" as const,
+            id: "tags",
+            label: "Tags",
+            options: tagFacets.map((t) => ({ key: t.key, label: t.label, count: t.count })),
+            active: effectiveTags,
+            onToggle: (key: string) =>
+              setActiveTags((prev) =>
+                prev.includes(key) ? prev.filter((t) => t !== key) : [...prev, key],
+              ),
+            onClear: () => setActiveTags([]),
+            searchPlaceholder: `Find one of ${tagFacets.length} tags…`,
+          },
+        ]
+      : []),
+  ];
+
   if (!room) return <Navigate to="/" replace />;
 
   return (
     <div className="k-page k-page--room">
-      <div className="k-roomhead">
-        <button
-          type="button"
-          className="k-roomhead__back"
-          onClick={goBack}
-          aria-label="Back to My List"
-        >
-          <Icon icon={ChevronLeft} size={22} />
-        </button>
-        <h1 className="k-roomhead__title">{room.title}</h1>
-        <span className="k-roomhead__count">{displayGroups.length}</span>
+      <RoomHeader
+        title={room.title}
+        search={{
+          value: search,
+          onChange: setSearch,
+          open: searchOpen,
+          onOpen: () => setSearchOpen(true),
+          onClose: () => {
+            setSearch("");
+            setSearchOpen(false);
+          },
+          placeholder: `Search ${scopedEntries.length.toLocaleString()} in ${room.title.toLowerCase()}`,
+        }}
+        actions={
+          <>
+            {/* The order is held still while you log; this is the way back to a
+                fresh sort, and it says how many entries are waiting to move. */}
+            {frozen.staleCount > 0 && (
+              <button
+                type="button"
+                className="k-roomhead__chip k-roomhead__chip--restack"
+                onClick={frozen.reorder}
+                aria-label={`Reorder list, ${frozen.staleCount} ${frozen.staleCount === 1 ? "entry has" : "entries have"} moved`}
+              >
+                <Icon icon={ArrowUpDown} size={13} />
+                {frozen.staleCount} updated
+              </button>
+            )}
 
-        {/* The order is held still while you log; this is the way back to a
-            fresh sort, and it says how many entries are waiting to move. */}
-        {frozen.staleCount > 0 && (
-          <button
-            type="button"
-            className="k-roomhead__chip k-roomhead__chip--restack"
-            onClick={frozen.reorder}
-            aria-label={`Reorder list, ${frozen.staleCount} ${frozen.staleCount === 1 ? "entry has" : "entries have"} moved`}
-          >
-            <Icon icon={ArrowUpDown} size={13} />
-            {frozen.staleCount} updated
-          </button>
-        )}
+            <ViewSwitch />
 
-        {/* One control for every way of narrowing this room, instead of a sort
-            row plus a tag strip all holding screen permanently. */}
-        <button
-          type="button"
-          className={`k-roomhead__filter${filterCount > 0 ? " k-roomhead__filter--on" : ""}`}
-          onClick={() => setFiltersOpen(true)}
-          aria-label={filterCount > 0 ? `Filter and sort, ${filterCount} active` : "Filter and sort"}
-        >
-          <Icon icon={SlidersHorizontal} size={17} />
-          {filterCount > 0 && <span className="k-roomhead__badge">{filterCount}</span>}
-        </button>
-      </div>
+            <FilterMenu
+              sections={filterSections}
+              activeCount={filterCount}
+              onClearAll={() => {
+                setActiveTags([]);
+                setSort(SORTS[0]);
+              }}
+            />
+          </>
+        }
+      />
 
       {displayGroups.length === 0 ? (
-        effectiveTags.length > 0 ? (
+        query ? (
+          <EmptyState
+            title={`Nothing in ${room.title.toLowerCase()} matches “${search.trim()}”`}
+            subtitle="This only looks inside this room. My List's own search looks across every status."
+          />
+        ) : effectiveTags.length > 0 ? (
           // A filtered-to-nothing room is not an empty room; offer the way back
           // rather than telling someone with 700 cards they have none.
           <EmptyState
@@ -247,22 +308,6 @@ export function StatusRoom() {
           <LetterRail sections={sections} onJump={(i) => jumpRef.current?.(i)} />
         </div>
       )}
-
-      <RoomFilters
-        open={filtersOpen}
-        onClose={() => setFiltersOpen(false)}
-        sorts={SORTS.map((key) => ({ key, label: SORT_LABELS[key] }))}
-        activeSort={sort}
-        onSort={(key) => setSort(key as RoomSort)}
-        tags={tagFacets}
-        activeTags={effectiveTags}
-        onToggleTag={(key) =>
-          setActiveTags((prev) =>
-            prev.includes(key) ? prev.filter((t) => t !== key) : [...prev, key],
-          )
-        }
-        onClearTags={() => setActiveTags([])}
-      />
     </div>
   );
 }
