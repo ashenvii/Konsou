@@ -39,3 +39,14 @@ npm-debug.log*
 *.db
 *.db-shm
 *.db-wal
+
+# Third-party reference source (DIM, etc.): a standalone clone kept for
+# design/code study, never Konsou's own code, never committed here.
+reference/
+
+# Local dev fixtures. The generators in devdata/ are committed; everything
+# they fetch or build is not. Tens of MB of AniList caches and a 6500-entry
+# stress list, all reproducible by running the scripts.
+devdata/**/*.json
+cover-pool.json
+konsou-stress-list.json
