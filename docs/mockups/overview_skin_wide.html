@@ -1,0 +1,381 @@
+<title>Night Market — wide layout, skinned</title>
+<style>
+:root{
+  --ink:oklch(90% 0.02 88);
+  --ink-dim:oklch(90% 0.02 88 / 62%);
+  --ink-tert:oklch(90% 0.02 88 / 40%);
+
+  /* Lantern — bumped chroma/lightness vs. round 3, closer to the reference's
+     actual punch: that red reads as a vivid signal pink-red, not a muted
+     brick, and the gold is bright enough to feel lit, not just warm. */
+  --base-a:oklch(13% 0.035 18);
+  --surf-a:color-mix(in oklab, oklch(90% 0.02 88) 3.5%, var(--base-a));
+  --surf-a2:color-mix(in oklab, oklch(90% 0.02 88) 6%, var(--base-a));
+  --backdrop-a:color-mix(in oklab, black 22%, var(--base-a));
+  --sign-a:oklch(64% 0.25 16);
+  --sign-a-line:oklch(64% 0.25 16 / 60%);
+  --hi-a:oklch(83% 0.17 84);
+  --radius-a:4px;
+
+  /* Neon — the reference's magenta is a vivid hot pink, not a muted
+     violet-magenta, and the tube is closer to pure cyan than a soft teal. */
+  --base-b:oklch(11% 0.025 262);
+  --surf-b:color-mix(in oklab, oklch(90% 0.02 88) 3.5%, var(--base-b));
+  --surf-b2:color-mix(in oklab, oklch(90% 0.02 88) 6%, var(--base-b));
+  --backdrop-b:color-mix(in oklab, black 26%, var(--base-b));
+  --sign-b:oklch(66% 0.29 346);
+  --sign-b-line:oklch(66% 0.29 346 / 60%);
+  --hi-b:oklch(82% 0.15 196);
+  --radius-b:0px;
+}
+*{box-sizing:border-box;}
+body{margin:0;}
+.wrap{background:#0a0a0a;padding:40px 24px 64px;font-family:"Space Grotesk","Trebuchet MS",ui-sans-serif,system-ui,sans-serif;color:var(--ink);}
+.tabs{display:flex;gap:8px;max-width:1080px;margin:0 auto 26px;justify-content:center;}
+.tab{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;background:none;border:1px solid rgba(255,255,255,.16);color:rgba(255,255,255,.5);padding:8px 18px;border-radius:999px;cursor:pointer;}
+.tab.active{color:#0a0a0a;background:rgba(255,255,255,.85);border-color:transparent;}
+
+.stage{max-width:1080px;margin:0 auto;}
+.world{display:none;position:relative;}
+.world.active{display:block;}
+
+/* LINE INVERT — the proven mechanism, restored verbatim after round 15
+   wrongly replaced it. A duplicate of the element's own outline in the
+   OPPOSITE hue, radially masked so only the stretch of line near the
+   cursor is visible. This is LOCAL by design: the border recolours where
+   the mouse is, not all at once. Round 15 swapped it for a whole-border
+   color-mix, which flipped the entire outline the moment the cursor came
+   anywhere near — that was the regression. Do not "simplify" this to a
+   plain border-color again; the mask is what makes it local. */
+[data-fx]{position:relative;}
+
+[data-fx]::after{
+  content:"";position:absolute;inset:-2px;pointer-events:none;
+  border-radius:inherit;border:3px solid var(--fx-opp,transparent);
+  /* mask-repeat MUST be no-repeat, and the mask painting area MUST be
+     grown past the element's own box. Default mask-repeat is `repeat`
+     and default mask-size is the border box — so anything painted
+     OUTSIDE the box (an outer box-shadow, i.e. the glow) gets masked by
+     the neighbouring tile, whose bright spot is a whole element-width
+     away, which resolves to fully transparent. That is exactly why the
+     border invert worked for rounds 6-16 while the glow never appeared:
+     the border paints inside the box, the glow paints outside it.
+     Growing the mask 60px on every side and offsetting it -60px puts the
+     glow region inside the mask's own painting area; the gradient centre
+     is then +60px in that larger space. */
+  /* mask-clip:no-clip is the one that actually mattered. It defaults to
+     border-box, which clips the element's ENTIRE painted output to its
+     own box — an outer box-shadow included — before the mask image is
+     even consulted. That is why the border invert rendered for a dozen
+     rounds while the glow never did once: the border paints inside the
+     box, the glow paints outside it and was being clipped away. Proven
+     by swapping the glow to opaque lime: invisible with the default
+     clip, immediately visible with no-clip. */
+  -webkit-mask-clip:no-clip; mask-clip:no-clip;
+  -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+  -webkit-mask-size:calc(100% + 120px) calc(100% + 120px);
+  mask-size:calc(100% + 120px) calc(100% + 120px);
+  -webkit-mask-position:-60px -60px; mask-position:-60px -60px;
+  -webkit-mask-image:radial-gradient(150px circle at calc(var(--gx,-9999px) + 60px) calc(var(--gy,-9999px) + 60px), black 0%, black 55%, transparent 82%);
+  mask-image:radial-gradient(150px circle at calc(var(--gx,-9999px) + 60px) calc(var(--gy,-9999px) + 60px), black 0%, black 55%, transparent 82%);
+}
+/* Background wash in the element's OWN hue, same cursor position. */
+[data-fx]::before{
+  content:"";position:absolute;inset:-2px;pointer-events:none;border-radius:inherit;
+  background:radial-gradient(230px circle at var(--gx,-999px) var(--gy,-999px), var(--fx-own,transparent) 0%, transparent 88%);
+  opacity:.11;
+}
+@media (hover:none){[data-fx]::after,[data-fx]::before{display:none;}}
+
+/* theme wiring. Completed's colour is not a third hue — it's the same
+   signage hue as Planned (both are "how many are filed here" counts),
+   just spent with far more presence: a real fill wash and a glow, not a
+   hairline. That is what makes it read as the fuller, more finished
+   register without inventing a colour the theme doesn't already have. */
+.world--a{--surf:var(--surf-a);--surf2:var(--surf-a2);--backdrop:var(--backdrop-a);--sign:var(--sign-a);--sign-line:var(--sign-a-line);--hi:var(--hi-a);--r:var(--radius-a);
+  --done-bg:color-mix(in oklab, var(--hi-a) 20%, var(--surf-a));}
+.world--b{--surf:var(--surf-b);--surf2:var(--surf-b2);--backdrop:var(--backdrop-b);--sign:var(--sign-b);--sign-line:var(--sign-b-line);--hi:var(--hi-b);--r:var(--radius-b);
+  --done-bg:color-mix(in oklab, var(--hi-b) 20%, var(--surf-b));}
+
+.wrap[data-world="a"]{background:radial-gradient(120% 90% at 50% -10%, color-mix(in oklab, var(--sign-a) 10%, transparent), transparent 55%), var(--base-a);}
+.wrap[data-world="b"]{background:radial-gradient(120% 90% at 50% -10%, color-mix(in oklab, var(--sign-b) 10%, transparent), transparent 55%), var(--base-b);}
+
+.census{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-tert);letter-spacing:.06em;text-transform:uppercase;margin:0 0 14px;}
+
+.tonight{
+  border-radius:var(--r);
+  border:2px solid var(--hi);
+  background:var(--surf);
+  padding:22px 24px;
+  display:grid;grid-template-columns:120px 1fr;gap:22px;
+  margin-bottom:14px;
+  --fx-opp:var(--sign);--fx-own:var(--hi);
+}
+/* The always-on ambient glow stays STATIC in its resting hue — this is
+   NOT where the hover effect lives (that was round 16's mistake: driving
+   this whole shadow off a single scalar made the entire halo flip at
+   once). The localized version lives on ::after below, using the exact
+   same cursor-radial mask as the line invert. */
+.world--a .tonight{
+  box-shadow:0 1px 2px oklch(0% 0 0/40%),0 14px 30px oklch(0% 0 0/34%),0 0 26px 4px color-mix(in oklab, var(--hi-a) 38%, transparent);
+  animation:flicker 4.4s ease-in-out infinite;
+}
+@keyframes flicker{
+  0%,100%{box-shadow:0 1px 2px oklch(0% 0 0/40%),0 14px 30px oklch(0% 0 0/34%),0 0 26px 4px color-mix(in oklab, var(--hi-a) 38%, transparent);}
+  45%{box-shadow:0 1px 2px oklch(0% 0 0/40%),0 14px 30px oklch(0% 0 0/34%),0 0 20px 2px color-mix(in oklab, var(--hi-a) 22%, transparent);}
+  70%{box-shadow:0 1px 2px oklch(0% 0 0/40%),0 14px 30px oklch(0% 0 0/34%),0 0 30px 5px color-mix(in oklab, var(--hi-a) 44%, transparent);}
+}
+@media (prefers-reduced-motion:reduce){.world--a .tonight{animation:none;box-shadow:0 1px 2px oklch(0% 0 0/40%),0 14px 30px oklch(0% 0 0/34%),0 0 28px 4px color-mix(in oklab, var(--hi-a) 40%, transparent);}}
+.world--b .tonight{
+  box-shadow:0 1px 2px oklch(0% 0 0/40%),0 14px 30px oklch(0% 0 0/34%),0 0 20px 2px color-mix(in oklab, var(--sign-b) 28%, transparent),0 0 30px 5px color-mix(in oklab, var(--hi-b) 22%, transparent);
+}
+
+/* THE LOCALIZED GLOW SHIFT. Previously this was a flat, arbitrary
+   0 0 34px 9px — its own invented shape, disconnected from the real
+   glow it's supposed to be recolouring locally. That read as a second
+   glow stacked on top instead of the same glow taking the other colour
+   near the cursor. Fixed: every rule below copies its blur/spread/alpha
+   numbers EXACTLY from the matching real glow above, substituting only
+   the colour (--fx-opp instead of the resting hue). For Tonight's
+   flicker this means a second, identically-timed animation running on
+   ::after — same duration, same keyframe percentages, same blur/spread
+   at every stop — so the two layers stay the same size and shape at
+   every instant of the pulse, not just at rest. */
+.world--a .tonight::after{
+  animation:flickerOpp 4.4s ease-in-out infinite;
+}
+@keyframes flickerOpp{
+  0%,100%{box-shadow:0 0 26px 4px color-mix(in oklab, var(--fx-opp) 38%, transparent);}
+  45%{box-shadow:0 0 20px 2px color-mix(in oklab, var(--fx-opp) 22%, transparent);}
+  70%{box-shadow:0 0 30px 5px color-mix(in oklab, var(--fx-opp) 44%, transparent);}
+}
+@media (prefers-reduced-motion:reduce){.world--a .tonight::after{animation:none;box-shadow:0 0 28px 4px color-mix(in oklab, var(--fx-opp) 40%, transparent);}}
+.world--b .tonight::after{
+  box-shadow:0 0 20px 2px color-mix(in oklab, var(--fx-opp) 28%, transparent);
+}
+.card.completed::after{
+  box-shadow:0 0 18px 2px color-mix(in oklab, var(--fx-opp) 32%, transparent);
+}
+
+.cov-flat{width:120px;height:168px;border-radius:var(--r);background:var(--surf2);border:1px solid rgba(255,255,255,.06);}
+
+.tonight-body{display:flex;flex-direction:column;justify-content:space-between;}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--hi);background:color-mix(in oklab, var(--hi) 14%, transparent);border:1px solid color-mix(in oklab, var(--hi) 38%, transparent);padding:4px 10px 4px 8px;border-radius:var(--r);width:fit-content;}
+.chip .dot{width:5px;height:5px;border-radius:50%;background:var(--hi);}
+.t-title{font-weight:400;font-size:22px;margin:10px 0 4px;color:var(--ink);}
+.t-bar{height:5px;background:rgba(255,255,255,.08);border-radius:var(--r);overflow:hidden;margin:8px 0 4px;}
+.t-bar i{display:block;height:100%;width:39%;background:var(--hi);}
+.t-meta{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-dim);margin:0;}
+.t-meta .live{color:var(--sign);font-weight:600;}
+.t-meta .total{color:var(--hi);font-weight:600;}
+.t-act{margin-top:12px;display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:10px 18px;border-radius:var(--r);border:2px solid var(--sign);background:var(--sign);color:oklch(12% 0 0);font-weight:600;cursor:pointer;width:fit-content;}
+
+.strip{border:2px solid var(--sign-line);border-radius:var(--r);background:var(--surf);padding:12px 16px;margin-bottom:14px;--fx-opp:var(--hi);--fx-own:var(--sign);}
+.strip-label{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-tert);margin:0 0 10px;}
+.strip-row{display:flex;gap:8px;margin-bottom:10px;}
+/* Art and its progress line are two separate boxes now, not one overlapping
+   the other's edge — bright cover art sitting flush against a highlight-hue
+   line risked the two blending into each other. */
+.strip-row .c{flex:1;display:flex;flex-direction:column;gap:4px;}
+.strip-row .c-art{height:32px;border-radius:calc(var(--r) * 0.7);background:var(--surf2);}
+.strip-row .c-meter{height:3px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;}
+.strip-row .c-meter i{display:block;height:100%;background:var(--hi);}
+.strip-door{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-dim);border-top:1px dashed rgba(255,255,255,.1);padding-top:9px;cursor:pointer;}
+
+.row2{display:flex;gap:14px;}
+.backdrop{flex:2.4;background:var(--backdrop);border-radius:var(--r);padding:16px;}
+.backdrop-label{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-tert);margin:0 0 10px;}
+.bd-row{display:flex;gap:12px;}
+.card{flex:1;border-radius:var(--r);padding:14px;height:150px;display:flex;flex-direction:column;justify-content:space-between;}
+.card.planned{background:var(--surf);border:2px solid var(--sign-line);--fx-opp:var(--hi);--fx-own:var(--sign);}
+/* Completed's static glow stays static in its resting hue — the localized
+   hover shift lives on .card.completed::after (see the shared ::after
+   glow rule above), not here. */
+.card.completed{background:var(--done-bg);border:2px solid var(--hi);
+  box-shadow:0 0 18px 2px color-mix(in oklab, var(--hi) 32%, transparent);
+  --fx-opp:var(--sign);--fx-own:var(--hi);}
+.card-head{display:flex;align-items:baseline;justify-content:space-between;}
+.card b{display:block;font-size:14px;font-weight:600;}
+.card b{color:var(--ink);}
+.card.completed b{color:var(--sign);}
+.card .n{font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:600;}
+.card.planned .n{color:var(--sign);}
+.card.completed .n{color:var(--hi);}
+.card span{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-tert);}
+.card-covers{display:flex;gap:5px;}
+.card-covers i{flex:1;height:30px;border-radius:calc(var(--r) * 0.6);background:var(--surf2);border:1px solid rgba(255,255,255,.08);}
+.card.completed .card-covers i{border-color:color-mix(in oklab, var(--hi) 30%, transparent);}
+
+.order{flex:1;border:2px solid var(--sign-line);border-radius:var(--r);background:var(--surf);padding:0;--fx-opp:var(--hi);--fx-own:var(--sign);}
+.order-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;}
+.order b{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-tert);}
+.order-seal{width:26px;height:26px;border-radius:50%;border:2px solid var(--hi);color:var(--hi);display:flex;align-items:center;justify-content:center;font-size:11px;background:color-mix(in oklab, var(--hi) 12%, transparent);}
+.order .row{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink-dim);padding:8px 16px;border-top:1px solid rgba(255,255,255,.06);cursor:pointer;}
+.order .row:hover{background:rgba(255,255,255,.03);}
+.order .row .cov{width:26px;height:36px;border-radius:calc(var(--r) * 0.6);background:var(--surf2);flex:none;position:relative;}
+.order .row .cov::before,.order .row .cov::after{content:"";position:absolute;width:5px;height:5px;border-color:var(--sign-line);}
+.order .row .cov::before{top:0;left:0;border-top:1px solid;border-left:1px solid;}
+.order .row .cov::after{bottom:0;right:0;border-bottom:1px solid;border-right:1px solid;}
+.order .row .tt{flex:1;color:var(--ink);}
+.order .row span:first-child{color:var(--sign);font-family:"IBM Plex Mono",monospace;font-weight:600;width:14px;}
+
+.legend{max-width:1080px;margin:26px auto 0;display:flex;gap:24px;flex-wrap:wrap;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:rgba(255,255,255,.4);}
+.legend span{display:inline-flex;align-items:center;gap:7px;}
+.legend i{width:13px;height:2px;display:inline-block;}
+</style>
+
+<div class="wrap" data-world="a" id="wrapEl">
+  <div class="tabs">
+    <button class="tab active" data-w="a" onclick="show('a')">A — Lantern · small radius</button>
+    <button class="tab" data-w="b" onclick="show('b')">B — Neon · hard corners</button>
+  </div>
+
+  <div class="stage">
+    <div class="world world--a active" id="w-a">
+      <p class="census">My List — 142 titles, kept since Mar 2024</p>
+
+      <div class="tonight" data-fx>
+        <div class="cov-flat"></div>
+        <div class="tonight-body">
+          <div>
+            <span class="chip"><span class="dot"></span>Watching now</span>
+            <p class="t-title">Frieren at the Funeral</p>
+            <div class="t-bar"><i></i></div>
+            <p class="t-meta">Ep <span class="live">11</span> / <span class="total">28</span> · airs weekly · next ep in 3d</p>
+          </div>
+          <button class="t-act">Log episode</button>
+        </div>
+      </div>
+
+      <div class="strip" data-fx>
+        <p class="strip-label">also watching</p>
+        <div class="strip-row">
+          <div class="c"><span class="c-art"></span><span class="c-meter"><i style="width:60%;"></i></span></div>
+          <div class="c"><span class="c-art"></span><span class="c-meter"><i style="width:30%;"></i></span></div>
+          <div class="c"><span class="c-art"></span><span class="c-meter"><i style="width:85%;"></i></span></div>
+          <div class="c"><span class="c-art"></span><span class="c-meter"><i style="width:10%;"></i></span></div>
+          <div class="c"><span class="c-art"></span><span class="c-meter"><i style="width:50%;"></i></span></div>
+        </div>
+        <div class="strip-door"><span>5 more watching</span><span>open Watching room →</span></div>
+      </div>
+
+      <div class="row2">
+        <div class="backdrop">
+          <p class="backdrop-label">grouping backdrop</p>
+          <div class="bd-row">
+            <div class="card completed" data-fx>
+              <div class="card-head"><b>Completed</b><span class="n">812</span></div>
+              <span>since 2012</span>
+              <div class="card-covers"><i></i><i></i><i></i><i></i></div>
+            </div>
+            <div class="card planned" data-fx>
+              <div class="card-head"><b>Planned</b><span class="n">34</span></div>
+              <span>210 hrs backlog</span>
+              <div class="card-covers"><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="order" data-fx>
+          <div class="order-head"><b>My Order</b><span class="order-seal">▶</span></div>
+          <div class="row"><span>1</span><span class="cov"></span><span class="tt">Vinland Saga S2</span></div>
+          <div class="row"><span>2</span><span class="cov"></span><span class="tt">Mushishi</span></div>
+          <div class="row"><span>3</span><span class="cov"></span><span class="tt">Monster</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="world world--b" id="w-b">
+      <p class="census">My List — 142 titles, kept since Mar 2024</p>
+
+      <div class="tonight" data-fx>
+        <div class="cov-flat"></div>
+        <div class="tonight-body">
+          <div>
+            <span class="chip"><span class="dot"></span>Watching now</span>
+            <p class="t-title">Frieren at the Funeral</p>
+            <div class="t-bar"><i></i></div>
+            <p class="t-meta">Ep <span class="live">11</span> / <span class="total">28</span> · airs weekly · next ep in 3d</p>
+          </div>
+          <button class="t-act">Log episode</button>
+        </div>
+      </div>
+
+      <div class="strip" data-fx>
+        <p class="strip-label">also watching</p>
+        <div class="strip-row">
+          <div class="c"><span class="c-art"></span><span class="c-meter"><i style="width:60%;"></i></span></div>
+          <div class="c"><span class="c-art"></span><span class="c-meter"><i style="width:30%;"></i></span></div>
+          <div class="c"><span class="c-art"></span><span class="c-meter"><i style="width:85%;"></i></span></div>
+          <div class="c"><span class="c-art"></span><span class="c-meter"><i style="width:10%;"></i></span></div>
+          <div class="c"><span class="c-art"></span><span class="c-meter"><i style="width:50%;"></i></span></div>
+        </div>
+        <div class="strip-door"><span>5 more watching</span><span>open Watching room →</span></div>
+      </div>
+
+      <div class="row2">
+        <div class="backdrop">
+          <p class="backdrop-label">grouping backdrop</p>
+          <div class="bd-row">
+            <div class="card completed" data-fx>
+              <div class="card-head"><b>Completed</b><span class="n">812</span></div>
+              <span>since 2012</span>
+              <div class="card-covers"><i></i><i></i><i></i><i></i></div>
+            </div>
+            <div class="card planned" data-fx>
+              <div class="card-head"><b>Planned</b><span class="n">34</span></div>
+              <span>210 hrs backlog</span>
+              <div class="card-covers"><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="order" data-fx>
+          <div class="order-head"><b>My Order</b><span class="order-seal">▶</span></div>
+          <div class="row"><span>1</span><span class="cov"></span><span class="tt">Vinland Saga S2</span></div>
+          <div class="row"><span>2</span><span class="cov"></span><span class="tt">Mushishi</span></div>
+          <div class="row"><span>3</span><span class="cov"></span><span class="tt">Monster</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><i style="background:oklch(64% 0.25 16)"></i>signage A</span>
+    <span><i style="background:oklch(83% 0.17 84)"></i>highlight A</span>
+    <span><i style="background:oklch(66% 0.29 346)"></i>signage B</span>
+    <span><i style="background:oklch(82% 0.15 196)"></i>highlight B</span>
+    <span>completed = signage, spent fuller (fill + glow, not a 3rd hue)</span>
+    <span>hover: soft highlight wash follows the cursor (desktop only, demo)</span>
+  </div>
+</div>
+
+<script>
+function show(w){
+  document.querySelectorAll('.world').forEach(function(el){el.classList.remove('active');});
+  document.getElementById('w-'+w).classList.add('active');
+  document.querySelectorAll('.tab').forEach(function(el){el.classList.toggle('active', el.dataset.w===w);});
+  document.getElementById('wrapEl').dataset.world = w;
+}
+document.querySelectorAll('.world').forEach(function(world){
+  var fxEls = world.querySelectorAll('[data-fx]');
+  var FX_RADIUS = 190;
+  world.addEventListener('mousemove', function(e){
+    fxEls.forEach(function(el){
+      var r = el.getBoundingClientRect();
+      el.style.setProperty('--gx', (e.clientX - r.left) + 'px');
+      el.style.setProperty('--gy', (e.clientY - r.top) + 'px');
+      var dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right);
+      var dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom);
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      var mix = Math.max(0, Math.min(1, 1 - dist / FX_RADIUS));
+      el.style.setProperty('--fx-mix', Math.round(mix * 100) + '%');
+    });
+  });
+  world.addEventListener('mouseleave', function(){
+    fxEls.forEach(function(el){
+      el.style.setProperty('--gx', '-999px');
+      el.style.setProperty('--gy', '-999px');
+      el.style.setProperty('--fx-mix', '0%');
+    });
+  });
+});
+</script>

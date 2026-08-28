@@ -62,20 +62,31 @@ You own your data. Local SQLite is the source of truth and sync runs through the
 ## Accessibility & Inclusion
 
 - State is never signaled by color alone: accent-as-state stays legible for colorblind users, paired with glow, shape, or label.
-- WCAG 2.1 AA contrast is the target across all eight themes.
+- WCAG 2.1 AA contrast is the target in both worlds, Lantern and Neon.
 
 ---
 
-<!-- Pending migration to DESIGN.md via /impeccable document. Preserved from the legacy record; these are visual-world decisions, not product truth. -->
+<!-- The visual world now lives in DESIGN.md, which is derived from the shipped
+     surface rather than from intentions. What follows is the product-level
+     summary only; DESIGN.md and src/styles/tokens.css are the source of truth. -->
 
-## Design principles (pending DESIGN.md)
+## Design principles
 
 - Cover art is the hero. Every surface choice exists to make anime covers pop.
 - Dark by default. This follows from the scene, not stylistic preference.
-- Accent color signals state, never decoration. The accent glow on a card means "in your list." Hover alone gets a depth shadow, not color.
+- One lit object per surface. A glow means live, and only one element on a screen may carry it.
 - Score is never required. Users can add to any status without rating.
 - Offline-first. The experience starts before any network call completes.
 
-## Palette (pending DESIGN.md)
+## Palette
 
-Sunset amber and coral on warm near-black surfaces, set by the default Ember theme. The exact OKLCH tokens live in `src/styles/tokens.css`; that file is the source of truth, not a copy here. Eight themes ship (Void, Ocean, Ember, Forest, Midnight, Crimson, Paper, Ash), each with a paired accent, and both surface and accent are overridable in Settings. Backgrounds are never neutral grey; every theme carries a deliberate hue cast.
+The world is the Night Market: a near-black street with one lit stall on it. Each
+world states exactly two hues, signage (names a thing, marks a boundary) and
+highlight (means live, counted, yours). Two worlds ship, and they are renditions
+of one world rather than palettes on a neutral chassis: **Lantern** (default,
+warm near-black ground, coral signage, amber highlight, 4px corner) and **Neon**
+(blue-black ground, magenta signage, cyan highlight, hard 0px corner). The exact
+OKLCH tokens live in `src/styles/tokens.css`, which is the source of truth, not a
+copy here. There is no accent picker: the old per-theme accent-ink system was
+deleted when the eight themes collapsed to two worlds. Backgrounds are never
+neutral grey; each world carries a deliberate hue cast.

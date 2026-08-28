@@ -48,7 +48,7 @@ Konsou is a tracker, not a social platform. No accounts, no followers, no discov
 
 **Google Drive sync.** Sign in once with Google. Your list syncs to a private `appDataFolder` in your Drive that only Konsou can read. Conflict resolution is field-level: episode progress takes the higher value, status follows a priority order, scores and notes go last-write-wins. No Konsou server exists. The sync path is your device to Google's servers.
 
-**Appearance.** Eight surface themes (Void, Ocean, Ember, Forest, Midnight, Crimson, Paper, Ash), each with a paired accent. Accents are independently overridable. Sidebar runs in rail, hover, or pinned-expanded mode on desktop.
+**Appearance.** Two worlds, Lantern (default, warm near-black with coral and amber) and Neon (blue-black with magenta and cyan). Each is a complete world rather than a palette swap, so ground, both hues, corner radius and motion all change with it. A Motion setting controls autonomous movement independently of the OS reduced-motion preference. Sidebar runs in rail, hover, or pinned-expanded mode on desktop.
 
 **Auto-update.** On desktop, the app checks for updates on launch and shows a toast when one is available; install and relaunch in one click. Android updates are manual: download the latest APK from Releases and it installs over the existing app.
 
