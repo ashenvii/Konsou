@@ -1788,6 +1788,7 @@
   --paper-blur:  10px;
   --paper-shade: 0.70;
   --lip:         0.22;    /* the case's one lit edge */
+  --wall-strip:  168px;   /* wall left under the paper below 1130 */
   /* The chit was a flat 300px, which is 55% of the card at 1280 and half that
      share on a wide monitor: the same object reading as two proportions. The
      comp's is 41% of its stage.
@@ -2409,18 +2410,23 @@
 .perf-lite .nm-board__wall {
   transform: none;
 }
-/* !important, and it is not decoration. This used to be a transition, which
-   the tier could cancel with a plain rule. It is an animation now, and
-   `.nm-board__wall i.is-turning.is-down` scores (0,3,1) against this
-   selector's (0,2,1), so the plain version lost the cascade and the 3D
-   rotation kept running on the tier built to drop it. Measured: the tile
-   still reported animationName nm-flap-down under .perf-lite while the faces,
-   which happened to tie on specificity and win on source order, correctly
-   reported none. Half a turn is worse than either whole. */
-.perf-lite .nm-board__wall i,
-.perf-lite .nm-board__wall i > b {
-  animation: none !important;
-}
+/* THE TURN SURVIVES THE LITE TIER, and that is a reversal, on the owner's
+   call: a phone is sniffed onto this tier by default, so dropping the turn
+   here meant the one card in the app whose whole premise is that it turns
+   never turned on the device it is used on most.
+
+   What the tier was built for is backdrop blur and glow re-rasterising on
+   every scroll frame, and the wall's own parallax, which is a transform on a
+   layer the size of the card. Those still go. One 71 x 97 tile rotating for
+   800ms is not in that class of cost, and the scheduler pays for it by
+   turning less often instead: see TURN_EVERY_LITE_MS in CompletedBoard.
+
+   If it ever does have to go again, note that `.nm-board__wall
+   i.is-turning.is-down` scores (0,3,1), so a plain `.perf-lite .nm-board__wall
+   i` at (0,2,1) loses the cascade and the rotation keeps running while the
+   shading, which ties and wins on source order, stops. Half a turn is worse
+   than either whole; it takes !important, the way the reduced-motion block
+   does it. */
 
 /* Below the phone breakpoint Completed reduces to a door whenever anything is
    planned, so the board mostly never renders there. When it does, it is one
@@ -2448,18 +2454,115 @@
 @media (max-width: 1129px) {
   .nm-board {
     --stub-w: 100%;
+    /* The wall's own room. Everything above this line is in flow, so without
+       a floor under it the card would end at the ledger and the wall would be
+       a strip behind the type rather than a thing you can watch turn. One row
+       and most of a second at every width in this range. */
+    padding-bottom: var(--wall-strip);
   }
+  /* THE PAPER TURNS, IT DOES NOT LEAVE. It used to be display:none here,
+     which took the one object off the card at exactly the sizes where the
+     card has the least else to say. A stub torn off a roll does not stop
+     being a stub when the roll is narrower: it is torn across the BOTTOM
+     now, with the head and the ledger printed on it and the wall running on
+     underneath. Same object, turned ninety degrees. */
   .nm-board__stub {
-    display: none;
+    inset: 0 0 auto 0;
+    width: auto;
+    /* Published by the component from the head and the ledger's real boxes,
+       because the paper has to end under the last printed line and no
+       constant knows where that is. */
+    height: var(--nm-paper-h, 232px);
+  }
+  .nm-board__stub::before {
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% calc(100% - 8.8px),
+      97.73% calc(100% - 1.6px),
+      95.45% calc(100% - 4.3px),
+      93.18% calc(100% - 3.0px),
+      90.91% calc(100% - 2.9px),
+      88.64% calc(100% - 4.4px),
+      86.36% calc(100% - 0.7px),
+      84.09% calc(100% - 3.4px),
+      81.82% calc(100% - 2.8px),
+      79.55% calc(100% - 4.4px),
+      77.27% calc(100% - 2.7px),
+      75% calc(100% - 4.2px),
+      72.73% calc(100% - 4.6px),
+      70.45% calc(100% - 2.6px),
+      68.18% calc(100% - 4.6px),
+      65.91% calc(100% - 0.8px),
+      63.64% calc(100% - 5.2px),
+      61.36% calc(100% - 4.0px),
+      59.09% calc(100% - 4.2px),
+      56.82% calc(100% - 3.3px),
+      54.55% calc(100% - 6.0px),
+      52.27% calc(100% - 0.1px),
+      50% calc(100% - 6.9px),
+      47.73% calc(100% - 1.2px),
+      45.45% calc(100% - 4.1px),
+      43.18% calc(100% - 1.9px),
+      40.91% calc(100% - 4.3px),
+      38.64% calc(100% - 2.0px),
+      36.36% calc(100% - 6.6px),
+      34.09% calc(100% - 1.6px),
+      31.82% calc(100% - 2.8px),
+      29.55% calc(100% - 2.3px),
+      27.27% calc(100% - 4.0px),
+      25% calc(100% - 6.9px),
+      22.73% calc(100% - 2.9px),
+      20.45% calc(100% - 4.1px),
+      18.18% calc(100% - 2.7px),
+      15.91% calc(100% - 0.3px),
+      13.64% calc(100% - 4.4px),
+      11.36% calc(100% - 0.4px),
+      9.09% calc(100% - 4.4px),
+      6.82% calc(100% - 0.4px),
+      4.55% calc(100% - 2.2px),
+      2.27% calc(100% - 0.2px),
+      0 calc(100% - 8.5px)
+    );
+    /* The lit cut runs along the tear, so it turns with it. */
+    background:
+      linear-gradient(
+        to bottom,
+        transparent calc(100% - 3px),
+        oklch(90% 0.02 88 / var(--paper-edge)) calc(100% - 3px)
+      ),
+      repeating-linear-gradient(96deg, transparent 0 2px, oklch(90% 0.02 88 / var(--paper-grain)) 2px 3px),
+      repeating-linear-gradient(4deg, transparent 0 5px, oklch(0% 0 0 / calc(var(--paper-grain) * 1.4)) 5px 6px),
+      radial-gradient(130% 90% at 16% 6%, oklch(90% 0.02 88 / 0.08), transparent 62%),
+      color-mix(in oklab, var(--w-highlight) var(--paper-warm), var(--w-sunk));
+  }
+  /* Thrown downward, because the paper is lying on the wall from above now. */
+  .nm-board__stub {
+    filter: drop-shadow(2px var(--paper-lift) var(--paper-blur) oklch(0% 0 0 / var(--paper-shade)));
+  }
+  .perf-lite .nm-board__stub::before {
+    box-shadow: 0 3px 0 oklch(0% 0 0 / 0.5);
   }
   .nm-board__head {
     width: auto;
     padding-right: var(--plate-pad);
   }
   .nm-board__ledger {
-    position: static;
+    /* RELATIVE, NOT STATIC, and it is the difference between the ledger being
+       on the card and not being on it at all. z-index only applies to a
+       POSITIONED element, so `position: static` here silently threw the
+       ledger's own `z-index: 1` away and it painted below .nm-board__clip,
+       which is absolute and therefore in the layer above in-flow content. The
+       wall covered it. It has been invisible at every width under 1130 since
+       the day it dropped into flow, in both worlds; the head only survived
+       because it is `position: relative` and kept its stacking. */
+    position: relative;
     inset: auto;
-    margin: 14px var(--plate-pad) var(--plate-pad);
+    margin: 14px var(--plate-pad) 0;
+    /* Printed on the paper rather than sunk into it: a panel inside a piece
+       of paper reads as a second surface, and there is only one here. */
+    padding: 0;
+    background: none;
   }
 }
 @media (max-width: 719px) {
@@ -2826,53 +2929,6 @@
   }
 }
 
-/* Completed as a door (phone only). A real entry button that navigates,
-   deliberately not an in-place toggle: on a phone a control that changes
-   what is under it costs you the thing you were reading. It keeps the
-   fill-and-glow that says "the fuller register" everywhere else. */
-.nm-cdoor {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  margin-top: 14px;
-  padding: 14px 16px;
-  border: 2px solid var(--w-highlight);
-  border-radius: var(--plate-radius);
-  background: var(--nm-done-bg);
-  box-shadow: 0 0 18px 2px color-mix(in oklab, var(--w-highlight) 32%, transparent);
-  /* Same ground as .nm-card--completed and therefore the same exception: the
-     wash puts this a tier lighter than a plate, so every ink tier steps up
-     one here. */
-  --ink-label: var(--w-ink-dim);
-  --ink-meta: var(--w-ink);
-  cursor: pointer;
-  text-align: left;
-  --fx-opp: var(--w-signage);
-  --fx-own: var(--w-highlight);
-}
-.nm-cdoor::after {
-  box-shadow: 0 0 18px 2px color-mix(in oklab, var(--fx-opp) 32%, transparent);
-}
-.nm-cdoor__name {
-  font-size: var(--text-base);
-  font-weight: 600;
-  /* Was signage on a highlight wash, which measured 3.73. The crossover on
-     this door lives on the parts that can hold it: highlight border and
-     count, signage on the cursor ring. */
-  color: var(--ink-body);
-}
-.nm-cdoor__n {
-  font-family: var(--w-face-mono);
-  font-size: var(--text-xl);
-  font-weight: 600;
-  color: var(--w-highlight);
-  margin-left: auto;
-}
-.nm-cdoor__go {
-  flex: none;
-  color: var(--ink-label);
-}
 
 
 /* ── TONIGHT, LAID ACROSS THE BAND ───────────────────────────────

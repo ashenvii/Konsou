@@ -1104,29 +1104,19 @@ export function NightMarket() {
         {/* ── The anchors ─────────────────────────────────────────
             Desktop and medium: a backdrop familying both, with the
             order beside it (medium drops the order underneath). Phone:
-            no backdrop at all — Planned stands in place and Completed
-            reduces to a door. */}
+            no backdrop at all, the two cards stand in the column.
+
+            COMPLETED USED TO REDUCE TO A DOOR HERE, a name and a number
+            and a chevron, and that was wrong for the same reason the whole
+            room is: this card is a wall of the covers you have finished and
+            a stub torn off the roll, and a phone is where you look at it
+            most. A row of text is what every other tracker shows. The card
+            carries at 375: the paper turns into a band across the top and
+            the wall runs on underneath it, still turning. */}
         {isPhone ? (
           <>
-            {counts.planned > 0 ? (
-              <>
-                {plannedCard}
-                <button
-                  type="button"
-                  className="nm-cdoor"
-                  data-fx
-                  onClick={() => go("/list/completed")}
-                >
-                  <span className="nm-cdoor__name">Completed</span>
-                  <span className="nm-cdoor__n">{archived.toLocaleString()}</span>
-                  <Icon icon={ChevronRight} size={16} className="nm-cdoor__go" />
-                </button>
-              </>
-            ) : (
-              /* Nothing planned, so there is nothing to sit small beside:
-                 Completed expands into the slot instead of staying a door. */
-              completedCard
-            )}
+            {counts.planned > 0 && plannedCard}
+            {completedCard}
           </>
         ) : (
           /* The order used to stand here as a third block below these two.

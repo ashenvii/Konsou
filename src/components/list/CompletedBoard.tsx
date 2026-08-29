@@ -34,6 +34,11 @@ const MAX_TILES = 110;
 const POOL = 140;
 
 const TURN_EVERY_MS = 1000;
+/** The lite tier turns, it just turns less. A phone is sniffed onto that tier
+ *  by default, and a board that never moves there is not this card. At 800ms a
+ *  turn, a 1s cadence leaves something animating 80% of the time; 2.4s takes
+ *  that to a third, which is what the tier is actually buying. */
+const TURN_EVERY_LITE_MS = 2400;
 /**
  * WHAT A FLAP ACTUALLY COSTS, and it is not the 500ms this had.
  *
@@ -96,6 +101,10 @@ export function CompletedBoard({
   onOpenRoom: () => void;
 }) {
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  /* Read by the wall sync below, to place the tear under the last line the
+     card prints. */
+  const headRef = useRef<HTMLSpanElement>(null);
+  const ledgerRef = useRef<HTMLSpanElement>(null);
   /* The paint-budget tier, which is a SEPARATE axis from reduced motion:
      see lib/motion.ts. A machine that asks for stillness is not necessarily
      a slow one, and a slow one has not asked for stillness. */
@@ -184,11 +193,13 @@ export function CompletedBoard({
   }, [pool.length, tileCount]);
 
   useEffect(() => {
-    /* THE LITE TIER STOPS THE WALL, not just its animation. perf.css already
-       drops the turn on this tier, but the interval kept swapping pictures
-       underneath it, so a tile changed instantly once a second with no motion
-       to explain it. A snap is worse than either a turn or stillness. */
-    if (reducedMotion || lite || pool.length <= tileCount + 4) return;
+    /* REDUCED MOTION STOPS THE WALL, and it is the only thing that does. The
+       lite tier used to stop it too, which meant no phone ever saw the board
+       turn; it slows the cadence instead now, and the CSS keeps the flap.
+       Whatever stops the animation must also stop this interval, or a tile
+       changes picture instantly with no motion to explain it, and a snap is
+       worse than either a turn or stillness. */
+    if (reducedMotion || pool.length <= tileCount + 4) return;
     let clearTimer = 0;
     let last = -1;
     const tick = () => {
@@ -233,7 +244,7 @@ export function CompletedBoard({
        missed cleanup from forking, and a forked chain does not look broken, it
        just runs at some other rate: measured once at a ragged 1s/2s alternation
        averaging 1.4s against a 1s setting. */
-    const id = window.setInterval(tick, TURN_EVERY_MS);
+    const id = window.setInterval(tick, lite ? TURN_EVERY_LITE_MS : TURN_EVERY_MS);
     return () => {
       window.clearInterval(id);
       window.clearTimeout(clearTimer);
@@ -293,6 +304,19 @@ export function CompletedBoard({
       card.style.setProperty("--nm-cell-w", `${colW + gap}px`);
       card.style.setProperty("--nm-cell-h", `${rowH + gap}px`);
       setTileCount(Math.min(MAX_TILES, cols * rows));
+
+      /* WHERE THE PAPER ENDS, below 1130 where it is a band across the top
+         rather than a panel down the side. The tear has to fall under the
+         last printed line, and the only thing that knows where that is is the
+         ledger's own box: the head grows with the count's fitted size and the
+         ledger wraps or does not depending on how many digits it is carrying.
+         Above 1130 nothing reads this, and publishing it costs one write. */
+      const printed = ledgerRef.current ?? headRef.current;
+      if (printed) {
+        const cardTop = card.getBoundingClientRect().top;
+        const end = printed.getBoundingClientRect().bottom - cardTop;
+        card.style.setProperty("--nm-paper-h", `${Math.round(end + 14)}px`);
+      }
     };
     sync();
     const ro = new ResizeObserver(sync);
@@ -423,7 +447,7 @@ export function CompletedBoard({
         <span className="nm-board__stub" />
       </span>
 
-      <span className="nm-board__head">
+      <span className="nm-board__head" ref={headRef}>
         <span className="nm-board__issuer">Konsou &middot; Completed</span>
         <span className="nm-board__rule" />
         <span className="nm-board__n" ref={countRef}>
@@ -453,7 +477,7 @@ export function CompletedBoard({
         <Icon icon={ChevronRight} size={15} />
       </span>
 
-      <span className="nm-board__ledger">
+      <span className="nm-board__ledger" ref={ledgerRef}>
         <span>
           <em>This year</em>
           <b>{thisYear.toLocaleString()}</b>
