@@ -1691,6 +1691,39 @@
   border: 2px solid var(--w-signage-line);
   --fx-opp: var(--w-highlight);
   --fx-own: var(--w-signage);
+  /* NOT space-between, which .nm-card sets and which this card cannot use.
+     The two anchors stretch to a common height, so whichever is taller sets
+     the other's box, and space-between then hands the shorter one's slack out
+     as gaps between its parts. Measured at 1000: 372px of content in a 458px
+     card, so the name and its own caption sat 35px apart and the caption and
+     the order 47px apart. Neither number was chosen by anyone, and both move
+     whenever the OTHER card's height moves.
+
+     The header keeps its own rhythm and the order takes what is left. */
+  justify-content: flex-start;
+}
+.nm-card--planned .nm-card__meta {
+  margin-top: 4px;
+}
+.nm-card--planned .nm-card__order {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+}
+/* The slack lands HERE, spread across the rows, rather than as a hole at the
+   foot of the card. A list whose rows breathe more on a taller card is a
+   rhythm; a gap under the last row is a card that ran out of things to say.
+
+   It cannot be "fit as many rows as the height allows", which is the answer
+   the wall gets and the obvious one to reach for. Planned's own height is
+   what drives the row when it is the taller card, so a rule that adds a row
+   whenever there is room makes the card taller, which makes room, which adds
+   a row. The row count is fixed and the rows absorb; the cap is the safety
+   valve if some future height change hands this a lot of slack at once. */
+.nm-card--planned .nm-order__row {
+  flex: 1 1 auto;
+  max-height: 76px;
 }
 /* Completed's static glow stays static in its resting hue; the localized
    hover shift lives on .nm-card--completed::after above. */
