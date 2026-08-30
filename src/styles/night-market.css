@@ -1742,39 +1742,6 @@
   --ink-label: var(--w-ink-dim);
   --ink-meta: var(--w-ink);
 }
-.nm-card__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-/* Planned's header is a door, so it needs the row treatment the watching
-   block's header has: the name leads, the count sits with it, the arrow
-   holds the right edge. */
-.nm-card__head--door {
-  position: relative;
-  width: 100%;
-  justify-content: flex-start;
-  gap: var(--space-2);
-  cursor: pointer;
-}
-.nm-card__go {
-  margin-left: auto;
-  align-self: center;
-  flex: none;
-  color: var(--ink-meta);
-  transition:
-    transform var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
-}
-.nm-card__head--door:hover .nm-card__name,
-.nm-card__head--door:focus-visible .nm-card__name {
-  color: var(--w-highlight);
-}
-.nm-card__head--door:hover .nm-card__go {
-  color: var(--w-highlight);
-  transform: translateX(3px);
-}
-
 /* The order, living inside Planned on a phone. Ruled off rather than boxed:
    it is part of this card, not a card sitting in it. */
 .nm-card__order {
@@ -2258,14 +2225,9 @@
     margin-bottom: 78px;
   }
 }
-.nm-board__issuer {
-  display: block;
-  font-family: var(--w-face-mono);
-  font-size: var(--text-2xs);
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--ink-label);
-}
+/* The shared figure head below states the issuer, the figure, the overprint
+   and the sub for both cards. What stays here is only what is the BOARD's:
+   its own size, its own hue, and the placement its comp was measured to. */
 .nm-board__rule {
   display: block;
   height: 2px;
@@ -2274,23 +2236,15 @@
   opacity: 0.85;
 }
 .nm-board__n {
-  display: block;
   /* --count-size is the tuned ceiling. --count-px is what the component works
      out it can actually afford, and it only ever comes in under. Written as a
      whole length rather than as calc(var(--count-size) * var(--fit)), because
-     a var multiplier inside calc is silently inert in the target webviews. */
-  font-family: var(--w-face-mono);
+     a var multiplier inside calc is silently inert in the target webviews.
+     The fit-content sizing this measurement needs is stated in the shared
+     rule below, along with the face, the weight and the tracking. */
   font-size: var(--count-px, var(--count-size));
-  /* Both are for the fit measurement: as a full-width block its scrollWidth is
-     the column, not the digits, so it could never report an overflow. */
-  width: fit-content;
-  max-width: 100%;
-  white-space: nowrap;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  line-height: 1.02;
+  /* FILLED, where the queue's figure is hollow. This one happened. */
   color: var(--w-highlight);
-  font-variant-numeric: tabular-nums;
 }
 /* THE OVERPRINT. It crosses the lower rule, which is what a stamp does to a
    chit, and it is deliberately not laid over the digits: in the comp it sat on
@@ -2298,45 +2252,24 @@
    because a stamp says filed; the count is in highlight, because a count says
    live. That pairing is the only place on this card the two hues meet. */
 .nm-board__closed {
-  display: block;
-  width: fit-content;
   /* Placed by ink, not by box. Measured, the digits' ink stops at y 212.5 and
      the lower rule sits at 233.5, so the stamp is centred on the rule: it
      crosses the printed line, which is what a stamp does, and it clears the
      count by 12px instead of the 3.4px it had when it was set by eye. */
   margin: -6px 0 7px;
-  font-family: var(--w-face-mono);
-  font-size: var(--text-xl);
-  /* 700, because 600 is semibold and WCAG's large-text allowance wants BOLD at
-     18.66px or over. As normal text at 20/600 the Neon stamp measured 3.59:1
-     where it crosses a slat hairline, against a 4.5 bar. At 700 it is large
-     text, the bar is 3.0, and it clears in every band. Lantern was never close
-     to failing: 5.37 on the chit. */
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.42em;
-  text-transform: uppercase;
-  color: var(--w-signage);
+  /* ROTATED, and the queue's is not. A stamp is pressed onto a chit by hand;
+     nothing has stamped a plan yet. That is the whole of the difference
+     between these two overprints, and it is why they share everything else. */
   transform: rotate(-2.6deg);
   transform-origin: left center;
 }
 
 .nm-board__sub {
-  display: block;
   margin-top: 10px;
-  font-family: var(--w-face-mono);
-  font-size: var(--text-2xs);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
   color: var(--ink-meta);
 }
 .nm-board__since {
-  display: block;
   margin-top: 3px;
-  font-family: var(--w-face-mono);
-  font-size: var(--text-2xs);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
   color: var(--ink-label);
 }
 /* Against the CARD, not the head. It used to be positioned inside the head,
@@ -2663,64 +2596,184 @@
   color: var(--w-highlight);
 }
 
-.nm-card__name {
+/* ── THE FIGURE HEAD, SHARED ───────────────────────────────────────
+   Owner's call, 2026-08-29: the two anchors must not have different buttons
+   or different typography. "One is flashy and the other one feels planned."
+
+   So the anatomy is written ONCE here for both cards, and only the FEEL is
+   stated per card below. The board keeps its own .nm-board__* names because
+   the tuner rig and the count's fit routine both address them by selector;
+   grouping is the extraction, not a rename.
+
+     issuer   what this card is
+     rule     a printed line
+     figure   the number, at display size
+     rule
+     stamp    the one word the figure cannot say on its own
+     sub      the same fact in the other unit
+*/
+.nm-board__issuer,
+.nm-plan__issuer {
   display: block;
-  font-size: var(--text-base);
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-label);
+}
+.nm-board__n,
+.nm-plan__n {
+  display: block;
+  font-family: var(--w-face-mono);
+  width: fit-content;
+  max-width: 100%;
+  white-space: nowrap;
   font-weight: 600;
-  color: var(--ink-body);
+  letter-spacing: 0.03em;
+  line-height: 1.02;
+  font-variant-numeric: tabular-nums;
 }
-/* The name was signage on a highlight wash, which measured 3.73 and is the
-   one place the two-hue crossover asked for a colour the ground could not
-   carry. The crossover still happens on this card, on the parts that can
-   hold it: highlight border and count, signage on the cursor ring. */
-/* Planned's header is a door, so it needs the row treatment the watching
-   block's header has: the name leads, the count sits with it, the arrow
-   holds the right edge.
-
-   The orphan that used to sit here: a `.nm-card--completed` selector was left
-   behind when its declarations were deleted, and CSS reads a comment as
-   whitespace, so the two fused into `.nm-card--completed .nm-card__head--door`
-   and this rule stopped matching anything at all. Planned's door header was
-   getting its layout from elsewhere by luck. */
-.nm-card__head--door {
-  position: relative;
-  width: 100%;
-  justify-content: flex-start;
-  gap: var(--space-2);
-  cursor: pointer;
-}
-.nm-card__go {
-  margin-left: auto;
-  align-self: center;
-  flex: none;
-  color: var(--ink-meta);
-  transition:
-    transform var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
-}
-.nm-card__head--door:hover .nm-card__name,
-.nm-card__head--door:focus-visible .nm-card__name {
-  color: var(--w-highlight);
-}
-.nm-card__head--door:hover .nm-card__go {
-  color: var(--w-highlight);
-  transform: translateX(3px);
-}
-
-.nm-card__name {
-  color: var(--ink-body);
-}
-.nm-card__n {
+.nm-board__closed,
+.nm-plan__stamp {
+  display: block;
+  width: fit-content;
   font-family: var(--w-face-mono);
   font-size: var(--text-xl);
-  font-weight: 600;
-}
-.nm-card--planned .nm-card__n {
+  /* 700, because 600 is semibold and WCAG's large-text allowance wants BOLD at
+     18.66px or over. As normal text at 20/600 the Neon stamp measured 3.59:1
+     where it crosses a slat hairline, against a 4.5 bar. At 700 it is large
+     text, the bar is 3.0, and it clears in every band. */
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
   color: var(--w-signage);
 }
-.nm-card--completed .nm-card__n {
-  color: var(--w-highlight);
+.nm-board__sub,
+.nm-plan__sub,
+.nm-board__since {
+  display: block;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
+
+/* ── PLANNED'S HEAD, and the three places it differs ──────────────
+   Same order, same faces, same sizes. The difference is that none of this
+   has happened yet, and each of the three says exactly that. */
+.nm-card--planned {
+  --plan-n-size: 62px;
+}
+.nm-plan__head {
+  position: relative;
+  z-index: 1;
+  display: block;
+  padding-right: 104px; /* clear of the Open chip */
+}
+/* 1. THE FIGURE IS HOLLOW. Completed's is filled because it happened; this
+      one is drawn and not yet inked. The stroke carries the contrast, so it
+      is 2px rather than a hairline: measured on the plate it reads the same
+      5.12 the filled signage did, and at 62px it is large text either way. */
+.nm-plan__fig {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 8px;
+  width: fit-content;
+  max-width: 100%;
+  white-space: nowrap;
+}
+.nm-plan__n {
+  font-size: var(--plan-n-px, var(--plan-n-size));
+  color: transparent;
+  -webkit-text-stroke: 2px var(--w-signage);
+}
+.nm-plan__unit {
+  font-style: normal;
+  font-family: var(--w-face-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-meta);
+}
+/* 2. THE RULES ARE DASHED. Completed prints solid lines because the entry is
+      made; a dash is the line you rule before you write on it. */
+.nm-plan__rule {
+  display: block;
+  height: 0;
+  margin: 10px calc(var(--plate-pad) + 8px) 0 0;
+  border-top: 2px dashed var(--w-signage);
+  opacity: 0.85;
+}
+.nm-plan__rule + .nm-plan__fig + .nm-plan__rule {
+  margin-top: 8px;
+}
+/* 3. THE OVERPRINT IS UPRIGHT. Completed's is rotated because a stamp is
+      pressed onto a chit by hand. Nothing has stamped this one, so it sits
+      square on the line and carries no rotation at all. */
+.nm-plan__stamp {
+  margin: 10px 0 0;
+  opacity: 0.92;
+}
+.nm-plan__sub {
+  margin-top: 10px;
+  color: var(--ink-meta);
+}
+
+/* The Open chip, the same object in the same corner on both cards. On
+   Completed the whole card is the button and this is its mark; here the card
+   cannot be a button, because the order rows inside it are, so the chip IS
+   the door and carries the real target. */
+.nm-plan__go {
+  position: absolute;
+  z-index: 2;
+  top: var(--plate-pad);
+  right: var(--plate-pad);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px 5px 10px;
+  border: 1px solid var(--filed-ink);
+  border-radius: var(--radius-sm);
+  font-family: var(--w-face-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-meta);
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nm-plan__goword { white-space: nowrap; }
+/* THE SLOP, and this chip needs it where Completed's does not. On Completed
+   the whole card is the button and the chip is only its mark; here the chip
+   IS the door, and it draws 35 x 27 once the word is dropped below 420, which
+   is under the 44px floor. Nothing else on this card is a control until the
+   order rows begin well below it, so the slop has room to grow into without
+   two controls sharing hit pixels. Measured after: 53 x 45. */
+.nm-plan__go::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+}
+.nm-card--planned:hover .nm-plan__go,
+.nm-plan__go:focus-visible {
+  background: var(--w-signage);
+  border-color: var(--w-signage);
+  color: var(--w-ink-on-signage);
+}
+.nm-plan__go:focus-visible {
+  outline: 2px solid var(--w-signage);
+  outline-offset: 3px;
+}
+@media (max-width: 419px) {
+  .nm-plan__goword { display: none; }
+  /* The head reserves the chip's lane, and the chip is 69px narrower once the
+     word goes, so the reservation goes with it. */
+  .nm-plan__head { padding-right: 56px; }
+}
+
 .nm-card__meta {
   font-family: var(--w-face-mono);
   font-size: var(--text-2xs);

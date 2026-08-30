@@ -48,13 +48,12 @@ import type { AnimeListEntry, ListStatus, TitleLanguage } from "@/types/list";
 /** How many order rows stand in the column before it out-grows the
  *  backdrop beside it. The whole order lives one tap away on its own page.
  *
- *  FIVE, NOT FOUR, since the cover strip above them was deleted: the strip
- *  and these rows drew the same four groups off `planGroups`, so with no hand
- *  ordering set, which is everyone's state until they set one, the card
- *  printed the same four covers twice, 42px apart. One copy carried a number,
- *  a title and a target; the other carried a 4.38:1 slice of the same poster.
- *  The row the strip's height paid for shows a fifth title instead. */
-const ORDER_ROWS = 5;
+ *  It went to five when the duplicate cover strip was deleted and the row that
+ *  strip's height paid for went to the order. It is back to four now that the
+ *  backlog is a serial: the serial and its rule want about the same 70px the
+ *  fifth row does, and a card that says how much you owe in one figure beats a
+ *  card that names one more of the forty-seven. */
+const ORDER_ROWS = 4;
 /** How deep the Completed board's cover pool may go. It shows up to 56 tiles
  *  at once and wants a free list well past that; see CompletedBoard's POOL. */
 const BOARD_COVERS = 140;
@@ -359,6 +358,10 @@ export function NightMarket() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
+  /* The debt serial and the row it sits in, read by the fit below. */
+  const plannedRef = useRef<HTMLDivElement>(null);
+  const debtRef = useRef<HTMLElement>(null);
+  const debtRowRef = useRef<HTMLSpanElement>(null);
   const debounced = useDebounce(query, 200);
   const needle = normalizeForSearch(debounced);
   const searching = needle.length > 0;
@@ -488,6 +491,36 @@ export function NightMarket() {
       backlogHours: Math.round(backlogMinutes / 60),
     };
   }, [entries]);
+
+  /**
+   * THE FIGURE FITS, MEASURED, the same way the board's count does.
+   *
+   * 62px is the tuned ceiling and it stays the ceiling; this only ever comes
+   * in under it. A backlog is unbounded in a way the archive count is not, so
+   * a big library can hand this figure five digits, and the unit beside it
+   * does not shrink with it. Written as a whole length rather than as a
+   * calc() multiplier, because a var multiplied inside calc is silently inert
+   * in the target webviews (see the app's own note on --gx).
+   */
+  useEffect(() => {
+    const card = plannedRef.current;
+    const row = debtRowRef.current;
+    const fig = debtRef.current;
+    if (!card || !row || !fig) return;
+    const fit = () => {
+      card.style.removeProperty("--plan-n-px");
+      const max = parseFloat(getComputedStyle(card).getPropertyValue("--plan-n-size")) || 62;
+      const avail = row.clientWidth;
+      const want = row.scrollWidth;
+      if (avail < 1 || want <= avail) return;
+      card.style.setProperty("--plan-n-px", `${Math.floor(max * (avail / want))}px`);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(card);
+    return () => ro.disconnect();
+  }, [counts.backlogHours]);
+
 
   /* Distinct titles in the archive, from the ledger AND the list together:
      rewatches collapse back to one title, and a completion whose entry was
@@ -747,20 +780,56 @@ export function NightMarket() {
      button has nowhere to put a second control — the same trap the watching
      strip fell into. Its header is the door instead, the way the watching
      block's header is. */
+  /* Unlike Completed, this card is NOT one big button. It has to hold the
+     order's own controls, and a card whose whole face is a button has nowhere
+     to put a second control. The Open chip is the door instead, which is the
+     same chip Completed wears in the same corner: owner's call, 2026-08-29,
+     that the two anchors must not have different buttons.
+
+     THE HEAD IS COMPLETED'S HEAD. Same anatomy in the same order: issuer,
+     rule, figure, rule, overprint, sub. What differs is the FEEL, and it
+     differs in three places rather than in the structure:
+
+       the figure is HOLLOW, because it has not happened yet
+       the rules are DASHED, because a plan is provisional
+       the overprint is UPRIGHT, because nothing has stamped it
+
+     and the card keeps the signage keyline with no glow, against Completed's
+     highlight and its lit ring. One is flashy; this one is waiting. */
+  /* Hours are the figure when there are any. With no durations known there
+     is no backlog to print, and a 62px zero is a mark that says the card is
+     broken rather than empty, so the title count takes the figure instead and
+     the unit says so. */
+  const hasBacklog = counts.backlogHours > 0;
+  const backlogDays = Math.round(counts.backlogHours / 24);
+
   const plannedCard = (
-    <div className="nm-card nm-card--planned" data-fx>
+    <div className="nm-card nm-card--planned" data-fx ref={plannedRef}>
+      <span className="nm-plan__head">
+        <span className="nm-plan__issuer">Planned</span>
+        <span className="nm-plan__rule" />
+        <span className="nm-plan__fig" ref={debtRowRef}>
+          <b className="nm-plan__n" ref={debtRef}>
+            {hasBacklog ? counts.backlogHours : counts.planned}
+          </b>
+          <i className="nm-plan__unit">{hasBacklog ? "hrs" : "titles"}</i>
+        </span>
+        <span className="nm-plan__rule" />
+        <span className="nm-plan__stamp">To go</span>
+        <span className="nm-plan__sub">
+          {hasBacklog
+            ? `${counts.planned.toLocaleString()} titles · ${backlogDays.toLocaleString()} days`
+            : "nothing queued"}
+        </span>
+      </span>
       <button
         type="button"
-        className="nm-card__head nm-card__head--door"
+        className="nm-plan__go"
         onClick={() => go("/list/plan")}
       >
-        <span className="nm-card__name">Planned</span>
-        <span className="nm-card__n">{counts.planned.toLocaleString()}</span>
-        <Icon icon={ChevronRight} size={16} className="nm-card__go" />
+        <span className="nm-plan__goword">Open</span>
+        <Icon icon={ChevronRight} size={15} />
       </button>
-      <span className="nm-card__meta">
-        {counts.backlogHours > 0 ? `${counts.backlogHours.toLocaleString()} hrs backlog` : "nothing queued"}
-      </span>
       {orderInline}
     </div>
   );

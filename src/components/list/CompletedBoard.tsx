@@ -448,21 +448,27 @@ export function CompletedBoard({
       </span>
 
       <span className="nm-board__head" ref={headRef}>
-        <span className="nm-board__issuer">Konsou &middot; Completed</span>
+        {/* It said "Konsou · Completed". Nobody reading this card needs
+            telling which app they are in, and the word that matters was
+            second. */}
+        <span className="nm-board__issuer">Completed</span>
         <span className="nm-board__rule" />
         <span className="nm-board__n" ref={countRef}>
           {serial}
         </span>
         <span className="nm-board__rule" />
         {/* THE OVERPRINT. A count says how many; it does not say that anything
-            finished. "Closed" is the one word an archive can carry that a plan
-            never can, and it is set in signage because a stamp says filed
-            rather than happening. It crosses the lower rule, which is what a
-            stamp does to a chit, and it is deliberately NOT laid over the
-            digits: in the comp it sat on them and the two read as a collision
-            rather than as ink over paper. */}
+            finished. It is set in signage because a stamp says filed rather
+            than happening, it crosses the lower rule the way a stamp crosses a
+            printed line, and it is deliberately NOT laid over the digits: in
+            the comp it sat on them and the two read as a collision rather than
+            as ink over paper.
+
+            "DONE", not "CLOSED". Closed is what happens to an account; done is
+            what happens to a thing you watched, and it is the word that pairs
+            with the queue's "TO GO" across the row. */}
         <span className="nm-board__closed" aria-hidden>
-          Closed
+          Done
         </span>
         <span className="nm-board__sub">
           {hours.toLocaleString()} hrs &middot; {days.toLocaleString()} days
