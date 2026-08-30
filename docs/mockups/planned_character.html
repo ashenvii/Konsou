@@ -1,0 +1,624 @@
+<title>The Queue, Four Ways</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+
+<style>
+/* ═══ Lantern, copied out of tokens.css rather than invented ═══════════ */
+:root {
+  --w-ink-raw:   oklch(90% 0.02 88);
+  --w-base:      oklch(13% 0.035 18);
+  --w-surface:   color-mix(in oklab, var(--w-ink-raw) 3.5%, var(--w-base));
+  --w-surface-2: color-mix(in oklab, var(--w-ink-raw) 6%,   var(--w-base));
+  --w-sunk:      color-mix(in oklab, black 22%, var(--w-base));
+  --w-ink:       var(--w-ink-raw);
+  --w-ink-dim:   oklch(90% 0.02 88 / 62%);
+  --w-ink-faint: oklch(90% 0.02 88 / 55%);
+  --w-signage:   oklch(64% 0.25 16);
+  --w-signage-line: oklch(64% 0.25 16 / 60%);
+  --w-highlight: oklch(83% 0.17 84);
+  --w-line:      oklch(90% 0.02 88 / 10%);
+  --w-line-strong: oklch(90% 0.02 88 / 22%);
+
+  --plate-bg:   var(--w-surface);
+  --plate-bg-2: var(--w-surface-2);
+  --ink-body:   var(--w-ink);
+  --ink-meta:   var(--w-ink-dim);
+  --ink-label:  var(--w-ink-faint);
+
+  --face: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Courier New", monospace;
+
+  --sheet:      oklch(8.5% 0.022 18);
+  --sheet-2:    oklch(11% 0.026 18);
+  --sheet-line: oklch(90% 0.02 88 / 9%);
+
+  /* The board's paper, so a direction that reaches for it reaches for the
+     same stock rather than a lookalike. */
+  --paper-warm:  5%;
+  --paper-grain: 0.035;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--sheet);
+  color: var(--ink-body);
+  font-family: var(--face);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 56px 28px 96px; }
+
+.eyebrow {
+  margin: 0 0 14px;
+  font-family: var(--mono);
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--w-signage);
+}
+h1 {
+  margin: 0 0 18px;
+  font-size: clamp(32px, 5vw, 46px);
+  font-weight: 500; letter-spacing: -0.02em; line-height: 1.05;
+  text-wrap: balance; color: var(--w-ink);
+}
+.stand { max-width: 62ch; margin: 0 0 14px; color: var(--w-ink-dim); }
+.stand strong { color: var(--w-ink); font-weight: 500; }
+
+.terms {
+  margin: 34px 0 0; padding: 18px 20px;
+  border: 1px solid var(--sheet-line); border-radius: 3px;
+  background: var(--sheet-2);
+  display: grid; gap: 10px 34px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+.terms p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--w-ink-dim); }
+.terms b {
+  display: block; font-family: var(--mono); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-label); margin-bottom: 3px;
+}
+hr.div { height: 1px; margin: 52px 0; border: 0; background: var(--sheet-line); }
+
+.dir { display: grid; gap: 30px 40px; grid-template-columns: 572px minmax(0, 1fr); align-items: start; }
+@media (max-width: 1020px) { .dir { grid-template-columns: minmax(0, 1fr); } }
+.stage { overflow-x: auto; padding-bottom: 4px; }
+.stage-note {
+  margin: 10px 0 0; font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-label);
+}
+
+.mark { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+.mark span.k {
+  font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.2em;
+  color: var(--w-base); background: var(--w-signage);
+  padding: 3px 9px 2px; border-radius: 2px;
+}
+.mark span.k.now { background: var(--w-ink-dim); }
+.mark h2 { margin: 0; font-size: 26px; font-weight: 500; letter-spacing: -0.015em; color: var(--w-ink); }
+.mark em {
+  font-style: normal; font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--w-signage);
+}
+.lede { margin: 0 0 22px; color: var(--w-ink-dim); max-width: 56ch; }
+
+dl.spec { margin: 0; display: grid; gap: 16px; }
+dl.spec dt {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-label); margin-bottom: 4px;
+}
+dl.spec dd { margin: 0; font-size: 14px; line-height: 1.55; color: var(--w-ink-dim); }
+dl.spec dd .cost { color: var(--w-signage); }
+code { font-family: var(--mono); font-size: 0.9em; color: var(--w-ink); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   THE CARD. 572 x 392, which is what Planned measures at 1280 beside the
+   board, on the component's own boxes: 14px padding, a 2px signage keyline,
+   a 4px corner, 53px rows.
+   ═══════════════════════════════════════════════════════════════════ */
+.card {
+  position: relative;
+  width: 572px; height: 392px;
+  padding: 14px;
+  border: 2px solid var(--w-signage-line);
+  border-radius: 4px;
+  background: var(--plate-bg);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.head { display: flex; align-items: baseline; gap: 8px; }
+.nm { font-size: 14px; font-weight: 600; line-height: 20px; color: var(--ink-body); }
+.n { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--w-signage); }
+.go { margin-left: auto; color: var(--ink-label); font-size: 15px; align-self: center; }
+.meta {
+  margin-top: 4px;
+  font-family: var(--mono); font-size: 10px; color: var(--ink-label);
+}
+.order { position: relative; margin-top: 12px; flex: 1; display: flex; flex-direction: column; }
+.ohead {
+  display: flex; align-items: baseline; width: calc(100% - 34px);
+  margin-bottom: 6px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-meta);
+}
+.ohead i { font-style: normal; margin-left: auto; color: var(--ink-label); }
+.seal {
+  position: absolute; top: 8px; right: 0;
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 2px solid var(--w-highlight); color: var(--w-highlight);
+  background: color-mix(in oklab, var(--w-highlight) 12%, transparent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+}
+.row {
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--w-line);
+  font-size: 12.5px; color: var(--ink-meta);
+  flex: 1 1 auto;
+}
+.rn { font-family: var(--mono); font-size: 12.5px; color: var(--w-signage); width: 14px; flex: none; }
+.cov {
+  width: 26px; height: 36px; flex: none; border-radius: 2px;
+  background: var(--plate-bg-2); border: 1px solid var(--w-line);
+  overflow: hidden; position: relative;
+}
+.tt { color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   A · THE ROLL. Completed is the stub TORN OFF this. Planned is what is
+   still on it.
+   ═══════════════════════════════════════════════════════════════════ */
+.a .order {
+  padding: 0 18px;
+  margin-left: -14px; margin-right: -14px;
+  margin-bottom: -14px;
+  background:
+    repeating-linear-gradient(96deg, transparent 0 2px, oklch(90% 0.02 88 / var(--paper-grain)) 2px 3px),
+    repeating-linear-gradient(4deg, transparent 0 5px, oklch(0% 0 0 / 0.05) 5px 6px),
+    color-mix(in oklab, var(--w-highlight) var(--paper-warm), var(--w-sunk));
+  box-shadow: inset 0 1px 0 oklch(90% 0.02 88 / 0.14);
+}
+/* The sprocket holes down both edges: this is stock that feeds. */
+.a .order::before, .a .order::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 9px;
+  background-image: radial-gradient(circle 3px at 50% 9px, var(--plate-bg) 96%, transparent 100%);
+  background-size: 9px 26px; background-repeat: repeat-y;
+}
+.a .order::before { left: 4px; }
+.a .order::after { right: 4px; }
+.a .ohead { padding-left: 12px; padding-top: 8px; }
+.a .seal { right: 14px; top: 14px; }
+/* Each row is a ticket, and the line between two tickets is a perforation
+   rather than a rule. */
+.a .row {
+  border-top: 0;
+  padding-left: 26px; padding-right: 26px;
+}
+.a .row + .row::before {
+  content: ""; position: absolute; left: 16px; right: 16px; top: 0; height: 1px;
+  background-image: radial-gradient(circle 1.4px at 50% 50%, oklch(90% 0.02 88 / 0.42) 96%, transparent 100%);
+  background-size: 7px 3px; background-repeat: repeat-x;
+}
+/* The tear line: the top ticket is the one about to come off. */
+.a .row:first-of-type {
+  box-shadow: inset 0 -1px 0 oklch(83% 0.17 84 / 0.30);
+}
+.a .rn { color: var(--w-highlight); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   B · WRAPPED. The board's veil hides the covers and your hand opens it.
+   This does the opposite and means it: they are not opened yet.
+   ═══════════════════════════════════════════════════════════════════ */
+.b .cov::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(118deg, oklch(90% 0.02 88 / 0.22) 0 38%, oklch(90% 0.02 88 / 0.07) 38% 100%),
+    oklch(13% 0.035 18 / 0.55);
+  backdrop-filter: blur(1.5px);
+}
+/* One is open: the next one. */
+.b .row:first-of-type .cov::after { display: none; }
+.b .row:first-of-type .cov { border-color: oklch(83% 0.17 84 / 0.55); }
+.b .row:not(:first-of-type) .tt { color: var(--ink-meta); }
+.b .row:first-of-type::after {
+  content: "NEXT"; position: absolute; right: 16px;
+  font-family: var(--mono); font-size: 9px; font-weight: 600;
+  letter-spacing: 0.2em; color: var(--w-highlight);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   C · THE SPIKE. A receipt spindle. The numbers stop being printed and
+   become the hole each docket hangs on.
+   ═══════════════════════════════════════════════════════════════════ */
+.c .order { padding-left: 34px; }
+.c .order::before {
+  content: ""; position: absolute; left: 14px; top: 2px; bottom: 8px; width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right,
+    oklch(90% 0.02 88 / 0.10), oklch(90% 0.02 88 / 0.40) 45%, oklch(90% 0.02 88 / 0.08));
+}
+.c .order::after {
+  content: ""; position: absolute; left: 9px; top: -4px;
+  width: 13px; height: 8px; border-radius: 2px;
+  background: var(--w-signage);
+}
+.c .ohead { padding-left: 4px; }
+.c .rn {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 1px solid var(--w-signage-line);
+  background: var(--plate-bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; margin-left: -30px; margin-right: 8px;
+}
+.c .row { padding-left: 30px; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   D · THE DEBT. Completed prints what you spent, at 98px. This prints what
+   you owe, at the same size, in the other hue.
+   ═══════════════════════════════════════════════════════════════════ */
+.d .head { align-items: baseline; }
+.d .n { font-size: 14px; color: var(--ink-label); font-weight: 500; }
+.d .debt {
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 2px 0 0;
+}
+.d .debt b {
+  font-family: var(--mono); font-size: 62px; font-weight: 600;
+  line-height: 1.02; letter-spacing: 0.02em;
+  color: var(--w-signage); font-variant-numeric: tabular-nums;
+}
+.d .debt i {
+  font-style: normal; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-meta);
+}
+.d .rule { display: block; height: 2px; margin: 8px 0 0; background: var(--w-signage); opacity: 0.85; }
+.d .order { margin-top: 10px; }
+/* :last-child, NOT :nth-of-type(5). The order block's head and seal are divs
+   too, so nth-of-type counted them and hid the third row instead of the
+   fifth: the drawing read 1, 2, 4, 5. */
+.d .row:last-child { display: none; }
+.card:not(.d) .debt, .card:not(.d) .rule { display: none; }
+
+/* ═══ Footer ═══ */
+.close-out {
+  margin-top: 64px; padding: 26px 28px;
+  border: 1px solid var(--w-signage); border-left-width: 3px; border-radius: 3px;
+  background: color-mix(in oklab, var(--w-signage) 6%, var(--sheet-2));
+}
+.close-out h3 { margin: 0 0 10px; font-size: 19px; font-weight: 500; color: var(--w-ink); }
+.close-out p { margin: 0 0 10px; color: var(--w-ink-dim); max-width: 68ch; }
+.close-out p:last-child { margin-bottom: 0; }
+.close-out b { color: var(--w-ink); font-weight: 500; }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Planned card &middot; character round</p>
+  <h1>Four ways to make the queue an object</h1>
+  <p class="stand">
+    Two passes of measuring have taken everything off this card that was
+    objectively wrong: the cover strip that printed the order a second time, and
+    the spacing that was really the board's leftovers. What is left is that
+    <strong>Completed is an object and Planned is a panel of text sitting next to
+    it</strong>. That is a taste call, so it is yours.
+  </p>
+  <p class="stand">
+    Each of these takes a different route: <strong>system</strong>,
+    <strong>concealment</strong>, <strong>vernacular</strong>,
+    <strong>typography</strong>. Pick one by letter. Then it goes into the real
+    card and the values come off a tuner on the component itself.
+  </p>
+
+  <div class="terms">
+    <p><b>Real size</b>572 &times; 392, which is what Planned measures at 1280 beside the board. Real padding, keyline, corner and 53px rows.</p>
+    <p><b>Real values</b>Lantern's own tokens. Where a direction reaches for the board's paper it uses the same stock, not a lookalike.</p>
+    <p><b>Drawn, not fetched</b>Covers are stand-in gradients. AniList art is CORS-blocked outside the Tauri webview.</p>
+    <p><b>Drawn loud</b>Each treatment is pushed past where it would ship so the four tell apart on one screen. Strength is a slider and the slider comes later.</p>
+  </div>
+
+  <hr class="div">
+
+  <section class="dir">
+    <div class="stage">
+      <div class="card now">
+        <div class="head"><span class="nm">Planned</span><span class="n">47</span><span class="go">&rsaquo;</span></div>
+        <div class="meta">226 hrs backlog</div>
+        <div class="order">
+          <div class="ohead">Planned next <i>&rsaquo;</i></div>
+          <div class="seal">&#9654;</div>
+          <div class="row"><span class="rn">1</span><span class="cov"></span><span class="tt">Mushishi</span></div>
+          <div class="row"><span class="rn">2</span><span class="cov"></span><span class="tt">Kaiba</span></div>
+          <div class="row"><span class="rn">3</span><span class="cov"></span><span class="tt">Ping Pong the Animation</span></div>
+          <div class="row"><span class="rn">4</span><span class="cov"></span><span class="tt">Texhnolyze</span></div>
+          <div class="row"><span class="rn">5</span><span class="cov"></span><span class="tt">The Tatami Galaxy</span></div>
+        </div>
+      </div>
+      <p class="stage-note">As built, after the two measured passes</p>
+    </div>
+    <div>
+      <div class="mark"><span class="k now">Now</span><h2>What is there today</h2></div>
+      <p class="lede">
+        Correct, and made of nothing. Every part is type on a plate: a name, a
+        count, a caption, a row of five. The only thing on it that is an object
+        is the seal, and that is 26px across.
+      </p>
+      <dl class="spec">
+        <div>
+          <dt>The gap</dt>
+          <dd>Beside it sits a card made of torn paper and a wall of covers that
+          turns on its own. These two are peers in the same row and only one of
+          them is a thing.</dd>
+        </div>
+        <div>
+          <dt>Also true</dt>
+          <dd>The count is 20px. Completed's serial is 98px. Whatever else is
+          decided, those two numbers are doing the same job at five times the
+          difference in size.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <section class="dir">
+    <div class="stage">
+      <div class="card a">
+        <div class="head"><span class="nm">Planned</span><span class="n">47</span><span class="go">&rsaquo;</span></div>
+        <div class="meta">226 hrs backlog</div>
+        <div class="order">
+          <div class="ohead">Planned next <i>&rsaquo;</i></div>
+          <div class="seal">&#9654;</div>
+          <div class="row"><span class="rn">1</span><span class="cov"></span><span class="tt">Mushishi</span></div>
+          <div class="row"><span class="rn">2</span><span class="cov"></span><span class="tt">Kaiba</span></div>
+          <div class="row"><span class="rn">3</span><span class="cov"></span><span class="tt">Ping Pong the Animation</span></div>
+          <div class="row"><span class="rn">4</span><span class="cov"></span><span class="tt">Texhnolyze</span></div>
+          <div class="row"><span class="rn">5</span><span class="cov"></span><span class="tt">The Tatami Galaxy</span></div>
+        </div>
+      </div>
+      <p class="stage-note">Sprocketed stock, perforations between tickets, the tear line at the top</p>
+    </div>
+    <div>
+      <div class="mark"><span class="k">A</span><h2>The roll</h2><em>system</em></div>
+      <p class="lede">
+        Completed is a stub torn off a market roll. This is the roll it was torn
+        from. The order runs down a continuous strip of the same stock, one
+        ticket per title, perforated between them, sprocketed down both edges,
+        and it runs off the bottom of the card because there are 47 of them. The
+        top ticket carries the tear line: it is the next one to come off.
+      </p>
+      <dl class="spec">
+        <div>
+          <dt>Why it is the strongest</dt>
+          <dd>It makes the two anchors one object seen at two moments, which is
+          the sentence this row of the page is already trying to say. Nothing
+          new has to be invented and nothing has to be explained: the material
+          is already in the app and already means "a transaction that is done",
+          so the unspent end of it means the opposite for free.</dd>
+        </div>
+        <div>
+          <dt>What it costs</dt>
+          <dd><span class="cost">Lantern only</span>, like the paper it borrows.
+          Neon needs its own answer, and the obvious one is that a shutter has
+          slats the way a roll has perforations.</dd>
+        </div>
+        <div>
+          <dt>What gets built</dt>
+          <dd>The order block takes the board's own stock, sprockets as a
+          repeating radial on both edges, perforations replacing the row rules,
+          and the block bleeds to the card's edges so the strip is cut by the
+          card rather than ending inside it.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <section class="dir">
+    <div class="stage">
+      <div class="card b">
+        <div class="head"><span class="nm">Planned</span><span class="n">47</span><span class="go">&rsaquo;</span></div>
+        <div class="meta">226 hrs backlog</div>
+        <div class="order">
+          <div class="ohead">Planned next <i>&rsaquo;</i></div>
+          <div class="seal">&#9654;</div>
+          <div class="row"><span class="rn">1</span><span class="cov"></span><span class="tt">Mushishi</span></div>
+          <div class="row"><span class="rn">2</span><span class="cov"></span><span class="tt">Kaiba</span></div>
+          <div class="row"><span class="rn">3</span><span class="cov"></span><span class="tt">Ping Pong the Animation</span></div>
+          <div class="row"><span class="rn">4</span><span class="cov"></span><span class="tt">Texhnolyze</span></div>
+          <div class="row"><span class="rn">5</span><span class="cov"></span><span class="tt">The Tatami Galaxy</span></div>
+        </div>
+      </div>
+      <p class="stage-note">Every cover still wrapped except the one you are about to start</p>
+    </div>
+    <div>
+      <div class="mark"><span class="k">B</span><h2>Wrapped</h2><em>concealment</em></div>
+      <p class="lede">
+        The board's veil hides the covers and thins where your hand goes. This is
+        the same device meaning the opposite thing: these are not opened yet. Each
+        cover sits under a waxed wrap with a sheen across it, and exactly one is
+        clear, the one the seal beside it will start.
+      </p>
+      <dl class="spec">
+        <div>
+          <dt>Why it might beat A</dt>
+          <dd>It states the difference between the two cards rather than their
+          kinship: over there everything is open, here nothing is. It also works
+          in both worlds, because a wrap is a layer over art rather than a
+          material of its own, which is exactly what let the veil work in both.</dd>
+        </div>
+        <div>
+          <dt>What it costs</dt>
+          <dd><span class="cost">It dims the one thing that is recognisable.</span>
+          The covers on this card are already 26 x 36. Wrapping four of the five
+          leaves a card whose art you cannot read at all, and the room's own
+          argument is that the covers are the record.</dd>
+        </div>
+        <div>
+          <dt>What gets built</dt>
+          <dd>One overlay on the cover, one exception on the first row, and a
+          NEXT mark. The smallest of the four by a distance.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <section class="dir">
+    <div class="stage">
+      <div class="card c">
+        <div class="head"><span class="nm">Planned</span><span class="n">47</span><span class="go">&rsaquo;</span></div>
+        <div class="meta">226 hrs backlog</div>
+        <div class="order">
+          <div class="ohead">Planned next <i>&rsaquo;</i></div>
+          <div class="seal">&#9654;</div>
+          <div class="row"><span class="rn">1</span><span class="cov"></span><span class="tt">Mushishi</span></div>
+          <div class="row"><span class="rn">2</span><span class="cov"></span><span class="tt">Kaiba</span></div>
+          <div class="row"><span class="rn">3</span><span class="cov"></span><span class="tt">Ping Pong the Animation</span></div>
+          <div class="row"><span class="rn">4</span><span class="cov"></span><span class="tt">Texhnolyze</span></div>
+          <div class="row"><span class="rn">5</span><span class="cov"></span><span class="tt">The Tatami Galaxy</span></div>
+        </div>
+      </div>
+      <p class="stage-note">A spindle down the left, the numbers as the hole each docket hangs on</p>
+    </div>
+    <div>
+      <div class="mark"><span class="k">C</span><h2>The spike</h2><em>vernacular</em></div>
+      <p class="lede">
+        The receipt spindle every stall and every kitchen has: orders go on the
+        spike in the order they are taken and come off the top. The numbers stop
+        being printed beside the rows and become the hole each docket hangs on,
+        so the ordering is structural rather than stated.
+      </p>
+      <dl class="spec">
+        <div>
+          <dt>Why it is interesting</dt>
+          <dd>It is the only one of the four that makes the card's own numbering
+          mean something physically, and numbering is the whole reason this
+          block exists: it is a watch order, not a list. It also survives an
+          empty state better than A, because a bare spike still reads.</dd>
+        </div>
+        <div>
+          <dt>What it costs</dt>
+          <dd><span class="cost">It fights the door.</span> A spike says the top
+          one comes off next, but the top one here is row 1 of five out of 47,
+          and the rest of the queue lives a tap away. It also eats 34px of the
+          row's width, which the titles cannot spare at 375.</dd>
+        </div>
+        <div>
+          <dt>What gets built</dt>
+          <dd>The spindle as a gradient bar with a cap, the numbers reshaped into
+          punched rings, and the rows inset past it. The width cost needs its own
+          answer below 720.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <section class="dir">
+    <div class="stage">
+      <div class="card d">
+        <div class="head"><span class="nm">Planned</span><span class="n">47 titles</span><span class="go">&rsaquo;</span></div>
+        <div class="debt"><b>226</b><i>hrs owed</i></div>
+        <span class="rule"></span>
+        <div class="order">
+          <div class="ohead">Planned next <i>&rsaquo;</i></div>
+          <div class="seal">&#9654;</div>
+          <div class="row"><span class="rn">1</span><span class="cov"></span><span class="tt">Mushishi</span></div>
+          <div class="row"><span class="rn">2</span><span class="cov"></span><span class="tt">Kaiba</span></div>
+          <div class="row"><span class="rn">3</span><span class="cov"></span><span class="tt">Ping Pong the Animation</span></div>
+          <div class="row"><span class="rn">4</span><span class="cov"></span><span class="tt">Texhnolyze</span></div>
+          <div class="row"><span class="rn">5</span><span class="cov"></span><span class="tt">The Tatami Galaxy</span></div>
+        </div>
+      </div>
+      <p class="stage-note">The backlog becomes the subject, at the board's own size, in the other hue</p>
+    </div>
+    <div>
+      <div class="mark"><span class="k">D</span><h2>The debt</h2><em>typography</em></div>
+      <p class="lede">
+        No material at all. Completed prints what you have spent as a 98px
+        serial; this prints what you owe at the same weight in the other hue, and
+        the title count drops to a caption beside the name. The row stops being
+        an object beside a panel and becomes two ledgers facing each other:
+        16,914 hours closed, 226 hours owed.
+      </p>
+      <dl class="spec">
+        <div>
+          <dt>Why it might be the right answer anyway</dt>
+          <dd>It fixes the imbalance directly instead of dressing around it, it
+          costs nothing in either world, and it says the truest thing this card
+          knows. A queue of 47 is abstract; nine days of your life is not.</dd>
+        </div>
+        <div>
+          <dt>What it costs</dt>
+          <dd><span class="cost">A fifth row, and possibly the honesty of the
+          number.</span> The serial needs about 70px, which is one row. And the
+          backlog is estimated from episode counts and durations, so a figure
+          set that large is claiming a precision the data does not have.</dd>
+        </div>
+        <div>
+          <dt>What gets built</dt>
+          <dd>A serial and a rule in the header, the count demoted, ORDER_ROWS
+          back to 4, and the same fit routine the board's count uses so five
+          digits cannot run out of the card.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <div class="close-out">
+    <h3>My call, if you want one</h3>
+    <p>
+      <b>A, and D's serial only if you decide the hours are honest enough to
+      print that big.</b> A is the one that makes the page say something it is
+      already half saying: the roll and the stub torn off it are one object, and
+      this row of the overview is the two ends of it. B is the smallest change
+      and the weakest, because it spends its effect on hiding the covers, which
+      this card has too little of already.
+    </p>
+    <p>
+      C is the one to pick if the watch ORDER is the point of this card rather
+      than the backlog. It is the only direction that makes the numbering
+      physical, and if you have been thinking of the order as the real subject
+      here, it beats A on meaning.
+    </p>
+    <p>
+      Whichever you name, the count-versus-serial imbalance is a separate
+      decision and it survives all four: 20px beside 98px is either deliberate,
+      because Completed is the lit subject of that row, or it is an oversight.
+      Say which and I will build to it.
+    </p>
+  </div>
+</div>
+
+<script>
+/* Deterministic stand-in covers, hue-varied so five rows read as five
+   different things rather than one repeated swatch. */
+(function () {
+  var seed = 20260829;
+  function rnd() { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
+  document.querySelectorAll(".card").forEach(function (card) {
+    var s = seed; seed = 20260829;
+    card.querySelectorAll(".cov").forEach(function (cov) {
+      var h = Math.floor(rnd() * 360);
+      var h2 = (h + 40 + Math.floor(rnd() * 90)) % 360;
+      var l1 = 36 + Math.floor(rnd() * 24);
+      var l2 = 15 + Math.floor(rnd() * 14);
+      var c1 = (0.07 + rnd() * 0.12).toFixed(3);
+      var ang = 140 + Math.floor(rnd() * 80);
+      cov.style.backgroundImage =
+        "linear-gradient(" + ang + "deg, oklch(" + l1 + "% " + c1 + " " + h + ") 0%, oklch(" +
+        l2 + "% " + (c1 * 0.7).toFixed(3) + " " + h2 + ") 100%)";
+    });
+    seed = s;
+  });
+})();
+</script>
