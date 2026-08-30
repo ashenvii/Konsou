@@ -46,12 +46,15 @@ import type { AnimeListEntry, ListStatus, TitleLanguage } from "@/types/list";
  */
 
 /** How many order rows stand in the column before it out-grows the
- *  backdrop beside it. The whole order lives one tap away on its own page. */
-const ORDER_ROWS = 4;
-
-/** Covers printed on an anchor card. Four is what the comp draws, and it is
- *  a face, not an inventory. */
-const CARD_COVERS = 4;
+ *  backdrop beside it. The whole order lives one tap away on its own page.
+ *
+ *  FIVE, NOT FOUR, since the cover strip above them was deleted: the strip
+ *  and these rows drew the same four groups off `planGroups`, so with no hand
+ *  ordering set, which is everyone's state until they set one, the card
+ *  printed the same four covers twice, 42px apart. One copy carried a number,
+ *  a title and a target; the other carried a 4.38:1 slice of the same poster.
+ *  The row the strip's height paid for shows a fifth title instead. */
+const ORDER_ROWS = 5;
 /** How deep the Completed board's cover pool may go. It shows up to 56 tiles
  *  at once and wants a free list well past that; see CompletedBoard's POOL. */
 const BOARD_COVERS = 140;
@@ -527,11 +530,6 @@ export function NightMarket() {
     return { hours: Math.round(mins / 60), thisYear, rewatched };
   }, [completionEvents]);
 
-  const plannedCovers = useMemo(
-    () => planGroups.slice(0, CARD_COVERS).map((g) => g.displayEntry.cover_url),
-    [planGroups],
-  );
-
   /* Tonight. Whatever is running leads; with nothing running the head of
      the order takes the plate, because "what's next" is the same question
      asked one step earlier. */
@@ -762,11 +760,6 @@ export function NightMarket() {
       </button>
       <span className="nm-card__meta">
         {counts.backlogHours > 0 ? `${counts.backlogHours.toLocaleString()} hrs backlog` : "nothing queued"}
-      </span>
-      <span className="nm-card__covers">
-        {plannedCovers.map((c, i) => (
-          <NmArt key={i} src={c} className="nm-card__cover" />
-        ))}
       </span>
       {orderInline}
     </div>

@@ -2693,30 +2693,6 @@
   font-size: var(--text-2xs);
   color: var(--ink-label);
 }
-.nm-card__covers {
-  display: flex;
-  gap: 5px;
-}
-.nm-card__cover {
-  display: block;
-  flex: 1;
-  min-width: 0;
-  height: 30px;
-  border-radius: calc(var(--plate-radius) * 0.6);
-  background: var(--plate-bg-2);
-  border: 1px solid var(--w-line);
-  overflow: hidden;
-}
-.nm-card__cover img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 28%;
-}
-.nm-card--completed .nm-card__cover {
-  border-color: color-mix(in oklab, var(--w-highlight) 30%, transparent);
-}
 
 /* ── My Order rows ─────────────────────────────────────────────────
    The standing .nm-order panel is gone: the order lives inside Planned at
