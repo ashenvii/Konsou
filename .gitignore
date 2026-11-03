@@ -12,6 +12,8 @@ dist-ssr
 # Rust / Tauri
 src-tauri/target
 src-tauri/gen/schemas
+legacy/src-tauri/target
+legacy/src-tauri/gen/schemas
 
 # Claude Code session memory
 .claude/
