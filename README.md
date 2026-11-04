@@ -7,5 +7,3 @@ The original app lives in `legacy/`. It is reference only: nothing in there is b
 The full old state is also tagged as `legacy-final`.
 
 Privacy policy and terms: https://ashenvii.github.io/Konsou/privacy.html
-
-See `OPEN.md` for what must not change and what is still undecided.

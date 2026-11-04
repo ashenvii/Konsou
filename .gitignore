@@ -52,3 +52,7 @@ reference/
 devdata/**/*.json
 cover-pool.json
 konsou-stress-list.json
+
+# Not the app: plans, rules, design files, test data
+notes/
+testdata/
