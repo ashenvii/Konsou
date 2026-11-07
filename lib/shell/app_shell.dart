@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../design/tokens.dart';
+import '../gallery/gallery_screen.dart';
 import 'window_buttons.dart';
 import 'window_config.dart';
 import 'window_memory.dart';
@@ -217,6 +219,8 @@ class _Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The gallery is the first screen in debug builds.
+    if (kDebugMode) return const GalleryScreen();
     return const Center(
       child: Text(
         'Window shell. Nothing here yet.',

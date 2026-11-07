@@ -11,6 +11,8 @@ abstract final class Tokens {
   static const Color amber = Color(0xFFF2B33D);
   static const Color mint = Color(0xFF3DD6A0);
   static const Color red = Color(0xFFE5484D);
+  // Fill of secondary buttons, fields and panels (approved 2026-11-08).
+  static const Color surface = Color(0xFF0F1F25);
 
   // Radius: square everywhere
   static const BorderRadius square = BorderRadius.zero;
@@ -33,9 +35,19 @@ abstract final class Tokens {
   static const String sans = 'PlexSans';
   static const String mono = 'PlexMono';
 
-  // Shell sizes (proposed 2026-11-08, waiting for the owner's approval)
-  static const double barHeight = 40;
-  static const double railWidth = 56;
-  static const double windowButtonWidth = 46;
+  // Shell sizes, measured from the comp and approved 2026-11-08.
+  // windowIconSize is not measured yet.
+  static const double barHeight = 36;
+  static const double railWidth = 48;
+  static const double railItemSize = 36;
+  static const double windowButtonWidth = 40;
   static const double windowIconSize = 10;
+
+  // Component sizes, measured from the comp and approved 2026-11-08.
+  // focusRing is not in the comp.
+  static const double controlHeight = 36;
+  static const double badgeSize = 16;
+  static const double checkboxSize = 20;
+  static const double checkboxBorder = 2;
+  static const double focusRing = 2;
 }
