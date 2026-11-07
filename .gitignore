@@ -56,3 +56,18 @@ konsou-stress-list.json
 # Not the app: plans, rules, design files, test data
 notes/
 testdata/
+
+# Flutter / Dart
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+android/.gradle/
+android/local.properties
+android/app/debug
+android/app/profile
+android/app/release
+
+# Resource compiler temp files
+windows/runner/RC??????
