@@ -6,6 +6,8 @@ import '../components/app_tab.dart';
 import '../components/count_badge.dart';
 import '../components/panel.dart';
 import '../design/tokens.dart';
+import '../icons/app_icon.dart';
+import '../icons/app_icons.dart';
 
 /// Every token and every component built so far, on one scrolling page. The
 /// first screen in debug builds. Add a component here when it is built.
@@ -124,6 +126,13 @@ class _GalleryScreenState extends State<GalleryScreen> {
               ),
             ),
           ),
+          const _Section('Icons'),
+          const _Icons(),
+          const SizedBox(height: Tokens.space2),
+          const _Note(
+            'Straight lines on a 16 grid, only 90 and 45 degrees. Nekomimi at '
+            '20 (logo size) and 96; Discover at 20 on the amber rail item.',
+          ),
         ],
       ),
     );
@@ -174,6 +183,34 @@ class _Note extends StatelessWidget {
       color: Tokens.inkMuted,
     ),
   );
+}
+
+class _Icons extends StatelessWidget {
+  const _Icons();
+
+  @override
+  Widget build(BuildContext context) {
+    const mascot = AppIcons.nekomimi;
+    return const Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppIcon(mascot, size: 20, color: Tokens.mint, lineColor: Tokens.ground),
+        SizedBox(width: Tokens.space5),
+        AppIcon(mascot, size: 96, color: Tokens.mint, lineColor: Tokens.ground),
+        SizedBox(width: Tokens.space5),
+        ColoredBox(
+          color: Tokens.amber,
+          child: SizedBox.square(
+            dimension: Tokens.railItemSize,
+            child: Center(
+              child: AppIcon(AppIcons.discover, size: 20, color: Tokens.ground),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _Colors extends StatelessWidget {

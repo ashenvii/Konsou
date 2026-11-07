@@ -6,6 +6,7 @@ import 'package:konsou/components/app_tab.dart';
 import 'package:konsou/components/count_badge.dart';
 import 'package:konsou/components/panel.dart';
 import 'package:konsou/gallery/gallery_screen.dart';
+import 'package:konsou/icons/app_icon.dart';
 
 import 'support/pump_widget.dart';
 
@@ -25,6 +26,7 @@ void main() {
     expect(find.byType(CountBadge), findsWidgets);
     expect(find.byType(AppCheckbox), findsWidgets);
     expect(find.byType(Panel), findsWidgets);
+    expect(find.byType(AppIcon), findsWidgets);
   });
 
   testWidgets('clicking a tab selects it', (tester) async {
