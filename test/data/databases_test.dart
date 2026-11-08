@@ -31,7 +31,7 @@ void main() {
         status: status,
         score: Value(score),
         addedAt: 1700000000000,
-        updatedAt: 1700000000000,
+        progressChangedAt: 1700000000000,
       );
 
   Future<void> saveMalReference() {

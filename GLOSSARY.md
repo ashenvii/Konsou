@@ -9,7 +9,7 @@ One anime on the user's list, with the user's own status, progress, score and no
 _Avoid_: Item, show, row
 
 **Record**:
-The user's own data in `konsou.db`: entries, finished watches, alerts, deletions and settings. Only the record is backed up to Drive, without the local names.
+The user's own data in `konsou.db`: entries, finished watches, alerts, deletions and settings. Only the record is backed up to Drive, and only not-linked entries take their names with them.
 _Avoid_: User data, save file
 
 **Details**:
@@ -27,6 +27,14 @@ _Avoid_: Sync, load, download
 **Sync**:
 Moving the record to and from the user's Drive. Never used for the provider.
 _Avoid_: Backup (for the act), upload
+
+**Sync stopped**:
+Sync has paused until the user acts: Konsou needs updating to read the Drive copy, or Google sign-in has to be done again. Nothing on either side is overwritten while stopped.
+_Avoid_: List conflict, sync error
+
+**Duplicate**:
+The same title on the list twice, which sync merges into one entry. Two different titles that share one provider page are not duplicates.
+_Avoid_: Conflict, double
 
 **Trickle**:
 Fetching details in the background, one title at a time, after whatever is on screen.
@@ -113,7 +121,7 @@ The mascot, a square cat head. It sits beside the Konsou wordmark.
 _Avoid_: Logo cat, cat icon
 
 **Status section**:
-The small icons beside the wordmark that report sync, connection, a waiting update and a list conflict. Each says its state when hovered.
+The small icons beside the wordmark that report sync, connection, a waiting update and sync stopped. Each says its state when hovered.
 _Avoid_: Status bar, banners
 
 **Wordmark menu**:

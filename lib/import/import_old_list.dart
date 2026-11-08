@@ -59,18 +59,46 @@ Future<ImportReport> importOldDatabase(
 /// Imports an old "Export list" file, a JSON array of list rows. The rows go
 /// into a scratch file in the old shape and take the same path as a database.
 Future<ImportReport> importExportJson(String json, Databases databases) async {
-  final List<dynamic> rows;
+  final parsed = _decode(json);
+  if (parsed is! List) throw ImportRefused('not a Konsou export');
+  return _importLists(databases, entries: parsed);
+}
+
+/// Imports the old app's Drive file, `list.json`: list rows with their
+/// removals and, from v0.8 on, their finished watches.
+Future<ImportReport> importDriveList(String json, Databases databases) async {
+  final parsed = _decode(json);
+  if (parsed is! Map || parsed['entries'] is! List) {
+    throw ImportRefused('not an old Konsou Drive file');
+  }
+  return _importLists(
+    databases,
+    entries: parsed['entries'] as List,
+    completions: parsed['completions'] as List?,
+    removals: parsed['tombstones'] as List? ?? const [],
+  );
+}
+
+Object? _decode(String json) {
   try {
-    final parsed = jsonDecode(json);
-    if (parsed is! List) throw ImportRefused('not a Konsou export');
-    rows = parsed;
+    return jsonDecode(json);
   } on FormatException {
     throw ImportRefused('not a Konsou export');
   }
+}
+
+Future<ImportReport> _importLists(
+  Databases databases, {
+  required List<dynamic> entries,
+  List<dynamic>? completions,
+  List<dynamic> removals = const [],
+}) async {
   await _refuseUnlessEmpty(databases);
   final scratch = _newScratchFile();
   try {
-    final skipped = await Isolate.run(() => _writeExportScratch(rows, scratch));
+    final skipped = await Isolate.run(
+      () => _writeListScratch(scratch, entries, completions, removals),
+    );
     return await _importScratch(scratch, databases, skippedEarlier: skipped);
   } finally {
     scratch.parent.deleteSync(recursive: true);
@@ -112,40 +140,57 @@ void _copyAndBringUp(File oldFile, File copy) {
   }
 }
 
-/// Returns how many rows could not be written to the scratch file.
-int _writeExportScratch(List<dynamic> rows, File scratch) {
-  var skipped = 0;
+/// Returns how many list rows could not be written to the scratch file.
+int _writeListScratch(
+  File scratch,
+  List<dynamic> entries,
+  List<dynamic>? completions,
+  List<dynamic> removals,
+) {
   final db = sqlite3.open(scratch.path);
   try {
-    _runOldMigrations(db, (version) => version <= 11);
-    final columns = {
-      for (final column in db.select('PRAGMA table_info(anime_list)'))
-        column['name'] as String,
-    }..remove('id');
-    for (final row in rows) {
-      if (row is! Map<String, dynamic>) {
-        skipped++;
-        continue;
-      }
-      final values = {
-        for (final MapEntry(:key, :value) in row.entries)
-          if (columns.contains(key) && value is! Map && value is! List)
-            key: value is bool ? (value ? 1 : 0) : value,
-      };
-      try {
-        db.execute(
-          'INSERT INTO anime_list (${values.keys.join(', ')}) '
-          'VALUES (${List.filled(values.length, '?').join(', ')})',
-          values.values.toList(),
-        );
-      } on SqliteException {
-        skipped++;
-      }
+    _runOldMigrations(db, (version) => version <= 12);
+    final skipped = _insertOldRows(db, 'anime_list', entries);
+    if (completions == null) {
+      // old migration 12 rebuilds the finished watches from the list rows
+      _runOldMigrations(db, (version) => version == 12);
+    } else {
+      _insertOldRows(db, 'completion_log', completions);
     }
-    // migration 12 rebuilds the finished watches from these rows
-    _runOldMigrations(db, (version) => version == 12);
+    _insertOldRows(db, 'list_tombstones', removals);
+    return skipped;
   } finally {
     db.close();
+  }
+}
+
+/// Writes JSON rows into an old table, keeping only the columns it has.
+/// Returns how many rows it refused.
+int _insertOldRows(Database db, String table, List<dynamic> rows) {
+  var skipped = 0;
+  final columns = {
+    for (final column in db.select('PRAGMA table_info($table)'))
+      column['name'] as String,
+  }..remove('id');
+  for (final row in rows) {
+    if (row is! Map<String, dynamic>) {
+      skipped++;
+      continue;
+    }
+    final values = {
+      for (final MapEntry(:key, :value) in row.entries)
+        if (columns.contains(key) && value is! Map && value is! List)
+          key: value is bool ? (value ? 1 : 0) : value,
+    };
+    try {
+      db.execute(
+        'INSERT INTO $table (${values.keys.join(', ')}) '
+        'VALUES (${List.filled(values.length, '?').join(', ')})',
+        values.values.toList(),
+      );
+    } on SqliteException {
+      skipped++;
+    }
   }
   return skipped;
 }
@@ -251,12 +296,15 @@ List<String> _importStatements(String? language) => [
   // skipped here and counted in the report
   '''
   INSERT OR IGNORE INTO entry (entry_id, name, status, episodes_watched, score,
-                               notes, plan_rank, added_at, updated_at, started_at)
+                               notes, plan_rank, added_at, started_at,
+                               progress_changed_at, score_changed_at,
+                               notes_changed_at, link_changed_at)
   SELECT 'legacy-' || anilist_id, ${_pickName(language, 'anime_list')}, status,
          episodes_watched, CAST(ROUND(score) AS INTEGER), notes, plan_rank,
-         ${_milliseconds('added_at')}, ${_milliseconds('updated_at')},
-         ${_milliseconds('started_at')}
-  FROM old.anime_list
+         ${_milliseconds('added_at')}, ${_milliseconds('started_at')},
+         changed_at, changed_at, changed_at, changed_at
+  FROM (SELECT *, ${_milliseconds('updated_at')} AS changed_at FROM old.anime_list)
+       AS anime_list
   ''',
   '''
   INSERT INTO entry_reference (entry_id, provider, provider_id)

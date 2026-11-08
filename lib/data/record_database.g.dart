@@ -89,17 +89,6 @@ class EntryTable extends Table with TableInfo<EntryTable, Entry> {
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL',
   );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL',
-  );
   static const VerificationMeta _startedAtMeta = const VerificationMeta(
     'startedAt',
   );
@@ -111,6 +100,70 @@ class EntryTable extends Table with TableInfo<EntryTable, Entry> {
     requiredDuringInsert: false,
     $customConstraints: '',
   );
+  static const VerificationMeta _progressChangedAtMeta = const VerificationMeta(
+    'progressChangedAt',
+  );
+  late final GeneratedColumn<int> progressChangedAt = GeneratedColumn<int>(
+    'progress_changed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _scoreChangedAtMeta = const VerificationMeta(
+    'scoreChangedAt',
+  );
+  late final GeneratedColumn<int> scoreChangedAt = GeneratedColumn<int>(
+    'score_changed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  static const VerificationMeta _notesChangedAtMeta = const VerificationMeta(
+    'notesChangedAt',
+  );
+  late final GeneratedColumn<int> notesChangedAt = GeneratedColumn<int>(
+    'notes_changed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  static const VerificationMeta _linkChangedAtMeta = const VerificationMeta(
+    'linkChangedAt',
+  );
+  late final GeneratedColumn<int> linkChangedAt = GeneratedColumn<int>(
+    'link_changed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    true,
+    generatedAs: GeneratedAs(
+      const CustomExpression(
+        'max(progress_changed_at, score_changed_at, notes_changed_at, link_changed_at)',
+      ),
+      false,
+    ),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'GENERATED ALWAYS AS (max(progress_changed_at, score_changed_at, notes_changed_at, link_changed_at)) VIRTUAL',
+  );
   @override
   List<GeneratedColumn> get $columns => [
     entryId,
@@ -121,8 +174,12 @@ class EntryTable extends Table with TableInfo<EntryTable, Entry> {
     notes,
     planRank,
     addedAt,
-    updatedAt,
     startedAt,
+    progressChangedAt,
+    scoreChangedAt,
+    notesChangedAt,
+    linkChangedAt,
+    updatedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -193,18 +250,54 @@ class EntryTable extends Table with TableInfo<EntryTable, Entry> {
     } else if (isInserting) {
       context.missing(_addedAtMeta);
     }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
     if (data.containsKey('started_at')) {
       context.handle(
         _startedAtMeta,
         startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    }
+    if (data.containsKey('progress_changed_at')) {
+      context.handle(
+        _progressChangedAtMeta,
+        progressChangedAt.isAcceptableOrUnknown(
+          data['progress_changed_at']!,
+          _progressChangedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_progressChangedAtMeta);
+    }
+    if (data.containsKey('score_changed_at')) {
+      context.handle(
+        _scoreChangedAtMeta,
+        scoreChangedAt.isAcceptableOrUnknown(
+          data['score_changed_at']!,
+          _scoreChangedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('notes_changed_at')) {
+      context.handle(
+        _notesChangedAtMeta,
+        notesChangedAt.isAcceptableOrUnknown(
+          data['notes_changed_at']!,
+          _notesChangedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('link_changed_at')) {
+      context.handle(
+        _linkChangedAtMeta,
+        linkChangedAt.isAcceptableOrUnknown(
+          data['link_changed_at']!,
+          _linkChangedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
       );
     }
     return context;
@@ -248,13 +341,29 @@ class EntryTable extends Table with TableInfo<EntryTable, Entry> {
         DriftSqlType.int,
         data['${effectivePrefix}added_at'],
       )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}updated_at'],
-      )!,
       startedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}started_at'],
+      ),
+      progressChangedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}progress_changed_at'],
+      )!,
+      scoreChangedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}score_changed_at'],
+      )!,
+      notesChangedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}notes_changed_at'],
+      )!,
+      linkChangedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}link_changed_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
       ),
     );
   }
@@ -272,15 +381,25 @@ class Entry extends DataClass implements Insertable<Entry> {
   final String entryId;
   final String? name;
 
-  /// local only, never synced
+  /// synced only while not linked
   final String status;
   final int episodesWatched;
   final int? score;
   final String? notes;
   final int? planRank;
   final int addedAt;
-  final int updatedAt;
   final int? startedAt;
+
+  /// sync merges each group on its own, the latest change wins; 0 is never changed
+  final int progressChangedAt;
+
+  /// status, episodes, started date, plan rank
+  final int scoreChangedAt;
+  final int notesChangedAt;
+  final int linkChangedAt;
+
+  /// the provider references
+  final int? updatedAt;
   const Entry({
     required this.entryId,
     this.name,
@@ -290,8 +409,12 @@ class Entry extends DataClass implements Insertable<Entry> {
     this.notes,
     this.planRank,
     required this.addedAt,
-    required this.updatedAt,
     this.startedAt,
+    required this.progressChangedAt,
+    required this.scoreChangedAt,
+    required this.notesChangedAt,
+    required this.linkChangedAt,
+    this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -312,10 +435,13 @@ class Entry extends DataClass implements Insertable<Entry> {
       map['plan_rank'] = Variable<int>(planRank);
     }
     map['added_at'] = Variable<int>(addedAt);
-    map['updated_at'] = Variable<int>(updatedAt);
     if (!nullToAbsent || startedAt != null) {
       map['started_at'] = Variable<int>(startedAt);
     }
+    map['progress_changed_at'] = Variable<int>(progressChangedAt);
+    map['score_changed_at'] = Variable<int>(scoreChangedAt);
+    map['notes_changed_at'] = Variable<int>(notesChangedAt);
+    map['link_changed_at'] = Variable<int>(linkChangedAt);
     return map;
   }
 
@@ -335,10 +461,13 @@ class Entry extends DataClass implements Insertable<Entry> {
           ? const Value.absent()
           : Value(planRank),
       addedAt: Value(addedAt),
-      updatedAt: Value(updatedAt),
       startedAt: startedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(startedAt),
+      progressChangedAt: Value(progressChangedAt),
+      scoreChangedAt: Value(scoreChangedAt),
+      notesChangedAt: Value(notesChangedAt),
+      linkChangedAt: Value(linkChangedAt),
     );
   }
 
@@ -356,8 +485,12 @@ class Entry extends DataClass implements Insertable<Entry> {
       notes: serializer.fromJson<String?>(json['notes']),
       planRank: serializer.fromJson<int?>(json['plan_rank']),
       addedAt: serializer.fromJson<int>(json['added_at']),
-      updatedAt: serializer.fromJson<int>(json['updated_at']),
       startedAt: serializer.fromJson<int?>(json['started_at']),
+      progressChangedAt: serializer.fromJson<int>(json['progress_changed_at']),
+      scoreChangedAt: serializer.fromJson<int>(json['score_changed_at']),
+      notesChangedAt: serializer.fromJson<int>(json['notes_changed_at']),
+      linkChangedAt: serializer.fromJson<int>(json['link_changed_at']),
+      updatedAt: serializer.fromJson<int?>(json['updated_at']),
     );
   }
   @override
@@ -372,8 +505,12 @@ class Entry extends DataClass implements Insertable<Entry> {
       'notes': serializer.toJson<String?>(notes),
       'plan_rank': serializer.toJson<int?>(planRank),
       'added_at': serializer.toJson<int>(addedAt),
-      'updated_at': serializer.toJson<int>(updatedAt),
       'started_at': serializer.toJson<int?>(startedAt),
+      'progress_changed_at': serializer.toJson<int>(progressChangedAt),
+      'score_changed_at': serializer.toJson<int>(scoreChangedAt),
+      'notes_changed_at': serializer.toJson<int>(notesChangedAt),
+      'link_changed_at': serializer.toJson<int>(linkChangedAt),
+      'updated_at': serializer.toJson<int?>(updatedAt),
     };
   }
 
@@ -386,8 +523,12 @@ class Entry extends DataClass implements Insertable<Entry> {
     Value<String?> notes = const Value.absent(),
     Value<int?> planRank = const Value.absent(),
     int? addedAt,
-    int? updatedAt,
     Value<int?> startedAt = const Value.absent(),
+    int? progressChangedAt,
+    int? scoreChangedAt,
+    int? notesChangedAt,
+    int? linkChangedAt,
+    Value<int?> updatedAt = const Value.absent(),
   }) => Entry(
     entryId: entryId ?? this.entryId,
     name: name.present ? name.value : this.name,
@@ -397,26 +538,13 @@ class Entry extends DataClass implements Insertable<Entry> {
     notes: notes.present ? notes.value : this.notes,
     planRank: planRank.present ? planRank.value : this.planRank,
     addedAt: addedAt ?? this.addedAt,
-    updatedAt: updatedAt ?? this.updatedAt,
     startedAt: startedAt.present ? startedAt.value : this.startedAt,
+    progressChangedAt: progressChangedAt ?? this.progressChangedAt,
+    scoreChangedAt: scoreChangedAt ?? this.scoreChangedAt,
+    notesChangedAt: notesChangedAt ?? this.notesChangedAt,
+    linkChangedAt: linkChangedAt ?? this.linkChangedAt,
+    updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
   );
-  Entry copyWithCompanion(EntryCompanion data) {
-    return Entry(
-      entryId: data.entryId.present ? data.entryId.value : this.entryId,
-      name: data.name.present ? data.name.value : this.name,
-      status: data.status.present ? data.status.value : this.status,
-      episodesWatched: data.episodesWatched.present
-          ? data.episodesWatched.value
-          : this.episodesWatched,
-      score: data.score.present ? data.score.value : this.score,
-      notes: data.notes.present ? data.notes.value : this.notes,
-      planRank: data.planRank.present ? data.planRank.value : this.planRank,
-      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
-    );
-  }
-
   @override
   String toString() {
     return (StringBuffer('Entry(')
@@ -428,8 +556,12 @@ class Entry extends DataClass implements Insertable<Entry> {
           ..write('notes: $notes, ')
           ..write('planRank: $planRank, ')
           ..write('addedAt: $addedAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('startedAt: $startedAt')
+          ..write('startedAt: $startedAt, ')
+          ..write('progressChangedAt: $progressChangedAt, ')
+          ..write('scoreChangedAt: $scoreChangedAt, ')
+          ..write('notesChangedAt: $notesChangedAt, ')
+          ..write('linkChangedAt: $linkChangedAt, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -444,8 +576,12 @@ class Entry extends DataClass implements Insertable<Entry> {
     notes,
     planRank,
     addedAt,
-    updatedAt,
     startedAt,
+    progressChangedAt,
+    scoreChangedAt,
+    notesChangedAt,
+    linkChangedAt,
+    updatedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -459,8 +595,12 @@ class Entry extends DataClass implements Insertable<Entry> {
           other.notes == this.notes &&
           other.planRank == this.planRank &&
           other.addedAt == this.addedAt &&
-          other.updatedAt == this.updatedAt &&
-          other.startedAt == this.startedAt);
+          other.startedAt == this.startedAt &&
+          other.progressChangedAt == this.progressChangedAt &&
+          other.scoreChangedAt == this.scoreChangedAt &&
+          other.notesChangedAt == this.notesChangedAt &&
+          other.linkChangedAt == this.linkChangedAt &&
+          other.updatedAt == this.updatedAt);
 }
 
 class EntryCompanion extends UpdateCompanion<Entry> {
@@ -472,8 +612,11 @@ class EntryCompanion extends UpdateCompanion<Entry> {
   final Value<String?> notes;
   final Value<int?> planRank;
   final Value<int> addedAt;
-  final Value<int> updatedAt;
   final Value<int?> startedAt;
+  final Value<int> progressChangedAt;
+  final Value<int> scoreChangedAt;
+  final Value<int> notesChangedAt;
+  final Value<int> linkChangedAt;
   final Value<int> rowid;
   const EntryCompanion({
     this.entryId = const Value.absent(),
@@ -484,8 +627,11 @@ class EntryCompanion extends UpdateCompanion<Entry> {
     this.notes = const Value.absent(),
     this.planRank = const Value.absent(),
     this.addedAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
     this.startedAt = const Value.absent(),
+    this.progressChangedAt = const Value.absent(),
+    this.scoreChangedAt = const Value.absent(),
+    this.notesChangedAt = const Value.absent(),
+    this.linkChangedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   EntryCompanion.insert({
@@ -497,13 +643,16 @@ class EntryCompanion extends UpdateCompanion<Entry> {
     this.notes = const Value.absent(),
     this.planRank = const Value.absent(),
     required int addedAt,
-    required int updatedAt,
     this.startedAt = const Value.absent(),
+    required int progressChangedAt,
+    this.scoreChangedAt = const Value.absent(),
+    this.notesChangedAt = const Value.absent(),
+    this.linkChangedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : entryId = Value(entryId),
        status = Value(status),
        addedAt = Value(addedAt),
-       updatedAt = Value(updatedAt);
+       progressChangedAt = Value(progressChangedAt);
   static Insertable<Entry> custom({
     Expression<String>? entryId,
     Expression<String>? name,
@@ -513,8 +662,11 @@ class EntryCompanion extends UpdateCompanion<Entry> {
     Expression<String>? notes,
     Expression<int>? planRank,
     Expression<int>? addedAt,
-    Expression<int>? updatedAt,
     Expression<int>? startedAt,
+    Expression<int>? progressChangedAt,
+    Expression<int>? scoreChangedAt,
+    Expression<int>? notesChangedAt,
+    Expression<int>? linkChangedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -526,8 +678,11 @@ class EntryCompanion extends UpdateCompanion<Entry> {
       if (notes != null) 'notes': notes,
       if (planRank != null) 'plan_rank': planRank,
       if (addedAt != null) 'added_at': addedAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
       if (startedAt != null) 'started_at': startedAt,
+      if (progressChangedAt != null) 'progress_changed_at': progressChangedAt,
+      if (scoreChangedAt != null) 'score_changed_at': scoreChangedAt,
+      if (notesChangedAt != null) 'notes_changed_at': notesChangedAt,
+      if (linkChangedAt != null) 'link_changed_at': linkChangedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -541,8 +696,11 @@ class EntryCompanion extends UpdateCompanion<Entry> {
     Value<String?>? notes,
     Value<int?>? planRank,
     Value<int>? addedAt,
-    Value<int>? updatedAt,
     Value<int?>? startedAt,
+    Value<int>? progressChangedAt,
+    Value<int>? scoreChangedAt,
+    Value<int>? notesChangedAt,
+    Value<int>? linkChangedAt,
     Value<int>? rowid,
   }) {
     return EntryCompanion(
@@ -554,8 +712,11 @@ class EntryCompanion extends UpdateCompanion<Entry> {
       notes: notes ?? this.notes,
       planRank: planRank ?? this.planRank,
       addedAt: addedAt ?? this.addedAt,
-      updatedAt: updatedAt ?? this.updatedAt,
       startedAt: startedAt ?? this.startedAt,
+      progressChangedAt: progressChangedAt ?? this.progressChangedAt,
+      scoreChangedAt: scoreChangedAt ?? this.scoreChangedAt,
+      notesChangedAt: notesChangedAt ?? this.notesChangedAt,
+      linkChangedAt: linkChangedAt ?? this.linkChangedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -587,11 +748,20 @@ class EntryCompanion extends UpdateCompanion<Entry> {
     if (addedAt.present) {
       map['added_at'] = Variable<int>(addedAt.value);
     }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<int>(updatedAt.value);
-    }
     if (startedAt.present) {
       map['started_at'] = Variable<int>(startedAt.value);
+    }
+    if (progressChangedAt.present) {
+      map['progress_changed_at'] = Variable<int>(progressChangedAt.value);
+    }
+    if (scoreChangedAt.present) {
+      map['score_changed_at'] = Variable<int>(scoreChangedAt.value);
+    }
+    if (notesChangedAt.present) {
+      map['notes_changed_at'] = Variable<int>(notesChangedAt.value);
+    }
+    if (linkChangedAt.present) {
+      map['link_changed_at'] = Variable<int>(linkChangedAt.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -610,8 +780,11 @@ class EntryCompanion extends UpdateCompanion<Entry> {
           ..write('notes: $notes, ')
           ..write('planRank: $planRank, ')
           ..write('addedAt: $addedAt, ')
-          ..write('updatedAt: $updatedAt, ')
           ..write('startedAt: $startedAt, ')
+          ..write('progressChangedAt: $progressChangedAt, ')
+          ..write('scoreChangedAt: $scoreChangedAt, ')
+          ..write('notesChangedAt: $notesChangedAt, ')
+          ..write('linkChangedAt: $linkChangedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2211,6 +2384,226 @@ class AlertCompanion extends UpdateCompanion<Alert> {
   }
 }
 
+class EntryAliasTable extends Table
+    with TableInfo<EntryAliasTable, EntryAlias> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  EntryAliasTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _aliasIdMeta = const VerificationMeta(
+    'aliasId',
+  );
+  late final GeneratedColumn<String> aliasId = GeneratedColumn<String>(
+    'alias_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _entryIdMeta = const VerificationMeta(
+    'entryId',
+  );
+  late final GeneratedColumn<String> entryId = GeneratedColumn<String>(
+    'entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [aliasId, entryId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'entry_alias';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EntryAlias> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('alias_id')) {
+      context.handle(
+        _aliasIdMeta,
+        aliasId.isAcceptableOrUnknown(data['alias_id']!, _aliasIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_aliasIdMeta);
+    }
+    if (data.containsKey('entry_id')) {
+      context.handle(
+        _entryIdMeta,
+        entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {aliasId};
+  @override
+  EntryAlias map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EntryAlias(
+      aliasId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}alias_id'],
+      )!,
+      entryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entry_id'],
+      )!,
+    );
+  }
+
+  @override
+  EntryAliasTable createAlias(String alias) {
+    return EntryAliasTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class EntryAlias extends DataClass implements Insertable<EntryAlias> {
+  final String aliasId;
+  final String entryId;
+  const EntryAlias({required this.aliasId, required this.entryId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['alias_id'] = Variable<String>(aliasId);
+    map['entry_id'] = Variable<String>(entryId);
+    return map;
+  }
+
+  EntryAliasCompanion toCompanion(bool nullToAbsent) {
+    return EntryAliasCompanion(
+      aliasId: Value(aliasId),
+      entryId: Value(entryId),
+    );
+  }
+
+  factory EntryAlias.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EntryAlias(
+      aliasId: serializer.fromJson<String>(json['alias_id']),
+      entryId: serializer.fromJson<String>(json['entry_id']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'alias_id': serializer.toJson<String>(aliasId),
+      'entry_id': serializer.toJson<String>(entryId),
+    };
+  }
+
+  EntryAlias copyWith({String? aliasId, String? entryId}) => EntryAlias(
+    aliasId: aliasId ?? this.aliasId,
+    entryId: entryId ?? this.entryId,
+  );
+  EntryAlias copyWithCompanion(EntryAliasCompanion data) {
+    return EntryAlias(
+      aliasId: data.aliasId.present ? data.aliasId.value : this.aliasId,
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EntryAlias(')
+          ..write('aliasId: $aliasId, ')
+          ..write('entryId: $entryId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(aliasId, entryId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EntryAlias &&
+          other.aliasId == this.aliasId &&
+          other.entryId == this.entryId);
+}
+
+class EntryAliasCompanion extends UpdateCompanion<EntryAlias> {
+  final Value<String> aliasId;
+  final Value<String> entryId;
+  final Value<int> rowid;
+  const EntryAliasCompanion({
+    this.aliasId = const Value.absent(),
+    this.entryId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  EntryAliasCompanion.insert({
+    required String aliasId,
+    required String entryId,
+    this.rowid = const Value.absent(),
+  }) : aliasId = Value(aliasId),
+       entryId = Value(entryId);
+  static Insertable<EntryAlias> custom({
+    Expression<String>? aliasId,
+    Expression<String>? entryId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (aliasId != null) 'alias_id': aliasId,
+      if (entryId != null) 'entry_id': entryId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  EntryAliasCompanion copyWith({
+    Value<String>? aliasId,
+    Value<String>? entryId,
+    Value<int>? rowid,
+  }) {
+    return EntryAliasCompanion(
+      aliasId: aliasId ?? this.aliasId,
+      entryId: entryId ?? this.entryId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (aliasId.present) {
+      map['alias_id'] = Variable<String>(aliasId.value);
+    }
+    if (entryId.present) {
+      map['entry_id'] = Variable<String>(entryId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EntryAliasCompanion(')
+          ..write('aliasId: $aliasId, ')
+          ..write('entryId: $entryId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class DeletionTable extends Table with TableInfo<DeletionTable, Deletion> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -2453,8 +2846,20 @@ class SettingTable extends Table with TableInfo<SettingTable, Setting> {
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL',
   );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
   @override
-  List<GeneratedColumn> get $columns => [key, value];
+  List<GeneratedColumn> get $columns => [key, value, updatedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2483,6 +2888,12 @@ class SettingTable extends Table with TableInfo<SettingTable, Setting> {
     } else if (isInserting) {
       context.missing(_valueMeta);
     }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -2500,6 +2911,10 @@ class SettingTable extends Table with TableInfo<SettingTable, Setting> {
         DriftSqlType.string,
         data['${effectivePrefix}value'],
       )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
     );
   }
 
@@ -2515,17 +2930,27 @@ class SettingTable extends Table with TableInfo<SettingTable, Setting> {
 class Setting extends DataClass implements Insertable<Setting> {
   final String key;
   final String value;
-  const Setting({required this.key, required this.value});
+  final int updatedAt;
+  const Setting({
+    required this.key,
+    required this.value,
+    required this.updatedAt,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['key'] = Variable<String>(key);
     map['value'] = Variable<String>(value);
+    map['updated_at'] = Variable<int>(updatedAt);
     return map;
   }
 
   SettingCompanion toCompanion(bool nullToAbsent) {
-    return SettingCompanion(key: Value(key), value: Value(value));
+    return SettingCompanion(
+      key: Value(key),
+      value: Value(value),
+      updatedAt: Value(updatedAt),
+    );
   }
 
   factory Setting.fromJson(
@@ -2536,6 +2961,7 @@ class Setting extends DataClass implements Insertable<Setting> {
     return Setting(
       key: serializer.fromJson<String>(json['key']),
       value: serializer.fromJson<String>(json['value']),
+      updatedAt: serializer.fromJson<int>(json['updated_at']),
     );
   }
   @override
@@ -2544,15 +2970,20 @@ class Setting extends DataClass implements Insertable<Setting> {
     return <String, dynamic>{
       'key': serializer.toJson<String>(key),
       'value': serializer.toJson<String>(value),
+      'updated_at': serializer.toJson<int>(updatedAt),
     };
   }
 
-  Setting copyWith({String? key, String? value}) =>
-      Setting(key: key ?? this.key, value: value ?? this.value);
+  Setting copyWith({String? key, String? value, int? updatedAt}) => Setting(
+    key: key ?? this.key,
+    value: value ?? this.value,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
   Setting copyWithCompanion(SettingCompanion data) {
     return Setting(
       key: data.key.present ? data.key.value : this.key,
       value: data.value.present ? data.value.value : this.value,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
 
@@ -2560,42 +2991,51 @@ class Setting extends DataClass implements Insertable<Setting> {
   String toString() {
     return (StringBuffer('Setting(')
           ..write('key: $key, ')
-          ..write('value: $value')
+          ..write('value: $value, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(key, value);
+  int get hashCode => Object.hash(key, value, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Setting && other.key == this.key && other.value == this.value);
+      (other is Setting &&
+          other.key == this.key &&
+          other.value == this.value &&
+          other.updatedAt == this.updatedAt);
 }
 
 class SettingCompanion extends UpdateCompanion<Setting> {
   final Value<String> key;
   final Value<String> value;
+  final Value<int> updatedAt;
   final Value<int> rowid;
   const SettingCompanion({
     this.key = const Value.absent(),
     this.value = const Value.absent(),
+    this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   SettingCompanion.insert({
     required String key,
     required String value,
+    this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : key = Value(key),
        value = Value(value);
   static Insertable<Setting> custom({
     Expression<String>? key,
     Expression<String>? value,
+    Expression<int>? updatedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (key != null) 'key': key,
       if (value != null) 'value': value,
+      if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2603,11 +3043,13 @@ class SettingCompanion extends UpdateCompanion<Setting> {
   SettingCompanion copyWith({
     Value<String>? key,
     Value<String>? value,
+    Value<int>? updatedAt,
     Value<int>? rowid,
   }) {
     return SettingCompanion(
       key: key ?? this.key,
       value: value ?? this.value,
+      updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2621,6 +3063,9 @@ class SettingCompanion extends UpdateCompanion<Setting> {
     if (value.present) {
       map['value'] = Variable<String>(value.value);
     }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2632,6 +3077,7 @@ class SettingCompanion extends UpdateCompanion<Setting> {
     return (StringBuffer('SettingCompanion(')
           ..write('key: $key, ')
           ..write('value: $value, ')
+          ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2654,8 +3100,59 @@ class DeviceTable extends Table with TableInfo<DeviceTable, Device> {
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL PRIMARY KEY',
   );
+  static const VerificationMeta _driveVersionMeta = const VerificationMeta(
+    'driveVersion',
+  );
+  late final GeneratedColumn<String> driveVersion = GeneratedColumn<String>(
+    'drive_version',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _driveHashMeta = const VerificationMeta(
+    'driveHash',
+  );
+  late final GeneratedColumn<String> driveHash = GeneratedColumn<String>(
+    'drive_hash',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _newestSeenAtMeta = const VerificationMeta(
+    'newestSeenAt',
+  );
+  late final GeneratedColumn<int> newestSeenAt = GeneratedColumn<int>(
+    'newest_seen_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  static const VerificationMeta _lastSyncedAtMeta = const VerificationMeta(
+    'lastSyncedAt',
+  );
+  late final GeneratedColumn<int> lastSyncedAt = GeneratedColumn<int>(
+    'last_synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   @override
-  List<GeneratedColumn> get $columns => [deviceId];
+  List<GeneratedColumn> get $columns => [
+    deviceId,
+    driveVersion,
+    driveHash,
+    newestSeenAt,
+    lastSyncedAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2676,6 +3173,39 @@ class DeviceTable extends Table with TableInfo<DeviceTable, Device> {
     } else if (isInserting) {
       context.missing(_deviceIdMeta);
     }
+    if (data.containsKey('drive_version')) {
+      context.handle(
+        _driveVersionMeta,
+        driveVersion.isAcceptableOrUnknown(
+          data['drive_version']!,
+          _driveVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('drive_hash')) {
+      context.handle(
+        _driveHashMeta,
+        driveHash.isAcceptableOrUnknown(data['drive_hash']!, _driveHashMeta),
+      );
+    }
+    if (data.containsKey('newest_seen_at')) {
+      context.handle(
+        _newestSeenAtMeta,
+        newestSeenAt.isAcceptableOrUnknown(
+          data['newest_seen_at']!,
+          _newestSeenAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_synced_at')) {
+      context.handle(
+        _lastSyncedAtMeta,
+        lastSyncedAt.isAcceptableOrUnknown(
+          data['last_synced_at']!,
+          _lastSyncedAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2689,6 +3219,22 @@ class DeviceTable extends Table with TableInfo<DeviceTable, Device> {
         DriftSqlType.string,
         data['${effectivePrefix}device_id'],
       )!,
+      driveVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}drive_version'],
+      ),
+      driveHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}drive_hash'],
+      ),
+      newestSeenAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}newest_seen_at'],
+      )!,
+      lastSyncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_synced_at'],
+      ),
     );
   }
 
@@ -2703,16 +3249,54 @@ class DeviceTable extends Table with TableInfo<DeviceTable, Device> {
 
 class Device extends DataClass implements Insertable<Device> {
   final String deviceId;
-  const Device({required this.deviceId});
+  final String? driveVersion;
+
+  /// id and version of the drive file last seen
+  final String? driveHash;
+
+  /// hash of the record as it is on drive
+  final int newestSeenAt;
+
+  /// newest change time seen in a merge
+  final int? lastSyncedAt;
+  const Device({
+    required this.deviceId,
+    this.driveVersion,
+    this.driveHash,
+    required this.newestSeenAt,
+    this.lastSyncedAt,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['device_id'] = Variable<String>(deviceId);
+    if (!nullToAbsent || driveVersion != null) {
+      map['drive_version'] = Variable<String>(driveVersion);
+    }
+    if (!nullToAbsent || driveHash != null) {
+      map['drive_hash'] = Variable<String>(driveHash);
+    }
+    map['newest_seen_at'] = Variable<int>(newestSeenAt);
+    if (!nullToAbsent || lastSyncedAt != null) {
+      map['last_synced_at'] = Variable<int>(lastSyncedAt);
+    }
     return map;
   }
 
   DeviceCompanion toCompanion(bool nullToAbsent) {
-    return DeviceCompanion(deviceId: Value(deviceId));
+    return DeviceCompanion(
+      deviceId: Value(deviceId),
+      driveVersion: driveVersion == null && nullToAbsent
+          ? const Value.absent()
+          : Value(driveVersion),
+      driveHash: driveHash == null && nullToAbsent
+          ? const Value.absent()
+          : Value(driveHash),
+      newestSeenAt: Value(newestSeenAt),
+      lastSyncedAt: lastSyncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncedAt),
+    );
   }
 
   factory Device.fromJson(
@@ -2720,62 +3304,141 @@ class Device extends DataClass implements Insertable<Device> {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Device(deviceId: serializer.fromJson<String>(json['device_id']));
+    return Device(
+      deviceId: serializer.fromJson<String>(json['device_id']),
+      driveVersion: serializer.fromJson<String?>(json['drive_version']),
+      driveHash: serializer.fromJson<String?>(json['drive_hash']),
+      newestSeenAt: serializer.fromJson<int>(json['newest_seen_at']),
+      lastSyncedAt: serializer.fromJson<int?>(json['last_synced_at']),
+    );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{'device_id': serializer.toJson<String>(deviceId)};
+    return <String, dynamic>{
+      'device_id': serializer.toJson<String>(deviceId),
+      'drive_version': serializer.toJson<String?>(driveVersion),
+      'drive_hash': serializer.toJson<String?>(driveHash),
+      'newest_seen_at': serializer.toJson<int>(newestSeenAt),
+      'last_synced_at': serializer.toJson<int?>(lastSyncedAt),
+    };
   }
 
-  Device copyWith({String? deviceId}) =>
-      Device(deviceId: deviceId ?? this.deviceId);
+  Device copyWith({
+    String? deviceId,
+    Value<String?> driveVersion = const Value.absent(),
+    Value<String?> driveHash = const Value.absent(),
+    int? newestSeenAt,
+    Value<int?> lastSyncedAt = const Value.absent(),
+  }) => Device(
+    deviceId: deviceId ?? this.deviceId,
+    driveVersion: driveVersion.present ? driveVersion.value : this.driveVersion,
+    driveHash: driveHash.present ? driveHash.value : this.driveHash,
+    newestSeenAt: newestSeenAt ?? this.newestSeenAt,
+    lastSyncedAt: lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
+  );
   Device copyWithCompanion(DeviceCompanion data) {
     return Device(
       deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      driveVersion: data.driveVersion.present
+          ? data.driveVersion.value
+          : this.driveVersion,
+      driveHash: data.driveHash.present ? data.driveHash.value : this.driveHash,
+      newestSeenAt: data.newestSeenAt.present
+          ? data.newestSeenAt.value
+          : this.newestSeenAt,
+      lastSyncedAt: data.lastSyncedAt.present
+          ? data.lastSyncedAt.value
+          : this.lastSyncedAt,
     );
   }
 
   @override
   String toString() {
     return (StringBuffer('Device(')
-          ..write('deviceId: $deviceId')
+          ..write('deviceId: $deviceId, ')
+          ..write('driveVersion: $driveVersion, ')
+          ..write('driveHash: $driveHash, ')
+          ..write('newestSeenAt: $newestSeenAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => deviceId.hashCode;
+  int get hashCode => Object.hash(
+    deviceId,
+    driveVersion,
+    driveHash,
+    newestSeenAt,
+    lastSyncedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Device && other.deviceId == this.deviceId);
+      (other is Device &&
+          other.deviceId == this.deviceId &&
+          other.driveVersion == this.driveVersion &&
+          other.driveHash == this.driveHash &&
+          other.newestSeenAt == this.newestSeenAt &&
+          other.lastSyncedAt == this.lastSyncedAt);
 }
 
 class DeviceCompanion extends UpdateCompanion<Device> {
   final Value<String> deviceId;
+  final Value<String?> driveVersion;
+  final Value<String?> driveHash;
+  final Value<int> newestSeenAt;
+  final Value<int?> lastSyncedAt;
   final Value<int> rowid;
   const DeviceCompanion({
     this.deviceId = const Value.absent(),
+    this.driveVersion = const Value.absent(),
+    this.driveHash = const Value.absent(),
+    this.newestSeenAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DeviceCompanion.insert({
     required String deviceId,
+    this.driveVersion = const Value.absent(),
+    this.driveHash = const Value.absent(),
+    this.newestSeenAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : deviceId = Value(deviceId);
   static Insertable<Device> custom({
     Expression<String>? deviceId,
+    Expression<String>? driveVersion,
+    Expression<String>? driveHash,
+    Expression<int>? newestSeenAt,
+    Expression<int>? lastSyncedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (deviceId != null) 'device_id': deviceId,
+      if (driveVersion != null) 'drive_version': driveVersion,
+      if (driveHash != null) 'drive_hash': driveHash,
+      if (newestSeenAt != null) 'newest_seen_at': newestSeenAt,
+      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  DeviceCompanion copyWith({Value<String>? deviceId, Value<int>? rowid}) {
+  DeviceCompanion copyWith({
+    Value<String>? deviceId,
+    Value<String?>? driveVersion,
+    Value<String?>? driveHash,
+    Value<int>? newestSeenAt,
+    Value<int?>? lastSyncedAt,
+    Value<int>? rowid,
+  }) {
     return DeviceCompanion(
       deviceId: deviceId ?? this.deviceId,
+      driveVersion: driveVersion ?? this.driveVersion,
+      driveHash: driveHash ?? this.driveHash,
+      newestSeenAt: newestSeenAt ?? this.newestSeenAt,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2785,6 +3448,18 @@ class DeviceCompanion extends UpdateCompanion<Device> {
     final map = <String, Expression>{};
     if (deviceId.present) {
       map['device_id'] = Variable<String>(deviceId.value);
+    }
+    if (driveVersion.present) {
+      map['drive_version'] = Variable<String>(driveVersion.value);
+    }
+    if (driveHash.present) {
+      map['drive_hash'] = Variable<String>(driveHash.value);
+    }
+    if (newestSeenAt.present) {
+      map['newest_seen_at'] = Variable<int>(newestSeenAt.value);
+    }
+    if (lastSyncedAt.present) {
+      map['last_synced_at'] = Variable<int>(lastSyncedAt.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -2796,6 +3471,10 @@ class DeviceCompanion extends UpdateCompanion<Device> {
   String toString() {
     return (StringBuffer('DeviceCompanion(')
           ..write('deviceId: $deviceId, ')
+          ..write('driveVersion: $driveVersion, ')
+          ..write('driveHash: $driveHash, ')
+          ..write('newestSeenAt: $newestSeenAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2826,6 +3505,7 @@ abstract class _$RecordDatabase extends GeneratedDatabase {
     'CREATE INDEX idx_completion_date ON completion (completed_at)',
   );
   late final AlertTable alert = AlertTable(this);
+  late final EntryAliasTable entryAlias = EntryAliasTable(this);
   late final DeletionTable deletion = DeletionTable(this);
   late final SettingTable setting = SettingTable(this);
   late final DeviceTable device = DeviceTable(this);
@@ -2843,6 +3523,7 @@ abstract class _$RecordDatabase extends GeneratedDatabase {
     completion,
     idxCompletionDate,
     alert,
+    entryAlias,
     deletion,
     setting,
     device,
@@ -2875,8 +3556,11 @@ typedef $EntryTableCreateCompanionBuilder = EntryCompanion Function({
   Value<String?> notes,
   Value<int?> planRank,
   required int addedAt,
-  required int updatedAt,
   Value<int?> startedAt,
+  required int progressChangedAt,
+  Value<int> scoreChangedAt,
+  Value<int> notesChangedAt,
+  Value<int> linkChangedAt,
   Value<int> rowid,
 });
 typedef $EntryTableUpdateCompanionBuilder = EntryCompanion Function({
@@ -2888,8 +3572,11 @@ typedef $EntryTableUpdateCompanionBuilder = EntryCompanion Function({
   Value<String?> notes,
   Value<int?> planRank,
   Value<int> addedAt,
-  Value<int> updatedAt,
   Value<int?> startedAt,
+  Value<int> progressChangedAt,
+  Value<int> scoreChangedAt,
+  Value<int> notesChangedAt,
+  Value<int> linkChangedAt,
   Value<int> rowid,
 });
 
@@ -2983,13 +3670,33 @@ class $EntryTableFilterComposer extends Composer<_$RecordDatabase, EntryTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
+  ColumnFilters<int> get startedAt => $composableBuilder(
+    column: $table.startedAt,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get startedAt => $composableBuilder(
-    column: $table.startedAt,
+  ColumnFilters<int> get progressChangedAt => $composableBuilder(
+    column: $table.progressChangedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get scoreChangedAt => $composableBuilder(
+    column: $table.scoreChangedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get notesChangedAt => $composableBuilder(
+    column: $table.notesChangedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get linkChangedAt => $composableBuilder(
+    column: $table.linkChangedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3093,13 +3800,33 @@ class $EntryTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
+  ColumnOrderings<int> get startedAt => $composableBuilder(
+    column: $table.startedAt,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get startedAt => $composableBuilder(
-    column: $table.startedAt,
+  ColumnOrderings<int> get progressChangedAt => $composableBuilder(
+    column: $table.progressChangedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get scoreChangedAt => $composableBuilder(
+    column: $table.scoreChangedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get notesChangedAt => $composableBuilder(
+    column: $table.notesChangedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get linkChangedAt => $composableBuilder(
+    column: $table.linkChangedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -3139,11 +3866,31 @@ class $EntryTableAnnotationComposer
   GeneratedColumn<int> get addedAt =>
       $composableBuilder(column: $table.addedAt, builder: (column) => column);
 
-  GeneratedColumn<int> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
   GeneratedColumn<int> get startedAt =>
       $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get progressChangedAt => $composableBuilder(
+    column: $table.progressChangedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get scoreChangedAt => $composableBuilder(
+    column: $table.scoreChangedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get notesChangedAt => $composableBuilder(
+    column: $table.notesChangedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get linkChangedAt => $composableBuilder(
+    column: $table.linkChangedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
   Expression<T> entryReferenceRefs<T extends Object>(
     Expression<T> Function($EntryReferenceTableAnnotationComposer a) f,
@@ -3235,8 +3982,11 @@ class $EntryTableTableManager
                 Value<String?> notes = const Value.absent(),
                 Value<int?> planRank = const Value.absent(),
                 Value<int> addedAt = const Value.absent(),
-                Value<int> updatedAt = const Value.absent(),
                 Value<int?> startedAt = const Value.absent(),
+                Value<int> progressChangedAt = const Value.absent(),
+                Value<int> scoreChangedAt = const Value.absent(),
+                Value<int> notesChangedAt = const Value.absent(),
+                Value<int> linkChangedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EntryCompanion(
                 entryId: entryId,
@@ -3247,8 +3997,11 @@ class $EntryTableTableManager
                 notes: notes,
                 planRank: planRank,
                 addedAt: addedAt,
-                updatedAt: updatedAt,
                 startedAt: startedAt,
+                progressChangedAt: progressChangedAt,
+                scoreChangedAt: scoreChangedAt,
+                notesChangedAt: notesChangedAt,
+                linkChangedAt: linkChangedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3261,8 +4014,11 @@ class $EntryTableTableManager
                 Value<String?> notes = const Value.absent(),
                 Value<int?> planRank = const Value.absent(),
                 required int addedAt,
-                required int updatedAt,
                 Value<int?> startedAt = const Value.absent(),
+                required int progressChangedAt,
+                Value<int> scoreChangedAt = const Value.absent(),
+                Value<int> notesChangedAt = const Value.absent(),
+                Value<int> linkChangedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EntryCompanion.insert(
                 entryId: entryId,
@@ -3273,8 +4029,11 @@ class $EntryTableTableManager
                 notes: notes,
                 planRank: planRank,
                 addedAt: addedAt,
-                updatedAt: updatedAt,
                 startedAt: startedAt,
+                progressChangedAt: progressChangedAt,
+                scoreChangedAt: scoreChangedAt,
+                notesChangedAt: notesChangedAt,
+                linkChangedAt: linkChangedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -4439,6 +5198,156 @@ typedef $AlertTableProcessedTableManager =
       Alert,
       PrefetchHooks Function()
     >;
+typedef $EntryAliasTableCreateCompanionBuilder = EntryAliasCompanion Function({
+  required String aliasId,
+  required String entryId,
+  Value<int> rowid,
+});
+typedef $EntryAliasTableUpdateCompanionBuilder = EntryAliasCompanion Function({
+  Value<String> aliasId,
+  Value<String> entryId,
+  Value<int> rowid,
+});
+
+class $EntryAliasTableFilterComposer
+    extends Composer<_$RecordDatabase, EntryAliasTable> {
+  $EntryAliasTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get aliasId => $composableBuilder(
+    column: $table.aliasId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $EntryAliasTableOrderingComposer
+    extends Composer<_$RecordDatabase, EntryAliasTable> {
+  $EntryAliasTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get aliasId => $composableBuilder(
+    column: $table.aliasId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $EntryAliasTableAnnotationComposer
+    extends Composer<_$RecordDatabase, EntryAliasTable> {
+  $EntryAliasTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get aliasId =>
+      $composableBuilder(column: $table.aliasId, builder: (column) => column);
+
+  GeneratedColumn<String> get entryId =>
+      $composableBuilder(column: $table.entryId, builder: (column) => column);
+}
+
+class $EntryAliasTableTableManager
+    extends
+        RootTableManager<
+          _$RecordDatabase,
+          EntryAliasTable,
+          EntryAlias,
+          $EntryAliasTableFilterComposer,
+          $EntryAliasTableOrderingComposer,
+          $EntryAliasTableAnnotationComposer,
+          $EntryAliasTableCreateCompanionBuilder,
+          $EntryAliasTableUpdateCompanionBuilder,
+          (
+            EntryAlias,
+            BaseReferences<_$RecordDatabase, EntryAliasTable, EntryAlias>,
+          ),
+          EntryAlias,
+          PrefetchHooks Function()
+        > {
+  $EntryAliasTableTableManager(_$RecordDatabase db, EntryAliasTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $EntryAliasTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $EntryAliasTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $EntryAliasTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> aliasId = const Value.absent(),
+                Value<String> entryId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => EntryAliasCompanion(
+                aliasId: aliasId,
+                entryId: entryId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String aliasId,
+                required String entryId,
+                Value<int> rowid = const Value.absent(),
+              }) => EntryAliasCompanion.insert(
+                aliasId: aliasId,
+                entryId: entryId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<EntryAliasTable, EntryAlias>(table),
+                  BaseReferences<_$RecordDatabase, EntryAliasTable, EntryAlias>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $EntryAliasTableProcessedTableManager =
+    ProcessedTableManager<
+      _$RecordDatabase,
+      EntryAliasTable,
+      EntryAlias,
+      $EntryAliasTableFilterComposer,
+      $EntryAliasTableOrderingComposer,
+      $EntryAliasTableAnnotationComposer,
+      $EntryAliasTableCreateCompanionBuilder,
+      $EntryAliasTableUpdateCompanionBuilder,
+      (
+        EntryAlias,
+        BaseReferences<_$RecordDatabase, EntryAliasTable, EntryAlias>,
+      ),
+      EntryAlias,
+      PrefetchHooks Function()
+    >;
 typedef $DeletionTableCreateCompanionBuilder = DeletionCompanion Function({
   required String entryId,
   required int deletedAt,
@@ -4586,11 +5495,13 @@ typedef $DeletionTableProcessedTableManager =
 typedef $SettingTableCreateCompanionBuilder = SettingCompanion Function({
   required String key,
   required String value,
+  Value<int> updatedAt,
   Value<int> rowid,
 });
 typedef $SettingTableUpdateCompanionBuilder = SettingCompanion Function({
   Value<String> key,
   Value<String> value,
+  Value<int> updatedAt,
   Value<int> rowid,
 });
 
@@ -4610,6 +5521,11 @@ class $SettingTableFilterComposer
 
   ColumnFilters<String> get value => $composableBuilder(
     column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4632,6 +5548,11 @@ class $SettingTableOrderingComposer
     column: $table.value,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $SettingTableAnnotationComposer
@@ -4648,6 +5569,9 @@ class $SettingTableAnnotationComposer
 
   GeneratedColumn<String> get value =>
       $composableBuilder(column: $table.value, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
 
 class $SettingTableTableManager
@@ -4676,16 +5600,30 @@ class $SettingTableTableManager
               $SettingTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $SettingTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> key = const Value.absent(),
-            Value<String> value = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) => SettingCompanion(key: key, value: value, rowid: rowid),
-          createCompanionCallback: ({
-            required String key,
-            required String value,
-            Value<int> rowid = const Value.absent(),
-          }) => SettingCompanion.insert(key: key, value: value, rowid: rowid),
+          updateCompanionCallback:
+              ({
+                Value<String> key = const Value.absent(),
+                Value<String> value = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SettingCompanion(
+                key: key,
+                value: value,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String key,
+                required String value,
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SettingCompanion.insert(
+                key: key,
+                value: value,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
@@ -4719,10 +5657,18 @@ typedef $SettingTableProcessedTableManager =
     >;
 typedef $DeviceTableCreateCompanionBuilder = DeviceCompanion Function({
   required String deviceId,
+  Value<String?> driveVersion,
+  Value<String?> driveHash,
+  Value<int> newestSeenAt,
+  Value<int?> lastSyncedAt,
   Value<int> rowid,
 });
 typedef $DeviceTableUpdateCompanionBuilder = DeviceCompanion Function({
   Value<String> deviceId,
+  Value<String?> driveVersion,
+  Value<String?> driveHash,
+  Value<int> newestSeenAt,
+  Value<int?> lastSyncedAt,
   Value<int> rowid,
 });
 
@@ -4737,6 +5683,26 @@ class $DeviceTableFilterComposer
   });
   ColumnFilters<String> get deviceId => $composableBuilder(
     column: $table.deviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get driveVersion => $composableBuilder(
+    column: $table.driveVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get driveHash => $composableBuilder(
+    column: $table.driveHash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get newestSeenAt => $composableBuilder(
+    column: $table.newestSeenAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4754,6 +5720,26 @@ class $DeviceTableOrderingComposer
     column: $table.deviceId,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get driveVersion => $composableBuilder(
+    column: $table.driveVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get driveHash => $composableBuilder(
+    column: $table.driveHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get newestSeenAt => $composableBuilder(
+    column: $table.newestSeenAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $DeviceTableAnnotationComposer
@@ -4767,6 +5753,24 @@ class $DeviceTableAnnotationComposer
   });
   GeneratedColumn<String> get deviceId =>
       $composableBuilder(column: $table.deviceId, builder: (column) => column);
+
+  GeneratedColumn<String> get driveVersion => $composableBuilder(
+    column: $table.driveVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get driveHash =>
+      $composableBuilder(column: $table.driveHash, builder: (column) => column);
+
+  GeneratedColumn<int> get newestSeenAt => $composableBuilder(
+    column: $table.newestSeenAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => column,
+  );
 }
 
 class $DeviceTableTableManager
@@ -4795,14 +5799,38 @@ class $DeviceTableTableManager
               $DeviceTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $DeviceTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> deviceId = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) => DeviceCompanion(deviceId: deviceId, rowid: rowid),
-          createCompanionCallback: ({
-            required String deviceId,
-            Value<int> rowid = const Value.absent(),
-          }) => DeviceCompanion.insert(deviceId: deviceId, rowid: rowid),
+          updateCompanionCallback:
+              ({
+                Value<String> deviceId = const Value.absent(),
+                Value<String?> driveVersion = const Value.absent(),
+                Value<String?> driveHash = const Value.absent(),
+                Value<int> newestSeenAt = const Value.absent(),
+                Value<int?> lastSyncedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DeviceCompanion(
+                deviceId: deviceId,
+                driveVersion: driveVersion,
+                driveHash: driveHash,
+                newestSeenAt: newestSeenAt,
+                lastSyncedAt: lastSyncedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String deviceId,
+                Value<String?> driveVersion = const Value.absent(),
+                Value<String?> driveHash = const Value.absent(),
+                Value<int> newestSeenAt = const Value.absent(),
+                Value<int?> lastSyncedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DeviceCompanion.insert(
+                deviceId: deviceId,
+                driveVersion: driveVersion,
+                driveHash: driveHash,
+                newestSeenAt: newestSeenAt,
+                lastSyncedAt: lastSyncedAt,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
@@ -4846,6 +5874,8 @@ class $RecordDatabaseManager {
   $CompletionTableTableManager get completion =>
       $CompletionTableTableManager(_db, _db.completion);
   $AlertTableTableManager get alert => $AlertTableTableManager(_db, _db.alert);
+  $EntryAliasTableTableManager get entryAlias =>
+      $EntryAliasTableTableManager(_db, _db.entryAlias);
   $DeletionTableTableManager get deletion =>
       $DeletionTableTableManager(_db, _db.deletion);
   $SettingTableTableManager get setting =>

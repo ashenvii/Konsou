@@ -1,15 +1,13 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:math';
 
 import 'package:http/http.dart' as http;
+
+import '../net/backoff.dart';
 
 /// MAL publishes no rate limit; this is the gap its API club asks for,
 /// counted from the start of one request to the start of the next.
 const requestGap = Duration(milliseconds: 500);
-
-const _firstBackoff = Duration(seconds: 5);
-const _maxBackoff = Duration(minutes: 10);
 
 /// Screen requests go ahead of every waiting trickle request.
 enum Lane { screen, trickle }
@@ -29,7 +27,7 @@ class RequestGate {
   final _trickle = Queue<_Job>();
   var _running = false;
   DateTime? _nextStart;
-  Duration? _backoff;
+  final _backoff = Backoff();
 
   Future<http.Response> send(
     Lane lane,
@@ -60,7 +58,7 @@ class RequestGate {
         if (response.statusCode == 429 || response.statusCode >= 500) {
           _slowDown();
         } else {
-          _backoff = null;
+          _backoff.reset();
         }
         job.done.complete(response);
       } catch (error, stack) {
@@ -71,19 +69,7 @@ class RequestGate {
     _running = false;
   }
 
-  void _slowDown() {
-    final previous = _backoff;
-    final backoff = previous == null
-        ? _firstBackoff
-        : Duration(
-            microseconds: min(
-              previous.inMicroseconds * 2,
-              _maxBackoff.inMicroseconds,
-            ),
-          );
-    _backoff = backoff;
-    _nextStart = _now().add(backoff);
-  }
+  void _slowDown() => _nextStart = _now().add(_backoff.next());
 }
 
 class _Job {

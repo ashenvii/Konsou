@@ -36,7 +36,7 @@ void main() {
             entryId: 'abc',
             status: 'watching',
             addedAt: 1,
-            updatedAt: 1,
+            progressChangedAt: 1,
           ),
         );
     await expectLater(
@@ -129,8 +129,12 @@ void main() {
         'notes': null,
         'plan_rank': null,
         'added_at': 1669585154282,
-        'updated_at': 1793390531000,
         'started_at': 1670276354282,
+        'progress_changed_at': 1793390531000,
+        'score_changed_at': 1793390531000,
+        'notes_changed_at': 1793390531000,
+        'link_changed_at': 1793390531000,
+        'updated_at': 1793390531000,
         'franchise_provider_id': 167404,
       });
     }, skip: skip);
@@ -237,6 +241,60 @@ void main() {
     test('a file that is not an export is refused', () async {
       await expectLater(
         importExportJson('{"entries": []}', databases),
+        throwsA(isA<ImportRefused>()),
+      );
+    });
+  });
+
+  group("the old app's Drive file", () {
+    // hand-written in the shape of the old list.json, version 1
+    const driveList = '''
+{"version": 1, "exported_at": 1720000000000,
+ "entries": [
+   {"anilist_id": 154587, "mal_id": 52991, "title_romaji": "Sousou no Frieren",
+    "status": "completed", "episodes_watched": 28, "added_at": 1700000000000,
+    "updated_at": 1710000000000, "completed_at": 1710000000000,
+    "rewatch_count": 0}
+ ],
+ "completions": [
+   {"anilist_id": 154587, "rewatch_index": 0, "completed_at": 1709000000000,
+    "episodes_at_completion": 28, "episode_duration": 24, "total_episodes": 28,
+    "title_romaji": "Sousou no Frieren", "estimated": false}
+ ],
+ "tombstones": [{"anilist_id": 5, "deleted_at": 1715000000000}]}''';
+
+    test(
+      'brings over its finished watches as recorded and its removals',
+      () async {
+        final report = await importDriveList(driveList, databases);
+
+        expect(report.entries, 1);
+        expect(report.completions, 1);
+        expect(report.deletions, 1);
+        expect(
+          await count(
+            'SELECT completed_at FROM completion WHERE NOT is_estimated',
+          ),
+          1709000000000,
+        );
+      },
+    );
+
+    test('a file without finished watches has them rebuilt', () async {
+      final report = await importDriveList(
+        driveList.replaceFirst(RegExp(r'"completions": \[[^\]]*\],'), ''),
+        databases,
+      );
+      expect(report.completions, 1);
+      expect(
+        await count('SELECT count(*) FROM completion WHERE is_estimated'),
+        1,
+      );
+    });
+
+    test('an export array is not a Drive file', () async {
+      await expectLater(
+        importDriveList('[]', databases),
         throwsA(isA<ImportRefused>()),
       );
     });

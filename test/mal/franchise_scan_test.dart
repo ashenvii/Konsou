@@ -80,7 +80,7 @@ void main() {
             entryId: entryId,
             status: 'completed',
             addedAt: 1,
-            updatedAt: 1,
+            progressChangedAt: 1,
           ),
         );
     await record

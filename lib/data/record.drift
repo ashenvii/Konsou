@@ -1,9 +1,10 @@
--- konsou.db, the user's own record. Everything here except the two name
--- columns goes into the Drive copy.
+-- konsou.db, the user's own record. Sync copies it to Drive without the
+-- names of linked entries and finished watches, the device row and the
+-- settings that stay on one device.
 
 CREATE TABLE entry (
   entry_id          TEXT NOT NULL PRIMARY KEY,
-  name              TEXT,                    -- local only, never synced
+  name              TEXT,                    -- synced only while not linked
   status            TEXT NOT NULL CHECK (status IN (
                       'watching', 'completed', 'plan_to_watch', 'on_hold',
                       'dropped', 'rewatching', 'not_interested')),
@@ -12,8 +13,14 @@ CREATE TABLE entry (
   notes             TEXT,
   plan_rank         INTEGER,
   added_at          INTEGER NOT NULL,
-  updated_at        INTEGER NOT NULL,
-  started_at        INTEGER
+  started_at        INTEGER,
+  -- sync merges each group on its own, the latest change wins; 0 is never changed
+  progress_changed_at  INTEGER NOT NULL,   -- status, episodes, started date, plan rank
+  score_changed_at     INTEGER NOT NULL DEFAULT 0,
+  notes_changed_at     INTEGER NOT NULL DEFAULT 0,
+  link_changed_at      INTEGER NOT NULL DEFAULT 0,  -- the provider references
+  updated_at        INTEGER GENERATED ALWAYS AS (max(progress_changed_at,
+                      score_changed_at, notes_changed_at, link_changed_at)) VIRTUAL
 ) AS Entry;
 
 CREATE INDEX idx_entry_status ON entry (status);
@@ -64,16 +71,28 @@ CREATE TABLE alert (
   PRIMARY KEY (entry_id, related_provider, related_provider_id, type)
 ) AS Alert;
 
+-- an entry id sync folded into another, when two devices added the same title
+CREATE TABLE entry_alias (
+  alias_id  TEXT NOT NULL PRIMARY KEY,
+  entry_id  TEXT NOT NULL
+) AS EntryAlias;
+
 CREATE TABLE deletion (
   entry_id    TEXT NOT NULL PRIMARY KEY,
   deleted_at  INTEGER NOT NULL
 ) AS Deletion;
 
 CREATE TABLE setting (
-  "key"  TEXT NOT NULL PRIMARY KEY,
-  value  TEXT NOT NULL
+  "key"       TEXT NOT NULL PRIMARY KEY,
+  value       TEXT NOT NULL,
+  updated_at  INTEGER NOT NULL DEFAULT 0
 ) AS Setting;
 
+-- this device only, never synced
 CREATE TABLE device (
-  device_id  TEXT NOT NULL PRIMARY KEY
+  device_id       TEXT NOT NULL PRIMARY KEY,
+  drive_version   TEXT,                       -- id and version of the drive file last seen
+  drive_hash      TEXT,                       -- hash of the record as it is on drive
+  newest_seen_at  INTEGER NOT NULL DEFAULT 0, -- newest change time seen in a merge
+  last_synced_at  INTEGER
 ) AS Device;

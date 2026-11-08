@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 
 import '../data/databases.dart';
 import '../data/details_database.dart';
+import '../data/edit_clock.dart';
 import '../data/record_database.dart';
 import '../search/title_tree.dart';
 import '../search/title_words.dart';
@@ -160,15 +161,18 @@ class Matching {
     int malId, {
     required Lane lane,
   }) async {
-    await _record
-        .into(_record.entryReference)
-        .insertOnConflictUpdate(
-          EntryReferenceCompanion.insert(
-            entryId: entryId,
-            provider: 'mal',
-            providerId: malId,
-          ),
-        );
+    await _record.transaction(() async {
+      await _record
+          .into(_record.entryReference)
+          .insertOnConflictUpdate(
+            EntryReferenceCompanion.insert(
+              entryId: entryId,
+              provider: 'mal',
+              providerId: malId,
+            ),
+          );
+      await _markLinkChanged(entryId);
+    });
     await _clearSearch(entryId);
     await detailRequest.fetch(malId, lane: lane, full: false);
   }
@@ -195,6 +199,7 @@ class Matching {
             (ref) => ref.entryId.equals(entryId) & ref.provider.equals('mal'),
           ))
           .go();
+      await _markLinkChanged(entryId);
       await _decline(entryId, malId);
     });
     await _clearSearch(entryId);
@@ -232,6 +237,13 @@ class Matching {
             ))
             .get();
     return usedElsewhere.isEmpty;
+  }
+
+  Future<void> _markLinkChanged(String entryId) async {
+    final changedAt = await readEditTime(_record, _now());
+    await (_record.update(_record.entry)
+          ..where((entry) => entry.entryId.equals(entryId)))
+        .write(EntryCompanion(linkChangedAt: Value(changedAt)));
   }
 
   Future<void> _decline(String entryId, int malId) => _record

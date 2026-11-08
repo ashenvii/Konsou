@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Which folder under lib/ may import which. The data side (database, import,
-/// MAL, search, sync) never touches Flutter or anything drawn, so it can be tested
+/// MAL, search, sync, net) never touches Flutter or anything drawn, so it can be tested
 /// without a screen and moved without a rewrite. Folders that do not exist yet
 /// are simply not checked.
 const _mayImport = <String, Set<String>>{
@@ -14,8 +14,9 @@ const _mayImport = <String, Set<String>>{
   'data': {'data'},
   'import': {'import', 'data'},
   'search': {'search', 'data'},
-  'mal': {'mal', 'data', 'search'},
-  'sync': {'sync', 'data'},
+  'net': {'net'},
+  'mal': {'mal', 'data', 'search', 'net'},
+  'sync': {'sync', 'data', 'import', 'net'},
   'screens': {
     'screens',
     'design',
@@ -26,11 +27,12 @@ const _mayImport = <String, Set<String>>{
     'mal',
     'search',
     'sync',
+    'net',
   },
 };
 
 /// Folders on the data side, which may not import any Flutter package.
-const _dataSide = {'data', 'import', 'mal', 'search', 'sync'};
+const _dataSide = {'data', 'import', 'mal', 'search', 'sync', 'net'};
 
 /// Whatever is not in a folder above (main.dart, gallery) is wiring and may
 /// import anything.

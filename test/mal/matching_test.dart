@@ -133,7 +133,7 @@ void main() {
               status: status,
               episodesWatched: Value(watched),
               addedAt: 1,
-              updatedAt: updatedAt,
+              progressChangedAt: updatedAt,
             ),
           );
       if (malId == null) return;
@@ -390,6 +390,11 @@ void main() {
 
       expect(await readMalId('bigo'), 567);
       expect(asked, ['detail 567']);
+      final record = databases.record;
+      final entry = await (record.select(
+        record.entry,
+      )..where((row) => row.entryId.equals('bigo'))).getSingle();
+      expect(entry.linkChangedAt, _now.millisecondsSinceEpoch);
     });
 
     test('runs not-linked entries due a search, in trickle order', () async {

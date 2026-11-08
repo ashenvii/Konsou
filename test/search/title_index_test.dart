@@ -36,7 +36,7 @@ void main() {
               name: Value(name),
               status: 'watching',
               addedAt: 1,
-              updatedAt: 1,
+              progressChangedAt: 1,
             ),
           );
     }

@@ -42,7 +42,7 @@ void main() {
             entryId: id,
             status: status,
             addedAt: 1,
-            updatedAt: updatedAt,
+            progressChangedAt: updatedAt,
           ),
         );
     if (malId == null) return;
