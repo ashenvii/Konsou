@@ -83,10 +83,12 @@ Future<bool> _generated() async {
   final before = _libFiles(isGenerated);
   if (!await _run('dart', ['run', 'build_runner', 'build'])) return false;
   final after = _libFiles(isGenerated);
+  // git checks files out with crlf on windows and build_runner writes lf
+  String? lines(String? text) => text?.replaceAll('\r\n', '\n');
   final changed = {
     ...before.keys,
     ...after.keys,
-  }.where((path) => before[path] != after[path]).toList();
+  }.where((path) => lines(before[path]) != lines(after[path])).toList();
   for (final path in changed) {
     stdout.writeln('  $path was out of date and is now rebuilt; commit it');
   }
