@@ -1,0 +1,60 @@
+-- details.db, everything fetched from MAL or worked out from it. Never
+-- synced, safe to delete, rebuilt on demand.
+
+-- json is the only source; the other columns are read out of it by sqlite
+CREATE TABLE detail (
+  provider        TEXT NOT NULL,
+  provider_id     INTEGER NOT NULL,
+  fetched_at      INTEGER NOT NULL,
+  json            TEXT NOT NULL,
+  title           TEXT GENERATED ALWAYS AS (json_extract(json, '$.title')) VIRTUAL,
+  title_english   TEXT GENERATED ALWAYS AS (
+                    NULLIF(json_extract(json, '$.alternative_titles.en'), '')) VIRTUAL,
+  title_japanese  TEXT GENERATED ALWAYS AS (
+                    NULLIF(json_extract(json, '$.alternative_titles.ja'), '')) VIRTUAL,
+  media_type      TEXT GENERATED ALWAYS AS (json_extract(json, '$.media_type')) VIRTUAL,
+  airing_status   TEXT GENERATED ALWAYS AS (json_extract(json, '$.status')) VIRTUAL,
+  -- mal sends 0 when the count is not known yet
+  episodes        INTEGER GENERATED ALWAYS AS (
+                    NULLIF(json_extract(json, '$.num_episodes'), 0)) VIRTUAL,
+  start_date      TEXT GENERATED ALWAYS AS (json_extract(json, '$.start_date')) VIRTUAL,
+  cover_url       TEXT GENERATED ALWAYS AS (COALESCE(
+                    json_extract(json, '$.main_picture.large'),
+                    json_extract(json, '$.main_picture.medium'))) VIRTUAL,
+  nsfw            TEXT GENERATED ALWAYS AS (json_extract(json, '$.nsfw')) VIRTUAL,
+  PRIMARY KEY (provider, provider_id)
+) AS Detail;
+
+-- entry_id points into konsou.db, a separate file, so there is no foreign key
+CREATE TABLE franchise_link (
+  entry_id          TEXT NOT NULL PRIMARY KEY,
+  root_provider     TEXT NOT NULL,
+  root_provider_id  INTEGER NOT NULL,
+  is_placeholder    BOOLEAN NOT NULL DEFAULT FALSE  -- true until the scan rebuilds it from mal
+) AS FranchiseLink;
+
+CREATE INDEX idx_franchise_root ON franchise_link (root_provider, root_provider_id);
+
+CREATE TABLE relation (
+  provider     TEXT NOT NULL,
+  provider_id  INTEGER NOT NULL,
+  json         TEXT NOT NULL,
+  checked_at   INTEGER NOT NULL,
+  PRIMARY KEY (provider, provider_id)
+) AS Relation;
+
+CREATE TABLE scan_schedule (
+  entry_id       TEXT NOT NULL PRIMARY KEY,
+  last_check_at  INTEGER NOT NULL,
+  next_check_at  INTEGER NOT NULL,
+  quiet_streak   INTEGER NOT NULL DEFAULT 0
+) AS ScanSchedule;
+
+CREATE INDEX idx_scan_due ON scan_schedule (next_check_at);
+
+CREATE TABLE search_cache (
+  query_hash  TEXT NOT NULL PRIMARY KEY,
+  query_text  TEXT NOT NULL,
+  results     TEXT NOT NULL,
+  cached_at   INTEGER NOT NULL
+) AS SearchCacheRow;

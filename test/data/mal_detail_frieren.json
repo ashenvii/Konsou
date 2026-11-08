@@ -1,0 +1,20 @@
+{
+  "id": 52991,
+  "title": "Sousou no Frieren",
+  "main_picture": {
+    "medium": "https://cdn.myanimelist.net/images/anime/1015/138006.jpg",
+    "large": "https://cdn.myanimelist.net/images/anime/1015/138006l.jpg"
+  },
+  "alternative_titles": {
+    "synonyms": ["Frieren at the Funeral"],
+    "en": "Frieren: Beyond Journey's End",
+    "ja": "葬送のフリーレン"
+  },
+  "start_date": "2023-09-29",
+  "end_date": "2024-03-22",
+  "nsfw": "white",
+  "media_type": "tv",
+  "status": "finished_airing",
+  "num_episodes": 28,
+  "average_episode_duration": 1470
+}

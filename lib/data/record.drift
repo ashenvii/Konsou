@@ -1,9 +1,9 @@
--- konsou.db: the user's own record. Everything here except the two `name`
--- columns is written to the Drive backup.
+-- konsou.db, the user's own record. Everything here except the two name
+-- columns goes into the Drive copy.
 
 CREATE TABLE entry (
-  entry_id          TEXT PRIMARY KEY,
-  name              TEXT,                      -- local only, never synced
+  entry_id          TEXT NOT NULL PRIMARY KEY,
+  name              TEXT,                    -- local only, never synced
   status            TEXT NOT NULL CHECK (status IN (
                       'watching', 'completed', 'plan_to_watch', 'on_hold',
                       'dropped', 'rewatching', 'not_interested')),
@@ -11,36 +11,37 @@ CREATE TABLE entry (
   score             INTEGER CHECK (score IS NULL OR (score >= 1 AND score <= 10)),
   notes             TEXT,
   plan_rank         INTEGER,
-  added_at          INTEGER NOT NULL,          -- Unix milliseconds
+  added_at          INTEGER NOT NULL,
   updated_at        INTEGER NOT NULL,
   started_at        INTEGER
-);
+) AS Entry;
 
-CREATE INDEX idx_entry_status  ON entry(status);
-CREATE INDEX idx_entry_updated ON entry(updated_at);
+CREATE INDEX idx_entry_status ON entry (status);
+CREATE INDEX idx_entry_updated ON entry (updated_at);
 
 CREATE TABLE entry_reference (
-  entry_id     TEXT NOT NULL REFERENCES entry(entry_id) ON DELETE CASCADE,
+  entry_id     TEXT NOT NULL REFERENCES entry (entry_id) ON DELETE CASCADE,
   provider     TEXT NOT NULL CHECK (provider IN ('mal', 'anilist')),
   provider_id  INTEGER NOT NULL,
   PRIMARY KEY (entry_id, provider)
-);
+) AS EntryReference;
 
--- Not unique: two entries can point at the same provider page.
-CREATE INDEX idx_reference_lookup ON entry_reference(provider, provider_id);
+-- not unique: anilist split three titles that mal keeps as one page
+CREATE INDEX idx_reference_lookup ON entry_reference (provider, provider_id);
 
+-- no foreign key: a finished watch stays on record after its entry is removed
 CREATE TABLE completion (
   entry_id             TEXT NOT NULL,
-  watch_number         INTEGER NOT NULL,       -- 0 first watch, 1 first rewatch
+  watch_number         INTEGER NOT NULL,     -- 0 first watch, 1 first rewatch
   completed_at         INTEGER NOT NULL,
   episodes_watched     INTEGER NOT NULL DEFAULT 0,
-  minutes_per_episode  INTEGER,                -- null: stats use 24
-  is_estimated         INTEGER NOT NULL DEFAULT 0,
-  name                 TEXT,                   -- local only, never synced
+  minutes_per_episode  INTEGER,              -- null: stats use 24
+  is_estimated         BOOLEAN NOT NULL DEFAULT FALSE,
+  name                 TEXT,                 -- local only, never synced
   PRIMARY KEY (entry_id, watch_number)
-);
+) AS Completion;
 
-CREATE INDEX idx_completion_date ON completion(completed_at);
+CREATE INDEX idx_completion_date ON completion (completed_at);
 
 CREATE TABLE alert (
   entry_id             TEXT NOT NULL,
@@ -48,22 +49,22 @@ CREATE TABLE alert (
   related_provider_id  INTEGER NOT NULL,
   type                 TEXT NOT NULL CHECK (type IN (
                          'sequel', 'side_story', 'spin_off', 'movie', 'started_airing')),
-  seen                 INTEGER NOT NULL DEFAULT 0,
-  dismissed            INTEGER NOT NULL DEFAULT 0,
+  seen                 BOOLEAN NOT NULL DEFAULT FALSE,
+  dismissed            BOOLEAN NOT NULL DEFAULT FALSE,
   created_at           INTEGER NOT NULL,
   PRIMARY KEY (entry_id, related_provider, related_provider_id, type)
-);
+) AS Alert;
 
 CREATE TABLE deletion (
-  entry_id    TEXT PRIMARY KEY,
+  entry_id    TEXT NOT NULL PRIMARY KEY,
   deleted_at  INTEGER NOT NULL
-);
+) AS Deletion;
 
 CREATE TABLE setting (
-  key    TEXT PRIMARY KEY,
+  "key"  TEXT NOT NULL PRIMARY KEY,
   value  TEXT NOT NULL
-);
+) AS Setting;
 
 CREATE TABLE device (
-  device_id  TEXT PRIMARY KEY
-);
+  device_id  TEXT NOT NULL PRIMARY KEY
+) AS Device;

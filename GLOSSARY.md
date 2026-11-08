@@ -8,6 +8,14 @@ An offline-first anime tracker for your own record. The user's list is theirs; t
 One anime on the user's list, with the user's own status, progress, score and notes.
 _Avoid_: Item, show, row
 
+**Record**:
+The user's own data in `konsou.db`: entries, finished watches, alerts, deletions and settings. Only the record is backed up to Drive, without the local names.
+_Avoid_: User data, save file
+
+**Details**:
+What was fetched from MyAnimeList, or worked out from it, in `details.db`. Never backed up, safe to delete, fetched again when needed.
+_Avoid_: Cache, metadata
+
 **Library**:
 The screen that lists every entry. It has the tabs All, Watching, Planned and Completed, a dropdown for the other statuses, a sort and a grid or list view, and no filters.
 _Avoid_: My List, Collection

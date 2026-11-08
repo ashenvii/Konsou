@@ -2,8 +2,8 @@
 //   check            (Windows, uses check.cmd)
 //   dart run tool/check.dart
 // It runs all gates even when one fails, prints a summary, and exits with 1 if
-// any gate failed. `--fast` skips the analyzer and tests, for working on the
-// gates themselves.
+// any gate failed. `--fast` skips code generation, the analyzer and tests, for
+// working on the gates themselves.
 import 'dart:io';
 
 import 'duplicates.dart';
@@ -21,8 +21,9 @@ Future<void> main(List<String> args) async {
   final results = <(String, bool)>[];
 
   if (!fast) {
-    results.add(('analyzer', await _flutter(['analyze'])));
-    results.add(('tests', await _flutter(['test'])));
+    results.add(('generated code is current', await _generated()));
+    results.add(('analyzer', await _run('flutter', ['analyze'])));
+    results.add(('tests', await _run('flutter', ['test'])));
   }
   results.add(('tokens match tokens.md', _tokens()));
   results.add(('no duplicated code', _duplicates()));
@@ -36,10 +37,10 @@ Future<void> main(List<String> args) async {
   exit(failed == 0 ? 0 : 1);
 }
 
-Future<bool> _flutter(List<String> args) async {
-  stdout.writeln('\n> flutter ${args.join(' ')}');
+Future<bool> _run(String executable, List<String> args) async {
+  stdout.writeln('\n> $executable ${args.join(' ')}');
   final process = await Process.start(
-    'flutter',
+    executable,
     args,
     mode: ProcessStartMode.inheritStdio,
     runInShell: true,
@@ -66,14 +67,34 @@ bool _tokens() {
 
 bool _duplicates() {
   stdout.writeln('\n> duplicated code in lib/');
-  final sources = {
-    for (final f in Directory('lib').listSync(recursive: true))
-      if (f is File && f.path.endsWith('.dart'))
-        f.path.replaceAll('\\', '/'): f.readAsStringSync(),
-  };
-  final found = findDuplicates(sources);
+  final found = findDuplicates(
+    _libFiles((path) => path.endsWith('.dart') && !path.endsWith('.g.dart')),
+  );
   for (final d in found) {
     stdout.writeln('  $d');
   }
   return found.isEmpty;
 }
+
+/// Rebuilds drift's generated files and fails if that changed any of them, so
+/// a stale `.g.dart` cannot be committed. The rebuilt files are left in place.
+Future<bool> _generated() async {
+  bool isGenerated(String path) => path.endsWith('.g.dart');
+  final before = _libFiles(isGenerated);
+  if (!await _run('dart', ['run', 'build_runner', 'build'])) return false;
+  final after = _libFiles(isGenerated);
+  final changed = {
+    ...before.keys,
+    ...after.keys,
+  }.where((path) => before[path] != after[path]).toList();
+  for (final path in changed) {
+    stdout.writeln('  $path was out of date and is now rebuilt; commit it');
+  }
+  return changed.isEmpty;
+}
+
+Map<String, String> _libFiles(bool Function(String path) keep) => {
+  for (final f in Directory('lib').listSync(recursive: true))
+    if (f is File && keep(f.path))
+      f.path.replaceAll('\\', '/'): f.readAsStringSync(),
+};
