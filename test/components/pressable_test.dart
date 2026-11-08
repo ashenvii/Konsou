@@ -36,7 +36,10 @@ void main() {
     expect(taps, 2);
   });
 
-  testWidgets('disabled does nothing', (tester) async {
+  testWidgets('disabled cannot take focus and reads as disabled', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
     await pumpWidget(
       tester,
       Pressable(
@@ -45,10 +48,44 @@ void main() {
         builder: (_, _) => const SizedBox(width: 40, height: 40),
       ),
     );
-    await tester.tap(find.byType(Pressable));
-    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    // Nothing to assert on a callback that does not exist; this must not throw.
-    expect(find.byType(Pressable), findsOneWidget);
+    await tester.pump();
+    final detector = tester.widget<FocusableActionDetector>(
+      find.byType(FocusableActionDetector),
+    );
+    expect(detector.enabled, isFalse);
+    final inside = tester.element(
+      find
+          .descendant(
+            of: find.byType(Pressable),
+            matching: find.byType(SizedBox),
+          )
+          .first,
+    );
+    expect(Focus.of(inside).hasFocus, isFalse);
+    expect(
+      tester.getSemantics(find.byType(Pressable)),
+      matchesSemantics(isButton: true, hasEnabledState: true, isEnabled: false),
+    );
+    handle.dispose();
+  });
+
+  testWidgets('a disabled pressable does not report hover', (tester) async {
+    var hovered = true;
+    await pumpWidget(
+      tester,
+      Pressable(
+        onPressed: null,
+        builder: (_, state) {
+          hovered = state.hovered;
+          return const SizedBox(width: 40, height: 40);
+        },
+      ),
+    );
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: const Offset(500, 500));
+    await mouse.moveTo(const Offset(20, 20));
+    await tester.pump();
+    expect(hovered, isFalse);
   });
 
   testWidgets('hover reaches the builder', (tester) async {

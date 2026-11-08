@@ -3,8 +3,10 @@
 /// way round. The owner approves a token by adding it to that index.
 library;
 
+// The value may wrap over several lines, which `dart format` does for long
+// ones, so it runs up to the semicolon.
 final _declaration = RegExp(
-  r'^\s*static const [\w<>]+ (\w+) = (.+);\s*$',
+  r'^\s*static const [\w<>]+ (\w+) =\s*([^;]+);',
   multiLine: true,
 );
 
@@ -57,11 +59,19 @@ List<String> tokenProblems(String dartSource, String markdown) {
 }
 
 String _normalize(String value) {
-  var v = value.trim();
-  final color = RegExp(r'^Color\(0x[0-9A-Fa-f]{2}([0-9A-Fa-f]{6})\)$');
+  var v = value.trim().replaceAll(RegExp(r'\s+'), ' ');
+  // A fully opaque color is written as its six hex digits in tokens.md. Any
+  // other alpha keeps all eight, so a change of alpha is a mismatch.
+  final color = RegExp(
+    r'^Color\(\s*0x([0-9A-Fa-f]{2})([0-9A-Fa-f]{6}),?\s*\)$',
+  );
   final cm = color.firstMatch(v);
-  if (cm != null) return cm.group(1)!.toUpperCase();
-  final hex = RegExp(r'^#?([0-9A-Fa-f]{6})$').firstMatch(v);
+  if (cm != null) {
+    final alpha = cm.group(1)!.toUpperCase();
+    final rgb = cm.group(2)!.toUpperCase();
+    return alpha == 'FF' ? rgb : '$alpha$rgb';
+  }
+  final hex = RegExp(r'^#?([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$').firstMatch(v);
   if (hex != null) return hex.group(1)!.toUpperCase();
   if (v.length >= 2 && (v.startsWith("'") || v.startsWith('"'))) {
     return v.substring(1, v.length - 1);

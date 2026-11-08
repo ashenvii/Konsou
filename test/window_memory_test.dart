@@ -29,6 +29,16 @@ void main() {
     expect(await WindowMemory.load(), isNull);
   });
 
+  test('a value of the wrong type gives null instead of throwing', () async {
+    SharedPreferences.setMockInitialValues({
+      'window.width': 'wide',
+      'window.height': 700.0,
+      'window.x': 10.0,
+      'window.y': 10.0,
+    });
+    expect(await WindowMemory.load(), isNull);
+  });
+
   test('a zero or negative size is ignored', () async {
     SharedPreferences.setMockInitialValues({
       'window.width': 0.0,

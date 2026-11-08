@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/icons/app_icons.dart';
 import 'package:konsou/icons/icon_def.dart';
@@ -7,6 +9,13 @@ void main() {
     for (final entry in AppIcons.all.entries) {
       test(entry.key, () => expect(entry.value.badEdges(), isEmpty));
     }
+  });
+
+  test('every icon declared in app_icons.dart is listed in AppIcons.all', () {
+    final declared = RegExp(r'static const \w+ = IconDef\(')
+        .allMatches(File('lib/icons/app_icons.dart').readAsStringSync())
+        .length;
+    expect(AppIcons.all.length, declared);
   });
 
   group('the check itself', () {

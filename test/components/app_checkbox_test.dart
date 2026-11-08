@@ -50,6 +50,21 @@ void main() {
     expect(seen, [CheckValue.checked, CheckValue.excluded, CheckValue.empty]);
   });
 
+  testWidgets('excluded is spoken as excluded', (tester) async {
+    final handle = tester.ensureSemantics();
+    await pumpWidget(
+      tester,
+      AppCheckbox(
+        value: CheckValue.excluded,
+        allowExclude: true,
+        onChanged: (_) {},
+      ),
+    );
+    expect(find.bySemanticsLabel('excluded'), findsNothing);
+    expect(tester.getSemantics(find.byType(AppCheckbox)).value, 'excluded');
+    handle.dispose();
+  });
+
   testWidgets('disabled ignores taps', (tester) async {
     await pumpWidget(
       tester,

@@ -29,13 +29,17 @@ class AppButton extends StatelessWidget {
         : (primary ? Tokens.ground : Tokens.ink);
     return Pressable(
       onPressed: onPressed,
+      focusColor: primary && enabled ? Tokens.ground : Tokens.ink,
       builder: (context, state) => Container(
         height: Tokens.controlHeight,
         padding: const EdgeInsets.symmetric(horizontal: Tokens.space4),
         color: fill,
         child: Center(
           widthFactor: 1,
-          child: Text(label, style: AppText.label(ink)),
+          child: Text(
+            label,
+            style: AppText.label(ink, bold: primary && enabled),
+          ),
         ),
       ),
     );

@@ -114,7 +114,11 @@ class _AppShellState extends State<AppShell> with WindowListener {
   Widget build(BuildContext context) {
     // The own title bar and window controls exist on Windows only.
     if (!Platform.isWindows) {
-      return const ColoredBox(color: Tokens.ground, child: _Content());
+      // Keep clear of a phone's status bar, notch and gesture bar.
+      return const ColoredBox(
+        color: Tokens.ground,
+        child: SafeArea(child: _Content()),
+      );
     }
     return DragToResizeArea(
       child: ColoredBox(

@@ -8,9 +8,9 @@ typedef GridLine = (GridPoint, GridPoint);
 /// [fills] are closed shapes painted solid, [lines] are strokes [lineWidth]
 /// units thick, and [thinLines] are strokes [thinWidth] units thick for fine
 /// detail.
-/// [shades] are closed shapes painted as a soft shadow of the line color over
-/// the fills, such as the inside of an ear. Every edge must be horizontal,
-/// vertical or 45 degrees. [badEdges] reports the ones that are not.
+/// [shades] are closed shapes painted in the line color over the fills, such
+/// as the dark inside of an ear. Every edge must be horizontal, vertical or 45
+/// degrees. [badEdges] reports the ones that are not.
 class IconDef {
   const IconDef({
     this.columns = 16,

@@ -28,8 +28,6 @@ class AppIcon extends StatelessWidget {
   }
 }
 
-const _shadeStrength = 1.0;
-
 class _IconPainter extends CustomPainter {
   _IconPainter(this.def, this.fillColor, this.lineColor);
 
@@ -53,12 +51,8 @@ class _IconPainter extends CustomPainter {
     }
 
     drawShapes(def.fills, Paint()..color = fillColor);
-    // A shade is the line color at part of its strength, so it needs no color
-    // of its own.
-    drawShapes(
-      def.shades,
-      Paint()..color = lineColor.withValues(alpha: _shadeStrength),
-    );
+    // A shade is a solid shape in the line color, drawn over the fills.
+    drawShapes(def.shades, Paint()..color = lineColor);
 
     Paint stroke(double width) => Paint()
       ..color = lineColor

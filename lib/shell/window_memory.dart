@@ -20,21 +20,28 @@ class WindowMemory {
   static const _y = 'window.y';
   static const _max = 'window.maximized';
 
+  /// Null when nothing usable is saved. A damaged preferences file or a value
+  /// of the wrong type also gives null: the window then opens at its default
+  /// size, instead of the app failing before it shows anything.
   static Future<WindowMemory?> load() async {
-    final p = await SharedPreferences.getInstance();
-    final w = p.getDouble(_w);
-    final h = p.getDouble(_h);
-    final x = p.getDouble(_x);
-    final y = p.getDouble(_y);
-    if (w == null || h == null || x == null || y == null) return null;
-    // Ignore a saved size that cannot be a real window.
-    if (!w.isFinite || !h.isFinite || w <= 0 || h <= 0) return null;
-    if (!x.isFinite || !y.isFinite) return null;
-    return WindowMemory(
-      size: Size(w, h),
-      position: Offset(x, y),
-      maximized: p.getBool(_max) ?? false,
-    );
+    try {
+      final p = await SharedPreferences.getInstance();
+      final w = p.getDouble(_w);
+      final h = p.getDouble(_h);
+      final x = p.getDouble(_x);
+      final y = p.getDouble(_y);
+      if (w == null || h == null || x == null || y == null) return null;
+      // Ignore a saved size that cannot be a real window.
+      if (!w.isFinite || !h.isFinite || w <= 0 || h <= 0) return null;
+      if (!x.isFinite || !y.isFinite) return null;
+      return WindowMemory(
+        size: Size(w, h),
+        position: Offset(x, y),
+        maximized: p.getBool(_max) ?? false,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> save() async {

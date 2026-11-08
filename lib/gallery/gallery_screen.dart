@@ -390,6 +390,7 @@ class _Sizes extends StatelessWidget {
     ('controlHeight', Tokens.controlHeight),
     ('badgeSize', Tokens.badgeSize),
     ('checkboxSize', Tokens.checkboxSize),
+    ('touchTarget', Tokens.touchTarget),
   ];
 
   @override

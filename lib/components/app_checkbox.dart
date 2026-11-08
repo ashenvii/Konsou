@@ -27,12 +27,16 @@ class AppCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Pressable(
-      onPressed: onChanged == null ? null : () => onChanged!(_next),
-      checked: value == CheckValue.checked,
-      builder: (context, state) => SizedBox.square(
-        dimension: Tokens.checkboxSize,
-        child: CustomPaint(painter: _BoxPainter(value)),
+    // Excluded is not "unchecked": say it, since only a red minus shows it.
+    return Semantics(
+      value: value == CheckValue.excluded ? 'excluded' : null,
+      child: Pressable(
+        onPressed: onChanged == null ? null : () => onChanged!(_next),
+        checked: value == CheckValue.checked,
+        builder: (context, state) => SizedBox.square(
+          dimension: Tokens.checkboxSize,
+          child: CustomPaint(painter: _BoxPainter(value)),
+        ),
       ),
     );
   }
@@ -64,19 +68,21 @@ class _BoxPainter extends CustomPainter {
       ..color = checked ? Tokens.ground : Tokens.red
       ..style = PaintingStyle.stroke
       ..strokeWidth = w;
+    // The mark was drawn for a box of checkboxSize; this scales it with the box.
+    final u = size.width / Tokens.checkboxSize;
     switch (value) {
       case CheckValue.empty:
         break;
       case CheckValue.checked:
         // Two 45 degree strokes.
         final path = Path()
-          ..moveTo(5, 10)
-          ..lineTo(8, 13)
-          ..lineTo(15, 6);
+          ..moveTo(5 * u, 10 * u)
+          ..lineTo(8 * u, 13 * u)
+          ..lineTo(15 * u, 6 * u);
         canvas.drawPath(path, mark);
       case CheckValue.excluded:
         final y = size.height / 2;
-        canvas.drawLine(Offset(5, y), Offset(size.width - 5, y), mark);
+        canvas.drawLine(Offset(5 * u, y), Offset(size.width - 5 * u, y), mark);
     }
   }
 

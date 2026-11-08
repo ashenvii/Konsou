@@ -50,4 +50,6 @@ abstract final class Tokens {
   static const double checkboxSize = 20;
   static const double checkboxBorder = 2;
   static const double focusRing = 2;
+  // Smallest area a finger can hit, on touch screens (Android guideline).
+  static const double touchTarget = 48;
 }

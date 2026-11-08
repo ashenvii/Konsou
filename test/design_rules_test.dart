@@ -14,7 +14,7 @@ void main() {
 
   // A size of 0 or 1 is not a design size (no gap, hairline, line height).
   const param =
-      r'(width|height|dimension|size|strokeWidth)\s*:\s*(?!(0|1)\b)\d';
+      r'(width|height|dimension|size|strokeWidth|minWidth|maxWidth|minHeight|maxHeight)\s*:\s*(?!(0|1)\b)\d';
   const inset =
       r'EdgeInsets\.[^;]*?\b(horizontal|vertical|left|top|right|bottom)\s*:\s*(?!0\b)\d';
   const insetAll = r'EdgeInsets\.(all|only|symmetric|fromLTRB)\(\s*(?!0\b)\d';
@@ -27,6 +27,11 @@ void main() {
       (_) => true,
     ),
     'font size number': (RegExp(r'fontSize:\s*\d'), (_) => true),
+    'Size number': (
+      RegExp(r'\bSize(\.square)?\(\s*(?!(0|1)\b)\d'),
+      // The window's own start and minimum size are not design tokens.
+      (path) => !_norm(path).endsWith('shell/window_config.dart'),
+    ),
     'layout size number': (
       RegExp('$param|$inset|$insetAll'),
       (path) => !_norm(path).contains('lib/gallery/'),
@@ -53,6 +58,18 @@ void main() {
     expect(size.hasMatch('padding: const EdgeInsets.all(12)'), isTrue);
     expect(size.hasMatch('EdgeInsets.symmetric(horizontal: 4)'), isTrue);
     expect(size.hasMatch('strokeWidth: 3'), isTrue);
+    expect(size.hasMatch('BoxConstraints(minWidth: 120)'), isTrue);
+    expect(size.hasMatch('maxHeight: 48,'), isTrue);
+    expect(
+      RegExp(r'\bSize(\.square)?\(\s*(?!(0|1)\b)\d').hasMatch('Size(300, 200)'),
+      isTrue,
+    );
+    expect(
+      RegExp(r'\bSize(\.square)?\(\s*(?!(0|1)\b)\d')
+          .hasMatch('Size.square(Tokens.x)'),
+      isFalse,
+    );
+    expect(size.hasMatch('minWidth: Tokens.badgeSize,'), isFalse);
     expect(size.hasMatch('SizedBox(width: Tokens.railWidth)'), isFalse);
     expect(size.hasMatch('height: 1,'), isFalse);
     expect(size.hasMatch('EdgeInsets.all(Tokens.space4)'), isFalse);

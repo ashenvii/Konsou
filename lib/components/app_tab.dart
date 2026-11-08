@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 
-import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import 'count_badge.dart';
 import 'pressable.dart';
+import 'weight_text.dart';
 
 /// One tab. The selected tab is a filled amber block. Put tabs side by side in
 /// a Row; the padding gives the gap.
@@ -26,6 +26,7 @@ class AppTab extends StatelessWidget {
     return Pressable(
       onPressed: onPressed,
       selected: selected,
+      focusColor: selected ? Tokens.ground : Tokens.ink,
       builder: (context, state) {
         final ink = selected
             ? Tokens.ground
@@ -37,10 +38,10 @@ class AppTab extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(label, style: AppText.label(ink)),
+              WeightText(label, color: ink, bold: selected),
               if (count != null) ...[
                 const SizedBox(width: Tokens.space2),
-                CountBadge(count!),
+                CountBadge(count!, onAccent: selected),
               ],
             ],
           ),

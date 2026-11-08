@@ -1,47 +1,49 @@
 import 'package:flutter/widgets.dart';
 
+import '../components/pressable.dart';
 import '../design/tokens.dart';
 
 enum WindowGlyph { minimize, maximize, restore, close }
 
 /// One of the three window buttons. Icons use only horizontal, vertical and
 /// 45 degree lines. Hover brightens the icon, and the close icon turns red.
-class WindowButton extends StatefulWidget {
+/// Built on [Pressable], so the keyboard reaches it and it has a spoken name.
+class WindowButton extends StatelessWidget {
   const WindowButton({super.key, required this.glyph, required this.onPressed});
 
   final WindowGlyph glyph;
   final VoidCallback onPressed;
 
-  @override
-  State<WindowButton> createState() => _WindowButtonState();
-}
-
-class _WindowButtonState extends State<WindowButton> {
-  bool _hover = false;
+  String get _label => switch (glyph) {
+    WindowGlyph.minimize => 'Minimize',
+    WindowGlyph.maximize => 'Maximize',
+    WindowGlyph.restore => 'Restore',
+    WindowGlyph.close => 'Close',
+  };
 
   @override
   Widget build(BuildContext context) {
-    final isClose = widget.glyph == WindowGlyph.close;
-    final color = !_hover
-        ? Tokens.inkMuted
-        : (isClose ? Tokens.red : Tokens.ink);
-    return MouseRegion(
-      cursor: SystemMouseCursors.basic,
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onPressed,
-        child: SizedBox(
-          width: Tokens.windowButtonWidth,
-          height: Tokens.barHeight,
-          child: Center(
-            child: CustomPaint(
-              size: const Size.square(Tokens.windowIconSize),
-              painter: _GlyphPainter(widget.glyph, color),
+    final isClose = glyph == WindowGlyph.close;
+    return Semantics(
+      label: _label,
+      child: Pressable(
+        onPressed: onPressed,
+        cursor: SystemMouseCursors.basic,
+        builder: (context, state) {
+          final color = !state.hovered
+              ? Tokens.inkMuted
+              : (isClose ? Tokens.red : Tokens.ink);
+          return SizedBox(
+            width: Tokens.windowButtonWidth,
+            height: Tokens.barHeight,
+            child: Center(
+              child: CustomPaint(
+                size: const Size.square(Tokens.windowIconSize),
+                painter: _GlyphPainter(glyph, color),
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

@@ -68,6 +68,21 @@ void main() {
     expect(tokenProblems(dart, _good), isEmpty);
   });
 
+  test('a declaration wrapped over two lines is still read', () {
+    const wrapped = '''
+abstract final class Tokens {
+  static const Color ground =
+      Color(0xFF080D10);
+}
+''';
+    expect(readDartTokens(wrapped), {'ground': '080D10'});
+  });
+
+  test('a change of alpha is a problem', () {
+    final dart = _dart.replaceAll('0xFF080D10', '0x80080D10');
+    expect(tokenProblems(dart, _good), hasLength(1));
+  });
+
   test('no index section is a problem', () {
     expect(tokenProblems(_dart, '# Tokens\n'), hasLength(1));
   });
