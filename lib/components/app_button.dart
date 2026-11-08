@@ -38,6 +38,9 @@ class AppButton extends StatelessWidget {
           widthFactor: 1,
           child: Text(
             label,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
             style: AppText.label(ink, bold: primary && enabled),
           ),
         ),

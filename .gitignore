@@ -69,5 +69,8 @@ android/app/debug
 android/app/profile
 android/app/release
 
+# Flutter DevTools writes this on its own
+devtools_options.yaml
+
 # Resource compiler temp files
 windows/runner/RC??????

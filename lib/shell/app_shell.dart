@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../design/tokens.dart';
-import '../gallery/gallery_screen.dart';
 import 'window_buttons.dart';
 import 'window_config.dart';
 import 'window_memory.dart';
 
 /// The frame around every screen: top bar (also the title bar), left rail and
-/// the content area. Empty for now. Layout comes from
+/// the content area, which shows [child]. Layout comes from
 /// notes/design/screens/shell.md.
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, required this.child});
+
+  final Widget child;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -55,7 +55,11 @@ class _AppShellState extends State<AppShell> with WindowListener {
     // Save a change made in the last moments before quitting.
     if (_saveTimer?.isActive ?? false) {
       _saveTimer!.cancel();
-      await _save();
+      try {
+        await _save();
+      } catch (_) {
+        // Losing the last window position must never stop the app closing.
+      }
     }
     await windowManager.close();
   }
@@ -115,9 +119,9 @@ class _AppShellState extends State<AppShell> with WindowListener {
     // The own title bar and window controls exist on Windows only.
     if (!Platform.isWindows) {
       // Keep clear of a phone's status bar, notch and gesture bar.
-      return const ColoredBox(
+      return ColoredBox(
         color: Tokens.ground,
-        child: SafeArea(child: _Content()),
+        child: SafeArea(child: widget.child),
       );
     }
     return DragToResizeArea(
@@ -131,11 +135,11 @@ class _AppShellState extends State<AppShell> with WindowListener {
               onToggleMaximize: _toggleMaximize,
               onClose: _close,
             ),
-            const Expanded(
+            Expanded(
               child: Row(
                 children: [
-                  SizedBox(width: Tokens.railWidth),
-                  Expanded(child: _Content()),
+                  const SizedBox(width: Tokens.railWidth),
+                  Expanded(child: widget.child),
                 ],
               ),
             ),
@@ -213,26 +217,6 @@ class _TopBar extends StatelessWidget {
           ),
           WindowButton(glyph: WindowGlyph.close, onPressed: onClose),
         ],
-      ),
-    );
-  }
-}
-
-class _Content extends StatelessWidget {
-  const _Content();
-
-  @override
-  Widget build(BuildContext context) {
-    // The gallery is the first screen in debug builds.
-    if (kDebugMode) return const GalleryScreen();
-    return const Center(
-      child: Text(
-        'Window shell. Nothing here yet.',
-        style: TextStyle(
-          fontFamily: Tokens.mono,
-          fontSize: Tokens.text2,
-          color: Tokens.inkSoft,
-        ),
       ),
     );
   }

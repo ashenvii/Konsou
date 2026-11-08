@@ -62,7 +62,8 @@ class _GlyphPainter extends CustomPainter {
       ..color = color
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke
-      ..isAntiAlias = false;
+      // Square lines stay sharp; only the close cross is diagonal.
+      ..isAntiAlias = glyph == WindowGlyph.close;
     switch (glyph) {
       case WindowGlyph.minimize:
         canvas.drawLine(Offset(0, s / 2), Offset(s, s / 2), line);
@@ -73,12 +74,8 @@ class _GlyphPainter extends CustomPainter {
         canvas.drawLine(const Offset(2.5, 0.5), Offset(s - 0.5, 0.5), line);
         canvas.drawLine(Offset(s - 0.5, 0.5), Offset(s - 0.5, s - 2.5), line);
       case WindowGlyph.close:
-        final diag = Paint()
-          ..color = color
-          ..strokeWidth = 1
-          ..style = PaintingStyle.stroke;
-        canvas.drawLine(Offset.zero, Offset(s, s), diag);
-        canvas.drawLine(Offset(s, 0), Offset(0, s), diag);
+        canvas.drawLine(Offset.zero, Offset(s, s), line);
+        canvas.drawLine(Offset(s, 0), Offset(0, s), line);
     }
   }
 

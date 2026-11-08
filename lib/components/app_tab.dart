@@ -38,7 +38,7 @@ class AppTab extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              WeightText(label, color: ink, bold: selected),
+              Flexible(child: WeightText(label, color: ink, bold: selected)),
               if (count != null) ...[
                 const SizedBox(width: Tokens.space2),
                 CountBadge(count!, onAccent: selected),

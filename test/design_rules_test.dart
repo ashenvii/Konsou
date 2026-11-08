@@ -18,6 +18,7 @@ void main() {
   const inset =
       r'EdgeInsets\.[^;]*?\b(horizontal|vertical|left|top|right|bottom)\s*:\s*(?!0\b)\d';
   const insetAll = r'EdgeInsets\.(all|only|symmetric|fromLTRB)\(\s*(?!0\b)\d';
+  final sizeNumber = RegExp(r'\bSize(\.square)?\(\s*(?!(0|1)\b)\d');
 
   final rules = <String, (RegExp, bool Function(String path))>{
     'color literal': (RegExp(r'Color\(0x'), (_) => true),
@@ -28,7 +29,7 @@ void main() {
     ),
     'font size number': (RegExp(r'fontSize:\s*\d'), (_) => true),
     'Size number': (
-      RegExp(r'\bSize(\.square)?\(\s*(?!(0|1)\b)\d'),
+      sizeNumber,
       // The window's own start and minimum size are not design tokens.
       (path) => !_norm(path).endsWith('shell/window_config.dart'),
     ),
@@ -60,15 +61,8 @@ void main() {
     expect(size.hasMatch('strokeWidth: 3'), isTrue);
     expect(size.hasMatch('BoxConstraints(minWidth: 120)'), isTrue);
     expect(size.hasMatch('maxHeight: 48,'), isTrue);
-    expect(
-      RegExp(r'\bSize(\.square)?\(\s*(?!(0|1)\b)\d').hasMatch('Size(300, 200)'),
-      isTrue,
-    );
-    expect(
-      RegExp(r'\bSize(\.square)?\(\s*(?!(0|1)\b)\d')
-          .hasMatch('Size.square(Tokens.x)'),
-      isFalse,
-    );
+    expect(sizeNumber.hasMatch('Size(300, 200)'), isTrue);
+    expect(sizeNumber.hasMatch('Size.square(Tokens.x)'), isFalse);
     expect(size.hasMatch('minWidth: Tokens.badgeSize,'), isFalse);
     expect(size.hasMatch('SizedBox(width: Tokens.railWidth)'), isFalse);
     expect(size.hasMatch('height: 1,'), isFalse);

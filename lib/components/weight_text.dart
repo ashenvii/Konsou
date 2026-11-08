@@ -4,7 +4,8 @@ import '../design/text_styles.dart';
 
 /// A label that gets bold when [bold] is true without changing its width. The
 /// box is always as wide as the bold text, so a row of tabs does not shift when
-/// the selection moves.
+/// the selection moves. In a space too small for it, it shrinks and ends in an
+/// ellipsis (put it in a Flexible inside a Row).
 class WeightText extends StatelessWidget {
   const WeightText(
     this.text, {
@@ -35,7 +36,7 @@ class WeightText extends StatelessWidget {
           text,
           maxLines: 1,
           softWrap: false,
-          overflow: TextOverflow.visible,
+          overflow: TextOverflow.ellipsis,
           style: AppText.label(color, bold: bold),
         ),
       ),

@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'design/tokens.dart';
+import 'gallery/gallery_screen.dart';
 import 'shell/app_shell.dart';
 import 'shell/native_window.dart';
 import 'shell/window_config.dart';
@@ -61,7 +63,27 @@ class KonsouApp extends StatelessWidget {
           fontSize: Tokens.text3,
           color: Tokens.ink,
         ),
-        child: AppShell(),
+        child: AppShell(child: _FirstScreen()),
+      ),
+    );
+  }
+}
+
+/// The gallery is the first screen in debug builds.
+class _FirstScreen extends StatelessWidget {
+  const _FirstScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    if (kDebugMode) return const GalleryScreen();
+    return const Center(
+      child: Text(
+        'Window shell. Nothing here yet.',
+        style: TextStyle(
+          fontFamily: Tokens.mono,
+          fontSize: Tokens.text2,
+          color: Tokens.inkSoft,
+        ),
       ),
     );
   }

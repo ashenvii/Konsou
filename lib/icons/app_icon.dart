@@ -42,7 +42,8 @@ class _IconPainter extends CustomPainter {
 
     void drawShapes(List<List<GridPoint>> shapes, Paint paint) {
       for (final shape in shapes) {
-        final path = Path()..moveTo(at(shape.first).dx, at(shape.first).dy);
+        final start = at(shape.first);
+        final path = Path()..moveTo(start.dx, start.dy);
         for (final p in shape.skip(1)) {
           path.lineTo(at(p).dx, at(p).dy);
         }
