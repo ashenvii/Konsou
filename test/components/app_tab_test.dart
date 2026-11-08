@@ -44,9 +44,6 @@ void main() {
       AppTab(label: 'For you', selected: false, onPressed: () {}),
     );
     final text = tester.getSize(find.text('For you')).width;
-    expect(
-      tester.getSize(find.byType(AppTab)).width,
-      text + 2 * Tokens.space4,
-    );
+    expect(tester.getSize(find.byType(AppTab)).width, text + 2 * Tokens.space4);
   });
 }

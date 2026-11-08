@@ -25,6 +25,17 @@ void main() {
       expect(bad.badEdges(), hasLength(2));
     });
 
+    test('catches a bad edge in a shade or a thin line', () {
+      const bad = IconDef(
+        shades: [
+          [(0, 0), (4, 1), (0, 4)],
+        ],
+        thinLines: [((0, 0), (5, 2))],
+      );
+      // Two edges of the shade are off angle, plus the thin line.
+      expect(bad.badEdges(), hasLength(3));
+    });
+
     test('catches a zero length line and a point off the grid', () {
       const bad = IconDef(lines: [((3, 3), (3, 3)), ((0, 0), (20, 0))]);
       expect(bad.badEdges(), hasLength(2));

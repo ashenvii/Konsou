@@ -13,8 +13,10 @@ void main() {
       .where((f) => !_norm(f.path).endsWith('design/tokens.dart'));
 
   // A size of 0 or 1 is not a design size (no gap, hairline, line height).
-  const param = r'(width|height|dimension|size|strokeWidth)\s*:\s*(?!(0|1)\b)\d';
-  const inset = r'EdgeInsets\.[^;]*?\b(horizontal|vertical|left|top|right|bottom)\s*:\s*(?!0\b)\d';
+  const param =
+      r'(width|height|dimension|size|strokeWidth)\s*:\s*(?!(0|1)\b)\d';
+  const inset =
+      r'EdgeInsets\.[^;]*?\b(horizontal|vertical|left|top|right|bottom)\s*:\s*(?!0\b)\d';
   const insetAll = r'EdgeInsets\.(all|only|symmetric|fromLTRB)\(\s*(?!0\b)\d';
 
   final rules = <String, (RegExp, bool Function(String path))>{

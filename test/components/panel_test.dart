@@ -22,7 +22,10 @@ void main() {
   testWidgets('padding can be changed', (tester) async {
     await pumpWidget(
       tester,
-      const Panel(padding: Tokens.space2, child: SizedBox(width: 10, height: 10)),
+      const Panel(
+        padding: Tokens.space2,
+        child: SizedBox(width: 10, height: 10),
+      ),
     );
     expect(tester.getSize(find.byType(Panel)).width, 10 + 2 * Tokens.space2);
   });

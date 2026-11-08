@@ -7,12 +7,18 @@ import 'package:konsou/icons/app_icons.dart';
 import '../support/pump_widget.dart';
 
 void main() {
-  testWidgets('draws square at the size it is given', (tester) async {
+  testWidgets('is as wide as asked and as tall as its grid', (tester) async {
     await pumpWidget(
       tester,
       const AppIcon(AppIcons.nekomimi, size: 20, color: Tokens.mint),
     );
-    expect(tester.getSize(find.byType(AppIcon)), const Size.square(20));
+    // The face grid is 20 by 21, so at 20 wide it is 21 tall.
+    expect(tester.getSize(find.byType(AppIcon)), const Size(20, 21));
+    await pumpWidget(
+      tester,
+      const AppIcon(AppIcons.discover, size: 32, color: Tokens.mint),
+    );
+    expect(tester.getSize(find.byType(AppIcon)), const Size.square(32));
   });
 
   testWidgets('paints without errors with one or two colors', (tester) async {

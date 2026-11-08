@@ -25,115 +25,123 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(Tokens.space5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _Heading('Gallery', size: Tokens.text5),
-          const _Note('Every token and component built so far.'),
-          const _Section('Colors'),
-          const _Colors(),
-          const _Section('Type'),
-          const _Type(),
-          const _Section('Space'),
-          const _Space(),
-          const _Section('Shell sizes'),
-          const _Sizes(),
-          const _Section('Button'),
-          Wrap(
-            spacing: Tokens.space3,
-            runSpacing: Tokens.space3,
-            children: [
-              AppButton(label: 'Primary', onPressed: () {}),
-              AppButton(
-                label: 'Secondary',
-                kind: ButtonKind.secondary,
-                onPressed: () {},
-              ),
-              const AppButton(label: 'Disabled', onPressed: null),
-              const AppButton(
-                label: 'Disabled secondary',
-                kind: ButtonKind.secondary,
-                onPressed: null,
-              ),
-            ],
-          ),
-          const _Section('Tab and count badge'),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final (i, label) in ['Browse', 'For you', 'Top 10'].indexed)
-                AppTab(
-                  label: label,
-                  selected: _tab == i,
-                  onPressed: () => setState(() => _tab = i),
+    // SafeArea keeps the page clear of a phone's status bar. On desktop it
+    // adds nothing.
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(Tokens.space5),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _Heading('Gallery', size: Tokens.text5),
+            const _Note('Every token and component built so far.'),
+            const _Section('Colors'),
+            const _Colors(),
+            const _Section('Type'),
+            const _Type(),
+            const _Section('Space'),
+            const _Space(),
+            const _Section('Shell sizes'),
+            const _Sizes(),
+            const _Section('Button'),
+            Wrap(
+              spacing: Tokens.space3,
+              runSpacing: Tokens.space3,
+              children: [
+                AppButton(label: 'Primary', onPressed: () {}),
+                AppButton(
+                  label: 'Secondary',
+                  kind: ButtonKind.secondary,
+                  onPressed: () {},
                 ),
-              AppTab(
-                label: 'Watching',
-                count: 5,
-                selected: _tab == 3,
-                onPressed: () => setState(() => _tab = 3),
-              ),
-            ],
-          ),
-          const SizedBox(height: Tokens.space3),
-          const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CountBadge(5),
-              SizedBox(width: Tokens.space3),
-              CountBadge(42),
-              SizedBox(width: Tokens.space3),
-              CountBadge(250),
-            ],
-          ),
-          const _Section('Checkbox'),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const AppCheckbox(value: CheckValue.empty, onChanged: null),
-              const SizedBox(width: Tokens.space3),
-              const AppCheckbox(value: CheckValue.checked, onChanged: null),
-              const SizedBox(width: Tokens.space3),
-              const AppCheckbox(value: CheckValue.excluded, onChanged: null),
-              const SizedBox(width: Tokens.space5),
-              AppCheckbox(
-                value: _plain,
-                onChanged: (v) => setState(() => _plain = v),
-              ),
-              const SizedBox(width: Tokens.space3),
-              AppCheckbox(
-                value: _filter,
-                allowExclude: true,
-                onChanged: (v) => setState(() => _filter = v),
-              ),
-            ],
-          ),
-          const SizedBox(height: Tokens.space2),
-          const _Note(
-            'Left: empty, checked, excluded. Right: two you can click, the '
-            'second one cycles through excluded.',
-          ),
-          const _Section('Panel'),
-          const Panel(
-            child: Text(
-              'A block on the surface color. Square, no border.',
-              style: TextStyle(
-                fontFamily: Tokens.sans,
-                fontSize: Tokens.text3,
-                color: Tokens.inkSoft,
+                const AppButton(label: 'Disabled', onPressed: null),
+                const AppButton(
+                  label: 'Disabled secondary',
+                  kind: ButtonKind.secondary,
+                  onPressed: null,
+                ),
+              ],
+            ),
+            const _Section('Tab and count badge'),
+            Wrap(
+              children: [
+                for (final (i, label) in [
+                  'Browse',
+                  'For you',
+                  'Top 10',
+                ].indexed)
+                  AppTab(
+                    label: label,
+                    selected: _tab == i,
+                    onPressed: () => setState(() => _tab = i),
+                  ),
+                AppTab(
+                  label: 'Watching',
+                  count: 5,
+                  selected: _tab == 3,
+                  onPressed: () => setState(() => _tab = 3),
+                ),
+              ],
+            ),
+            const SizedBox(height: Tokens.space3),
+            const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CountBadge(5),
+                SizedBox(width: Tokens.space3),
+                CountBadge(42),
+                SizedBox(width: Tokens.space3),
+                CountBadge(250),
+              ],
+            ),
+            const _Section('Checkbox'),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppCheckbox(value: CheckValue.empty, onChanged: null),
+                const SizedBox(width: Tokens.space3),
+                const AppCheckbox(value: CheckValue.checked, onChanged: null),
+                const SizedBox(width: Tokens.space3),
+                const AppCheckbox(value: CheckValue.excluded, onChanged: null),
+                const SizedBox(width: Tokens.space5),
+                AppCheckbox(
+                  value: _plain,
+                  onChanged: (v) => setState(() => _plain = v),
+                ),
+                const SizedBox(width: Tokens.space3),
+                AppCheckbox(
+                  value: _filter,
+                  allowExclude: true,
+                  onChanged: (v) => setState(() => _filter = v),
+                ),
+              ],
+            ),
+            const SizedBox(height: Tokens.space2),
+            const _Note(
+              'Left: empty, checked, excluded. Right: two you can click, the '
+              'second one cycles through excluded.',
+            ),
+            const _Section('Panel'),
+            const Panel(
+              child: Text(
+                'A block on the surface color. Square, no border.',
+                style: TextStyle(
+                  fontFamily: Tokens.sans,
+                  fontSize: Tokens.text3,
+                  color: Tokens.inkSoft,
+                ),
               ),
             ),
-          ),
-          const _Section('Icons'),
-          const _Icons(),
-          const SizedBox(height: Tokens.space2),
-          const _Note(
-            'Straight lines on a 16 grid, only 90 and 45 degrees. Nekomimi at '
-            '20 (logo size) and 96; Discover at 20 on the amber rail item.',
-          ),
-        ],
+            const _Section('Icons'),
+            const _Icons(),
+            const SizedBox(height: Tokens.space2),
+            const _Note(
+              'Straight lines on a fixed grid, only 90 and 45 degrees. '
+              'Nekomimi at 20 (logo size) and 96; Discover at 20 on the amber '
+              'rail item.',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -248,7 +256,10 @@ class _Colors extends StatelessWidget {
                     color: color,
                     border: Border.all(color: Tokens.inkMuted),
                   ),
-                  child: const SizedBox(height: Tokens.controlHeight, width: 96),
+                  child: const SizedBox(
+                    height: Tokens.controlHeight,
+                    width: 96,
+                  ),
                 ),
                 const SizedBox(height: Tokens.space1),
                 Text(
@@ -288,25 +299,33 @@ class _Type extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: Tokens.space2),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(width: 72, child: _Note('$name ${size.toInt()}')),
-                Text(
-                  'IBM Plex Sans 0123',
-                  style: TextStyle(
-                    fontFamily: Tokens.sans,
-                    fontSize: size,
-                    color: Tokens.ink,
-                  ),
-                ),
-                const SizedBox(width: Tokens.space4),
-                Text(
-                  'EP 07 / 24',
-                  style: TextStyle(
-                    fontFamily: Tokens.mono,
-                    fontSize: size,
-                    color: Tokens.inkSoft,
+                // Wraps to a second line on a narrow screen instead of
+                // running off the edge.
+                Expanded(
+                  child: Wrap(
+                    spacing: Tokens.space4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'IBM Plex Sans 0123',
+                        style: TextStyle(
+                          fontFamily: Tokens.sans,
+                          fontSize: size,
+                          color: Tokens.ink,
+                        ),
+                      ),
+                      Text(
+                        'EP 07 / 24',
+                        style: TextStyle(
+                          fontFamily: Tokens.mono,
+                          fontSize: size,
+                          color: Tokens.inkSoft,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

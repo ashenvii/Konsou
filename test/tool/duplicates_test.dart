@@ -2,7 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../tool/duplicates.dart';
 
-String _block(String tag) => '''
+String _block(String tag) =>
+    '''
 void $tag() {
   final a = compute(1);
   final b = compute(2);
@@ -34,8 +35,10 @@ void main() {
 
   test('different code is not a duplicate', () {
     final found = findDuplicates({
-      'a.dart': 'void a() {\n${List.generate(8, (i) => '  one$i();').join('\n')}\n}',
-      'b.dart': 'void b() {\n${List.generate(8, (i) => '  two$i();').join('\n')}\n}',
+      'a.dart':
+          'void a() {\n${List.generate(8, (i) => '  one$i();').join('\n')}\n}',
+      'b.dart':
+          'void b() {\n${List.generate(8, (i) => '  two$i();').join('\n')}\n}',
     });
     expect(found, isEmpty);
   });
@@ -45,10 +48,7 @@ void main() {
         .split('\n')
         .map((l) => l.isEmpty ? l : '      // note\n\n   $l')
         .join('\n');
-    final found = findDuplicates({
-      'a.dart': _block('one'),
-      'b.dart': spaced,
-    });
+    final found = findDuplicates({'a.dart': _block('one'), 'b.dart': spaced});
     expect(found, hasLength(1));
   });
 

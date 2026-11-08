@@ -46,12 +46,16 @@ void main() {
 
   test('a token missing from tokens.md is a problem', () {
     final md = _good.replaceAll('- space1: 4\n', '');
-    expect(tokenProblems(_dart, md), ['space1 is in tokens.dart but not in tokens.md']);
+    expect(tokenProblems(_dart, md), [
+      'space1 is in tokens.dart but not in tokens.md',
+    ]);
   });
 
   test('an index entry with no token is a problem', () {
     final md = _good.replaceAll('## Questions', '- extra: 9\n\n## Questions');
-    expect(tokenProblems(_dart, md), ['extra is in tokens.md but not in tokens.dart']);
+    expect(tokenProblems(_dart, md), [
+      'extra is in tokens.md but not in tokens.dart',
+    ]);
   });
 
   test('a different value is a problem', () {

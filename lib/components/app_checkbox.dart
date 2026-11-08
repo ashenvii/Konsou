@@ -53,10 +53,7 @@ class _BoxPainter extends CustomPainter {
       ..strokeWidth = w
       ..isAntiAlias = false;
     if (checked) {
-      canvas.drawRect(
-        Offset.zero & size,
-        Paint()..color = Tokens.amber,
-      );
+      canvas.drawRect(Offset.zero & size, Paint()..color = Tokens.amber);
     }
     canvas.drawRect(
       Rect.fromLTWH(w / 2, w / 2, size.width - w, size.height - w),

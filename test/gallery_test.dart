@@ -29,6 +29,18 @@ void main() {
     expect(find.byType(AppIcon), findsWidgets);
   });
 
+  testWidgets('nothing overflows at phone width', (tester) async {
+    tester.view.physicalSize = const Size(360, 4000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pumpWidget(
+      tester,
+      const SizedBox(width: 360, height: 4000, child: GalleryScreen()),
+    );
+    // A layout overflow is reported as an exception by the test binding.
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('clicking a tab selects it', (tester) async {
     tester.view.physicalSize = const Size(1200, 4000);
     tester.view.devicePixelRatio = 1;

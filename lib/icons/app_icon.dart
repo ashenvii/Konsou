@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 
 import 'icon_def.dart';
 
-/// Draws an [IconDef] at [size]. The fills use [color]; the lines use
-/// [lineColor], or [color] when none is given.
+/// Draws an [IconDef] [size] wide, as tall as its grid is. The fills use
+/// [color]; the lines use [lineColor], or [color] when none is given.
 class AppIcon extends StatelessWidget {
   const AppIcon(
     this.def, {
@@ -20,12 +20,15 @@ class AppIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: size,
+    return SizedBox(
+      width: size,
+      height: size * def.rows / def.columns,
       child: CustomPaint(painter: _IconPainter(def, color, lineColor ?? color)),
     );
   }
 }
+
+const _shadeStrength = 1.0;
 
 class _IconPainter extends CustomPainter {
   _IconPainter(this.def, this.fillColor, this.lineColor);
@@ -36,25 +39,39 @@ class _IconPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final unit = size.width / def.grid;
+    final unit = size.width / def.columns;
     Offset at(GridPoint p) => Offset(p.$1 * unit, p.$2 * unit);
 
-    final fill = Paint()..color = fillColor;
-    for (final shape in def.fills) {
-      final path = Path()..moveTo(at(shape.first).dx, at(shape.first).dy);
-      for (final p in shape.skip(1)) {
-        path.lineTo(at(p).dx, at(p).dy);
+    void drawShapes(List<List<GridPoint>> shapes, Paint paint) {
+      for (final shape in shapes) {
+        final path = Path()..moveTo(at(shape.first).dx, at(shape.first).dy);
+        for (final p in shape.skip(1)) {
+          path.lineTo(at(p).dx, at(p).dy);
+        }
+        canvas.drawPath(path..close(), paint);
       }
-      canvas.drawPath(path..close(), fill);
     }
 
-    final stroke = Paint()
+    drawShapes(def.fills, Paint()..color = fillColor);
+    // A shade is the line color at part of its strength, so it needs no color
+    // of its own.
+    drawShapes(
+      def.shades,
+      Paint()..color = lineColor.withValues(alpha: _shadeStrength),
+    );
+
+    Paint stroke(double width) => Paint()
       ..color = lineColor
-      ..strokeWidth = unit
+      ..strokeWidth = unit * width
       ..strokeCap = StrokeCap.square
       ..style = PaintingStyle.stroke;
+    final main = stroke(def.lineWidth);
     for (final (a, b) in def.lines) {
-      canvas.drawLine(at(a), at(b), stroke);
+      canvas.drawLine(at(a), at(b), main);
+    }
+    final thin = stroke(def.thinWidth);
+    for (final (a, b) in def.thinLines) {
+      canvas.drawLine(at(a), at(b), thin);
     }
   }
 

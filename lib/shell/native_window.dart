@@ -90,10 +90,9 @@ bool restoreWindowPlacement({
         int Function(int, Pointer<_Placement>)
       >('SetWindowPlacement');
   final getStyle = user32
-      .lookupFunction<
-        IntPtr Function(IntPtr, Int32),
-        int Function(int, int)
-      >('GetWindowLongPtrW');
+      .lookupFunction<IntPtr Function(IntPtr, Int32), int Function(int, int)>(
+        'GetWindowLongPtrW',
+      );
   final setStyle = user32
       .lookupFunction<
         IntPtr Function(IntPtr, Int32, IntPtr),
@@ -138,7 +137,10 @@ bool restoreWindowPlacement({
     primary.ref.size = sizeOf<_MonitorInfo>();
     var shiftX = 0;
     var shiftY = 0;
-    if (getMonitorInfo(monitorFromPoint(origin.ref, _primaryMonitor), primary) !=
+    if (getMonitorInfo(
+          monitorFromPoint(origin.ref, _primaryMonitor),
+          primary,
+        ) !=
         0) {
       shiftX = primary.ref.work.left - primary.ref.monitor.left;
       shiftY = primary.ref.work.top - primary.ref.monitor.top;
