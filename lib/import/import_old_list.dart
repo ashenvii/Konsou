@@ -295,7 +295,7 @@ List<String> _importStatements(String? language) => [
   // details.db is a cache, so a leftover row from an earlier try is replaced
   '''
   INSERT OR REPLACE INTO details.franchise_link
-    (entry_id, root_provider, root_provider_id, is_placeholder)
+    (entry_id, franchise_provider, franchise_provider_id, is_placeholder)
   SELECT entry_id, 'anilist', franchise_root_id, 1 FROM $_imported
   WHERE franchise_root_id IS NOT NULL
   ''',

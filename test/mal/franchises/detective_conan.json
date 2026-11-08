@@ -1,0 +1,1155 @@
+{
+  "seed": 235,
+  "titles": [
+    {
+      "id": 235,
+      "title": "Meitantei Conan",
+      "title_english": "Case Closed",
+      "media_type": "tv",
+      "status": "currently_airing",
+      "start_date": "1996-01-08",
+      "num_episodes": 0,
+      "related": [
+        {
+          "id": 779,
+          "title": "Meitantei Conan Movie 01: Tokei Jikake no Matenrou",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 780,
+          "title": "Meitantei Conan Movie 02: 14-banme no Target",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 781,
+          "title": "Meitantei Conan Movie 03: Seikimatsu no Majutsushi",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 1363,
+          "title": "Meitantei Conan Movie 04: Hitomi no Naka no Ansatsusha",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 1364,
+          "title": "Meitantei Conan Movie 05: Tengoku e no Countdown",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 1365,
+          "title": "Meitantei Conan Movie 06: Baker Street no Bourei",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 1366,
+          "title": "Meitantei Conan Movie 07: Meikyuu no Crossroad",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 1367,
+          "title": "Meitantei Conan Movie 08: Ginyoku no Magician",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 1368,
+          "title": "Meitantei Conan OVA 06: Kieta Daiya wo Oe! Conan & Heiji VS Kid!",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 1369,
+          "title": "Meitantei Conan OVA 01: Conan vs. Kid vs. Yaiba - Houtou Soudatsu Daikessen!!",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 1505,
+          "title": "Meitantei Conan Movie 09: Suihei Senjou no Strategy",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 1506,
+          "title": "Meitantei Conan Movie 10: Tantei-tachi no Requiem",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 2171,
+          "title": "Meitantei Conan Movie 11: Konpeki no Jolly Roger",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 2512,
+          "title": "Meitantei Conan OVA 02: 16-nin no Yougisha!?",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 2513,
+          "title": "Meitantei Conan OVA 03: Conan to Heiji to Kieta Shounen",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 2514,
+          "title": "Meitantei Conan OVA 04: Conan to Kid to Crystal Mother",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 2515,
+          "title": "Meitantei Conan OVA 05: Target wa Kogorou!! Shounen Tanteidan Maruhi Report",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 2597,
+          "title": "Meitantei Conan OVA 07: Agasa kara no Chousenjou! Agasa vs Conan & Shounen Tanteidan",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 4447,
+          "title": "Meitantei Conan Movie 12: Senritsu no Full Score",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 5348,
+          "title": "Meitantei Conan Magic File 2: Kudou Shinichi Nazo no Kabe to Kuro Lab Jiken",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 5460,
+          "title": "Meitantei Conan Movie 13: Shikkoku no Chaser",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 5578,
+          "title": "Aoyama Goushou Tanpenshuu",
+          "relation_type": "other"
+        },
+        {
+          "id": 6115,
+          "title": "Lupin III vs. Meitantei Conan",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 6198,
+          "title": "Meitantei Conan OVA 08: Joshikousei Tantei Suzuki Sonoko no Jikenbo",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 6231,
+          "title": "Meitantei Conan Magic File 3: Shinichi to Ran Mahjong Pai to Tanabata no Omoide",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 6438,
+          "title": "Meitantei Conan OVA 09: 10-nengo no Stranger",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 6467,
+          "title": "Meitantei Conan Movie 14: Tenkuu no Lost Ship",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 7303,
+          "title": "Meitantei Conan: Kuro no Soshiki to Taiketsu no Rekishi",
+          "relation_type": "summary"
+        },
+        {
+          "id": 8310,
+          "title": "Magic Kaito",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 8331,
+          "title": "Meitantei Conan Magic File 4: Osaka Okonomiyaki Odyssey",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 8609,
+          "title": "Meitantei Conan OVA 10: Kid in Trap Island",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 9785,
+          "title": "Meitantei Conan: Conan vs. Kid - Shark & Jewel",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 9786,
+          "title": "Meitantei Conan: Conan vs. Kid - Shikkoku no Sniper",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 9963,
+          "title": "Meitantei Conan Movie 15: Chinmoku no Quarter",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 10531,
+          "title": "Meitantei Conan Magic File 5: Niigata - Tokyo Omiyage Capriccio",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 10703,
+          "title": "Meitantei Conan OVA 11: London kara no Maru Hi Shirei",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 10766,
+          "title": "Meitantei Conan vs. Wooo",
+          "relation_type": "other"
+        },
+        {
+          "id": 12117,
+          "title": "Meitantei Conan Movie 16: 11-ninme no Striker",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 13837,
+          "title": "Meitantei Conan Bonus File: Fantasista no Hana",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 13839,
+          "title": "Meitantei Conan OVA 12: Excalibur no Kiseki",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 14735,
+          "title": "Meitantei Conan Movie 17: Zekkai no Private Eye",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 18429,
+          "title": "Lupin III vs. Meitantei Conan: The Movie",
+          "relation_type": "character"
+        },
+        {
+          "id": 21419,
+          "title": "Meitantei Conan Movie 18: Ijigen no Sniper",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 21867,
+          "title": "Edogawa Conan Shissou Jiken: Shijou Saiaku no Futsukakan",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 24169,
+          "title": "Meitantei Conan: Toubousha Mouri Kogorou",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 25517,
+          "title": "Magic Kaito 1412",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 28479,
+          "title": "Meitantei Conan Movie 19: Gouka no Himawari",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 32005,
+          "title": "Meitantei Conan Movie 20: Junkoku no Nightmare",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 33145,
+          "title": "Meitantei Conan: Nazo no Suisei Kaijuu wo Oe!",
+          "relation_type": "other"
+        },
+        {
+          "id": 33148,
+          "title": "Meitantei Conan: Jomon Taiken Yatte Miyou!",
+          "relation_type": "other"
+        },
+        {
+          "id": 33149,
+          "title": "Meitantei Conan: Internet Nazo no Mail Jiken",
+          "relation_type": "other"
+        },
+        {
+          "id": 33150,
+          "title": "Meitantei Conan: Pyramid kara no Chousenjou!",
+          "relation_type": "other"
+        },
+        {
+          "id": 33151,
+          "title": "Meitantei Conan: Kodai Kyouryuu no Nazo ni Semare!",
+          "relation_type": "other"
+        },
+        {
+          "id": 33152,
+          "title": "Meitantei Conan: Machi Tanken! Doubutsu Mark wo Get Seyo!",
+          "relation_type": "other"
+        },
+        {
+          "id": 34036,
+          "title": "Meitantei Conan: Episode One - Chiisaku Natta Meitantei",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 34430,
+          "title": "Meitantei Conan Movie 21: Karakurenai no Love Letter",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 35798,
+          "title": "Meitantei Conan Movie 22: Zero no Shikkounin",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 36269,
+          "title": "Meitantei Conan: Bouhan Guide",
+          "relation_type": "other"
+        },
+        {
+          "id": 36760,
+          "title": "Meitantei Conan: Hoshikage no Majutsushi",
+          "relation_type": "other"
+        },
+        {
+          "id": 38770,
+          "title": "Meitantei Conan Movie 23: Konjou no Fist",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 39764,
+          "title": "Meitantei Conan Movie 24: Hiiro no Dangan",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 40348,
+          "title": "Shounen Sunday CM: Meitantei Conan",
+          "relation_type": "other"
+        },
+        {
+          "id": 42476,
+          "title": "Meitantei Conan: Shakunetsu no Ginga Tetsudou",
+          "relation_type": "other"
+        },
+        {
+          "id": 47413,
+          "title": "Meitantei Conan: Hiiro no Fuzai Shoumei",
+          "relation_type": "summary"
+        },
+        {
+          "id": 49320,
+          "title": "Meitantei Conan Movie 25: Halloween no Hanayome",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 49611,
+          "title": "Meitantei Conan: Necchuushou no Nazo wo Toke!",
+          "relation_type": "other"
+        },
+        {
+          "id": 50010,
+          "title": "Meitantei Conan: Hannin no Hanzawa-san",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 50012,
+          "title": "Meitantei Conan: Zero no Tea Time",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 51782,
+          "title": "Meitantei Conan: Honchou no Keiji Koi Monogatari - Kekkon Zenya",
+          "relation_type": "summary"
+        },
+        {
+          "id": 53540,
+          "title": "Meitantei Conan Movie 26: Kurogane no Submarine",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 53780,
+          "title": "Meitantei Conan: Haibara Ai Monogatari - Kurogane no Mystery Train",
+          "relation_type": "summary"
+        },
+        {
+          "id": 53976,
+          "title": "Meitantei Conan: Tantei-tachi no Starry Night",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 54864,
+          "title": "Meitantei Conan: Keisatsu Gakkou-hen Wild Police Story - Case. Furuya Rei",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 55134,
+          "title": "Meitantei Conan: TDK Video Head Cleaner",
+          "relation_type": "other"
+        },
+        {
+          "id": 56785,
+          "title": "Meitantei Conan Movie 27: 100-man Dollar no Michishirube",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 57441,
+          "title": "Meitantei Conan vs. Kaitou Kid",
+          "relation_type": "summary"
+        },
+        {
+          "id": 60445,
+          "title": "Meitantei Conan Movie 28: Sekigan no Flashback",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 62061,
+          "title": "Meitantei Conan: Senkou no Payload",
+          "relation_type": "other"
+        },
+        {
+          "id": 62387,
+          "title": "Meitantei Conan Movie 29: Highway no Datenshi",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 64359,
+          "title": "Meitantei Conan: Hanamaru na Answer",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 64913,
+          "title": "Meitantei Conan: 30-gou Satsujin Jiken",
+          "relation_type": "side_story"
+        }
+      ]
+    },
+    {
+      "id": 779,
+      "title": "Meitantei Conan Movie 01: Tokei Jikake no Matenrou",
+      "title_english": "Case Closed Movie 01: The Time Bombed Skyscraper",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "1997-04-19",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 780,
+      "title": "Meitantei Conan Movie 02: 14-banme no Target",
+      "title_english": "Case Closed Movie 02: The Fourteenth Target",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "1998-04-18",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 781,
+      "title": "Meitantei Conan Movie 03: Seikimatsu no Majutsushi",
+      "title_english": "Case Closed Movie 03: The Last Wizard of the Century",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "1999-04-17",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 1363,
+      "title": "Meitantei Conan Movie 04: Hitomi no Naka no Ansatsusha",
+      "title_english": "Case Closed Movie 04: Captured In Her Eyes",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2000-04-22",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 1364,
+      "title": "Meitantei Conan Movie 05: Tengoku e no Countdown",
+      "title_english": "Case Closed Movie 05: Countdown to Heaven",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2001-04-21",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 1365,
+      "title": "Meitantei Conan Movie 06: Baker Street no Bourei",
+      "title_english": "Case Closed Movie 06: The Phantom of Baker Street",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2002-04-20",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 1366,
+      "title": "Meitantei Conan Movie 07: Meikyuu no Crossroad",
+      "title_english": "Detective Conan Movie 07: Crossroad in the Ancient Capital",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2003-04-19",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 1367,
+      "title": "Meitantei Conan Movie 08: Ginyoku no Magician",
+      "title_english": "Detective Conan Movie 08: Magician of the Silver Sky",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2004-04-17",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 7304,
+          "title": "Meitantei Conan Movie 08: Ginyoku no Time Travel Recap",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 1368,
+      "title": "Meitantei Conan OVA 06: Kieta Daiya wo Oe! Conan & Heiji VS Kid!",
+      "title_english": "Detective Conan OVA 06: Follow the Vanished Diamond! Conan & Heiji vs. Kid!",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2006-03-15",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 1369,
+      "title": "Meitantei Conan OVA 01: Conan vs. Kid vs. Yaiba - Houtou Soudatsu Daikessen!!",
+      "title_english": "Detective Conan OVA 01: Conan VS KID VS Yaiba",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2000-10-11",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 2335,
+          "title": "Kenyuu Densetsu Yaiba",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 1505,
+      "title": "Meitantei Conan Movie 09: Suihei Senjou no Strategy",
+      "title_english": "Detective Conan Movie 09: Strategy Above the Depths",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2005-04-09",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 7471,
+          "title": "Meitantei Conan Movie 09: Suihei Senjou no Strategy Recap",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 1506,
+      "title": "Meitantei Conan Movie 10: Tantei-tachi no Requiem",
+      "title_english": "Detective Conan Movie 10: The Private Eyes' Requiem",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2006-04-15",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 7305,
+          "title": "Meitantei Conan Movie 10: Tantei-tachi no Requiem Recap",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 2171,
+      "title": "Meitantei Conan Movie 11: Konpeki no Jolly Roger",
+      "title_english": "Detective Conan Movie 11: Jolly Roger in the Deep Azure",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2007-04-21",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 2512,
+      "title": "Meitantei Conan OVA 02: 16-nin no Yougisha!?",
+      "title_english": "Detective Conan OVA 02: 16 Suspects",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2002-01-16",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 2513,
+      "title": "Meitantei Conan OVA 03: Conan to Heiji to Kieta Shounen",
+      "title_english": "Detective Conan OVA 03: Conan and Heiji and the Vanished Boy",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2003-03-12",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 2514,
+      "title": "Meitantei Conan OVA 04: Conan to Kid to Crystal Mother",
+      "title_english": "Detective Conan OVA 04: Conan and Kid and Crystal Mother",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2004-03-03",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 8310,
+          "title": "Magic Kaito",
+          "relation_type": "spin_off"
+        },
+        {
+          "id": 25517,
+          "title": "Magic Kaito 1412",
+          "relation_type": "spin_off"
+        }
+      ]
+    },
+    {
+      "id": 2515,
+      "title": "Meitantei Conan OVA 05: Target wa Kogorou!! Shounen Tanteidan Maruhi Report",
+      "title_english": "Detective Conan OVA 05: The Target is Kogoro! The Detective Boys' Secret Investigation",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2005-03-09",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 2597,
+      "title": "Meitantei Conan OVA 07: Agasa kara no Chousenjou! Agasa vs Conan & Shounen Tanteidan",
+      "title_english": "Detective Conan OVA 07: A Challenge from Agasa! Agasa vs. Conan and the Detective Boys",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2007-03-13",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 4447,
+      "title": "Meitantei Conan Movie 12: Senritsu no Full Score",
+      "title_english": "Detective Conan Movie 12: Full Score of Fear",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2008-04-19",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 5348,
+          "title": "Meitantei Conan Magic File 2: Kudou Shinichi Nazo no Kabe to Kuro Lab Jiken",
+          "relation_type": "side_story"
+        }
+      ]
+    },
+    {
+      "id": 5348,
+      "title": "Meitantei Conan Magic File 2: Kudou Shinichi Nazo no Kabe to Kuro Lab Jiken",
+      "title_english": "Detective Conan Magic File 2: Kudou Shinichi - The Case of the Mysterious Wall and the Black Lab",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2008-04-19",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 4447,
+          "title": "Meitantei Conan Movie 12: Senritsu no Full Score",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 5460,
+      "title": "Meitantei Conan Movie 13: Shikkoku no Chaser",
+      "title_english": "Detective Conan Movie 13: The Raven Chaser",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2009-04-18",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 6231,
+          "title": "Meitantei Conan Magic File 3: Shinichi to Ran Mahjong Pai to Tanabata no Omoide",
+          "relation_type": "side_story"
+        }
+      ]
+    },
+    {
+      "id": 6115,
+      "title": "Lupin III vs. Meitantei Conan",
+      "title_english": "Lupin III vs. Detective Conan",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2009-03-27",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 1412,
+          "title": "Lupin III",
+          "relation_type": "character"
+        },
+        {
+          "id": 18429,
+          "title": "Lupin III vs. Meitantei Conan: The Movie",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 18429,
+      "title": "Lupin III vs. Meitantei Conan: The Movie",
+      "title_english": "Lupin III vs. Detective Conan: The Movie",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2013-12-07",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "character"
+        },
+        {
+          "id": 1412,
+          "title": "Lupin III",
+          "relation_type": "character"
+        },
+        {
+          "id": 6115,
+          "title": "Lupin III vs. Meitantei Conan",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 6198,
+      "title": "Meitantei Conan OVA 08: Joshikousei Tantei Suzuki Sonoko no Jikenbo",
+      "title_english": "Detective Conan OVA 08: High School Girl Detective Sonoko Suzuki's Case Files",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2008-03-26",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 6231,
+      "title": "Meitantei Conan Magic File 3: Shinichi to Ran Mahjong Pai to Tanabata no Omoide",
+      "title_english": "Detective Conan Magic File 3: Shinichi and Ran - Memories of Mahjong Tiles and Tanabata",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2009-04-18",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 5460,
+          "title": "Meitantei Conan Movie 13: Shikkoku no Chaser",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 6438,
+      "title": "Meitantei Conan OVA 09: 10-nengo no Stranger",
+      "title_english": "Detective Conan OVA 09: The Stranger in 10 Years...",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2009-06-17",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 6467,
+      "title": "Meitantei Conan Movie 14: Tenkuu no Lost Ship",
+      "title_english": "Detective Conan Movie 14: The Lost Ship in the Sky",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2010-04-17",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 8331,
+          "title": "Meitantei Conan Magic File 4: Osaka Okonomiyaki Odyssey",
+          "relation_type": "side_story"
+        }
+      ]
+    },
+    {
+      "id": 7303,
+      "title": "Meitantei Conan: Kuro no Soshiki to Taiketsu no Rekishi",
+      "title_english": "Detective Conan: Black History",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2007-12-17",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "full_story"
+        }
+      ]
+    },
+    {
+      "id": 8310,
+      "title": "Magic Kaito",
+      "title_english": "",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2010-04-17",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 2514,
+          "title": "Meitantei Conan OVA 04: Conan to Kid to Crystal Mother",
+          "relation_type": "spin_off"
+        },
+        {
+          "id": 25517,
+          "title": "Magic Kaito 1412",
+          "relation_type": "alternative_version"
+        }
+      ]
+    },
+    {
+      "id": 8331,
+      "title": "Meitantei Conan Magic File 4: Osaka Okonomiyaki Odyssey",
+      "title_english": "Detective Conan Magic File 4: Osaka Okonomiyaki Odyssey",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2010-04-17",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 6467,
+          "title": "Meitantei Conan Movie 14: Tenkuu no Lost Ship",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 8609,
+      "title": "Meitantei Conan OVA 10: Kid in Trap Island",
+      "title_english": "Detective Conan OVA 10: Kid in Trap Island",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2010-04-14",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 9785,
+      "title": "Meitantei Conan: Conan vs. Kid - Shark & Jewel",
+      "title_english": "Detective Conan: Conan vs. Kid - Shark & Jewel",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2005-07-29",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 9786,
+      "title": "Meitantei Conan: Conan vs. Kid - Shikkoku no Sniper",
+      "title_english": "Detective Conan: Conan vs. Kid - Jet Black Sniper",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2006-07-28",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 9963,
+      "title": "Meitantei Conan Movie 15: Chinmoku no Quarter",
+      "title_english": "Detective Conan Movie 15: Quarter of Silence",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2011-04-16",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 10531,
+          "title": "Meitantei Conan Magic File 5: Niigata - Tokyo Omiyage Capriccio",
+          "relation_type": "side_story"
+        }
+      ]
+    },
+    {
+      "id": 10531,
+      "title": "Meitantei Conan Magic File 5: Niigata - Tokyo Omiyage Capriccio",
+      "title_english": "Detective Conan Magic File 5: Niigata - Tokyo Omiyage Capriccio",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2011-04-16",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 9963,
+          "title": "Meitantei Conan Movie 15: Chinmoku no Quarter",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 10703,
+      "title": "Meitantei Conan OVA 11: London kara no Maru Hi Shirei",
+      "title_english": "Detective Conan OVA 11: A Secret Order from London",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2011-05-30",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 12117,
+      "title": "Meitantei Conan Movie 16: 11-ninme no Striker",
+      "title_english": "Detective Conan Movie 16: The Eleventh Striker",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2012-04-14",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 13837,
+          "title": "Meitantei Conan Bonus File: Fantasista no Hana",
+          "relation_type": "side_story"
+        }
+      ]
+    },
+    {
+      "id": 13837,
+      "title": "Meitantei Conan Bonus File: Fantasista no Hana",
+      "title_english": "Detective Conan Bonus File: Fantasista Flower",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2012-04-14",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 12117,
+          "title": "Meitantei Conan Movie 16: 11-ninme no Striker",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 13839,
+      "title": "Meitantei Conan OVA 12: Excalibur no Kiseki",
+      "title_english": "Detective Conan OVA 12: The Miracle of Excalibur",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2012-05-24",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 235,
+          "title": "Meitantei Conan",
+          "relation_type": "parent_story"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,587 @@
+{
+  "seed": 5081,
+  "titles": [
+    {
+      "id": 5081,
+      "title": "Bakemonogatari",
+      "title_english": "Bakemonogatari",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2009-07-03",
+      "num_episodes": 15,
+      "related": [
+        {
+          "id": 6948,
+          "title": "Bakemonogatari Recap",
+          "relation_type": "summary"
+        },
+        {
+          "id": 11597,
+          "title": "Nisemonogatari",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 15689,
+          "title": "Nekomonogatari: Kuro",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 30514,
+          "title": "Nisekoimonogatari",
+          "relation_type": "other"
+        },
+        {
+          "id": 32268,
+          "title": "Koyomimonogatari",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 51068,
+          "title": "Manga \"Bakemonogatari\" Shaft Seisaku Tokubetsu PV",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 54209,
+          "title": "Minna to Manner wo Manabou",
+          "relation_type": "other"
+        }
+      ]
+    },
+    {
+      "id": 11597,
+      "title": "Nisemonogatari",
+      "title_english": "Nisemonogatari",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2012-01-08",
+      "num_episodes": 11,
+      "related": [
+        {
+          "id": 5081,
+          "title": "Bakemonogatari",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 17074,
+          "title": "Monogatari Series: Second Season",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 23831,
+          "title": "Mahou Shoujo Madoka☆Magica Movie 3: Hangyaku no Monogatari - Magica Quartet x Nisioisin",
+          "relation_type": "character"
+        },
+        {
+          "id": 32268,
+          "title": "Koyomimonogatari",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 36725,
+          "title": "Naisho no Hanashi",
+          "relation_type": "other"
+        }
+      ]
+    },
+    {
+      "id": 15689,
+      "title": "Nekomonogatari: Kuro",
+      "title_english": "Nekomonogatari Black",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2012-12-31",
+      "num_episodes": 4,
+      "related": [
+        {
+          "id": 5081,
+          "title": "Bakemonogatari",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 31758,
+          "title": "Kizumonogatari III: Reiketsu-hen",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 32268,
+          "title": "Koyomimonogatari",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 38971,
+          "title": "Nekomonogatari: Kuro Recap",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 17074,
+      "title": "Monogatari Series: Second Season",
+      "title_english": "Monogatari Series: Second Season",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2013-07-07",
+      "num_episodes": 26,
+      "related": [
+        {
+          "id": 11597,
+          "title": "Nisemonogatari",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 21855,
+          "title": "Hanamonogatari",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 32268,
+          "title": "Koyomimonogatari",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 37139,
+          "title": "Koyomi History",
+          "relation_type": "side_story"
+        }
+      ]
+    },
+    {
+      "id": 31758,
+      "title": "Kizumonogatari III: Reiketsu-hen",
+      "title_english": "Kizumonogatari Part 3: Cold-Blooded",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2017-01-06",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 15689,
+          "title": "Nekomonogatari: Kuro",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 31757,
+          "title": "Kizumonogatari II: Nekketsu-hen",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 56609,
+          "title": "Kizumonogatari: Koyomi Vamp",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 21855,
+      "title": "Hanamonogatari",
+      "title_english": "Hanamonogatari",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2014-08-16",
+      "num_episodes": 5,
+      "related": [
+        {
+          "id": 17074,
+          "title": "Monogatari Series: Second Season",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 28025,
+          "title": "Tsukimonogatari",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 31757,
+      "title": "Kizumonogatari II: Nekketsu-hen",
+      "title_english": "Kizumonogatari Part 2: Hot-Blooded",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2016-08-19",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 9260,
+          "title": "Kizumonogatari I: Tekketsu-hen",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 31758,
+          "title": "Kizumonogatari III: Reiketsu-hen",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 56609,
+          "title": "Kizumonogatari: Koyomi Vamp",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 28025,
+      "title": "Tsukimonogatari",
+      "title_english": "Tsukimonogatari",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2014-12-31",
+      "num_episodes": 4,
+      "related": [
+        {
+          "id": 21855,
+          "title": "Hanamonogatari",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 31181,
+          "title": "Owarimonogatari",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 32191,
+          "title": "Okitegami Kyouko no Bibouroku x Monogatari",
+          "relation_type": "other"
+        }
+      ]
+    },
+    {
+      "id": 9260,
+      "title": "Kizumonogatari I: Tekketsu-hen",
+      "title_english": "Kizumonogatari Part 1: Iron-Blooded",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2016-01-08",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 31757,
+          "title": "Kizumonogatari II: Nekketsu-hen",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 56609,
+          "title": "Kizumonogatari: Koyomi Vamp",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 31181,
+      "title": "Owarimonogatari",
+      "title_english": "Owarimonogatari",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2015-10-04",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 28025,
+          "title": "Tsukimonogatari",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 32268,
+          "title": "Koyomimonogatari",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 32268,
+      "title": "Koyomimonogatari",
+      "title_english": "Koyomimonogatari",
+      "media_type": "ona",
+      "status": "finished_airing",
+      "start_date": "2016-01-10",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 5081,
+          "title": "Bakemonogatari",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 11597,
+          "title": "Nisemonogatari",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 15689,
+          "title": "Nekomonogatari: Kuro",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 17074,
+          "title": "Monogatari Series: Second Season",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 28025,
+          "title": "Tsukimonogatari",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 31181,
+          "title": "Owarimonogatari",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 35247,
+          "title": "Owarimonogatari 2nd Season",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 35247,
+      "title": "Owarimonogatari 2nd Season",
+      "title_english": "Owarimonogatari Second Season",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2017-08-12",
+      "num_episodes": 7,
+      "related": [
+        {
+          "id": 32268,
+          "title": "Koyomimonogatari",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 36796,
+          "title": "Owarimonogatari 2nd Season Recaps",
+          "relation_type": "summary"
+        },
+        {
+          "id": 36999,
+          "title": "Zoku Owarimonogatari",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 36999,
+      "title": "Zoku Owarimonogatari",
+      "title_english": "",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2019-05-19",
+      "num_episodes": 6,
+      "related": [
+        {
+          "id": 35247,
+          "title": "Owarimonogatari 2nd Season",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 57864,
+          "title": "Monogatari Series: Off & Monster Season",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 57864,
+      "title": "Monogatari Series: Off & Monster Season",
+      "title_english": "Monogatari Series: Off & Monster Season",
+      "media_type": "ona",
+      "status": "finished_airing",
+      "start_date": "2024-07-06",
+      "num_episodes": 14,
+      "related": [
+        {
+          "id": 36999,
+          "title": "Zoku Owarimonogatari",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 59612,
+          "title": "Monogatari Series: Off & Monster Season - Zankoku Douwa: Utsukushi-hime",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 59825,
+          "title": "Undead",
+          "relation_type": "other"
+        },
+        {
+          "id": 61968,
+          "title": "Monogatari Series: Off & Monster Season - Wazamonogatari: Karen Ogre",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 61968,
+      "title": "Monogatari Series: Off & Monster Season - Wazamonogatari: Karen Ogre",
+      "title_english": "",
+      "media_type": "tv_special",
+      "status": "not_yet_aired",
+      "start_date": "2026",
+      "num_episodes": 0,
+      "related": [
+        {
+          "id": 57864,
+          "title": "Monogatari Series: Off & Monster Season",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 6948,
+      "title": "Bakemonogatari Recap",
+      "title_english": "",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2009-08-07",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 5081,
+          "title": "Bakemonogatari",
+          "relation_type": "full_story"
+        }
+      ]
+    },
+    {
+      "id": 51068,
+      "title": "Manga \"Bakemonogatari\" Shaft Seisaku Tokubetsu PV",
+      "title_english": "Bakemonogatari Shaft Special Production PV",
+      "media_type": "pv",
+      "status": "finished_airing",
+      "start_date": "2022-02-16",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 5081,
+          "title": "Bakemonogatari",
+          "relation_type": "alternative_version"
+        }
+      ]
+    },
+    {
+      "id": 38971,
+      "title": "Nekomonogatari: Kuro Recap",
+      "title_english": "Nekomonogatari Black Recap",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2013-03-06",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 15689,
+          "title": "Nekomonogatari: Kuro",
+          "relation_type": "full_story"
+        }
+      ]
+    },
+    {
+      "id": 37139,
+      "title": "Koyomi History",
+      "title_english": "",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2016-09-22",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 17074,
+          "title": "Monogatari Series: Second Season",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 56609,
+      "title": "Kizumonogatari: Koyomi Vamp",
+      "title_english": "",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2024-01-12",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 9260,
+          "title": "Kizumonogatari I: Tekketsu-hen",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 31757,
+          "title": "Kizumonogatari II: Nekketsu-hen",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 31758,
+          "title": "Kizumonogatari III: Reiketsu-hen",
+          "relation_type": "full_story"
+        }
+      ]
+    },
+    {
+      "id": 36796,
+      "title": "Owarimonogatari 2nd Season Recaps",
+      "title_english": "Owarimonogatari Second Season Recaps",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2017-08-12",
+      "num_episodes": 2,
+      "related": [
+        {
+          "id": 5081,
+          "title": "Bakemonogatari",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 9260,
+          "title": "Kizumonogatari I: Tekketsu-hen",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 11597,
+          "title": "Nisemonogatari",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 15689,
+          "title": "Nekomonogatari: Kuro",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 17074,
+          "title": "Monogatari Series: Second Season",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 28025,
+          "title": "Tsukimonogatari",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 31181,
+          "title": "Owarimonogatari",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 32268,
+          "title": "Koyomimonogatari",
+          "relation_type": "full_story"
+        }
+      ]
+    },
+    {
+      "id": 59612,
+      "title": "Monogatari Series: Off & Monster Season - Zankoku Douwa: Utsukushi-hime",
+      "title_english": "Monogatari Series: Off & Monster Season  - A Cruel Fairy Tale: The Beautiful Princess",
+      "media_type": "ona",
+      "status": "finished_airing",
+      "start_date": "2024-08-17",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 57864,
+          "title": "Monogatari Series: Off & Monster Season",
+          "relation_type": "parent_story"
+        }
+      ]
+    }
+  ]
+}

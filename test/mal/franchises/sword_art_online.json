@@ -1,0 +1,468 @@
+{
+  "seed": 11757,
+  "titles": [
+    {
+      "id": 11757,
+      "title": "Sword Art Online",
+      "title_english": "Sword Art Online",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2012-07-08",
+      "num_episodes": 25,
+      "related": [
+        {
+          "id": 16099,
+          "title": "Sword Art Online: Sword Art Offline",
+          "relation_type": "other"
+        },
+        {
+          "id": 20021,
+          "title": "Sword Art Online: Extra Edition",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 21881,
+          "title": "Sword Art Online II",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 42916,
+          "title": "Sword Art Online: Progressive Movie - Hoshi Naki Yoru no Aria",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 53588,
+          "title": "Sword Art Online: Full Dive - Opening Eizou",
+          "relation_type": "other"
+        },
+        {
+          "id": 63736,
+          "title": "Sword Art Online: Unanswered//butterfly",
+          "relation_type": "other"
+        }
+      ]
+    },
+    {
+      "id": 21881,
+      "title": "Sword Art Online II",
+      "title_english": "Sword Art Online II",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2014-07-05",
+      "num_episodes": 24,
+      "related": [
+        {
+          "id": 11757,
+          "title": "Sword Art Online",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 27891,
+          "title": "Sword Art Online II: Debriefing",
+          "relation_type": "summary"
+        },
+        {
+          "id": 28063,
+          "title": "Sword Art Online II: Sword Art Offline II",
+          "relation_type": "other"
+        },
+        {
+          "id": 31765,
+          "title": "Sword Art Online Movie: Ordinal Scale",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 36475,
+          "title": "Sword Art Online Alternative: Gun Gale Online",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 37278,
+          "title": "Sword Art Online Fatal Bullet: The Third Episode - Pilot-ban",
+          "relation_type": "other"
+        },
+        {
+          "id": 37362,
+          "title": "Sword Art Online Fatal Bullet: The Third Episode",
+          "relation_type": "other"
+        },
+        {
+          "id": 55994,
+          "title": "Sword Art Online Alternative: Gun Gale Online II",
+          "relation_type": "alternative_setting"
+        }
+      ]
+    },
+    {
+      "id": 31765,
+      "title": "Sword Art Online Movie: Ordinal Scale",
+      "title_english": "Sword Art Online the Movie: Ordinal Scale",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2017-02-18",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 21881,
+          "title": "Sword Art Online II",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 36439,
+          "title": "Sword Art Online Movie: Ordinal Scale - Sword Art Offline",
+          "relation_type": "other"
+        },
+        {
+          "id": 36474,
+          "title": "Sword Art Online: Alicization",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 36474,
+      "title": "Sword Art Online: Alicization",
+      "title_english": "Sword Art Online: Alicization",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2018-10-07",
+      "num_episodes": 24,
+      "related": [
+        {
+          "id": 31765,
+          "title": "Sword Art Online Movie: Ordinal Scale",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 39239,
+          "title": "Sword Art Online: Alicization - Recollection",
+          "relation_type": "summary"
+        },
+        {
+          "id": 39597,
+          "title": "Sword Art Online: Alicization - War of Underworld",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 40489,
+          "title": "Sword Art Online: Alicization - War of Underworld Reflection",
+          "relation_type": "summary"
+        },
+        {
+          "id": 42128,
+          "title": "He Wei Dao x Daojian Shenyu Alicization",
+          "relation_type": "other"
+        }
+      ]
+    },
+    {
+      "id": 39597,
+      "title": "Sword Art Online: Alicization - War of Underworld",
+      "title_english": "Sword Art Online: Alicization - War of Underworld",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2019-10-13",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 36474,
+          "title": "Sword Art Online: Alicization",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 40489,
+          "title": "Sword Art Online: Alicization - War of Underworld Reflection",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 40540,
+          "title": "Sword Art Online: Alicization - War of Underworld 2nd Season",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 41341,
+          "title": "Sword Art Online: Alicization - War of Underworld Recap",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 40489,
+      "title": "Sword Art Online: Alicization - War of Underworld Reflection",
+      "title_english": "",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2019-10-06",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 36474,
+          "title": "Sword Art Online: Alicization",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 39597,
+          "title": "Sword Art Online: Alicization - War of Underworld",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 40540,
+      "title": "Sword Art Online: Alicization - War of Underworld 2nd Season",
+      "title_english": "Sword Art Online: Alicization - War of Underworld Part 2",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2020-07-12",
+      "num_episodes": 11,
+      "related": [
+        {
+          "id": 39597,
+          "title": "Sword Art Online: Alicization - War of Underworld",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 41341,
+          "title": "Sword Art Online: Alicization - War of Underworld Recap",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 53529,
+          "title": "Sword Art Online Movie: Integral Domain",
+          "relation_type": "side_story"
+        }
+      ]
+    },
+    {
+      "id": 41341,
+      "title": "Sword Art Online: Alicization - War of Underworld Recap",
+      "title_english": "Sword Art Online: Alicization - War of Underworld Reminiscence",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2020-07-04",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 39597,
+          "title": "Sword Art Online: Alicization - War of Underworld",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 40540,
+          "title": "Sword Art Online: Alicization - War of Underworld 2nd Season",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 20021,
+      "title": "Sword Art Online: Extra Edition",
+      "title_english": "Sword Art Online: Extra Edition",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2013-12-31",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 11757,
+          "title": "Sword Art Online",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 21879,
+          "title": "Sword Art Online: Sword Art Offline - Extra Edition",
+          "relation_type": "other"
+        }
+      ]
+    },
+    {
+      "id": 42916,
+      "title": "Sword Art Online: Progressive Movie - Hoshi Naki Yoru no Aria",
+      "title_english": "Sword Art Online the Movie: Progressive - Aria of a Starless Night",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2021-10-30",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 11757,
+          "title": "Sword Art Online",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 50275,
+          "title": "Sword Art Online: Progressive Movie - Kuraki Yuuyami no Scherzo",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 50275,
+      "title": "Sword Art Online: Progressive Movie - Kuraki Yuuyami no Scherzo",
+      "title_english": "Sword Art Online the Movie: Progressive - Scherzo of Deep Night",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2022-10-22",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 42916,
+          "title": "Sword Art Online: Progressive Movie - Hoshi Naki Yoru no Aria",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 27891,
+      "title": "Sword Art Online II: Debriefing",
+      "title_english": "Sword Art Online II: Debriefing",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2014-10-11",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 21881,
+          "title": "Sword Art Online II",
+          "relation_type": "full_story"
+        }
+      ]
+    },
+    {
+      "id": 36475,
+      "title": "Sword Art Online Alternative: Gun Gale Online",
+      "title_english": "",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2018-04-08",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 21881,
+          "title": "Sword Art Online II",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 37278,
+          "title": "Sword Art Online Fatal Bullet: The Third Episode - Pilot-ban",
+          "relation_type": "other"
+        },
+        {
+          "id": 37362,
+          "title": "Sword Art Online Fatal Bullet: The Third Episode",
+          "relation_type": "other"
+        },
+        {
+          "id": 37831,
+          "title": "Sword Art Online Alternative: Gun Gale Online - Refrain",
+          "relation_type": "summary"
+        },
+        {
+          "id": 55994,
+          "title": "Sword Art Online Alternative: Gun Gale Online II",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 59968,
+          "title": "Sword Art Online Alternative: Gun Gale Online II - Gala",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 55994,
+      "title": "Sword Art Online Alternative: Gun Gale Online II",
+      "title_english": "Sword Art Online Alternative: Gun Gale Online II",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2024-10-05",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 21881,
+          "title": "Sword Art Online II",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 36475,
+          "title": "Sword Art Online Alternative: Gun Gale Online",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 59968,
+          "title": "Sword Art Online Alternative: Gun Gale Online II - Gala",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 59968,
+      "title": "Sword Art Online Alternative: Gun Gale Online II - Gala",
+      "title_english": "Sword Art Online Alternative: Gun Gale Online II - Gala",
+      "media_type": "ona",
+      "status": "finished_airing",
+      "start_date": "2024-09-27",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 36475,
+          "title": "Sword Art Online Alternative: Gun Gale Online",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 55994,
+          "title": "Sword Art Online Alternative: Gun Gale Online II",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 39239,
+      "title": "Sword Art Online: Alicization - Recollection",
+      "title_english": "",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2019-02-17",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 36474,
+          "title": "Sword Art Online: Alicization",
+          "relation_type": "full_story"
+        }
+      ]
+    },
+    {
+      "id": 53529,
+      "title": "Sword Art Online Movie: Integral Domain",
+      "title_english": "Sword Art Online Movie: Integral Domain",
+      "media_type": "movie",
+      "status": "not_yet_aired",
+      "start_date": "2028",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 40540,
+          "title": "Sword Art Online: Alicization - War of Underworld 2nd Season",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 37831,
+      "title": "Sword Art Online Alternative: Gun Gale Online - Refrain",
+      "title_english": "",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2018-05-13",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 36475,
+          "title": "Sword Art Online Alternative: Gun Gale Online",
+          "relation_type": "full_story"
+        }
+      ]
+    }
+  ]
+}

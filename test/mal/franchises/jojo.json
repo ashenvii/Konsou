@@ -1,0 +1,320 @@
+{
+  "seed": 14719,
+  "titles": [
+    {
+      "id": 14719,
+      "title": "JoJo no Kimyou na Bouken (TV)",
+      "title_english": "JoJo's Bizarre Adventure (2012)",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2012-10-06",
+      "num_episodes": 26,
+      "related": [
+        {
+          "id": 3603,
+          "title": "JoJo no Kimyou na Bouken: Phantom Blood",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 20899,
+          "title": "JoJo no Kimyou na Bouken Part 3: Stardust Crusaders",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 20899,
+      "title": "JoJo no Kimyou na Bouken Part 3: Stardust Crusaders",
+      "title_english": "JoJo's Bizarre Adventure: Stardust Crusaders",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2014-04-05",
+      "num_episodes": 24,
+      "related": [
+        {
+          "id": 665,
+          "title": "JoJo no Kimyou na Bouken: Adventure",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 14719,
+          "title": "JoJo no Kimyou na Bouken (TV)",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 26055,
+          "title": "JoJo no Kimyou na Bouken Part 3: Stardust Crusaders - Egypt-hen",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 26055,
+      "title": "JoJo no Kimyou na Bouken Part 3: Stardust Crusaders - Egypt-hen",
+      "title_english": "JoJo's Bizarre Adventure: Stardust Crusaders - Battle in Egypt",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2015-01-10",
+      "num_episodes": 24,
+      "related": [
+        {
+          "id": 666,
+          "title": "JoJo no Kimyou na Bouken",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 20899,
+          "title": "JoJo no Kimyou na Bouken Part 3: Stardust Crusaders",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 31933,
+          "title": "JoJo no Kimyou na Bouken Part 4: Diamond wa Kudakenai",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 31933,
+      "title": "JoJo no Kimyou na Bouken Part 4: Diamond wa Kudakenai",
+      "title_english": "JoJo's Bizarre Adventure: Diamond Is Unbreakable",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2016-04-02",
+      "num_episodes": 39,
+      "related": [
+        {
+          "id": 26055,
+          "title": "JoJo no Kimyou na Bouken Part 3: Stardust Crusaders - Egypt-hen",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 33191,
+          "title": "Kishibe Rohan wa Ugokanai",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 37991,
+          "title": "JoJo no Kimyou na Bouken Part 5: Ougon no Kaze",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 37991,
+      "title": "JoJo no Kimyou na Bouken Part 5: Ougon no Kaze",
+      "title_english": "JoJo's Bizarre Adventure: Golden Wind",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2018-10-06",
+      "num_episodes": 39,
+      "related": [
+        {
+          "id": 31933,
+          "title": "JoJo no Kimyou na Bouken Part 4: Diamond wa Kudakenai",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 38972,
+          "title": "JoJo no Kimyou na Bouken Part 5: Ougon no Kaze Recaps",
+          "relation_type": "summary"
+        },
+        {
+          "id": 48661,
+          "title": "JoJo no Kimyou na Bouken Part 6: Stone Ocean",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 48661,
+      "title": "JoJo no Kimyou na Bouken Part 6: Stone Ocean",
+      "title_english": "JoJo's Bizarre Adventure: Stone Ocean",
+      "media_type": "ona",
+      "status": "finished_airing",
+      "start_date": "2021-12-01",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 37991,
+          "title": "JoJo no Kimyou na Bouken Part 5: Ougon no Kaze",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 51367,
+          "title": "JoJo no Kimyou na Bouken Part 6: Stone Ocean Part 2",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 51367,
+      "title": "JoJo no Kimyou na Bouken Part 6: Stone Ocean Part 2",
+      "title_english": "JoJo's Bizarre Adventure: Stone Ocean Part 2",
+      "media_type": "ona",
+      "status": "finished_airing",
+      "start_date": "2022-09-01",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 48661,
+          "title": "JoJo no Kimyou na Bouken Part 6: Stone Ocean",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 53273,
+          "title": "JoJo no Kimyou na Bouken Part 6: Stone Ocean Part 3",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 53273,
+      "title": "JoJo no Kimyou na Bouken Part 6: Stone Ocean Part 3",
+      "title_english": "JoJo's Bizarre Adventure: Stone Ocean Part 3",
+      "media_type": "ona",
+      "status": "finished_airing",
+      "start_date": "2022-12-01",
+      "num_episodes": 14,
+      "related": [
+        {
+          "id": 51367,
+          "title": "JoJo no Kimyou na Bouken Part 6: Stone Ocean Part 2",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 61469,
+          "title": "Steel Ball Run: JoJo no Kimyou na Bouken",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 61469,
+      "title": "Steel Ball Run: JoJo no Kimyou na Bouken",
+      "title_english": "Steel Ball Run: JoJo's Bizarre Adventure",
+      "media_type": "ona",
+      "status": "currently_airing",
+      "start_date": "2026-03-19",
+      "num_episodes": 0,
+      "related": [
+        {
+          "id": 53273,
+          "title": "JoJo no Kimyou na Bouken Part 6: Stone Ocean Part 3",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 3603,
+      "title": "JoJo no Kimyou na Bouken: Phantom Blood",
+      "title_english": "JoJo's Bizarre Adventure: Phantom Blood",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2007-02-17",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 14719,
+          "title": "JoJo no Kimyou na Bouken (TV)",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 41306,
+          "title": "JoJo no Kimyou na Bouken: Phantom Blood Pilot",
+          "relation_type": "alternative_version"
+        }
+      ]
+    },
+    {
+      "id": 665,
+      "title": "JoJo no Kimyou na Bouken: Adventure",
+      "title_english": "JoJo's Bizarre Adventure (2000)",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2000-05-25",
+      "num_episodes": 7,
+      "related": [
+        {
+          "id": 666,
+          "title": "JoJo no Kimyou na Bouken",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 20899,
+          "title": "JoJo no Kimyou na Bouken Part 3: Stardust Crusaders",
+          "relation_type": "alternative_version"
+        }
+      ]
+    },
+    {
+      "id": 666,
+      "title": "JoJo no Kimyou na Bouken",
+      "title_english": "JoJo's Bizarre Adventure",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "1993-11-19",
+      "num_episodes": 6,
+      "related": [
+        {
+          "id": 665,
+          "title": "JoJo no Kimyou na Bouken: Adventure",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 26055,
+          "title": "JoJo no Kimyou na Bouken Part 3: Stardust Crusaders - Egypt-hen",
+          "relation_type": "alternative_version"
+        }
+      ]
+    },
+    {
+      "id": 33191,
+      "title": "Kishibe Rohan wa Ugokanai",
+      "title_english": "Thus Spoke Kishibe Rohan",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2017-09-20",
+      "num_episodes": 4,
+      "related": [
+        {
+          "id": 31933,
+          "title": "JoJo no Kimyou na Bouken Part 4: Diamond wa Kudakenai",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 38972,
+      "title": "JoJo no Kimyou na Bouken Part 5: Ougon no Kaze Recaps",
+      "title_english": "JoJo's Bizarre Adventure: Golden Wind Recaps",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2019-01-05",
+      "num_episodes": 3,
+      "related": [
+        {
+          "id": 37991,
+          "title": "JoJo no Kimyou na Bouken Part 5: Ougon no Kaze",
+          "relation_type": "full_story"
+        }
+      ]
+    },
+    {
+      "id": 41306,
+      "title": "JoJo no Kimyou na Bouken: Phantom Blood Pilot",
+      "title_english": "JoJo's Bizarre Adventure: Phantom Blood Pilot",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2004-03-28",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 3603,
+          "title": "JoJo no Kimyou na Bouken: Phantom Blood",
+          "relation_type": "alternative_version"
+        }
+      ]
+    }
+  ]
+}

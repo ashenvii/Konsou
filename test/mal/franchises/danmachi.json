@@ -1,0 +1,319 @@
+{
+  "seed": 28121,
+  "titles": [
+    {
+      "id": 28121,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon?",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2015-04-04",
+      "num_episodes": 13,
+      "related": [
+        {
+          "id": 32801,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka OVA",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 32887,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka Gaiden: Sword Oratoria",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 37347,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka II",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 37348,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka Movie: Orion no Ya",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 40064,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka II: Past & Future",
+          "relation_type": "summary"
+        },
+        {
+          "id": 52357,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka IV Episode 0",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 37347,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka II",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon? II",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2019-07-13",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 28121,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 40453,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka II OVA",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 40454,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka III",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 52357,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka IV Episode 0",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 40454,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka III",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon? III",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2020-10-03",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 37347,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka II",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 44983,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka III OVA",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 47164,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka IV: Shin Shou - Meikyuu-hen",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 52357,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka IV Episode 0",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 47164,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka IV: Shin Shou - Meikyuu-hen",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon? IV",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2022-07-23",
+      "num_episodes": 11,
+      "related": [
+        {
+          "id": 40454,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka III",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 53111,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka IV: Shin Shou - Yakusai-hen",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 53111,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka IV: Shin Shou - Yakusai-hen",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon? IV Part 2",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2023-01-07",
+      "num_episodes": 11,
+      "related": [
+        {
+          "id": 47164,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka IV: Shin Shou - Meikyuu-hen",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 57066,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka V: Houjou no Megami-hen",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 57066,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka V: Houjou no Megami-hen",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon? V",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2024-10-05",
+      "num_episodes": 15,
+      "related": [
+        {
+          "id": 53111,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka IV: Shin Shou - Yakusai-hen",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 63442,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka 6th Season",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 63442,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka 6th Season",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon? Season 6",
+      "media_type": "tv",
+      "status": "not_yet_aired",
+      "start_date": null,
+      "num_episodes": 0,
+      "related": [
+        {
+          "id": 57066,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka V: Houjou no Megami-hen",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 32801,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka OVA",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon?: Is It Wrong to Expect a Hot Spring in a Dungeon?",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2016-12-07",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 28121,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 37348,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka Movie: Orion no Ya",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 37348,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka Movie: Orion no Ya",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon?: Arrow of the Orion",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2019-02-15",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 28121,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 32887,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka Gaiden: Sword Oratoria",
+      "title_english": "Sword Oratoria: Is It Wrong to Try to Pick Up Girls in a Dungeon? On the Side",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2017-04-15",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 28121,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 40064,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka II: Past & Future",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon? II: Past & Future",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2019-07-06",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 28121,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 40453,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka II OVA",
+          "relation_type": "other"
+        }
+      ]
+    },
+    {
+      "id": 52357,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka IV Episode 0",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon? IV: Play Back",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2022-07-09",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 28121,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 37347,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka II",
+          "relation_type": "full_story"
+        },
+        {
+          "id": 40454,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka III",
+          "relation_type": "full_story"
+        }
+      ]
+    },
+    {
+      "id": 40453,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka II OVA",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon? II: Is It Wrong to go Searching for Herbs on a Deserted Island?",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2020-01-29",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 37347,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka II",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 44983,
+      "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka III OVA",
+      "title_english": "Is It Wrong to Try to Pick Up Girls in a Dungeon? III: Is It Wrong to Try to Find a Hot Spring in Orario?",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2021-04-28",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 40454,
+          "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka III",
+          "relation_type": "parent_story"
+        }
+      ]
+    }
+  ]
+}

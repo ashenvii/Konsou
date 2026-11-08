@@ -4,9 +4,6 @@ import '../data/record_database.dart';
 import 'detail_request.dart';
 import 'request_gate.dart';
 
-/// How long a gone page is left alone before it is checked again.
-const _goneRecheck = Duration(days: 30);
-
 /// Fetches details in the background, one title at a time, for entries that
 /// have none yet. It keeps no progress of its own: what still has no details
 /// is what is left.
@@ -42,7 +39,7 @@ class Trickle {
   void stop() => _stopped = true;
 
   Future<int?> _nextTitle(Set<int> skip) async {
-    final goneSince = _now().subtract(_goneRecheck).millisecondsSinceEpoch;
+    final goneSince = _now().subtract(goneRecheck).millisecondsSinceEpoch;
     final rows = await record
         .customSelect(
           '''

@@ -722,27 +722,39 @@ class FranchiseLinkTable extends Table
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL PRIMARY KEY',
   );
-  static const VerificationMeta _rootProviderMeta = const VerificationMeta(
-    'rootProvider',
+  static const VerificationMeta _franchiseProviderMeta = const VerificationMeta(
+    'franchiseProvider',
   );
-  late final GeneratedColumn<String> rootProvider = GeneratedColumn<String>(
-    'root_provider',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL',
-  );
-  static const VerificationMeta _rootProviderIdMeta = const VerificationMeta(
-    'rootProviderId',
-  );
-  late final GeneratedColumn<int> rootProviderId = GeneratedColumn<int>(
-    'root_provider_id',
+  late final GeneratedColumn<String> franchiseProvider =
+      GeneratedColumn<String>(
+        'franchise_provider',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+        $customConstraints: 'NOT NULL',
+      );
+  static const VerificationMeta _franchiseProviderIdMeta =
+      const VerificationMeta('franchiseProviderId');
+  late final GeneratedColumn<int> franchiseProviderId = GeneratedColumn<int>(
+    'franchise_provider_id',
     aliasedName,
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _isExtraMeta = const VerificationMeta(
+    'isExtra',
+  );
+  late final GeneratedColumn<bool> isExtra = GeneratedColumn<bool>(
+    'is_extra',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT FALSE',
+    defaultValue: const CustomExpression('FALSE'),
   );
   static const VerificationMeta _isPlaceholderMeta = const VerificationMeta(
     'isPlaceholder',
@@ -759,8 +771,9 @@ class FranchiseLinkTable extends Table
   @override
   List<GeneratedColumn> get $columns => [
     entryId,
-    rootProvider,
-    rootProviderId,
+    franchiseProvider,
+    franchiseProviderId,
+    isExtra,
     isPlaceholder,
   ];
   @override
@@ -783,27 +796,33 @@ class FranchiseLinkTable extends Table
     } else if (isInserting) {
       context.missing(_entryIdMeta);
     }
-    if (data.containsKey('root_provider')) {
+    if (data.containsKey('franchise_provider')) {
       context.handle(
-        _rootProviderMeta,
-        rootProvider.isAcceptableOrUnknown(
-          data['root_provider']!,
-          _rootProviderMeta,
+        _franchiseProviderMeta,
+        franchiseProvider.isAcceptableOrUnknown(
+          data['franchise_provider']!,
+          _franchiseProviderMeta,
         ),
       );
     } else if (isInserting) {
-      context.missing(_rootProviderMeta);
+      context.missing(_franchiseProviderMeta);
     }
-    if (data.containsKey('root_provider_id')) {
+    if (data.containsKey('franchise_provider_id')) {
       context.handle(
-        _rootProviderIdMeta,
-        rootProviderId.isAcceptableOrUnknown(
-          data['root_provider_id']!,
-          _rootProviderIdMeta,
+        _franchiseProviderIdMeta,
+        franchiseProviderId.isAcceptableOrUnknown(
+          data['franchise_provider_id']!,
+          _franchiseProviderIdMeta,
         ),
       );
     } else if (isInserting) {
-      context.missing(_rootProviderIdMeta);
+      context.missing(_franchiseProviderIdMeta);
+    }
+    if (data.containsKey('is_extra')) {
+      context.handle(
+        _isExtraMeta,
+        isExtra.isAcceptableOrUnknown(data['is_extra']!, _isExtraMeta),
+      );
     }
     if (data.containsKey('is_placeholder')) {
       context.handle(
@@ -827,13 +846,17 @@ class FranchiseLinkTable extends Table
         DriftSqlType.string,
         data['${effectivePrefix}entry_id'],
       )!,
-      rootProvider: attachedDatabase.typeMapping.read(
+      franchiseProvider: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}root_provider'],
+        data['${effectivePrefix}franchise_provider'],
       )!,
-      rootProviderId: attachedDatabase.typeMapping.read(
+      franchiseProviderId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
-        data['${effectivePrefix}root_provider_id'],
+        data['${effectivePrefix}franchise_provider_id'],
+      )!,
+      isExtra: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_extra'],
       )!,
       isPlaceholder: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -853,21 +876,24 @@ class FranchiseLinkTable extends Table
 
 class FranchiseLink extends DataClass implements Insertable<FranchiseLink> {
   final String entryId;
-  final String rootProvider;
-  final int rootProviderId;
+  final String franchiseProvider;
+  final int franchiseProviderId;
+  final bool isExtra;
   final bool isPlaceholder;
   const FranchiseLink({
     required this.entryId,
-    required this.rootProvider,
-    required this.rootProviderId,
+    required this.franchiseProvider,
+    required this.franchiseProviderId,
+    required this.isExtra,
     required this.isPlaceholder,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['entry_id'] = Variable<String>(entryId);
-    map['root_provider'] = Variable<String>(rootProvider);
-    map['root_provider_id'] = Variable<int>(rootProviderId);
+    map['franchise_provider'] = Variable<String>(franchiseProvider);
+    map['franchise_provider_id'] = Variable<int>(franchiseProviderId);
+    map['is_extra'] = Variable<bool>(isExtra);
     map['is_placeholder'] = Variable<bool>(isPlaceholder);
     return map;
   }
@@ -875,8 +901,9 @@ class FranchiseLink extends DataClass implements Insertable<FranchiseLink> {
   FranchiseLinkCompanion toCompanion(bool nullToAbsent) {
     return FranchiseLinkCompanion(
       entryId: Value(entryId),
-      rootProvider: Value(rootProvider),
-      rootProviderId: Value(rootProviderId),
+      franchiseProvider: Value(franchiseProvider),
+      franchiseProviderId: Value(franchiseProviderId),
+      isExtra: Value(isExtra),
       isPlaceholder: Value(isPlaceholder),
     );
   }
@@ -888,8 +915,13 @@ class FranchiseLink extends DataClass implements Insertable<FranchiseLink> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return FranchiseLink(
       entryId: serializer.fromJson<String>(json['entry_id']),
-      rootProvider: serializer.fromJson<String>(json['root_provider']),
-      rootProviderId: serializer.fromJson<int>(json['root_provider_id']),
+      franchiseProvider: serializer.fromJson<String>(
+        json['franchise_provider'],
+      ),
+      franchiseProviderId: serializer.fromJson<int>(
+        json['franchise_provider_id'],
+      ),
+      isExtra: serializer.fromJson<bool>(json['is_extra']),
       isPlaceholder: serializer.fromJson<bool>(json['is_placeholder']),
     );
   }
@@ -898,32 +930,36 @@ class FranchiseLink extends DataClass implements Insertable<FranchiseLink> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'entry_id': serializer.toJson<String>(entryId),
-      'root_provider': serializer.toJson<String>(rootProvider),
-      'root_provider_id': serializer.toJson<int>(rootProviderId),
+      'franchise_provider': serializer.toJson<String>(franchiseProvider),
+      'franchise_provider_id': serializer.toJson<int>(franchiseProviderId),
+      'is_extra': serializer.toJson<bool>(isExtra),
       'is_placeholder': serializer.toJson<bool>(isPlaceholder),
     };
   }
 
   FranchiseLink copyWith({
     String? entryId,
-    String? rootProvider,
-    int? rootProviderId,
+    String? franchiseProvider,
+    int? franchiseProviderId,
+    bool? isExtra,
     bool? isPlaceholder,
   }) => FranchiseLink(
     entryId: entryId ?? this.entryId,
-    rootProvider: rootProvider ?? this.rootProvider,
-    rootProviderId: rootProviderId ?? this.rootProviderId,
+    franchiseProvider: franchiseProvider ?? this.franchiseProvider,
+    franchiseProviderId: franchiseProviderId ?? this.franchiseProviderId,
+    isExtra: isExtra ?? this.isExtra,
     isPlaceholder: isPlaceholder ?? this.isPlaceholder,
   );
   FranchiseLink copyWithCompanion(FranchiseLinkCompanion data) {
     return FranchiseLink(
       entryId: data.entryId.present ? data.entryId.value : this.entryId,
-      rootProvider: data.rootProvider.present
-          ? data.rootProvider.value
-          : this.rootProvider,
-      rootProviderId: data.rootProviderId.present
-          ? data.rootProviderId.value
-          : this.rootProviderId,
+      franchiseProvider: data.franchiseProvider.present
+          ? data.franchiseProvider.value
+          : this.franchiseProvider,
+      franchiseProviderId: data.franchiseProviderId.present
+          ? data.franchiseProviderId.value
+          : this.franchiseProviderId,
+      isExtra: data.isExtra.present ? data.isExtra.value : this.isExtra,
       isPlaceholder: data.isPlaceholder.present
           ? data.isPlaceholder.value
           : this.isPlaceholder,
@@ -934,59 +970,72 @@ class FranchiseLink extends DataClass implements Insertable<FranchiseLink> {
   String toString() {
     return (StringBuffer('FranchiseLink(')
           ..write('entryId: $entryId, ')
-          ..write('rootProvider: $rootProvider, ')
-          ..write('rootProviderId: $rootProviderId, ')
+          ..write('franchiseProvider: $franchiseProvider, ')
+          ..write('franchiseProviderId: $franchiseProviderId, ')
+          ..write('isExtra: $isExtra, ')
           ..write('isPlaceholder: $isPlaceholder')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(entryId, rootProvider, rootProviderId, isPlaceholder);
+  int get hashCode => Object.hash(
+    entryId,
+    franchiseProvider,
+    franchiseProviderId,
+    isExtra,
+    isPlaceholder,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is FranchiseLink &&
           other.entryId == this.entryId &&
-          other.rootProvider == this.rootProvider &&
-          other.rootProviderId == this.rootProviderId &&
+          other.franchiseProvider == this.franchiseProvider &&
+          other.franchiseProviderId == this.franchiseProviderId &&
+          other.isExtra == this.isExtra &&
           other.isPlaceholder == this.isPlaceholder);
 }
 
 class FranchiseLinkCompanion extends UpdateCompanion<FranchiseLink> {
   final Value<String> entryId;
-  final Value<String> rootProvider;
-  final Value<int> rootProviderId;
+  final Value<String> franchiseProvider;
+  final Value<int> franchiseProviderId;
+  final Value<bool> isExtra;
   final Value<bool> isPlaceholder;
   final Value<int> rowid;
   const FranchiseLinkCompanion({
     this.entryId = const Value.absent(),
-    this.rootProvider = const Value.absent(),
-    this.rootProviderId = const Value.absent(),
+    this.franchiseProvider = const Value.absent(),
+    this.franchiseProviderId = const Value.absent(),
+    this.isExtra = const Value.absent(),
     this.isPlaceholder = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   FranchiseLinkCompanion.insert({
     required String entryId,
-    required String rootProvider,
-    required int rootProviderId,
+    required String franchiseProvider,
+    required int franchiseProviderId,
+    this.isExtra = const Value.absent(),
     this.isPlaceholder = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : entryId = Value(entryId),
-       rootProvider = Value(rootProvider),
-       rootProviderId = Value(rootProviderId);
+       franchiseProvider = Value(franchiseProvider),
+       franchiseProviderId = Value(franchiseProviderId);
   static Insertable<FranchiseLink> custom({
     Expression<String>? entryId,
-    Expression<String>? rootProvider,
-    Expression<int>? rootProviderId,
+    Expression<String>? franchiseProvider,
+    Expression<int>? franchiseProviderId,
+    Expression<bool>? isExtra,
     Expression<bool>? isPlaceholder,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (entryId != null) 'entry_id': entryId,
-      if (rootProvider != null) 'root_provider': rootProvider,
-      if (rootProviderId != null) 'root_provider_id': rootProviderId,
+      if (franchiseProvider != null) 'franchise_provider': franchiseProvider,
+      if (franchiseProviderId != null)
+        'franchise_provider_id': franchiseProviderId,
+      if (isExtra != null) 'is_extra': isExtra,
       if (isPlaceholder != null) 'is_placeholder': isPlaceholder,
       if (rowid != null) 'rowid': rowid,
     });
@@ -994,15 +1043,17 @@ class FranchiseLinkCompanion extends UpdateCompanion<FranchiseLink> {
 
   FranchiseLinkCompanion copyWith({
     Value<String>? entryId,
-    Value<String>? rootProvider,
-    Value<int>? rootProviderId,
+    Value<String>? franchiseProvider,
+    Value<int>? franchiseProviderId,
+    Value<bool>? isExtra,
     Value<bool>? isPlaceholder,
     Value<int>? rowid,
   }) {
     return FranchiseLinkCompanion(
       entryId: entryId ?? this.entryId,
-      rootProvider: rootProvider ?? this.rootProvider,
-      rootProviderId: rootProviderId ?? this.rootProviderId,
+      franchiseProvider: franchiseProvider ?? this.franchiseProvider,
+      franchiseProviderId: franchiseProviderId ?? this.franchiseProviderId,
+      isExtra: isExtra ?? this.isExtra,
       isPlaceholder: isPlaceholder ?? this.isPlaceholder,
       rowid: rowid ?? this.rowid,
     );
@@ -1014,11 +1065,14 @@ class FranchiseLinkCompanion extends UpdateCompanion<FranchiseLink> {
     if (entryId.present) {
       map['entry_id'] = Variable<String>(entryId.value);
     }
-    if (rootProvider.present) {
-      map['root_provider'] = Variable<String>(rootProvider.value);
+    if (franchiseProvider.present) {
+      map['franchise_provider'] = Variable<String>(franchiseProvider.value);
     }
-    if (rootProviderId.present) {
-      map['root_provider_id'] = Variable<int>(rootProviderId.value);
+    if (franchiseProviderId.present) {
+      map['franchise_provider_id'] = Variable<int>(franchiseProviderId.value);
+    }
+    if (isExtra.present) {
+      map['is_extra'] = Variable<bool>(isExtra.value);
     }
     if (isPlaceholder.present) {
       map['is_placeholder'] = Variable<bool>(isPlaceholder.value);
@@ -1033,8 +1087,9 @@ class FranchiseLinkCompanion extends UpdateCompanion<FranchiseLink> {
   String toString() {
     return (StringBuffer('FranchiseLinkCompanion(')
           ..write('entryId: $entryId, ')
-          ..write('rootProvider: $rootProvider, ')
-          ..write('rootProviderId: $rootProviderId, ')
+          ..write('franchiseProvider: $franchiseProvider, ')
+          ..write('franchiseProviderId: $franchiseProviderId, ')
+          ..write('isExtra: $isExtra, ')
           ..write('isPlaceholder: $isPlaceholder, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1322,16 +1377,27 @@ class ScanScheduleTable extends Table
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   ScanScheduleTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _entryIdMeta = const VerificationMeta(
-    'entryId',
+  static const VerificationMeta _providerMeta = const VerificationMeta(
+    'provider',
   );
-  late final GeneratedColumn<String> entryId = GeneratedColumn<String>(
-    'entry_id',
+  late final GeneratedColumn<String> provider = GeneratedColumn<String>(
+    'provider',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL PRIMARY KEY',
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _providerIdMeta = const VerificationMeta(
+    'providerId',
+  );
+  late final GeneratedColumn<int> providerId = GeneratedColumn<int>(
+    'provider_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _lastCheckAtMeta = const VerificationMeta(
     'lastCheckAt',
@@ -1369,7 +1435,8 @@ class ScanScheduleTable extends Table
   );
   @override
   List<GeneratedColumn> get $columns => [
-    entryId,
+    provider,
+    providerId,
     lastCheckAt,
     nextCheckAt,
     quietStreak,
@@ -1386,13 +1453,21 @@ class ScanScheduleTable extends Table
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('entry_id')) {
+    if (data.containsKey('provider')) {
       context.handle(
-        _entryIdMeta,
-        entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta),
+        _providerMeta,
+        provider.isAcceptableOrUnknown(data['provider']!, _providerMeta),
       );
     } else if (isInserting) {
-      context.missing(_entryIdMeta);
+      context.missing(_providerMeta);
+    }
+    if (data.containsKey('provider_id')) {
+      context.handle(
+        _providerIdMeta,
+        providerId.isAcceptableOrUnknown(data['provider_id']!, _providerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_providerIdMeta);
     }
     if (data.containsKey('last_check_at')) {
       context.handle(
@@ -1429,14 +1504,18 @@ class ScanScheduleTable extends Table
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {entryId};
+  Set<GeneratedColumn> get $primaryKey => {provider, providerId};
   @override
   ScanSchedule map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ScanSchedule(
-      entryId: attachedDatabase.typeMapping.read(
+      provider: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}entry_id'],
+        data['${effectivePrefix}provider'],
+      )!,
+      providerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}provider_id'],
       )!,
       lastCheckAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -1459,16 +1538,22 @@ class ScanScheduleTable extends Table
   }
 
   @override
+  List<String> get customConstraints => const [
+    'PRIMARY KEY(provider, provider_id)',
+  ];
+  @override
   bool get dontWriteConstraints => true;
 }
 
 class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
-  final String entryId;
+  final String provider;
+  final int providerId;
   final int lastCheckAt;
   final int nextCheckAt;
   final int quietStreak;
   const ScanSchedule({
-    required this.entryId,
+    required this.provider,
+    required this.providerId,
     required this.lastCheckAt,
     required this.nextCheckAt,
     required this.quietStreak,
@@ -1476,7 +1561,8 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['entry_id'] = Variable<String>(entryId);
+    map['provider'] = Variable<String>(provider);
+    map['provider_id'] = Variable<int>(providerId);
     map['last_check_at'] = Variable<int>(lastCheckAt);
     map['next_check_at'] = Variable<int>(nextCheckAt);
     map['quiet_streak'] = Variable<int>(quietStreak);
@@ -1485,7 +1571,8 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
 
   ScanScheduleCompanion toCompanion(bool nullToAbsent) {
     return ScanScheduleCompanion(
-      entryId: Value(entryId),
+      provider: Value(provider),
+      providerId: Value(providerId),
       lastCheckAt: Value(lastCheckAt),
       nextCheckAt: Value(nextCheckAt),
       quietStreak: Value(quietStreak),
@@ -1498,7 +1585,8 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ScanSchedule(
-      entryId: serializer.fromJson<String>(json['entry_id']),
+      provider: serializer.fromJson<String>(json['provider']),
+      providerId: serializer.fromJson<int>(json['provider_id']),
       lastCheckAt: serializer.fromJson<int>(json['last_check_at']),
       nextCheckAt: serializer.fromJson<int>(json['next_check_at']),
       quietStreak: serializer.fromJson<int>(json['quiet_streak']),
@@ -1508,7 +1596,8 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'entry_id': serializer.toJson<String>(entryId),
+      'provider': serializer.toJson<String>(provider),
+      'provider_id': serializer.toJson<int>(providerId),
       'last_check_at': serializer.toJson<int>(lastCheckAt),
       'next_check_at': serializer.toJson<int>(nextCheckAt),
       'quiet_streak': serializer.toJson<int>(quietStreak),
@@ -1516,19 +1605,24 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
   }
 
   ScanSchedule copyWith({
-    String? entryId,
+    String? provider,
+    int? providerId,
     int? lastCheckAt,
     int? nextCheckAt,
     int? quietStreak,
   }) => ScanSchedule(
-    entryId: entryId ?? this.entryId,
+    provider: provider ?? this.provider,
+    providerId: providerId ?? this.providerId,
     lastCheckAt: lastCheckAt ?? this.lastCheckAt,
     nextCheckAt: nextCheckAt ?? this.nextCheckAt,
     quietStreak: quietStreak ?? this.quietStreak,
   );
   ScanSchedule copyWithCompanion(ScanScheduleCompanion data) {
     return ScanSchedule(
-      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      provider: data.provider.present ? data.provider.value : this.provider,
+      providerId: data.providerId.present
+          ? data.providerId.value
+          : this.providerId,
       lastCheckAt: data.lastCheckAt.present
           ? data.lastCheckAt.value
           : this.lastCheckAt,
@@ -1544,7 +1638,8 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
   @override
   String toString() {
     return (StringBuffer('ScanSchedule(')
-          ..write('entryId: $entryId, ')
+          ..write('provider: $provider, ')
+          ..write('providerId: $providerId, ')
           ..write('lastCheckAt: $lastCheckAt, ')
           ..write('nextCheckAt: $nextCheckAt, ')
           ..write('quietStreak: $quietStreak')
@@ -1554,48 +1649,55 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
 
   @override
   int get hashCode =>
-      Object.hash(entryId, lastCheckAt, nextCheckAt, quietStreak);
+      Object.hash(provider, providerId, lastCheckAt, nextCheckAt, quietStreak);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is ScanSchedule &&
-          other.entryId == this.entryId &&
+          other.provider == this.provider &&
+          other.providerId == this.providerId &&
           other.lastCheckAt == this.lastCheckAt &&
           other.nextCheckAt == this.nextCheckAt &&
           other.quietStreak == this.quietStreak);
 }
 
 class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
-  final Value<String> entryId;
+  final Value<String> provider;
+  final Value<int> providerId;
   final Value<int> lastCheckAt;
   final Value<int> nextCheckAt;
   final Value<int> quietStreak;
   final Value<int> rowid;
   const ScanScheduleCompanion({
-    this.entryId = const Value.absent(),
+    this.provider = const Value.absent(),
+    this.providerId = const Value.absent(),
     this.lastCheckAt = const Value.absent(),
     this.nextCheckAt = const Value.absent(),
     this.quietStreak = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ScanScheduleCompanion.insert({
-    required String entryId,
+    required String provider,
+    required int providerId,
     required int lastCheckAt,
     required int nextCheckAt,
     this.quietStreak = const Value.absent(),
     this.rowid = const Value.absent(),
-  }) : entryId = Value(entryId),
+  }) : provider = Value(provider),
+       providerId = Value(providerId),
        lastCheckAt = Value(lastCheckAt),
        nextCheckAt = Value(nextCheckAt);
   static Insertable<ScanSchedule> custom({
-    Expression<String>? entryId,
+    Expression<String>? provider,
+    Expression<int>? providerId,
     Expression<int>? lastCheckAt,
     Expression<int>? nextCheckAt,
     Expression<int>? quietStreak,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
-      if (entryId != null) 'entry_id': entryId,
+      if (provider != null) 'provider': provider,
+      if (providerId != null) 'provider_id': providerId,
       if (lastCheckAt != null) 'last_check_at': lastCheckAt,
       if (nextCheckAt != null) 'next_check_at': nextCheckAt,
       if (quietStreak != null) 'quiet_streak': quietStreak,
@@ -1604,14 +1706,16 @@ class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
   }
 
   ScanScheduleCompanion copyWith({
-    Value<String>? entryId,
+    Value<String>? provider,
+    Value<int>? providerId,
     Value<int>? lastCheckAt,
     Value<int>? nextCheckAt,
     Value<int>? quietStreak,
     Value<int>? rowid,
   }) {
     return ScanScheduleCompanion(
-      entryId: entryId ?? this.entryId,
+      provider: provider ?? this.provider,
+      providerId: providerId ?? this.providerId,
       lastCheckAt: lastCheckAt ?? this.lastCheckAt,
       nextCheckAt: nextCheckAt ?? this.nextCheckAt,
       quietStreak: quietStreak ?? this.quietStreak,
@@ -1622,8 +1726,11 @@ class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (entryId.present) {
-      map['entry_id'] = Variable<String>(entryId.value);
+    if (provider.present) {
+      map['provider'] = Variable<String>(provider.value);
+    }
+    if (providerId.present) {
+      map['provider_id'] = Variable<int>(providerId.value);
     }
     if (lastCheckAt.present) {
       map['last_check_at'] = Variable<int>(lastCheckAt.value);
@@ -1643,7 +1750,8 @@ class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
   @override
   String toString() {
     return (StringBuffer('ScanScheduleCompanion(')
-          ..write('entryId: $entryId, ')
+          ..write('provider: $provider, ')
+          ..write('providerId: $providerId, ')
           ..write('lastCheckAt: $lastCheckAt, ')
           ..write('nextCheckAt: $nextCheckAt, ')
           ..write('quietStreak: $quietStreak, ')
@@ -1980,9 +2088,9 @@ abstract class _$DetailsDatabase extends GeneratedDatabase {
   $DetailsDatabaseManager get managers => $DetailsDatabaseManager(this);
   late final DetailTable detail = DetailTable(this);
   late final FranchiseLinkTable franchiseLink = FranchiseLinkTable(this);
-  late final Index idxFranchiseRoot = Index(
-    'idx_franchise_root',
-    'CREATE INDEX idx_franchise_root ON franchise_link (root_provider, root_provider_id)',
+  late final Index idxFranchise = Index(
+    'idx_franchise',
+    'CREATE INDEX idx_franchise ON franchise_link (franchise_provider, franchise_provider_id)',
   );
   late final GonePageTable gonePage = GonePageTable(this);
   late final ScanScheduleTable scanSchedule = ScanScheduleTable(this);
@@ -1998,7 +2106,7 @@ abstract class _$DetailsDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     detail,
     franchiseLink,
-    idxFranchiseRoot,
+    idxFranchise,
     gonePage,
     scanSchedule,
     idxScanDue,
@@ -2335,16 +2443,18 @@ typedef $DetailTableProcessedTableManager =
 typedef $FranchiseLinkTableCreateCompanionBuilder =
     FranchiseLinkCompanion Function({
       required String entryId,
-      required String rootProvider,
-      required int rootProviderId,
+      required String franchiseProvider,
+      required int franchiseProviderId,
+      Value<bool> isExtra,
       Value<bool> isPlaceholder,
       Value<int> rowid,
     });
 typedef $FranchiseLinkTableUpdateCompanionBuilder =
     FranchiseLinkCompanion Function({
       Value<String> entryId,
-      Value<String> rootProvider,
-      Value<int> rootProviderId,
+      Value<String> franchiseProvider,
+      Value<int> franchiseProviderId,
+      Value<bool> isExtra,
       Value<bool> isPlaceholder,
       Value<int> rowid,
     });
@@ -2363,13 +2473,18 @@ class $FranchiseLinkTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get rootProvider => $composableBuilder(
-    column: $table.rootProvider,
+  ColumnFilters<String> get franchiseProvider => $composableBuilder(
+    column: $table.franchiseProvider,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get rootProviderId => $composableBuilder(
-    column: $table.rootProviderId,
+  ColumnFilters<int> get franchiseProviderId => $composableBuilder(
+    column: $table.franchiseProviderId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isExtra => $composableBuilder(
+    column: $table.isExtra,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2393,13 +2508,18 @@ class $FranchiseLinkTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get rootProvider => $composableBuilder(
-    column: $table.rootProvider,
+  ColumnOrderings<String> get franchiseProvider => $composableBuilder(
+    column: $table.franchiseProvider,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get rootProviderId => $composableBuilder(
-    column: $table.rootProviderId,
+  ColumnOrderings<int> get franchiseProviderId => $composableBuilder(
+    column: $table.franchiseProviderId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isExtra => $composableBuilder(
+    column: $table.isExtra,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -2421,15 +2541,18 @@ class $FranchiseLinkTableAnnotationComposer
   GeneratedColumn<String> get entryId =>
       $composableBuilder(column: $table.entryId, builder: (column) => column);
 
-  GeneratedColumn<String> get rootProvider => $composableBuilder(
-    column: $table.rootProvider,
+  GeneratedColumn<String> get franchiseProvider => $composableBuilder(
+    column: $table.franchiseProvider,
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get rootProviderId => $composableBuilder(
-    column: $table.rootProviderId,
+  GeneratedColumn<int> get franchiseProviderId => $composableBuilder(
+    column: $table.franchiseProviderId,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get isExtra =>
+      $composableBuilder(column: $table.isExtra, builder: (column) => column);
 
   GeneratedColumn<bool> get isPlaceholder => $composableBuilder(
     column: $table.isPlaceholder,
@@ -2475,28 +2598,32 @@ class $FranchiseLinkTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> entryId = const Value.absent(),
-                Value<String> rootProvider = const Value.absent(),
-                Value<int> rootProviderId = const Value.absent(),
+                Value<String> franchiseProvider = const Value.absent(),
+                Value<int> franchiseProviderId = const Value.absent(),
+                Value<bool> isExtra = const Value.absent(),
                 Value<bool> isPlaceholder = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FranchiseLinkCompanion(
                 entryId: entryId,
-                rootProvider: rootProvider,
-                rootProviderId: rootProviderId,
+                franchiseProvider: franchiseProvider,
+                franchiseProviderId: franchiseProviderId,
+                isExtra: isExtra,
                 isPlaceholder: isPlaceholder,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
                 required String entryId,
-                required String rootProvider,
-                required int rootProviderId,
+                required String franchiseProvider,
+                required int franchiseProviderId,
+                Value<bool> isExtra = const Value.absent(),
                 Value<bool> isPlaceholder = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FranchiseLinkCompanion.insert(
                 entryId: entryId,
-                rootProvider: rootProvider,
-                rootProviderId: rootProviderId,
+                franchiseProvider: franchiseProvider,
+                franchiseProviderId: franchiseProviderId,
+                isExtra: isExtra,
                 isPlaceholder: isPlaceholder,
                 rowid: rowid,
               ),
@@ -2704,7 +2831,8 @@ typedef $GonePageTableProcessedTableManager =
     >;
 typedef $ScanScheduleTableCreateCompanionBuilder =
     ScanScheduleCompanion Function({
-      required String entryId,
+      required String provider,
+      required int providerId,
       required int lastCheckAt,
       required int nextCheckAt,
       Value<int> quietStreak,
@@ -2712,7 +2840,8 @@ typedef $ScanScheduleTableCreateCompanionBuilder =
     });
 typedef $ScanScheduleTableUpdateCompanionBuilder =
     ScanScheduleCompanion Function({
-      Value<String> entryId,
+      Value<String> provider,
+      Value<int> providerId,
       Value<int> lastCheckAt,
       Value<int> nextCheckAt,
       Value<int> quietStreak,
@@ -2728,8 +2857,13 @@ class $ScanScheduleTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get entryId => $composableBuilder(
-    column: $table.entryId,
+  ColumnFilters<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get providerId => $composableBuilder(
+    column: $table.providerId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2758,8 +2892,13 @@ class $ScanScheduleTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get entryId => $composableBuilder(
-    column: $table.entryId,
+  ColumnOrderings<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get providerId => $composableBuilder(
+    column: $table.providerId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -2788,8 +2927,13 @@ class $ScanScheduleTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get entryId =>
-      $composableBuilder(column: $table.entryId, builder: (column) => column);
+  GeneratedColumn<String> get provider =>
+      $composableBuilder(column: $table.provider, builder: (column) => column);
+
+  GeneratedColumn<int> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get lastCheckAt => $composableBuilder(
     column: $table.lastCheckAt,
@@ -2838,13 +2982,15 @@ class $ScanScheduleTableTableManager
               $ScanScheduleTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> entryId = const Value.absent(),
+                Value<String> provider = const Value.absent(),
+                Value<int> providerId = const Value.absent(),
                 Value<int> lastCheckAt = const Value.absent(),
                 Value<int> nextCheckAt = const Value.absent(),
                 Value<int> quietStreak = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ScanScheduleCompanion(
-                entryId: entryId,
+                provider: provider,
+                providerId: providerId,
                 lastCheckAt: lastCheckAt,
                 nextCheckAt: nextCheckAt,
                 quietStreak: quietStreak,
@@ -2852,13 +2998,15 @@ class $ScanScheduleTableTableManager
               ),
           createCompanionCallback:
               ({
-                required String entryId,
+                required String provider,
+                required int providerId,
                 required int lastCheckAt,
                 required int nextCheckAt,
                 Value<int> quietStreak = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ScanScheduleCompanion.insert(
-                entryId: entryId,
+                provider: provider,
+                providerId: providerId,
                 lastCheckAt: lastCheckAt,
                 nextCheckAt: nextCheckAt,
                 quietStreak: quietStreak,

@@ -29,13 +29,14 @@ CREATE TABLE detail (
 
 -- entry_id points into konsou.db, a separate file, so there is no foreign key
 CREATE TABLE franchise_link (
-  entry_id          TEXT NOT NULL PRIMARY KEY,
-  root_provider     TEXT NOT NULL,
-  root_provider_id  INTEGER NOT NULL,
-  is_placeholder    BOOLEAN NOT NULL DEFAULT FALSE  -- true until the scan rebuilds it from mal
+  entry_id               TEXT NOT NULL PRIMARY KEY,
+  franchise_provider     TEXT NOT NULL,
+  franchise_provider_id  INTEGER NOT NULL,
+  is_extra               BOOLEAN NOT NULL DEFAULT FALSE,
+  is_placeholder         BOOLEAN NOT NULL DEFAULT FALSE  -- true until the scan rebuilds it from mal
 ) AS FranchiseLink;
 
-CREATE INDEX idx_franchise_root ON franchise_link (root_provider, root_provider_id);
+CREATE INDEX idx_franchise ON franchise_link (franchise_provider, franchise_provider_id);
 
 -- a provider page that answered 404; checked again after a while in case it returns
 CREATE TABLE gone_page (
@@ -45,11 +46,14 @@ CREATE TABLE gone_page (
   PRIMARY KEY (provider, provider_id)
 ) AS GonePage;
 
+-- one row per franchise, keyed by the title it is named after
 CREATE TABLE scan_schedule (
-  entry_id       TEXT NOT NULL PRIMARY KEY,
+  provider       TEXT NOT NULL,
+  provider_id    INTEGER NOT NULL,
   last_check_at  INTEGER NOT NULL,
   next_check_at  INTEGER NOT NULL,
-  quiet_streak   INTEGER NOT NULL DEFAULT 0
+  quiet_streak   INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (provider, provider_id)
 ) AS ScanSchedule;
 
 CREATE INDEX idx_scan_due ON scan_schedule (next_check_at);

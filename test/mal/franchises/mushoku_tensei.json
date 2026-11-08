@@ -1,0 +1,163 @@
+{
+  "seed": 39535,
+  "titles": [
+    {
+      "id": 39535,
+      "title": "Mushoku Tensei: Isekai Ittara Honki Dasu",
+      "title_english": "Mushoku Tensei: Jobless Reincarnation",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2021-01-11",
+      "num_episodes": 11,
+      "related": [
+        {
+          "id": 45576,
+          "title": "Mushoku Tensei: Isekai Ittara Honki Dasu Part 2",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 45576,
+      "title": "Mushoku Tensei: Isekai Ittara Honki Dasu Part 2",
+      "title_english": "Mushoku Tensei: Jobless Reincarnation Part 2",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2021-10-04",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 39535,
+          "title": "Mushoku Tensei: Isekai Ittara Honki Dasu",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 50360,
+          "title": "Mushoku Tensei: Isekai Ittara Honki Dasu - Eris no Goblin Toubatsu",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 55818,
+          "title": "Mushoku Tensei II: Isekai Ittara Honki Dasu - Shugo Jutsushi Fitz",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 55818,
+      "title": "Mushoku Tensei II: Isekai Ittara Honki Dasu - Shugo Jutsushi Fitz",
+      "title_english": "Mushoku Tensei: Jobless Reincarnation Season 2 - Episode 0 \"Guardian Fitz\"",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2023-07-03",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 45576,
+          "title": "Mushoku Tensei: Isekai Ittara Honki Dasu Part 2",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 51179,
+          "title": "Mushoku Tensei II: Isekai Ittara Honki Dasu",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 51179,
+      "title": "Mushoku Tensei II: Isekai Ittara Honki Dasu",
+      "title_english": "Mushoku Tensei: Jobless Reincarnation Season 2",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2023-07-10",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 55818,
+          "title": "Mushoku Tensei II: Isekai Ittara Honki Dasu - Shugo Jutsushi Fitz",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 55888,
+          "title": "Mushoku Tensei II: Isekai Ittara Honki Dasu Part 2",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 55888,
+      "title": "Mushoku Tensei II: Isekai Ittara Honki Dasu Part 2",
+      "title_english": "Mushoku Tensei: Jobless Reincarnation Season 2 Part 2",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2024-04-08",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 51179,
+          "title": "Mushoku Tensei II: Isekai Ittara Honki Dasu",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 59193,
+          "title": "Mushoku Tensei III: Isekai Ittara Honki Dasu",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 59193,
+      "title": "Mushoku Tensei III: Isekai Ittara Honki Dasu",
+      "title_english": "Mushoku Tensei: Jobless Reincarnation Season 3",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2026-07-06",
+      "num_episodes": 14,
+      "related": [
+        {
+          "id": 55888,
+          "title": "Mushoku Tensei II: Isekai Ittara Honki Dasu Part 2",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 65077,
+          "title": "Mushoku Tensei III: Isekai Ittara Honki Dasu Part 2",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 65077,
+      "title": "Mushoku Tensei III: Isekai Ittara Honki Dasu Part 2",
+      "title_english": "Mushoku Tensei: Jobless Reincarnation Season 3 Part 2",
+      "media_type": "tv",
+      "status": "not_yet_aired",
+      "start_date": "2027",
+      "num_episodes": 0,
+      "related": [
+        {
+          "id": 59193,
+          "title": "Mushoku Tensei III: Isekai Ittara Honki Dasu",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 50360,
+      "title": "Mushoku Tensei: Isekai Ittara Honki Dasu - Eris no Goblin Toubatsu",
+      "title_english": "Mushoku Tensei: Jobless Reincarnation - Eris the Goblin Slayer",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2022-03-16",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 45576,
+          "title": "Mushoku Tensei: Isekai Ittara Honki Dasu Part 2",
+          "relation_type": "parent_story"
+        }
+      ]
+    }
+  ]
+}

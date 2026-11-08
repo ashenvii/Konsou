@@ -116,7 +116,7 @@ void main() {
     test('one row comes over with its values and its seconds fixed', () async {
       await importOldDatabase(testList, databases);
       final row = await databases.record.customSelect('''
-        SELECT entry.*, franchise_link.root_provider_id
+        SELECT entry.*, franchise_link.franchise_provider_id
         FROM entry JOIN details.franchise_link USING (entry_id)
         WHERE entry_id = 'legacy-21'
       ''').getSingle();
@@ -131,7 +131,7 @@ void main() {
         'added_at': 1669585154282,
         'updated_at': 1793390531000,
         'started_at': 1670276354282,
-        'root_provider_id': 167404,
+        'franchise_provider_id': 167404,
       });
     }, skip: skip);
 

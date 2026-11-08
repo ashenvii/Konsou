@@ -1,0 +1,993 @@
+{
+  "seed": 10087,
+  "titles": [
+    {
+      "id": 10087,
+      "title": "Fate/Zero",
+      "title_english": "Fate/Zero",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2011-10-02",
+      "num_episodes": 13,
+      "related": [
+        {
+          "id": 11741,
+          "title": "Fate/Zero 2nd Season",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 13183,
+          "title": "Fate/Zero Remix",
+          "relation_type": "summary"
+        },
+        {
+          "id": 13263,
+          "title": "Fate/Zero: Onegai! Einzbern Soudanshitsu",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 19165,
+          "title": "Fate/Zero Cafe",
+          "relation_type": "other"
+        },
+        {
+          "id": 38936,
+          "title": "Lord El-Melloi II-sei no Jikenbo: Rail Zeppelin Grace Note - Hakamori to Neko to Majutsushi",
+          "relation_type": "character"
+        },
+        {
+          "id": 38959,
+          "title": "Lord El-Melloi II-sei no Jikenbo: Rail Zeppelin Grace Note",
+          "relation_type": "character"
+        }
+      ]
+    },
+    {
+      "id": 11741,
+      "title": "Fate/Zero 2nd Season",
+      "title_english": "Fate/Zero Season 2",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2012-04-08",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 6922,
+          "title": "Fate/stay night Movie: Unlimited Blade Works",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 10087,
+          "title": "Fate/Zero",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 13263,
+          "title": "Fate/Zero: Onegai! Einzbern Soudanshitsu",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 25537,
+          "title": "Fate/stay night Movie: Heaven's Feel - I. Presage Flower",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 27821,
+          "title": "Fate/stay night: Unlimited Blade Works Prologue",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 356,
+      "title": "Fate/stay night",
+      "title_english": "Fate/stay night",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2006-01-07",
+      "num_episodes": 24,
+      "related": [
+        {
+          "id": 6922,
+          "title": "Fate/stay night Movie: Unlimited Blade Works",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 7559,
+          "title": "Fate/stay night TV Reproduction",
+          "relation_type": "summary"
+        },
+        {
+          "id": 10012,
+          "title": "Carnival Phantasm",
+          "relation_type": "character"
+        },
+        {
+          "id": 11741,
+          "title": "Fate/Zero 2nd Season",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 12565,
+          "title": "Fate/Prototype",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 14829,
+          "title": "Fate/kaleid liner Prisma☆Illya",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 22297,
+          "title": "Fate/stay night: Unlimited Blade Works",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 25537,
+          "title": "Fate/stay night Movie: Heaven's Feel - I. Presage Flower",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 33047,
+          "title": "Fate/Extra: Last Encore",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 34321,
+          "title": "Fate/Grand Order: First Order",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 34662,
+          "title": "Fate/Apocrypha",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 37033,
+          "title": "Emiya-san Chi no Kyou no Gohan",
+          "relation_type": "spin_off"
+        },
+        {
+          "id": 53127,
+          "title": "Fate/strange Fake: Whispers of Dawn",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 64847,
+          "title": "Fate/strange Fake (Shin Series)",
+          "relation_type": "alternative_setting"
+        }
+      ]
+    },
+    {
+      "id": 6922,
+      "title": "Fate/stay night Movie: Unlimited Blade Works",
+      "title_english": "Fate/stay night: Unlimited Blade Works",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2010-01-23",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 11741,
+          "title": "Fate/Zero 2nd Season",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 22297,
+          "title": "Fate/stay night: Unlimited Blade Works",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 25537,
+          "title": "Fate/stay night Movie: Heaven's Feel - I. Presage Flower",
+          "relation_type": "alternative_version"
+        }
+      ]
+    },
+    {
+      "id": 25537,
+      "title": "Fate/stay night Movie: Heaven's Feel - I. Presage Flower",
+      "title_english": "Fate/stay night: Heaven's Feel - I. Presage Flower",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2017-10-14",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 6922,
+          "title": "Fate/stay night Movie: Unlimited Blade Works",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 11741,
+          "title": "Fate/Zero 2nd Season",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 22297,
+          "title": "Fate/stay night: Unlimited Blade Works",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 33049,
+          "title": "Fate/stay night Movie: Heaven's Feel - II. Lost Butterfly",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 27821,
+      "title": "Fate/stay night: Unlimited Blade Works Prologue",
+      "title_english": "Fate/stay night [Unlimited Blade Works] - Prologue",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2014-10-05",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 11741,
+          "title": "Fate/Zero 2nd Season",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 22297,
+          "title": "Fate/stay night: Unlimited Blade Works",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 33049,
+      "title": "Fate/stay night Movie: Heaven's Feel - II. Lost Butterfly",
+      "title_english": "Fate/stay night: Heaven's Feel - II. Lost Butterfly",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2019-01-12",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 25537,
+          "title": "Fate/stay night Movie: Heaven's Feel - I. Presage Flower",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 33050,
+          "title": "Fate/stay night Movie: Heaven's Feel - III. Spring Song",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 22297,
+      "title": "Fate/stay night: Unlimited Blade Works",
+      "title_english": "Fate/stay night [Unlimited Blade Works]",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2014-10-12",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 6922,
+          "title": "Fate/stay night Movie: Unlimited Blade Works",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 10012,
+          "title": "Carnival Phantasm",
+          "relation_type": "character"
+        },
+        {
+          "id": 25537,
+          "title": "Fate/stay night Movie: Heaven's Feel - I. Presage Flower",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 27821,
+          "title": "Fate/stay night: Unlimited Blade Works Prologue",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 28701,
+          "title": "Fate/stay night: Unlimited Blade Works 2nd Season",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 33050,
+      "title": "Fate/stay night Movie: Heaven's Feel - III. Spring Song",
+      "title_english": "Fate/stay night: Heaven's Feel - III. Spring Song",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2020-08-15",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 33049,
+          "title": "Fate/stay night Movie: Heaven's Feel - II. Lost Butterfly",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 28701,
+      "title": "Fate/stay night: Unlimited Blade Works 2nd Season",
+      "title_english": "Fate/stay night [Unlimited Blade Works] Season 2",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2015-04-05",
+      "num_episodes": 13,
+      "related": [
+        {
+          "id": 22297,
+          "title": "Fate/stay night: Unlimited Blade Works",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 31389,
+          "title": "Fate/stay night: Unlimited Blade Works 2nd Season - Sunny Day",
+          "relation_type": "alternative_version"
+        }
+      ]
+    },
+    {
+      "id": 13183,
+      "title": "Fate/Zero Remix",
+      "title_english": "",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2012-03-25",
+      "num_episodes": 2,
+      "related": [
+        {
+          "id": 10087,
+          "title": "Fate/Zero",
+          "relation_type": "full_story"
+        }
+      ]
+    },
+    {
+      "id": 13263,
+      "title": "Fate/Zero: Onegai! Einzbern Soudanshitsu",
+      "title_english": "Fate/Zero: Please! Einzbern Counseling Room",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2012-03-07",
+      "num_episodes": 6,
+      "related": [
+        {
+          "id": 10087,
+          "title": "Fate/Zero",
+          "relation_type": "parent_story"
+        },
+        {
+          "id": 11741,
+          "title": "Fate/Zero 2nd Season",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 7559,
+      "title": "Fate/stay night TV Reproduction",
+      "title_english": "",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2010-01-17",
+      "num_episodes": 2,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "full_story"
+        }
+      ]
+    },
+    {
+      "id": 12565,
+      "title": "Fate/Prototype",
+      "title_english": "",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2011-12-31",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 55830,
+          "title": "Fate/strange Fake",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 64847,
+          "title": "Fate/strange Fake (Shin Series)",
+          "relation_type": "alternative_version"
+        }
+      ]
+    },
+    {
+      "id": 14829,
+      "title": "Fate/kaleid liner Prisma☆Illya",
+      "title_english": "Fate/Kaleid Liner Prisma Illya",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2013-07-13",
+      "num_episodes": 10,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 18851,
+          "title": "Fate/kaleid liner Prisma☆Illya: Undoukai de Dance!",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 19109,
+          "title": "Fate/kaleid liner Prisma☆Illya Specials",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 20509,
+          "title": "Fate/kaleid liner Prisma☆Illya 2wei!",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 38897,
+          "title": "Fate/kaleid liner Prisma☆Illya: Prisma☆Phantasm",
+          "relation_type": "other"
+        }
+      ]
+    },
+    {
+      "id": 20509,
+      "title": "Fate/kaleid liner Prisma☆Illya 2wei!",
+      "title_english": "Fate/Kaleid Liner Prisma Illya 2Wei!",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2014-07-10",
+      "num_episodes": 10,
+      "related": [
+        {
+          "id": 14829,
+          "title": "Fate/kaleid liner Prisma☆Illya",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 25011,
+          "title": "Fate/kaleid liner Prisma☆Illya 2wei! Specials",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 26057,
+          "title": "Fate/kaleid liner Prisma☆Illya 2wei!: Mahou Shoujo in Onsen Ryokou",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 27525,
+          "title": "Fate/kaleid liner Prisma☆Illya 2wei Herz!",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 27525,
+      "title": "Fate/kaleid liner Prisma☆Illya 2wei Herz!",
+      "title_english": "Fate/Kaleid Liner Prisma Illya 2Wei Herz!",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2015-07-25",
+      "num_episodes": 10,
+      "related": [
+        {
+          "id": 20509,
+          "title": "Fate/kaleid liner Prisma☆Illya 2wei!",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 31056,
+          "title": "Fate/kaleid liner Prisma☆Illya 2wei Herz! Specials",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 31706,
+          "title": "Fate/kaleid liner Prisma☆Illya 3rei!!",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 31706,
+      "title": "Fate/kaleid liner Prisma☆Illya 3rei!!",
+      "title_english": "Fate/kaleid liner Prisma Illya 3rei!!",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2016-07-06",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 27525,
+          "title": "Fate/kaleid liner Prisma☆Illya 2wei Herz!",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 33456,
+          "title": "Fate/kaleid liner Prisma☆Illya 3rei!! Specials",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 34100,
+          "title": "Fate/kaleid liner Prisma☆Illya Movie: Sekka no Chikai",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 34100,
+      "title": "Fate/kaleid liner Prisma☆Illya Movie: Sekka no Chikai",
+      "title_english": "Fate/kaleid liner Prisma Illya: Vow in the Snow",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2017-08-26",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 31706,
+          "title": "Fate/kaleid liner Prisma☆Illya 3rei!!",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 36833,
+          "title": "Fate/kaleid liner Prisma☆Illya Movie: Sekka no Chikai - Kuro Sakura no Heya",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 42030,
+          "title": "Fate/kaleid liner Prisma☆Illya Movie: Licht - Namae no Nai Shoujo",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 42030,
+      "title": "Fate/kaleid liner Prisma☆Illya Movie: Licht - Namae no Nai Shoujo",
+      "title_english": "Fate/kaleid Liner Prisma Illya: Licht Nameless Girl",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2021-08-27",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 34100,
+          "title": "Fate/kaleid liner Prisma☆Illya Movie: Sekka no Chikai",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 49633,
+          "title": "Fate/kaleid liner Prisma☆Illya Movie: Licht - Namae no Nai Shoujo Mini Anime",
+          "relation_type": "other"
+        },
+        {
+          "id": 49703,
+          "title": "Fate/kaleid liner Prisma☆Illya: Finale",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 49703,
+      "title": "Fate/kaleid liner Prisma☆Illya: Finale",
+      "title_english": "",
+      "media_type": "tv",
+      "status": "not_yet_aired",
+      "start_date": "2027",
+      "num_episodes": 0,
+      "related": [
+        {
+          "id": 42030,
+          "title": "Fate/kaleid liner Prisma☆Illya Movie: Licht - Namae no Nai Shoujo",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 33047,
+      "title": "Fate/Extra: Last Encore",
+      "title_english": "Fate/Extra: Last Encore",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2018-01-28",
+      "num_episodes": 10,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 37651,
+          "title": "Fate/Extra: Last Encore - Illustrias Tendousetsu",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 38784,
+          "title": "Ken to Mahou no Logres: Inishie no Megami x Fate/Extella",
+          "relation_type": "other"
+        }
+      ]
+    },
+    {
+      "id": 37651,
+      "title": "Fate/Extra: Last Encore - Illustrias Tendousetsu",
+      "title_english": "Fate/Extra: Last Encore - Illustrias Geocentric Theory",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2018-07-29",
+      "num_episodes": 3,
+      "related": [
+        {
+          "id": 33047,
+          "title": "Fate/Extra: Last Encore",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 34321,
+      "title": "Fate/Grand Order: First Order",
+      "title_english": "Fate/Grand Order -First Order-",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2016-12-31",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 36064,
+          "title": "Fate/Grand Order",
+          "relation_type": "other"
+        },
+        {
+          "id": 36914,
+          "title": "Fate/Grand Order: Himuro no Tenchi - 7-nin no Saikyou Ijin-hen",
+          "relation_type": "other"
+        },
+        {
+          "id": 36915,
+          "title": "Fate/Grand Order: Moonlight/Lostroom",
+          "relation_type": "other"
+        },
+        {
+          "id": 38084,
+          "title": "Fate/Grand Order: Zettai Majuu Sensen Babylonia",
+          "relation_type": "other"
+        },
+        {
+          "id": 38085,
+          "title": "Fate/Grand Order: Shinsei Entaku Ryouiki Camelot 1 - Wandering; Agateram",
+          "relation_type": "other"
+        },
+        {
+          "id": 38086,
+          "title": "Fate/Grand Order: Shinsei Entaku Ryouiki Camelot 2 - Paladin; Agateram",
+          "relation_type": "other"
+        },
+        {
+          "id": 38958,
+          "title": "Manga de Wakaru! Fate/Grand Order",
+          "relation_type": "other"
+        },
+        {
+          "id": 40469,
+          "title": "Toshiwasure Guda Guda Order 2016",
+          "relation_type": "other"
+        }
+      ]
+    },
+    {
+      "id": 34662,
+      "title": "Fate/Apocrypha",
+      "title_english": "",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2017-07-02",
+      "num_episodes": 25,
+      "related": [
+        {
+          "id": 36729,
+          "title": "Fate/Apocrypha Recaps",
+          "relation_type": "summary"
+        }
+      ]
+    },
+    {
+      "id": 37033,
+      "title": "Emiya-san Chi no Kyou no Gohan",
+      "title_english": "Today's Menu for the Emiya Family",
+      "media_type": "ona",
+      "status": "finished_airing",
+      "start_date": "2018-01-25",
+      "num_episodes": 13,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 53127,
+      "title": "Fate/strange Fake: Whispers of Dawn",
+      "title_english": "Fate/strange Fake: Whispers of Dawn",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2023-07-02",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 38959,
+          "title": "Lord El-Melloi II-sei no Jikenbo: Rail Zeppelin Grace Note",
+          "relation_type": "character"
+        },
+        {
+          "id": 40982,
+          "title": "Fate/strange Fake PV",
+          "relation_type": "other"
+        },
+        {
+          "id": 55830,
+          "title": "Fate/strange Fake",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 55830,
+      "title": "Fate/strange Fake",
+      "title_english": "Fate/strange Fake",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2026-01-03",
+      "num_episodes": 13,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 12565,
+          "title": "Fate/Prototype",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 38959,
+          "title": "Lord El-Melloi II-sei no Jikenbo: Rail Zeppelin Grace Note",
+          "relation_type": "character"
+        },
+        {
+          "id": 40982,
+          "title": "Fate/strange Fake PV",
+          "relation_type": "other"
+        },
+        {
+          "id": 53127,
+          "title": "Fate/strange Fake: Whispers of Dawn",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 64847,
+          "title": "Fate/strange Fake (Shin Series)",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 64847,
+      "title": "Fate/strange Fake (Shin Series)",
+      "title_english": "Fate/strange Fake",
+      "media_type": "tv",
+      "status": "not_yet_aired",
+      "start_date": null,
+      "num_episodes": 0,
+      "related": [
+        {
+          "id": 356,
+          "title": "Fate/stay night",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 12565,
+          "title": "Fate/Prototype",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 55830,
+          "title": "Fate/strange Fake",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 31389,
+      "title": "Fate/stay night: Unlimited Blade Works 2nd Season - Sunny Day",
+      "title_english": "Fate/stay night [Unlimited Blade Works] Season 2: Sunny Day",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2015-10-07",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 28701,
+          "title": "Fate/stay night: Unlimited Blade Works 2nd Season",
+          "relation_type": "alternative_version"
+        }
+      ]
+    },
+    {
+      "id": 18851,
+      "title": "Fate/kaleid liner Prisma☆Illya: Undoukai de Dance!",
+      "title_english": "Fate/Kaleid Liner Prisma Illya: Dance at the Sports Festival!",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2014-03-10",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 14829,
+          "title": "Fate/kaleid liner Prisma☆Illya",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 19109,
+      "title": "Fate/kaleid liner Prisma☆Illya Specials",
+      "title_english": "Fate/Kaleid Liner Prisma Illya Shorts",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2013-09-27",
+      "num_episodes": 5,
+      "related": [
+        {
+          "id": 14829,
+          "title": "Fate/kaleid liner Prisma☆Illya",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 25011,
+      "title": "Fate/kaleid liner Prisma☆Illya 2wei! Specials",
+      "title_english": "Fate/Kaleid Liner Prisma Illya 2Wei! Shorts",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2014-09-26",
+      "num_episodes": 5,
+      "related": [
+        {
+          "id": 20509,
+          "title": "Fate/kaleid liner Prisma☆Illya 2wei!",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 26057,
+      "title": "Fate/kaleid liner Prisma☆Illya 2wei!: Mahou Shoujo in Onsen Ryokou",
+      "title_english": "Fate/kaleid liner Prisma Illya 2Wei!: Magical Girl in Hot Springs Inn",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2015-07-25",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 20509,
+          "title": "Fate/kaleid liner Prisma☆Illya 2wei!",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 31056,
+      "title": "Fate/kaleid liner Prisma☆Illya 2wei Herz! Specials",
+      "title_english": "Fate/Kaleid Liner Prisma Illya 2Wei Herz! Shorts",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2015-09-25",
+      "num_episodes": 5,
+      "related": [
+        {
+          "id": 27525,
+          "title": "Fate/kaleid liner Prisma☆Illya 2wei Herz!",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 33456,
+      "title": "Fate/kaleid liner Prisma☆Illya 3rei!! Specials",
+      "title_english": "Fate/Kaleid Liner Prisma Illya 3rei!! Shorts",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2016-09-30",
+      "num_episodes": 6,
+      "related": [
+        {
+          "id": 31706,
+          "title": "Fate/kaleid liner Prisma☆Illya 3rei!!",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 36833,
+      "title": "Fate/kaleid liner Prisma☆Illya Movie: Sekka no Chikai - Kuro Sakura no Heya",
+      "title_english": "Fate/Kaleid Liner Prisma Illya: Vow in the Snow - Dark Sakura's Room",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2018-01-31",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 34100,
+          "title": "Fate/kaleid liner Prisma☆Illya Movie: Sekka no Chikai",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 36729,
+      "title": "Fate/Apocrypha Recaps",
+      "title_english": "",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2017-09-24",
+      "num_episodes": 2,
+      "related": [
+        {
+          "id": 34662,
+          "title": "Fate/Apocrypha",
+          "relation_type": "full_story"
+        }
+      ]
+    }
+  ]
+}

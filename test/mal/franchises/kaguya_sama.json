@@ -1,0 +1,173 @@
+{
+  "seed": 37999,
+  "titles": [
+    {
+      "id": 37999,
+      "title": "Kaguya-sama wa Kokurasetai: Tensai-tachi no Renai Zunousen",
+      "title_english": "Kaguya-sama: Love is War",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2019-01-12",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 40591,
+          "title": "Kaguya-sama wa Kokurasetai? Tensai-tachi no Renai Zunousen",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 44270,
+          "title": "He Wei Dao x Hui Yeda Xiaojie Xiangyao Wo Gaobai",
+          "relation_type": "other"
+        }
+      ]
+    },
+    {
+      "id": 40591,
+      "title": "Kaguya-sama wa Kokurasetai? Tensai-tachi no Renai Zunousen",
+      "title_english": "Kaguya-sama: Love is War?",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2020-04-11",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 37999,
+          "title": "Kaguya-sama wa Kokurasetai: Tensai-tachi no Renai Zunousen",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 43608,
+          "title": "Kaguya-sama wa Kokurasetai: Ultra Romantic",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 43609,
+          "title": "Kaguya-sama wa Kokurasetai? Tensai-tachi no Renai Zunousen OVA",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 44270,
+          "title": "He Wei Dao x Hui Yeda Xiaojie Xiangyao Wo Gaobai",
+          "relation_type": "other"
+        }
+      ]
+    },
+    {
+      "id": 43608,
+      "title": "Kaguya-sama wa Kokurasetai: Ultra Romantic",
+      "title_english": "Kaguya-sama: Love is War -Ultra Romantic-",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2022-04-09",
+      "num_episodes": 13,
+      "related": [
+        {
+          "id": 40591,
+          "title": "Kaguya-sama wa Kokurasetai? Tensai-tachi no Renai Zunousen",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 50325,
+          "title": "Kaguya-sama wa Kokurasetai: Ultra Romantic Teaser PV - Ishigami Yuu wa Kataritai",
+          "relation_type": "side_story"
+        },
+        {
+          "id": 52198,
+          "title": "Kaguya-sama wa Kokurasetai: First Kiss wa Owaranai",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 52198,
+      "title": "Kaguya-sama wa Kokurasetai: First Kiss wa Owaranai",
+      "title_english": "Kaguya-sama: Love is War -The First Kiss That Never Ends-",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2022-12-17",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 43608,
+          "title": "Kaguya-sama wa Kokurasetai: Ultra Romantic",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 61903,
+          "title": "Kaguya-sama wa Kokurasetai: Otona e no Kaidan",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 61903,
+      "title": "Kaguya-sama wa Kokurasetai: Otona e no Kaidan",
+      "title_english": "Kaguya-sama: Love Is War - Stairway to Adulthood",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2025-12-31",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 52198,
+          "title": "Kaguya-sama wa Kokurasetai: First Kiss wa Owaranai",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 63212,
+          "title": "Kaguya-sama wa Kokurasetai Movie",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 63212,
+      "title": "Kaguya-sama wa Kokurasetai Movie",
+      "title_english": "Kaguya-sama: Love is War Movie",
+      "media_type": "movie",
+      "status": "not_yet_aired",
+      "start_date": null,
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 61903,
+          "title": "Kaguya-sama wa Kokurasetai: Otona e no Kaidan",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 43609,
+      "title": "Kaguya-sama wa Kokurasetai? Tensai-tachi no Renai Zunousen OVA",
+      "title_english": "Kaguya-sama: Love is War OVA",
+      "media_type": "ova",
+      "status": "finished_airing",
+      "start_date": "2021-05-19",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 40591,
+          "title": "Kaguya-sama wa Kokurasetai? Tensai-tachi no Renai Zunousen",
+          "relation_type": "parent_story"
+        }
+      ]
+    },
+    {
+      "id": 50325,
+      "title": "Kaguya-sama wa Kokurasetai: Ultra Romantic Teaser PV - Ishigami Yuu wa Kataritai",
+      "title_english": "Kaguya-sama: Love is War - Ultra Romantic \"Yu Ishigami Wants to Chat\"",
+      "media_type": "pv",
+      "status": "finished_airing",
+      "start_date": "2021-10-21",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 43608,
+          "title": "Kaguya-sama wa Kokurasetai: Ultra Romantic",
+          "relation_type": "parent_story"
+        }
+      ]
+    }
+  ]
+}

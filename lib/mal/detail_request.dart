@@ -23,6 +23,24 @@ const fullDetailFields =
 
 enum FetchOutcome { fetched, gone, failed }
 
+/// How long a gone page is left alone before it is checked again.
+const goneRecheck = Duration(days: 30);
+
+/// MAL statuses whose details change weekly.
+const changingStatuses = {'currently_airing', 'not_yet_aired'};
+
+/// The one place a MAL detail request is built. Callers send it through the
+/// request gate.
+Future<http.Response> getDetail(
+  http.Client client, {
+  required String clientId,
+  required int malId,
+  required String fields,
+}) => client.get(
+  Uri.https('api.myanimelist.net', '/v2/anime/$malId', {'fields': fields}),
+  headers: {'X-MAL-CLIENT-ID': clientId},
+);
+
 /// Fetches one title's details from MAL and saves what came back.
 class DetailRequest {
   DetailRequest({
@@ -48,11 +66,11 @@ class DetailRequest {
     try {
       response = await gate.send(
         lane,
-        () => client.get(
-          Uri.https('api.myanimelist.net', '/v2/anime/$malId', {
-            'fields': full ? fullDetailFields : shortDetailFields,
-          }),
-          headers: {'X-MAL-CLIENT-ID': clientId},
+        () => getDetail(
+          client,
+          clientId: clientId,
+          malId: malId,
+          fields: full ? fullDetailFields : shortDetailFields,
         ),
       );
     } on Exception {
@@ -103,9 +121,7 @@ bool isStale({
   required int fetchedAt,
   required DateTime now,
 }) {
-  final changesOften =
-      airingStatus == 'currently_airing' || airingStatus == 'not_yet_aired';
-  final maxAge = changesOften
+  final maxAge = changingStatuses.contains(airingStatus)
       ? const Duration(days: 1)
       : const Duration(days: 30);
   return now.difference(DateTime.fromMillisecondsSinceEpoch(fetchedAt)) >

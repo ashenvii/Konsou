@@ -1,0 +1,347 @@
+{
+  "seed": 9253,
+  "titles": [
+    {
+      "id": 9253,
+      "title": "Steins;Gate",
+      "title_english": "Steins;Gate",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2011-04-06",
+      "num_episodes": 24,
+      "related": [
+        {
+          "id": 4975,
+          "title": "ChäoS;HEAd",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 10863,
+          "title": "Steins;Gate: Oukoubakko no Poriomania",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 13599,
+          "title": "Robotics;Notes",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 27957,
+          "title": "Steins;Gate: Soumei Eichi no Cognitive Computing",
+          "relation_type": "other"
+        },
+        {
+          "id": 30485,
+          "title": "ChäoS;Child",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 32188,
+          "title": "Steins;Gate: Kyoukaimenjou no Missing Link - Divide By Zero",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 32962,
+          "title": "Occultic;Nine",
+          "relation_type": "alternative_setting"
+        }
+      ]
+    },
+    {
+      "id": 10863,
+      "title": "Steins;Gate: Oukoubakko no Poriomania",
+      "title_english": "Steins;Gate: Egoistic Poriomania",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2012-02-22",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 9253,
+          "title": "Steins;Gate",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 11577,
+          "title": "Steins;Gate Movie: Fuka Ryouiki no Déjà vu",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 11577,
+      "title": "Steins;Gate Movie: Fuka Ryouiki no Déjà vu",
+      "title_english": "Steins;Gate: The Movie - Load Region of Déjà Vu",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2013-04-20",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 10863,
+          "title": "Steins;Gate: Oukoubakko no Poriomania",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 4975,
+      "title": "ChäoS;HEAd",
+      "title_english": "ChäoS;HEAd",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2008-10-09",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 9253,
+          "title": "Steins;Gate",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 13599,
+          "title": "Robotics;Notes",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 30484,
+          "title": "Steins;Gate 0",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 30485,
+          "title": "ChäoS;Child",
+          "relation_type": "sequel"
+        },
+        {
+          "id": 32962,
+          "title": "Occultic;Nine",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 34753,
+          "title": "ChäoS;Child Episode 0",
+          "relation_type": "alternative_version"
+        }
+      ]
+    },
+    {
+      "id": 30485,
+      "title": "ChäoS;Child",
+      "title_english": "ChäoS;Child",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2017-01-11",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 4975,
+          "title": "ChäoS;HEAd",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 9253,
+          "title": "Steins;Gate",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 13599,
+          "title": "Robotics;Notes",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 30484,
+          "title": "Steins;Gate 0",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 32962,
+          "title": "Occultic;Nine",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 34753,
+          "title": "ChäoS;Child Episode 0",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 35315,
+          "title": "ChäoS;Child: Silent Sky",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 34753,
+      "title": "ChäoS;Child Episode 0",
+      "title_english": "ChäoS;Child Episode 0",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2017-01-11",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 4975,
+          "title": "ChäoS;HEAd",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 30485,
+          "title": "ChäoS;Child",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 35315,
+      "title": "ChäoS;Child: Silent Sky",
+      "title_english": "ChäoS;Child: Silent Sky",
+      "media_type": "movie",
+      "status": "finished_airing",
+      "start_date": "2017-06-17",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 30485,
+          "title": "ChäoS;Child",
+          "relation_type": "prequel"
+        }
+      ]
+    },
+    {
+      "id": 13599,
+      "title": "Robotics;Notes",
+      "title_english": "Robotics;Notes",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2012-10-12",
+      "num_episodes": 22,
+      "related": [
+        {
+          "id": 4975,
+          "title": "ChäoS;HEAd",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 9253,
+          "title": "Steins;Gate",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 30484,
+          "title": "Steins;Gate 0",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 30485,
+          "title": "ChäoS;Child",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 32962,
+          "title": "Occultic;Nine",
+          "relation_type": "alternative_setting"
+        }
+      ]
+    },
+    {
+      "id": 32188,
+      "title": "Steins;Gate: Kyoukaimenjou no Missing Link - Divide By Zero",
+      "title_english": "Steins;Gate: Open the Missing Link - Divide By Zero",
+      "media_type": "tv_special",
+      "status": "finished_airing",
+      "start_date": "2015-12-03",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 9253,
+          "title": "Steins;Gate",
+          "relation_type": "alternative_version"
+        },
+        {
+          "id": 30484,
+          "title": "Steins;Gate 0",
+          "relation_type": "sequel"
+        }
+      ]
+    },
+    {
+      "id": 30484,
+      "title": "Steins;Gate 0",
+      "title_english": "Steins;Gate 0",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2018-04-12",
+      "num_episodes": 23,
+      "related": [
+        {
+          "id": 13599,
+          "title": "Robotics;Notes",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 32188,
+          "title": "Steins;Gate: Kyoukaimenjou no Missing Link - Divide By Zero",
+          "relation_type": "prequel"
+        },
+        {
+          "id": 37492,
+          "title": "Steins;Gate 0: Kesshou Takei no Valentine - Bittersweet Intermedio",
+          "relation_type": "side_story"
+        }
+      ]
+    },
+    {
+      "id": 32962,
+      "title": "Occultic;Nine",
+      "title_english": "Occultic;Nine",
+      "media_type": "tv",
+      "status": "finished_airing",
+      "start_date": "2016-10-09",
+      "num_episodes": 12,
+      "related": [
+        {
+          "id": 4975,
+          "title": "ChäoS;HEAd",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 9253,
+          "title": "Steins;Gate",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 13599,
+          "title": "Robotics;Notes",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 30484,
+          "title": "Steins;Gate 0",
+          "relation_type": "alternative_setting"
+        },
+        {
+          "id": 30485,
+          "title": "ChäoS;Child",
+          "relation_type": "alternative_setting"
+        }
+      ]
+    },
+    {
+      "id": 37492,
+      "title": "Steins;Gate 0: Kesshou Takei no Valentine - Bittersweet Intermedio",
+      "title_english": "Steins;Gate 0: Valentine's of Crystal Polymorphism -Bittersweet Intermedio-",
+      "media_type": "special",
+      "status": "finished_airing",
+      "start_date": "2018-12-21",
+      "num_episodes": 1,
+      "related": [
+        {
+          "id": 30484,
+          "title": "Steins;Gate 0",
+          "relation_type": "parent_story"
+        }
+      ]
+    }
+  ]
+}

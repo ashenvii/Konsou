@@ -32,6 +32,22 @@ _Avoid_: Backup (for the act), upload
 Fetching details in the background, one title at a time, after whatever is on screen.
 _Avoid_: Crawl, bulk fetch, prefetch
 
+**Franchise**:
+A story plus the extras that belong to it. One Library card.
+_Avoid_: Series, collection, group
+
+**Story**:
+Titles joined by sequel or prequel links, in any format.
+_Avoid_: Main chain, backbone, seasons (for the set)
+
+**Extra**:
+A title with no sequel or prequel of its own that belongs to exactly one franchise, such as an OVA, movie, recap or special.
+_Avoid_: Side story (MAL's narrower word), bonus
+
+**Relation**:
+One of the provider's connections between two titles, such as sequel, prequel or side story.
+_Avoid_: Link (taken by not linked), edge
+
 **Not linked**:
 An entry with no working provider page, whether it was never matched or its page is gone.
 _Avoid_: Orphan, unmatched, broken link
