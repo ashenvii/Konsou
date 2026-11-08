@@ -54,7 +54,10 @@ void main() {
       ),
     );
     expect(tester.takeException(), isNull);
-    expect(tester.getSize(find.byType(AppTab)).width, lessThanOrEqualTo(narrow));
+    expect(
+      tester.getSize(find.byType(AppTab)).width,
+      lessThanOrEqualTo(narrow),
+    );
   });
 
   for (final scale in [1.5, 2.0, 3.0]) {
@@ -106,7 +109,12 @@ void main() {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AppTab(label: 'مشاهدة', selected: true, count: 3, onPressed: () {}),
+              AppTab(
+                label: 'مشاهدة',
+                selected: true,
+                count: 3,
+                onPressed: () {},
+              ),
               AppTab(label: 'Top 10', selected: false, onPressed: () {}),
               AppButton(label: 'تصفح', onPressed: () {}),
             ],
@@ -128,7 +136,9 @@ void main() {
     }
   });
 
-  testWidgets('an empty label does not break a button or a tab', (tester) async {
+  testWidgets('an empty label does not break a button or a tab', (
+    tester,
+  ) async {
     await pumpWidget(
       tester,
       Row(
@@ -155,10 +165,7 @@ void main() {
 
   testWidgets('a fast double tap fires twice, once per tap', (tester) async {
     var taps = 0;
-    await pumpWidget(
-      tester,
-      AppButton(label: 'Save', onPressed: () => taps++),
-    );
+    await pumpWidget(tester, AppButton(label: 'Save', onPressed: () => taps++));
     await tester.tap(find.byType(AppButton));
     await tester.tap(find.byType(AppButton));
     expect(taps, 2);

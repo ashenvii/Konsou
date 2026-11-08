@@ -65,10 +65,19 @@ bool _tokens() {
   return problems.isEmpty;
 }
 
+/// Frozen copies, not ours to deduplicate: the old app's migrations rebuild
+/// tables by repeating them. Generated `.g.dart` files are skipped as well.
+const _notCheckedForDuplicates = {'lib/import/old_migrations.dart'};
+
 bool _duplicates() {
   stdout.writeln('\n> duplicated code in lib/');
   final found = findDuplicates(
-    _libFiles((path) => path.endsWith('.dart') && !path.endsWith('.g.dart')),
+    _libFiles(
+      (path) =>
+          path.endsWith('.dart') &&
+          !path.endsWith('.g.dart') &&
+          !_notCheckedForDuplicates.contains(path.replaceAll('\\', '/')),
+    ),
   );
   for (final d in found) {
     stdout.writeln('  $d');
