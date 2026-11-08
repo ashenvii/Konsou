@@ -7,7 +7,9 @@ import 'package:konsou/data/databases.dart';
 import 'package:konsou/data/details_database.dart';
 import 'package:konsou/data/record_database.dart';
 import 'package:konsou/mal/detail_request.dart';
+import 'package:konsou/mal/matching.dart';
 import 'package:konsou/mal/request_gate.dart';
+import 'package:konsou/mal/search_request.dart';
 import 'package:konsou/mal/trickle.dart';
 
 final _now = DateTime.utc(2026, 11, 8, 12);
@@ -69,24 +71,43 @@ void main() {
   }
 
   /// A trickle whose requests answer through [respond], noting each title asked.
+  /// Searches answer with no results, so matching asks nothing for a detail.
   Trickle trickleAnswering(
     List<int> asked,
     http.Response Function(int malId) respond,
-  ) => Trickle(
-    record: databases.record,
-    detailRequest: DetailRequest(
+  ) {
+    final client = MockClient((request) async {
+      if (request.url.pathSegments.last == 'anime') {
+        return http.Response('{"data": []}', 200);
+      }
+      final malId = int.parse(request.url.pathSegments.last);
+      asked.add(malId);
+      return respond(malId);
+    });
+    final gate = RequestGate(wait: (_) async {});
+    final detailRequest = DetailRequest(
       clientId: 'test-client',
-      client: MockClient((request) async {
-        final malId = int.parse(request.url.pathSegments.last);
-        asked.add(malId);
-        return respond(malId);
-      }),
-      gate: RequestGate(wait: (_) async {}),
+      client: client,
+      gate: gate,
       details: databases.details,
       now: () => _now,
-    ),
-    now: () => _now,
-  );
+    );
+    return Trickle(
+      record: databases.record,
+      detailRequest: detailRequest,
+      matching: Matching(
+        databases: databases,
+        searchRequest: SearchRequest(
+          clientId: 'test-client',
+          client: client,
+          gate: gate,
+        ),
+        detailRequest: detailRequest,
+        now: () => _now,
+      ),
+      now: () => _now,
+    );
+  }
 
   test('fetches in the agreed order and skips what it should', () async {
     await addEntry('watching', 'watching', 100, malId: 1);
@@ -145,5 +166,21 @@ void main() {
     await trickle.run();
 
     expect(asked, hasLength(1));
+  });
+
+  test('matches not-linked entries once details are filled', () async {
+    await addEntry('linked', 'watching', 1, malId: 1);
+    await addEntry('not linked', 'watching', 2);
+    final asked = <int>[];
+
+    await trickleAnswering(
+      asked,
+      (malId) => http.Response('{"id": $malId}', 200),
+    ).run();
+
+    expect(asked, [1]);
+    final details = databases.details;
+    final attempts = await details.select(details.matchAttempt).get();
+    expect(attempts.single.entryId, 'not linked');
   });
 }

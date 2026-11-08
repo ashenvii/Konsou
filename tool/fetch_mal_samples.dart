@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:konsou/mal/detail_request.dart';
 import 'package:konsou/mal/request_gate.dart';
+import 'package:konsou/mal/search_request.dart';
 
 import 'mal_client_id.dart';
 
@@ -11,6 +12,11 @@ const _samples = {
   'frieren_full': (52991, fullDetailFields),
   'frieren_short': (52991, shortDetailFields),
   'one_piece_short': (21, shortDetailFields),
+};
+
+const _searches = {
+  'search_frieren': 'Sousou no Frieren',
+  'search_nothing': 'Scott Pilgrim Takes Off',
 };
 
 const _placeholder = 'Replaced so the repo carries no MAL text.';
@@ -29,20 +35,36 @@ Future<void> main() async {
         Lane.screen,
         () => getDetail(client, clientId: clientId, malId: id, fields: fields),
       );
-      if (response.statusCode != 200) {
-        stderr.writeln('$name: HTTP ${response.statusCode}');
-        exitCode = 1;
-        continue;
-      }
-      final trimmed = _trim(jsonDecode(response.body) as Map<String, dynamic>);
-      File('test/mal/samples/$name.json').writeAsStringSync(
-        '${const JsonEncoder.withIndent('  ').convert(trimmed)}\n',
+      _save(name, response, _trim);
+    }
+    for (final MapEntry(key: name, value: query) in _searches.entries) {
+      final response = await gate.send(
+        Lane.screen,
+        () => getSearch(client, clientId: clientId, query: query),
       );
-      stdout.writeln('$name: saved');
+      // search results carry no prose to trim
+      _save(name, response, (body) => body);
     }
   } finally {
     client.close();
   }
+}
+
+void _save(
+  String name,
+  http.Response response,
+  Map<String, dynamic> Function(Map<String, dynamic> body) trim,
+) {
+  if (response.statusCode != 200) {
+    stderr.writeln('$name: HTTP ${response.statusCode}');
+    exitCode = 1;
+    return;
+  }
+  final body = trim(jsonDecode(response.body) as Map<String, dynamic>);
+  File(
+    'test/mal/samples/$name.json',
+  ).writeAsStringSync('${const JsonEncoder.withIndent('  ').convert(body)}\n');
+  stdout.writeln('$name: saved');
 }
 
 Map<String, dynamic> _trim(Map<String, dynamic> response) {

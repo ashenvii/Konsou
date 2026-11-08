@@ -58,6 +58,24 @@ CREATE TABLE scan_schedule (
 
 CREATE INDEX idx_scan_due ON scan_schedule (next_check_at);
 
+-- kept apart from detail: a search result has no related titles, and the
+-- franchise scan would read it as a title with none
+CREATE TABLE match_suggestion (
+  entry_id     TEXT NOT NULL,
+  provider     TEXT NOT NULL,
+  provider_id  INTEGER NOT NULL,
+  position     INTEGER NOT NULL,
+  json         TEXT NOT NULL,
+  found_at     INTEGER NOT NULL,
+  PRIMARY KEY (entry_id, provider, provider_id)
+) AS MatchSuggestion;
+
+-- when Konsou last searched for a not-linked entry and could not link it
+CREATE TABLE match_attempt (
+  entry_id     TEXT NOT NULL PRIMARY KEY,
+  searched_at  INTEGER NOT NULL
+) AS MatchAttempt;
+
 CREATE TABLE search_cache (
   query_hash  TEXT NOT NULL PRIMARY KEY,
   query_text  TEXT NOT NULL,

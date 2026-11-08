@@ -1,0 +1,90 @@
+{
+  "data": [
+    {
+      "node": {
+        "id": 52991,
+        "title": "Sousou no Frieren",
+        "main_picture": {
+          "medium": "https://cdn.myanimelist.net/images/anime/1015/138006.jpg",
+          "large": "https://cdn.myanimelist.net/images/anime/1015/138006l.jpg"
+        },
+        "alternative_titles": {
+          "synonyms": [
+            "Frieren at the Funeral",
+            "Frieren The Slayer"
+          ],
+          "en": "Frieren: Beyond Journey's End",
+          "ja": "葬送のフリーレン"
+        },
+        "media_type": "tv",
+        "status": "finished_airing",
+        "num_episodes": 28,
+        "start_date": "2023-09-29"
+      }
+    },
+    {
+      "node": {
+        "id": 59978,
+        "title": "Sousou no Frieren 2nd Season",
+        "main_picture": {
+          "medium": "https://cdn.myanimelist.net/images/anime/1921/154528.jpg",
+          "large": "https://cdn.myanimelist.net/images/anime/1921/154528l.jpg"
+        },
+        "alternative_titles": {
+          "synonyms": [
+            "Frieren at the Funeral Season 2"
+          ],
+          "en": "Frieren: Beyond Journey's End Season 2",
+          "ja": "葬送のフリーレン 第2期"
+        },
+        "media_type": "tv",
+        "status": "finished_airing",
+        "num_episodes": 10,
+        "start_date": "2026-01-16"
+      }
+    },
+    {
+      "node": {
+        "id": 56885,
+        "title": "Sousou no Frieren: ●● no Mahou",
+        "main_picture": {
+          "medium": "https://cdn.myanimelist.net/images/anime/1045/150038.webp",
+          "large": "https://cdn.myanimelist.net/images/anime/1045/150038l.webp"
+        },
+        "alternative_titles": {
+          "synonyms": [
+            "Sousou no Frieren: Marumaru no Mahou"
+          ],
+          "en": "Frieren: Beyond Journey's End Mini Anime",
+          "ja": "葬送のフリーレン ～●●の魔法～"
+        },
+        "media_type": "ona",
+        "status": "finished_airing",
+        "num_episodes": 24,
+        "start_date": "2023-10-11"
+      }
+    },
+    {
+      "node": {
+        "id": 63816,
+        "title": "Sousou no Frieren: Ougonkyou-hen",
+        "main_picture": {
+          "medium": "https://cdn.myanimelist.net/images/anime/1619/156313.jpg",
+          "large": "https://cdn.myanimelist.net/images/anime/1619/156313l.jpg"
+        },
+        "alternative_titles": {
+          "synonyms": [
+            "Frieren at the Funeral Season 3"
+          ],
+          "en": "Frieren: Beyond Journey's End - Golden Land Arc",
+          "ja": "葬送のフリーレン 黄金郷編"
+        },
+        "media_type": "tv",
+        "status": "not_yet_aired",
+        "num_episodes": 0,
+        "start_date": "2027-10"
+      }
+    }
+  ],
+  "paging": {}
+}

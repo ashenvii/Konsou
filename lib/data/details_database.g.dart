@@ -1761,6 +1761,650 @@ class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
   }
 }
 
+class MatchSuggestionTable extends Table
+    with TableInfo<MatchSuggestionTable, MatchSuggestion> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  MatchSuggestionTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entryIdMeta = const VerificationMeta(
+    'entryId',
+  );
+  late final GeneratedColumn<String> entryId = GeneratedColumn<String>(
+    'entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _providerMeta = const VerificationMeta(
+    'provider',
+  );
+  late final GeneratedColumn<String> provider = GeneratedColumn<String>(
+    'provider',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _providerIdMeta = const VerificationMeta(
+    'providerId',
+  );
+  late final GeneratedColumn<int> providerId = GeneratedColumn<int>(
+    'provider_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _jsonMeta = const VerificationMeta('json');
+  late final GeneratedColumn<String> json = GeneratedColumn<String>(
+    'json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _foundAtMeta = const VerificationMeta(
+    'foundAt',
+  );
+  late final GeneratedColumn<int> foundAt = GeneratedColumn<int>(
+    'found_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    entryId,
+    provider,
+    providerId,
+    position,
+    json,
+    foundAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'match_suggestion';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MatchSuggestion> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entry_id')) {
+      context.handle(
+        _entryIdMeta,
+        entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryIdMeta);
+    }
+    if (data.containsKey('provider')) {
+      context.handle(
+        _providerMeta,
+        provider.isAcceptableOrUnknown(data['provider']!, _providerMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_providerMeta);
+    }
+    if (data.containsKey('provider_id')) {
+      context.handle(
+        _providerIdMeta,
+        providerId.isAcceptableOrUnknown(data['provider_id']!, _providerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_providerIdMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('json')) {
+      context.handle(
+        _jsonMeta,
+        json.isAcceptableOrUnknown(data['json']!, _jsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_jsonMeta);
+    }
+    if (data.containsKey('found_at')) {
+      context.handle(
+        _foundAtMeta,
+        foundAt.isAcceptableOrUnknown(data['found_at']!, _foundAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_foundAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entryId, provider, providerId};
+  @override
+  MatchSuggestion map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MatchSuggestion(
+      entryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entry_id'],
+      )!,
+      provider: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provider'],
+      )!,
+      providerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}provider_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+      json: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}json'],
+      )!,
+      foundAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}found_at'],
+      )!,
+    );
+  }
+
+  @override
+  MatchSuggestionTable createAlias(String alias) {
+    return MatchSuggestionTable(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'PRIMARY KEY(entry_id, provider, provider_id)',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class MatchSuggestion extends DataClass implements Insertable<MatchSuggestion> {
+  final String entryId;
+  final String provider;
+  final int providerId;
+  final int position;
+  final String json;
+  final int foundAt;
+  const MatchSuggestion({
+    required this.entryId,
+    required this.provider,
+    required this.providerId,
+    required this.position,
+    required this.json,
+    required this.foundAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entry_id'] = Variable<String>(entryId);
+    map['provider'] = Variable<String>(provider);
+    map['provider_id'] = Variable<int>(providerId);
+    map['position'] = Variable<int>(position);
+    map['json'] = Variable<String>(json);
+    map['found_at'] = Variable<int>(foundAt);
+    return map;
+  }
+
+  MatchSuggestionCompanion toCompanion(bool nullToAbsent) {
+    return MatchSuggestionCompanion(
+      entryId: Value(entryId),
+      provider: Value(provider),
+      providerId: Value(providerId),
+      position: Value(position),
+      json: Value(json),
+      foundAt: Value(foundAt),
+    );
+  }
+
+  factory MatchSuggestion.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MatchSuggestion(
+      entryId: serializer.fromJson<String>(json['entry_id']),
+      provider: serializer.fromJson<String>(json['provider']),
+      providerId: serializer.fromJson<int>(json['provider_id']),
+      position: serializer.fromJson<int>(json['position']),
+      json: serializer.fromJson<String>(json['json']),
+      foundAt: serializer.fromJson<int>(json['found_at']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entry_id': serializer.toJson<String>(entryId),
+      'provider': serializer.toJson<String>(provider),
+      'provider_id': serializer.toJson<int>(providerId),
+      'position': serializer.toJson<int>(position),
+      'json': serializer.toJson<String>(json),
+      'found_at': serializer.toJson<int>(foundAt),
+    };
+  }
+
+  MatchSuggestion copyWith({
+    String? entryId,
+    String? provider,
+    int? providerId,
+    int? position,
+    String? json,
+    int? foundAt,
+  }) => MatchSuggestion(
+    entryId: entryId ?? this.entryId,
+    provider: provider ?? this.provider,
+    providerId: providerId ?? this.providerId,
+    position: position ?? this.position,
+    json: json ?? this.json,
+    foundAt: foundAt ?? this.foundAt,
+  );
+  MatchSuggestion copyWithCompanion(MatchSuggestionCompanion data) {
+    return MatchSuggestion(
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      provider: data.provider.present ? data.provider.value : this.provider,
+      providerId: data.providerId.present
+          ? data.providerId.value
+          : this.providerId,
+      position: data.position.present ? data.position.value : this.position,
+      json: data.json.present ? data.json.value : this.json,
+      foundAt: data.foundAt.present ? data.foundAt.value : this.foundAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MatchSuggestion(')
+          ..write('entryId: $entryId, ')
+          ..write('provider: $provider, ')
+          ..write('providerId: $providerId, ')
+          ..write('position: $position, ')
+          ..write('json: $json, ')
+          ..write('foundAt: $foundAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(entryId, provider, providerId, position, json, foundAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MatchSuggestion &&
+          other.entryId == this.entryId &&
+          other.provider == this.provider &&
+          other.providerId == this.providerId &&
+          other.position == this.position &&
+          other.json == this.json &&
+          other.foundAt == this.foundAt);
+}
+
+class MatchSuggestionCompanion extends UpdateCompanion<MatchSuggestion> {
+  final Value<String> entryId;
+  final Value<String> provider;
+  final Value<int> providerId;
+  final Value<int> position;
+  final Value<String> json;
+  final Value<int> foundAt;
+  final Value<int> rowid;
+  const MatchSuggestionCompanion({
+    this.entryId = const Value.absent(),
+    this.provider = const Value.absent(),
+    this.providerId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.json = const Value.absent(),
+    this.foundAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MatchSuggestionCompanion.insert({
+    required String entryId,
+    required String provider,
+    required int providerId,
+    required int position,
+    required String json,
+    required int foundAt,
+    this.rowid = const Value.absent(),
+  }) : entryId = Value(entryId),
+       provider = Value(provider),
+       providerId = Value(providerId),
+       position = Value(position),
+       json = Value(json),
+       foundAt = Value(foundAt);
+  static Insertable<MatchSuggestion> custom({
+    Expression<String>? entryId,
+    Expression<String>? provider,
+    Expression<int>? providerId,
+    Expression<int>? position,
+    Expression<String>? json,
+    Expression<int>? foundAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entryId != null) 'entry_id': entryId,
+      if (provider != null) 'provider': provider,
+      if (providerId != null) 'provider_id': providerId,
+      if (position != null) 'position': position,
+      if (json != null) 'json': json,
+      if (foundAt != null) 'found_at': foundAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MatchSuggestionCompanion copyWith({
+    Value<String>? entryId,
+    Value<String>? provider,
+    Value<int>? providerId,
+    Value<int>? position,
+    Value<String>? json,
+    Value<int>? foundAt,
+    Value<int>? rowid,
+  }) {
+    return MatchSuggestionCompanion(
+      entryId: entryId ?? this.entryId,
+      provider: provider ?? this.provider,
+      providerId: providerId ?? this.providerId,
+      position: position ?? this.position,
+      json: json ?? this.json,
+      foundAt: foundAt ?? this.foundAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entryId.present) {
+      map['entry_id'] = Variable<String>(entryId.value);
+    }
+    if (provider.present) {
+      map['provider'] = Variable<String>(provider.value);
+    }
+    if (providerId.present) {
+      map['provider_id'] = Variable<int>(providerId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (json.present) {
+      map['json'] = Variable<String>(json.value);
+    }
+    if (foundAt.present) {
+      map['found_at'] = Variable<int>(foundAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MatchSuggestionCompanion(')
+          ..write('entryId: $entryId, ')
+          ..write('provider: $provider, ')
+          ..write('providerId: $providerId, ')
+          ..write('position: $position, ')
+          ..write('json: $json, ')
+          ..write('foundAt: $foundAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class MatchAttemptTable extends Table
+    with TableInfo<MatchAttemptTable, MatchAttempt> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  MatchAttemptTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entryIdMeta = const VerificationMeta(
+    'entryId',
+  );
+  late final GeneratedColumn<String> entryId = GeneratedColumn<String>(
+    'entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _searchedAtMeta = const VerificationMeta(
+    'searchedAt',
+  );
+  late final GeneratedColumn<int> searchedAt = GeneratedColumn<int>(
+    'searched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [entryId, searchedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'match_attempt';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MatchAttempt> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entry_id')) {
+      context.handle(
+        _entryIdMeta,
+        entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryIdMeta);
+    }
+    if (data.containsKey('searched_at')) {
+      context.handle(
+        _searchedAtMeta,
+        searchedAt.isAcceptableOrUnknown(data['searched_at']!, _searchedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_searchedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entryId};
+  @override
+  MatchAttempt map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MatchAttempt(
+      entryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entry_id'],
+      )!,
+      searchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}searched_at'],
+      )!,
+    );
+  }
+
+  @override
+  MatchAttemptTable createAlias(String alias) {
+    return MatchAttemptTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class MatchAttempt extends DataClass implements Insertable<MatchAttempt> {
+  final String entryId;
+  final int searchedAt;
+  const MatchAttempt({required this.entryId, required this.searchedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entry_id'] = Variable<String>(entryId);
+    map['searched_at'] = Variable<int>(searchedAt);
+    return map;
+  }
+
+  MatchAttemptCompanion toCompanion(bool nullToAbsent) {
+    return MatchAttemptCompanion(
+      entryId: Value(entryId),
+      searchedAt: Value(searchedAt),
+    );
+  }
+
+  factory MatchAttempt.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MatchAttempt(
+      entryId: serializer.fromJson<String>(json['entry_id']),
+      searchedAt: serializer.fromJson<int>(json['searched_at']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entry_id': serializer.toJson<String>(entryId),
+      'searched_at': serializer.toJson<int>(searchedAt),
+    };
+  }
+
+  MatchAttempt copyWith({String? entryId, int? searchedAt}) => MatchAttempt(
+    entryId: entryId ?? this.entryId,
+    searchedAt: searchedAt ?? this.searchedAt,
+  );
+  MatchAttempt copyWithCompanion(MatchAttemptCompanion data) {
+    return MatchAttempt(
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      searchedAt: data.searchedAt.present
+          ? data.searchedAt.value
+          : this.searchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MatchAttempt(')
+          ..write('entryId: $entryId, ')
+          ..write('searchedAt: $searchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(entryId, searchedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MatchAttempt &&
+          other.entryId == this.entryId &&
+          other.searchedAt == this.searchedAt);
+}
+
+class MatchAttemptCompanion extends UpdateCompanion<MatchAttempt> {
+  final Value<String> entryId;
+  final Value<int> searchedAt;
+  final Value<int> rowid;
+  const MatchAttemptCompanion({
+    this.entryId = const Value.absent(),
+    this.searchedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MatchAttemptCompanion.insert({
+    required String entryId,
+    required int searchedAt,
+    this.rowid = const Value.absent(),
+  }) : entryId = Value(entryId),
+       searchedAt = Value(searchedAt);
+  static Insertable<MatchAttempt> custom({
+    Expression<String>? entryId,
+    Expression<int>? searchedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entryId != null) 'entry_id': entryId,
+      if (searchedAt != null) 'searched_at': searchedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MatchAttemptCompanion copyWith({
+    Value<String>? entryId,
+    Value<int>? searchedAt,
+    Value<int>? rowid,
+  }) {
+    return MatchAttemptCompanion(
+      entryId: entryId ?? this.entryId,
+      searchedAt: searchedAt ?? this.searchedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entryId.present) {
+      map['entry_id'] = Variable<String>(entryId.value);
+    }
+    if (searchedAt.present) {
+      map['searched_at'] = Variable<int>(searchedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MatchAttemptCompanion(')
+          ..write('entryId: $entryId, ')
+          ..write('searchedAt: $searchedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class SearchCache extends Table with TableInfo<SearchCache, SearchCacheRow> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -2098,6 +2742,8 @@ abstract class _$DetailsDatabase extends GeneratedDatabase {
     'idx_scan_due',
     'CREATE INDEX idx_scan_due ON scan_schedule (next_check_at)',
   );
+  late final MatchSuggestionTable matchSuggestion = MatchSuggestionTable(this);
+  late final MatchAttemptTable matchAttempt = MatchAttemptTable(this);
   late final SearchCache searchCache = SearchCache(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -2110,6 +2756,8 @@ abstract class _$DetailsDatabase extends GeneratedDatabase {
     gonePage,
     scanSchedule,
     idxScanDue,
+    matchSuggestion,
+    matchAttempt,
     searchCache,
   ];
 }
@@ -3046,6 +3694,400 @@ typedef $ScanScheduleTableProcessedTableManager =
       ScanSchedule,
       PrefetchHooks Function()
     >;
+typedef $MatchSuggestionTableCreateCompanionBuilder =
+    MatchSuggestionCompanion Function({
+      required String entryId,
+      required String provider,
+      required int providerId,
+      required int position,
+      required String json,
+      required int foundAt,
+      Value<int> rowid,
+    });
+typedef $MatchSuggestionTableUpdateCompanionBuilder =
+    MatchSuggestionCompanion Function({
+      Value<String> entryId,
+      Value<String> provider,
+      Value<int> providerId,
+      Value<int> position,
+      Value<String> json,
+      Value<int> foundAt,
+      Value<int> rowid,
+    });
+
+class $MatchSuggestionTableFilterComposer
+    extends Composer<_$DetailsDatabase, MatchSuggestionTable> {
+  $MatchSuggestionTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get json => $composableBuilder(
+    column: $table.json,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get foundAt => $composableBuilder(
+    column: $table.foundAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $MatchSuggestionTableOrderingComposer
+    extends Composer<_$DetailsDatabase, MatchSuggestionTable> {
+  $MatchSuggestionTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get json => $composableBuilder(
+    column: $table.json,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get foundAt => $composableBuilder(
+    column: $table.foundAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $MatchSuggestionTableAnnotationComposer
+    extends Composer<_$DetailsDatabase, MatchSuggestionTable> {
+  $MatchSuggestionTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get entryId =>
+      $composableBuilder(column: $table.entryId, builder: (column) => column);
+
+  GeneratedColumn<String> get provider =>
+      $composableBuilder(column: $table.provider, builder: (column) => column);
+
+  GeneratedColumn<int> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<String> get json =>
+      $composableBuilder(column: $table.json, builder: (column) => column);
+
+  GeneratedColumn<int> get foundAt =>
+      $composableBuilder(column: $table.foundAt, builder: (column) => column);
+}
+
+class $MatchSuggestionTableTableManager
+    extends
+        RootTableManager<
+          _$DetailsDatabase,
+          MatchSuggestionTable,
+          MatchSuggestion,
+          $MatchSuggestionTableFilterComposer,
+          $MatchSuggestionTableOrderingComposer,
+          $MatchSuggestionTableAnnotationComposer,
+          $MatchSuggestionTableCreateCompanionBuilder,
+          $MatchSuggestionTableUpdateCompanionBuilder,
+          (
+            MatchSuggestion,
+            BaseReferences<
+              _$DetailsDatabase,
+              MatchSuggestionTable,
+              MatchSuggestion
+            >,
+          ),
+          MatchSuggestion,
+          PrefetchHooks Function()
+        > {
+  $MatchSuggestionTableTableManager(
+    _$DetailsDatabase db,
+    MatchSuggestionTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $MatchSuggestionTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $MatchSuggestionTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $MatchSuggestionTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> entryId = const Value.absent(),
+                Value<String> provider = const Value.absent(),
+                Value<int> providerId = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<String> json = const Value.absent(),
+                Value<int> foundAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MatchSuggestionCompanion(
+                entryId: entryId,
+                provider: provider,
+                providerId: providerId,
+                position: position,
+                json: json,
+                foundAt: foundAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String entryId,
+                required String provider,
+                required int providerId,
+                required int position,
+                required String json,
+                required int foundAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MatchSuggestionCompanion.insert(
+                entryId: entryId,
+                provider: provider,
+                providerId: providerId,
+                position: position,
+                json: json,
+                foundAt: foundAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<MatchSuggestionTable, MatchSuggestion>(table),
+                  BaseReferences<
+                    _$DetailsDatabase,
+                    MatchSuggestionTable,
+                    MatchSuggestion
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $MatchSuggestionTableProcessedTableManager =
+    ProcessedTableManager<
+      _$DetailsDatabase,
+      MatchSuggestionTable,
+      MatchSuggestion,
+      $MatchSuggestionTableFilterComposer,
+      $MatchSuggestionTableOrderingComposer,
+      $MatchSuggestionTableAnnotationComposer,
+      $MatchSuggestionTableCreateCompanionBuilder,
+      $MatchSuggestionTableUpdateCompanionBuilder,
+      (
+        MatchSuggestion,
+        BaseReferences<
+          _$DetailsDatabase,
+          MatchSuggestionTable,
+          MatchSuggestion
+        >,
+      ),
+      MatchSuggestion,
+      PrefetchHooks Function()
+    >;
+typedef $MatchAttemptTableCreateCompanionBuilder =
+    MatchAttemptCompanion Function({
+      required String entryId,
+      required int searchedAt,
+      Value<int> rowid,
+    });
+typedef $MatchAttemptTableUpdateCompanionBuilder =
+    MatchAttemptCompanion Function({
+      Value<String> entryId,
+      Value<int> searchedAt,
+      Value<int> rowid,
+    });
+
+class $MatchAttemptTableFilterComposer
+    extends Composer<_$DetailsDatabase, MatchAttemptTable> {
+  $MatchAttemptTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get searchedAt => $composableBuilder(
+    column: $table.searchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $MatchAttemptTableOrderingComposer
+    extends Composer<_$DetailsDatabase, MatchAttemptTable> {
+  $MatchAttemptTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get searchedAt => $composableBuilder(
+    column: $table.searchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $MatchAttemptTableAnnotationComposer
+    extends Composer<_$DetailsDatabase, MatchAttemptTable> {
+  $MatchAttemptTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get entryId =>
+      $composableBuilder(column: $table.entryId, builder: (column) => column);
+
+  GeneratedColumn<int> get searchedAt => $composableBuilder(
+    column: $table.searchedAt,
+    builder: (column) => column,
+  );
+}
+
+class $MatchAttemptTableTableManager
+    extends
+        RootTableManager<
+          _$DetailsDatabase,
+          MatchAttemptTable,
+          MatchAttempt,
+          $MatchAttemptTableFilterComposer,
+          $MatchAttemptTableOrderingComposer,
+          $MatchAttemptTableAnnotationComposer,
+          $MatchAttemptTableCreateCompanionBuilder,
+          $MatchAttemptTableUpdateCompanionBuilder,
+          (
+            MatchAttempt,
+            BaseReferences<_$DetailsDatabase, MatchAttemptTable, MatchAttempt>,
+          ),
+          MatchAttempt,
+          PrefetchHooks Function()
+        > {
+  $MatchAttemptTableTableManager(_$DetailsDatabase db, MatchAttemptTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $MatchAttemptTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $MatchAttemptTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $MatchAttemptTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> entryId = const Value.absent(),
+                Value<int> searchedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MatchAttemptCompanion(
+                entryId: entryId,
+                searchedAt: searchedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String entryId,
+                required int searchedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MatchAttemptCompanion.insert(
+                entryId: entryId,
+                searchedAt: searchedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<MatchAttemptTable, MatchAttempt>(table),
+                  BaseReferences<
+                    _$DetailsDatabase,
+                    MatchAttemptTable,
+                    MatchAttempt
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $MatchAttemptTableProcessedTableManager =
+    ProcessedTableManager<
+      _$DetailsDatabase,
+      MatchAttemptTable,
+      MatchAttempt,
+      $MatchAttemptTableFilterComposer,
+      $MatchAttemptTableOrderingComposer,
+      $MatchAttemptTableAnnotationComposer,
+      $MatchAttemptTableCreateCompanionBuilder,
+      $MatchAttemptTableUpdateCompanionBuilder,
+      (
+        MatchAttempt,
+        BaseReferences<_$DetailsDatabase, MatchAttemptTable, MatchAttempt>,
+      ),
+      MatchAttempt,
+      PrefetchHooks Function()
+    >;
 typedef $SearchCacheCreateCompanionBuilder = SearchCacheCompanion Function({
   required String queryHash,
   required String queryText,
@@ -3246,6 +4288,10 @@ class $DetailsDatabaseManager {
       $GonePageTableTableManager(_db, _db.gonePage);
   $ScanScheduleTableTableManager get scanSchedule =>
       $ScanScheduleTableTableManager(_db, _db.scanSchedule);
+  $MatchSuggestionTableTableManager get matchSuggestion =>
+      $MatchSuggestionTableTableManager(_db, _db.matchSuggestion);
+  $MatchAttemptTableTableManager get matchAttempt =>
+      $MatchAttemptTableTableManager(_db, _db.matchAttempt);
   $SearchCacheTableManager get searchCache =>
       $SearchCacheTableManager(_db, _db.searchCache);
 }

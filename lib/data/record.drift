@@ -29,6 +29,15 @@ CREATE TABLE entry_reference (
 -- not unique: anilist split three titles that mal keeps as one page
 CREATE INDEX idx_reference_lookup ON entry_reference (provider, provider_id);
 
+-- a suggested page the user said no to, never offered again for that entry
+CREATE TABLE match_decline (
+  entry_id     TEXT NOT NULL REFERENCES entry (entry_id) ON DELETE CASCADE,
+  provider     TEXT NOT NULL CHECK (provider IN ('mal', 'anilist')),
+  provider_id  INTEGER NOT NULL,
+  declined_at  INTEGER NOT NULL,
+  PRIMARY KEY (entry_id, provider, provider_id)
+) AS MatchDecline;
+
 -- no foreign key: a finished watch stays on record after its entry is removed
 CREATE TABLE completion (
   entry_id             TEXT NOT NULL,

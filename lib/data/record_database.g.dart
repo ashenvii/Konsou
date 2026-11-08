@@ -896,6 +896,337 @@ class EntryReferenceCompanion extends UpdateCompanion<EntryReference> {
   }
 }
 
+class MatchDeclineTable extends Table
+    with TableInfo<MatchDeclineTable, MatchDecline> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  MatchDeclineTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entryIdMeta = const VerificationMeta(
+    'entryId',
+  );
+  late final GeneratedColumn<String> entryId = GeneratedColumn<String>(
+    'entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES entry(entry_id)ON DELETE CASCADE',
+  );
+  static const VerificationMeta _providerMeta = const VerificationMeta(
+    'provider',
+  );
+  late final GeneratedColumn<String> provider = GeneratedColumn<String>(
+    'provider',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (provider IN (\'mal\', \'anilist\'))',
+  );
+  static const VerificationMeta _providerIdMeta = const VerificationMeta(
+    'providerId',
+  );
+  late final GeneratedColumn<int> providerId = GeneratedColumn<int>(
+    'provider_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _declinedAtMeta = const VerificationMeta(
+    'declinedAt',
+  );
+  late final GeneratedColumn<int> declinedAt = GeneratedColumn<int>(
+    'declined_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    entryId,
+    provider,
+    providerId,
+    declinedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'match_decline';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MatchDecline> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entry_id')) {
+      context.handle(
+        _entryIdMeta,
+        entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryIdMeta);
+    }
+    if (data.containsKey('provider')) {
+      context.handle(
+        _providerMeta,
+        provider.isAcceptableOrUnknown(data['provider']!, _providerMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_providerMeta);
+    }
+    if (data.containsKey('provider_id')) {
+      context.handle(
+        _providerIdMeta,
+        providerId.isAcceptableOrUnknown(data['provider_id']!, _providerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_providerIdMeta);
+    }
+    if (data.containsKey('declined_at')) {
+      context.handle(
+        _declinedAtMeta,
+        declinedAt.isAcceptableOrUnknown(data['declined_at']!, _declinedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_declinedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entryId, provider, providerId};
+  @override
+  MatchDecline map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MatchDecline(
+      entryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entry_id'],
+      )!,
+      provider: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provider'],
+      )!,
+      providerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}provider_id'],
+      )!,
+      declinedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}declined_at'],
+      )!,
+    );
+  }
+
+  @override
+  MatchDeclineTable createAlias(String alias) {
+    return MatchDeclineTable(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'PRIMARY KEY(entry_id, provider, provider_id)',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class MatchDecline extends DataClass implements Insertable<MatchDecline> {
+  final String entryId;
+  final String provider;
+  final int providerId;
+  final int declinedAt;
+  const MatchDecline({
+    required this.entryId,
+    required this.provider,
+    required this.providerId,
+    required this.declinedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entry_id'] = Variable<String>(entryId);
+    map['provider'] = Variable<String>(provider);
+    map['provider_id'] = Variable<int>(providerId);
+    map['declined_at'] = Variable<int>(declinedAt);
+    return map;
+  }
+
+  MatchDeclineCompanion toCompanion(bool nullToAbsent) {
+    return MatchDeclineCompanion(
+      entryId: Value(entryId),
+      provider: Value(provider),
+      providerId: Value(providerId),
+      declinedAt: Value(declinedAt),
+    );
+  }
+
+  factory MatchDecline.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MatchDecline(
+      entryId: serializer.fromJson<String>(json['entry_id']),
+      provider: serializer.fromJson<String>(json['provider']),
+      providerId: serializer.fromJson<int>(json['provider_id']),
+      declinedAt: serializer.fromJson<int>(json['declined_at']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entry_id': serializer.toJson<String>(entryId),
+      'provider': serializer.toJson<String>(provider),
+      'provider_id': serializer.toJson<int>(providerId),
+      'declined_at': serializer.toJson<int>(declinedAt),
+    };
+  }
+
+  MatchDecline copyWith({
+    String? entryId,
+    String? provider,
+    int? providerId,
+    int? declinedAt,
+  }) => MatchDecline(
+    entryId: entryId ?? this.entryId,
+    provider: provider ?? this.provider,
+    providerId: providerId ?? this.providerId,
+    declinedAt: declinedAt ?? this.declinedAt,
+  );
+  MatchDecline copyWithCompanion(MatchDeclineCompanion data) {
+    return MatchDecline(
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      provider: data.provider.present ? data.provider.value : this.provider,
+      providerId: data.providerId.present
+          ? data.providerId.value
+          : this.providerId,
+      declinedAt: data.declinedAt.present
+          ? data.declinedAt.value
+          : this.declinedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MatchDecline(')
+          ..write('entryId: $entryId, ')
+          ..write('provider: $provider, ')
+          ..write('providerId: $providerId, ')
+          ..write('declinedAt: $declinedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(entryId, provider, providerId, declinedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MatchDecline &&
+          other.entryId == this.entryId &&
+          other.provider == this.provider &&
+          other.providerId == this.providerId &&
+          other.declinedAt == this.declinedAt);
+}
+
+class MatchDeclineCompanion extends UpdateCompanion<MatchDecline> {
+  final Value<String> entryId;
+  final Value<String> provider;
+  final Value<int> providerId;
+  final Value<int> declinedAt;
+  final Value<int> rowid;
+  const MatchDeclineCompanion({
+    this.entryId = const Value.absent(),
+    this.provider = const Value.absent(),
+    this.providerId = const Value.absent(),
+    this.declinedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MatchDeclineCompanion.insert({
+    required String entryId,
+    required String provider,
+    required int providerId,
+    required int declinedAt,
+    this.rowid = const Value.absent(),
+  }) : entryId = Value(entryId),
+       provider = Value(provider),
+       providerId = Value(providerId),
+       declinedAt = Value(declinedAt);
+  static Insertable<MatchDecline> custom({
+    Expression<String>? entryId,
+    Expression<String>? provider,
+    Expression<int>? providerId,
+    Expression<int>? declinedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entryId != null) 'entry_id': entryId,
+      if (provider != null) 'provider': provider,
+      if (providerId != null) 'provider_id': providerId,
+      if (declinedAt != null) 'declined_at': declinedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MatchDeclineCompanion copyWith({
+    Value<String>? entryId,
+    Value<String>? provider,
+    Value<int>? providerId,
+    Value<int>? declinedAt,
+    Value<int>? rowid,
+  }) {
+    return MatchDeclineCompanion(
+      entryId: entryId ?? this.entryId,
+      provider: provider ?? this.provider,
+      providerId: providerId ?? this.providerId,
+      declinedAt: declinedAt ?? this.declinedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entryId.present) {
+      map['entry_id'] = Variable<String>(entryId.value);
+    }
+    if (provider.present) {
+      map['provider'] = Variable<String>(provider.value);
+    }
+    if (providerId.present) {
+      map['provider_id'] = Variable<int>(providerId.value);
+    }
+    if (declinedAt.present) {
+      map['declined_at'] = Variable<int>(declinedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MatchDeclineCompanion(')
+          ..write('entryId: $entryId, ')
+          ..write('provider: $provider, ')
+          ..write('providerId: $providerId, ')
+          ..write('declinedAt: $declinedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class CompletionTable extends Table
     with TableInfo<CompletionTable, Completion> {
   @override
@@ -2488,6 +2819,7 @@ abstract class _$RecordDatabase extends GeneratedDatabase {
     'idx_reference_lookup',
     'CREATE INDEX idx_reference_lookup ON entry_reference (provider, provider_id)',
   );
+  late final MatchDeclineTable matchDecline = MatchDeclineTable(this);
   late final CompletionTable completion = CompletionTable(this);
   late final Index idxCompletionDate = Index(
     'idx_completion_date',
@@ -2507,6 +2839,7 @@ abstract class _$RecordDatabase extends GeneratedDatabase {
     idxEntryUpdated,
     entryReference,
     idxReferenceLookup,
+    matchDecline,
     completion,
     idxCompletionDate,
     alert,
@@ -2522,6 +2855,13 @@ abstract class _$RecordDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('entry_reference', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'entry',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('match_decline', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -2571,6 +2911,24 @@ final class $EntryTableReferences
         );
 
     final cache = $_typedResult.readTableOrNull(_entryReferenceRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<MatchDeclineTable, List<MatchDecline>>
+  _matchDeclineRefsTable(_$RecordDatabase db) => MultiTypedResultKey.fromTable(
+    db.matchDecline,
+    aliasName: 'entry__entry_id__match_decline__entry_id',
+  );
+
+  $MatchDeclineTableProcessedTableManager get matchDeclineRefs {
+    final manager = $MatchDeclineTableTableManager($_db, $_db.matchDecline)
+        .filter(
+          (f) => f.entryId.entryId.sqlEquals($_itemColumn<String>('entry_id')!),
+        );
+
+    final cache = $_typedResult.readTableOrNull(_matchDeclineRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2651,6 +3009,31 @@ class $EntryTableFilterComposer extends Composer<_$RecordDatabase, EntryTable> {
           }) => $EntryReferenceTableFilterComposer(
             $db: $db,
             $table: $db.entryReference,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> matchDeclineRefs(
+    Expression<bool> Function($MatchDeclineTableFilterComposer f) f,
+  ) {
+    final $MatchDeclineTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entryId,
+      referencedTable: $db.matchDecline,
+      getReferencedColumn: (t) => t.entryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $MatchDeclineTableFilterComposer(
+            $db: $db,
+            $table: $db.matchDecline,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2786,6 +3169,31 @@ class $EntryTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> matchDeclineRefs<T extends Object>(
+    Expression<T> Function($MatchDeclineTableAnnotationComposer a) f,
+  ) {
+    final $MatchDeclineTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entryId,
+      referencedTable: $db.matchDecline,
+      getReferencedColumn: (t) => t.entryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $MatchDeclineTableAnnotationComposer(
+            $db: $db,
+            $table: $db.matchDecline,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $EntryTableTableManager
@@ -2801,7 +3209,10 @@ class $EntryTableTableManager
           $EntryTableUpdateCompanionBuilder,
           (Entry, $EntryTableReferences),
           Entry,
-          PrefetchHooks Function({bool entryReferenceRefs})
+          PrefetchHooks Function({
+            bool entryReferenceRefs,
+            bool matchDeclineRefs,
+          })
         > {
   $EntryTableTableManager(_$RecordDatabase db, EntryTable table)
     : super(
@@ -2874,38 +3285,59 @@ class $EntryTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({entryReferenceRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (entryReferenceRefs) db.entryReference,
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (entryReferenceRefs)
-                    await $_getPrefetchedDataByColumns<
-                      Entry,
-                      EntryTable,
-                      EntryReference,
-                      EntryReferenceTable
-                    >(
-                      currentTable: table,
-                      referencedTable: $EntryTableReferences
-                          ._entryReferenceRefsTable(db),
-                      managerFromTypedResult: (p0) => $EntryTableReferences(
-                        db,
-                        table,
-                        p0,
-                      ).entryReferenceRefs,
-                      currentColumn: 'entry_id',
-                      referencedColumn: 'entry_id',
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({entryReferenceRefs = false, matchDeclineRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (entryReferenceRefs) db.entryReference,
+                    if (matchDeclineRefs) db.matchDecline,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (entryReferenceRefs)
+                        await $_getPrefetchedDataByColumns<
+                          Entry,
+                          EntryTable,
+                          EntryReference,
+                          EntryReferenceTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $EntryTableReferences
+                              ._entryReferenceRefsTable(db),
+                          managerFromTypedResult: (p0) => $EntryTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).entryReferenceRefs,
+                          currentColumn: 'entry_id',
+                          referencedColumn: 'entry_id',
+                          typedResults: items,
+                        ),
+                      if (matchDeclineRefs)
+                        await $_getPrefetchedDataByColumns<
+                          Entry,
+                          EntryTable,
+                          MatchDecline,
+                          MatchDeclineTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $EntryTableReferences
+                              ._matchDeclineRefsTable(db),
+                          managerFromTypedResult: (p0) => $EntryTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).matchDeclineRefs,
+                          currentColumn: 'entry_id',
+                          referencedColumn: 'entry_id',
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -2922,7 +3354,7 @@ typedef $EntryTableProcessedTableManager =
       $EntryTableUpdateCompanionBuilder,
       (Entry, $EntryTableReferences),
       Entry,
-      PrefetchHooks Function({bool entryReferenceRefs})
+      PrefetchHooks Function({bool entryReferenceRefs, bool matchDeclineRefs})
     >;
 typedef $EntryReferenceTableCreateCompanionBuilder =
     EntryReferenceCompanion Function({
@@ -3208,6 +3640,306 @@ typedef $EntryReferenceTableProcessedTableManager =
       $EntryReferenceTableUpdateCompanionBuilder,
       (EntryReference, $EntryReferenceTableReferences),
       EntryReference,
+      PrefetchHooks Function({bool entryId})
+    >;
+typedef $MatchDeclineTableCreateCompanionBuilder =
+    MatchDeclineCompanion Function({
+      required String entryId,
+      required String provider,
+      required int providerId,
+      required int declinedAt,
+      Value<int> rowid,
+    });
+typedef $MatchDeclineTableUpdateCompanionBuilder =
+    MatchDeclineCompanion Function({
+      Value<String> entryId,
+      Value<String> provider,
+      Value<int> providerId,
+      Value<int> declinedAt,
+      Value<int> rowid,
+    });
+
+final class $MatchDeclineTableReferences
+    extends BaseReferences<_$RecordDatabase, MatchDeclineTable, MatchDecline> {
+  $MatchDeclineTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static EntryTable _entryIdTable(_$RecordDatabase db) =>
+      db.entry.createAlias('match_decline__entry_id__entry__entry_id');
+
+  $EntryTableProcessedTableManager get entryId {
+    final $_column = $_itemColumn<String>('entry_id')!;
+
+    final manager = $EntryTableTableManager(
+      $_db,
+      $_db.entry,
+    ).filter((f) => f.entryId.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_entryIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $MatchDeclineTableFilterComposer
+    extends Composer<_$RecordDatabase, MatchDeclineTable> {
+  $MatchDeclineTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get declinedAt => $composableBuilder(
+    column: $table.declinedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $EntryTableFilterComposer get entryId {
+    final $EntryTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entryId,
+      referencedTable: $db.entry,
+      getReferencedColumn: (t) => t.entryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $EntryTableFilterComposer(
+            $db: $db,
+            $table: $db.entry,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $MatchDeclineTableOrderingComposer
+    extends Composer<_$RecordDatabase, MatchDeclineTable> {
+  $MatchDeclineTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get declinedAt => $composableBuilder(
+    column: $table.declinedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $EntryTableOrderingComposer get entryId {
+    final $EntryTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entryId,
+      referencedTable: $db.entry,
+      getReferencedColumn: (t) => t.entryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $EntryTableOrderingComposer(
+            $db: $db,
+            $table: $db.entry,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $MatchDeclineTableAnnotationComposer
+    extends Composer<_$RecordDatabase, MatchDeclineTable> {
+  $MatchDeclineTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get provider =>
+      $composableBuilder(column: $table.provider, builder: (column) => column);
+
+  GeneratedColumn<int> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get declinedAt => $composableBuilder(
+    column: $table.declinedAt,
+    builder: (column) => column,
+  );
+
+  $EntryTableAnnotationComposer get entryId {
+    final $EntryTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entryId,
+      referencedTable: $db.entry,
+      getReferencedColumn: (t) => t.entryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $EntryTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entry,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $MatchDeclineTableTableManager
+    extends
+        RootTableManager<
+          _$RecordDatabase,
+          MatchDeclineTable,
+          MatchDecline,
+          $MatchDeclineTableFilterComposer,
+          $MatchDeclineTableOrderingComposer,
+          $MatchDeclineTableAnnotationComposer,
+          $MatchDeclineTableCreateCompanionBuilder,
+          $MatchDeclineTableUpdateCompanionBuilder,
+          (MatchDecline, $MatchDeclineTableReferences),
+          MatchDecline,
+          PrefetchHooks Function({bool entryId})
+        > {
+  $MatchDeclineTableTableManager(_$RecordDatabase db, MatchDeclineTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $MatchDeclineTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $MatchDeclineTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $MatchDeclineTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> entryId = const Value.absent(),
+                Value<String> provider = const Value.absent(),
+                Value<int> providerId = const Value.absent(),
+                Value<int> declinedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MatchDeclineCompanion(
+                entryId: entryId,
+                provider: provider,
+                providerId: providerId,
+                declinedAt: declinedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String entryId,
+                required String provider,
+                required int providerId,
+                required int declinedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MatchDeclineCompanion.insert(
+                entryId: entryId,
+                provider: provider,
+                providerId: providerId,
+                declinedAt: declinedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<MatchDeclineTable, MatchDecline>(table),
+                  $MatchDeclineTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({entryId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (entryId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.entryId,
+                        referencedTable: $MatchDeclineTableReferences
+                            ._entryIdTable(db),
+                        referencedColumn: $MatchDeclineTableReferences
+                            ._entryIdTable(db)
+                            .entryId,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $MatchDeclineTableProcessedTableManager =
+    ProcessedTableManager<
+      _$RecordDatabase,
+      MatchDeclineTable,
+      MatchDecline,
+      $MatchDeclineTableFilterComposer,
+      $MatchDeclineTableOrderingComposer,
+      $MatchDeclineTableAnnotationComposer,
+      $MatchDeclineTableCreateCompanionBuilder,
+      $MatchDeclineTableUpdateCompanionBuilder,
+      (MatchDecline, $MatchDeclineTableReferences),
+      MatchDecline,
       PrefetchHooks Function({bool entryId})
     >;
 typedef $CompletionTableCreateCompanionBuilder = CompletionCompanion Function({
@@ -4109,6 +4841,8 @@ class $RecordDatabaseManager {
   $EntryTableTableManager get entry => $EntryTableTableManager(_db, _db.entry);
   $EntryReferenceTableTableManager get entryReference =>
       $EntryReferenceTableTableManager(_db, _db.entryReference);
+  $MatchDeclineTableTableManager get matchDecline =>
+      $MatchDeclineTableTableManager(_db, _db.matchDecline);
   $CompletionTableTableManager get completion =>
       $CompletionTableTableManager(_db, _db.completion);
   $AlertTableTableManager get alert => $AlertTableTableManager(_db, _db.alert);

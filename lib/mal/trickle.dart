@@ -2,31 +2,45 @@ import 'package:drift/drift.dart' show Variable;
 
 import '../data/record_database.dart';
 import 'detail_request.dart';
+import 'matching.dart';
 import 'request_gate.dart';
 
+/// The order the trickle works through entries: Watching and Rewatching
+/// first, then Planned, On hold, Completed, Dropped, Not interested, most
+/// recently changed first within each.
+const trickleOrder = '''
+  CASE entry.status
+    WHEN 'watching' THEN 0 WHEN 'rewatching' THEN 0
+    WHEN 'plan_to_watch' THEN 1 WHEN 'on_hold' THEN 2
+    WHEN 'completed' THEN 3 WHEN 'dropped' THEN 4 ELSE 5
+  END, entry.updated_at DESC''';
+
 /// Fetches details in the background, one title at a time, for entries that
-/// have none yet. It keeps no progress of its own: what still has no details
-/// is what is left.
+/// have none yet, then matches not-linked entries. It keeps no progress of its
+/// own: what still has no details is what is left.
 class Trickle {
   Trickle({
     required this.record,
     required this.detailRequest,
+    required this.matching,
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
 
   final RecordDatabase record;
   final DetailRequest detailRequest;
+  final Matching matching;
   final DateTime Function() _now;
   var _stopped = false;
 
-  /// Runs until every entry has details or [stop] is called.
+  /// Runs until every entry has details and every due match is tried, or
+  /// [stop] is called.
   Future<void> run() async {
     _stopped = false;
     // titles that failed this run, so one bad page cannot hold the trickle
     final failed = <int>{};
     while (!_stopped) {
       final malId = await _nextTitle(failed);
-      if (malId == null) return;
+      if (malId == null) return matching.run();
       final outcome = await detailRequest.fetch(
         malId,
         lane: Lane.trickle,
@@ -36,7 +50,10 @@ class Trickle {
     }
   }
 
-  void stop() => _stopped = true;
+  void stop() {
+    _stopped = true;
+    matching.stop();
+  }
 
   Future<int?> _nextTitle(Set<int> skip) async {
     final goneSince = _now().subtract(goneRecheck).millisecondsSinceEpoch;
@@ -54,11 +71,7 @@ class Trickle {
         AND gone_page.checked_at > ?
       WHERE detail.provider_id IS NULL AND gone_page.provider_id IS NULL
         AND entry_reference.provider_id NOT IN (${skip.join(', ')})
-      ORDER BY CASE entry.status
-          WHEN 'watching' THEN 0 WHEN 'rewatching' THEN 0
-          WHEN 'plan_to_watch' THEN 1 WHEN 'on_hold' THEN 2
-          WHEN 'completed' THEN 3 WHEN 'dropped' THEN 4 ELSE 5
-        END, entry.updated_at DESC
+      ORDER BY $trickleOrder
       LIMIT 1
       ''',
           variables: [Variable.withInt(goneSince)],

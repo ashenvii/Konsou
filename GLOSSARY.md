@@ -56,6 +56,10 @@ _Avoid_: Orphan, unmatched, broken link
 Konsou pairing a not-linked entry with a provider page by itself. When it is not sure, the user picks from what it found.
 _Avoid_: Find on MAL, link manually, re-link
 
+**Suggestion**:
+A provider page Konsou offers for a not-linked entry when it is not sure of a match. The user picks one or declines them.
+_Avoid_: Candidate, result
+
 **Loading details**:
 An entry whose details have not been fetched yet.
 _Avoid_: Placeholder, skeleton (for the state)
