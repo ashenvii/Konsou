@@ -16,6 +16,34 @@ _Avoid_: User data, save file
 What was fetched from MyAnimeList, or worked out from it, in `details.db`. Never backed up, safe to delete, fetched again when needed.
 _Avoid_: Cache, metadata
 
+**Provider**:
+The outside service a title's facts come from. MyAnimeList today.
+_Avoid_: Source, API
+
+**Fetch**:
+Getting a title's facts from the provider into the details.
+_Avoid_: Sync, load, download
+
+**Sync**:
+Moving the record to and from the user's Drive. Never used for the provider.
+_Avoid_: Backup (for the act), upload
+
+**Trickle**:
+Fetching details in the background, one title at a time, after whatever is on screen.
+_Avoid_: Crawl, bulk fetch, prefetch
+
+**Not linked**:
+An entry with no working provider page, whether it was never matched or its page is gone.
+_Avoid_: Orphan, unmatched, broken link
+
+**Match**:
+Konsou pairing a not-linked entry with a provider page by itself. When it is not sure, the user picks from what it found.
+_Avoid_: Find on MAL, link manually, re-link
+
+**Loading details**:
+An entry whose details have not been fetched yet.
+_Avoid_: Placeholder, skeleton (for the state)
+
 **Library**:
 The screen that lists every entry. It has the tabs All, Watching, Planned and Completed, a dropdown for the other statuses, a sort and a grid or list view, and no filters.
 _Avoid_: My List, Collection

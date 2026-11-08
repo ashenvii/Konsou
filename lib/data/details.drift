@@ -7,6 +7,8 @@ CREATE TABLE detail (
   provider_id     INTEGER NOT NULL,
   fetched_at      INTEGER NOT NULL,
   json            TEXT NOT NULL,
+  -- the trickle fetches a short field list; a detail page fetches all of them
+  is_full         BOOLEAN NOT NULL DEFAULT FALSE,
   title           TEXT GENERATED ALWAYS AS (json_extract(json, '$.title')) VIRTUAL,
   title_english   TEXT GENERATED ALWAYS AS (
                     NULLIF(json_extract(json, '$.alternative_titles.en'), '')) VIRTUAL,
@@ -35,13 +37,13 @@ CREATE TABLE franchise_link (
 
 CREATE INDEX idx_franchise_root ON franchise_link (root_provider, root_provider_id);
 
-CREATE TABLE relation (
+-- a provider page that answered 404; checked again after a while in case it returns
+CREATE TABLE gone_page (
   provider     TEXT NOT NULL,
   provider_id  INTEGER NOT NULL,
-  json         TEXT NOT NULL,
   checked_at   INTEGER NOT NULL,
   PRIMARY KEY (provider, provider_id)
-) AS Relation;
+) AS GonePage;
 
 CREATE TABLE scan_schedule (
   entry_id       TEXT NOT NULL PRIMARY KEY,

@@ -50,6 +50,16 @@ class DetailTable extends Table with TableInfo<DetailTable, Detail> {
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL',
   );
+  static const VerificationMeta _isFullMeta = const VerificationMeta('isFull');
+  late final GeneratedColumn<bool> isFull = GeneratedColumn<bool>(
+    'is_full',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT FALSE',
+    defaultValue: const CustomExpression('FALSE'),
+  );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
     'title',
@@ -200,6 +210,7 @@ class DetailTable extends Table with TableInfo<DetailTable, Detail> {
     providerId,
     fetchedAt,
     json,
+    isFull,
     title,
     titleEnglish,
     titleJapanese,
@@ -253,6 +264,12 @@ class DetailTable extends Table with TableInfo<DetailTable, Detail> {
       );
     } else if (isInserting) {
       context.missing(_jsonMeta);
+    }
+    if (data.containsKey('is_full')) {
+      context.handle(
+        _isFullMeta,
+        isFull.isAcceptableOrUnknown(data['is_full']!, _isFullMeta),
+      );
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -342,6 +359,10 @@ class DetailTable extends Table with TableInfo<DetailTable, Detail> {
         DriftSqlType.string,
         data['${effectivePrefix}json'],
       )!,
+      isFull: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_full'],
+      )!,
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}title'],
@@ -399,6 +420,9 @@ class Detail extends DataClass implements Insertable<Detail> {
   final int providerId;
   final int fetchedAt;
   final String json;
+
+  /// the trickle fetches a short field list; a detail page fetches all of them
+  final bool isFull;
   final String? title;
   final String? titleEnglish;
   final String? titleJapanese;
@@ -415,6 +439,7 @@ class Detail extends DataClass implements Insertable<Detail> {
     required this.providerId,
     required this.fetchedAt,
     required this.json,
+    required this.isFull,
     this.title,
     this.titleEnglish,
     this.titleJapanese,
@@ -432,6 +457,7 @@ class Detail extends DataClass implements Insertable<Detail> {
     map['provider_id'] = Variable<int>(providerId);
     map['fetched_at'] = Variable<int>(fetchedAt);
     map['json'] = Variable<String>(json);
+    map['is_full'] = Variable<bool>(isFull);
     return map;
   }
 
@@ -441,6 +467,7 @@ class Detail extends DataClass implements Insertable<Detail> {
       providerId: Value(providerId),
       fetchedAt: Value(fetchedAt),
       json: Value(json),
+      isFull: Value(isFull),
     );
   }
 
@@ -454,6 +481,7 @@ class Detail extends DataClass implements Insertable<Detail> {
       providerId: serializer.fromJson<int>(json['provider_id']),
       fetchedAt: serializer.fromJson<int>(json['fetched_at']),
       json: serializer.fromJson<String>(json['json']),
+      isFull: serializer.fromJson<bool>(json['is_full']),
       title: serializer.fromJson<String?>(json['title']),
       titleEnglish: serializer.fromJson<String?>(json['title_english']),
       titleJapanese: serializer.fromJson<String?>(json['title_japanese']),
@@ -473,6 +501,7 @@ class Detail extends DataClass implements Insertable<Detail> {
       'provider_id': serializer.toJson<int>(providerId),
       'fetched_at': serializer.toJson<int>(fetchedAt),
       'json': serializer.toJson<String>(json),
+      'is_full': serializer.toJson<bool>(isFull),
       'title': serializer.toJson<String?>(title),
       'title_english': serializer.toJson<String?>(titleEnglish),
       'title_japanese': serializer.toJson<String?>(titleJapanese),
@@ -490,6 +519,7 @@ class Detail extends DataClass implements Insertable<Detail> {
     int? providerId,
     int? fetchedAt,
     String? json,
+    bool? isFull,
     Value<String?> title = const Value.absent(),
     Value<String?> titleEnglish = const Value.absent(),
     Value<String?> titleJapanese = const Value.absent(),
@@ -504,6 +534,7 @@ class Detail extends DataClass implements Insertable<Detail> {
     providerId: providerId ?? this.providerId,
     fetchedAt: fetchedAt ?? this.fetchedAt,
     json: json ?? this.json,
+    isFull: isFull ?? this.isFull,
     title: title.present ? title.value : this.title,
     titleEnglish: titleEnglish.present ? titleEnglish.value : this.titleEnglish,
     titleJapanese: titleJapanese.present
@@ -523,6 +554,7 @@ class Detail extends DataClass implements Insertable<Detail> {
           ..write('providerId: $providerId, ')
           ..write('fetchedAt: $fetchedAt, ')
           ..write('json: $json, ')
+          ..write('isFull: $isFull, ')
           ..write('title: $title, ')
           ..write('titleEnglish: $titleEnglish, ')
           ..write('titleJapanese: $titleJapanese, ')
@@ -542,6 +574,7 @@ class Detail extends DataClass implements Insertable<Detail> {
     providerId,
     fetchedAt,
     json,
+    isFull,
     title,
     titleEnglish,
     titleJapanese,
@@ -560,6 +593,7 @@ class Detail extends DataClass implements Insertable<Detail> {
           other.providerId == this.providerId &&
           other.fetchedAt == this.fetchedAt &&
           other.json == this.json &&
+          other.isFull == this.isFull &&
           other.title == this.title &&
           other.titleEnglish == this.titleEnglish &&
           other.titleJapanese == this.titleJapanese &&
@@ -576,12 +610,14 @@ class DetailCompanion extends UpdateCompanion<Detail> {
   final Value<int> providerId;
   final Value<int> fetchedAt;
   final Value<String> json;
+  final Value<bool> isFull;
   final Value<int> rowid;
   const DetailCompanion({
     this.provider = const Value.absent(),
     this.providerId = const Value.absent(),
     this.fetchedAt = const Value.absent(),
     this.json = const Value.absent(),
+    this.isFull = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DetailCompanion.insert({
@@ -589,6 +625,7 @@ class DetailCompanion extends UpdateCompanion<Detail> {
     required int providerId,
     required int fetchedAt,
     required String json,
+    this.isFull = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : provider = Value(provider),
        providerId = Value(providerId),
@@ -599,6 +636,7 @@ class DetailCompanion extends UpdateCompanion<Detail> {
     Expression<int>? providerId,
     Expression<int>? fetchedAt,
     Expression<String>? json,
+    Expression<bool>? isFull,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -606,6 +644,7 @@ class DetailCompanion extends UpdateCompanion<Detail> {
       if (providerId != null) 'provider_id': providerId,
       if (fetchedAt != null) 'fetched_at': fetchedAt,
       if (json != null) 'json': json,
+      if (isFull != null) 'is_full': isFull,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -615,6 +654,7 @@ class DetailCompanion extends UpdateCompanion<Detail> {
     Value<int>? providerId,
     Value<int>? fetchedAt,
     Value<String>? json,
+    Value<bool>? isFull,
     Value<int>? rowid,
   }) {
     return DetailCompanion(
@@ -622,6 +662,7 @@ class DetailCompanion extends UpdateCompanion<Detail> {
       providerId: providerId ?? this.providerId,
       fetchedAt: fetchedAt ?? this.fetchedAt,
       json: json ?? this.json,
+      isFull: isFull ?? this.isFull,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -641,6 +682,9 @@ class DetailCompanion extends UpdateCompanion<Detail> {
     if (json.present) {
       map['json'] = Variable<String>(json.value);
     }
+    if (isFull.present) {
+      map['is_full'] = Variable<bool>(isFull.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -654,6 +698,7 @@ class DetailCompanion extends UpdateCompanion<Detail> {
           ..write('providerId: $providerId, ')
           ..write('fetchedAt: $fetchedAt, ')
           ..write('json: $json, ')
+          ..write('isFull: $isFull, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -997,11 +1042,11 @@ class FranchiseLinkCompanion extends UpdateCompanion<FranchiseLink> {
   }
 }
 
-class RelationTable extends Table with TableInfo<RelationTable, Relation> {
+class GonePageTable extends Table with TableInfo<GonePageTable, GonePage> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  RelationTable(this.attachedDatabase, [this._alias]);
+  GonePageTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _providerMeta = const VerificationMeta(
     'provider',
   );
@@ -1024,15 +1069,6 @@ class RelationTable extends Table with TableInfo<RelationTable, Relation> {
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL',
   );
-  static const VerificationMeta _jsonMeta = const VerificationMeta('json');
-  late final GeneratedColumn<String> json = GeneratedColumn<String>(
-    'json',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL',
-  );
   static const VerificationMeta _checkedAtMeta = const VerificationMeta(
     'checkedAt',
   );
@@ -1045,15 +1081,15 @@ class RelationTable extends Table with TableInfo<RelationTable, Relation> {
     $customConstraints: 'NOT NULL',
   );
   @override
-  List<GeneratedColumn> get $columns => [provider, providerId, json, checkedAt];
+  List<GeneratedColumn> get $columns => [provider, providerId, checkedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'relation';
+  static const String $name = 'gone_page';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Relation> instance, {
+    Insertable<GonePage> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -1074,14 +1110,6 @@ class RelationTable extends Table with TableInfo<RelationTable, Relation> {
     } else if (isInserting) {
       context.missing(_providerIdMeta);
     }
-    if (data.containsKey('json')) {
-      context.handle(
-        _jsonMeta,
-        json.isAcceptableOrUnknown(data['json']!, _jsonMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_jsonMeta);
-    }
     if (data.containsKey('checked_at')) {
       context.handle(
         _checkedAtMeta,
@@ -1096,9 +1124,9 @@ class RelationTable extends Table with TableInfo<RelationTable, Relation> {
   @override
   Set<GeneratedColumn> get $primaryKey => {provider, providerId};
   @override
-  Relation map(Map<String, dynamic> data, {String? tablePrefix}) {
+  GonePage map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Relation(
+    return GonePage(
       provider: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}provider'],
@@ -1106,10 +1134,6 @@ class RelationTable extends Table with TableInfo<RelationTable, Relation> {
       providerId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}provider_id'],
-      )!,
-      json: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}json'],
       )!,
       checkedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -1119,8 +1143,8 @@ class RelationTable extends Table with TableInfo<RelationTable, Relation> {
   }
 
   @override
-  RelationTable createAlias(String alias) {
-    return RelationTable(attachedDatabase, alias);
+  GonePageTable createAlias(String alias) {
+    return GonePageTable(attachedDatabase, alias);
   }
 
   @override
@@ -1131,15 +1155,13 @@ class RelationTable extends Table with TableInfo<RelationTable, Relation> {
   bool get dontWriteConstraints => true;
 }
 
-class Relation extends DataClass implements Insertable<Relation> {
+class GonePage extends DataClass implements Insertable<GonePage> {
   final String provider;
   final int providerId;
-  final String json;
   final int checkedAt;
-  const Relation({
+  const GonePage({
     required this.provider,
     required this.providerId,
-    required this.json,
     required this.checkedAt,
   });
   @override
@@ -1147,29 +1169,26 @@ class Relation extends DataClass implements Insertable<Relation> {
     final map = <String, Expression>{};
     map['provider'] = Variable<String>(provider);
     map['provider_id'] = Variable<int>(providerId);
-    map['json'] = Variable<String>(json);
     map['checked_at'] = Variable<int>(checkedAt);
     return map;
   }
 
-  RelationCompanion toCompanion(bool nullToAbsent) {
-    return RelationCompanion(
+  GonePageCompanion toCompanion(bool nullToAbsent) {
+    return GonePageCompanion(
       provider: Value(provider),
       providerId: Value(providerId),
-      json: Value(json),
       checkedAt: Value(checkedAt),
     );
   }
 
-  factory Relation.fromJson(
+  factory GonePage.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Relation(
+    return GonePage(
       provider: serializer.fromJson<String>(json['provider']),
       providerId: serializer.fromJson<int>(json['provider_id']),
-      json: serializer.fromJson<String>(json['json']),
       checkedAt: serializer.fromJson<int>(json['checked_at']),
     );
   }
@@ -1179,106 +1198,89 @@ class Relation extends DataClass implements Insertable<Relation> {
     return <String, dynamic>{
       'provider': serializer.toJson<String>(provider),
       'provider_id': serializer.toJson<int>(providerId),
-      'json': serializer.toJson<String>(json),
       'checked_at': serializer.toJson<int>(checkedAt),
     };
   }
 
-  Relation copyWith({
-    String? provider,
-    int? providerId,
-    String? json,
-    int? checkedAt,
-  }) => Relation(
-    provider: provider ?? this.provider,
-    providerId: providerId ?? this.providerId,
-    json: json ?? this.json,
-    checkedAt: checkedAt ?? this.checkedAt,
-  );
-  Relation copyWithCompanion(RelationCompanion data) {
-    return Relation(
+  GonePage copyWith({String? provider, int? providerId, int? checkedAt}) =>
+      GonePage(
+        provider: provider ?? this.provider,
+        providerId: providerId ?? this.providerId,
+        checkedAt: checkedAt ?? this.checkedAt,
+      );
+  GonePage copyWithCompanion(GonePageCompanion data) {
+    return GonePage(
       provider: data.provider.present ? data.provider.value : this.provider,
       providerId: data.providerId.present
           ? data.providerId.value
           : this.providerId,
-      json: data.json.present ? data.json.value : this.json,
       checkedAt: data.checkedAt.present ? data.checkedAt.value : this.checkedAt,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('Relation(')
+    return (StringBuffer('GonePage(')
           ..write('provider: $provider, ')
           ..write('providerId: $providerId, ')
-          ..write('json: $json, ')
           ..write('checkedAt: $checkedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(provider, providerId, json, checkedAt);
+  int get hashCode => Object.hash(provider, providerId, checkedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Relation &&
+      (other is GonePage &&
           other.provider == this.provider &&
           other.providerId == this.providerId &&
-          other.json == this.json &&
           other.checkedAt == this.checkedAt);
 }
 
-class RelationCompanion extends UpdateCompanion<Relation> {
+class GonePageCompanion extends UpdateCompanion<GonePage> {
   final Value<String> provider;
   final Value<int> providerId;
-  final Value<String> json;
   final Value<int> checkedAt;
   final Value<int> rowid;
-  const RelationCompanion({
+  const GonePageCompanion({
     this.provider = const Value.absent(),
     this.providerId = const Value.absent(),
-    this.json = const Value.absent(),
     this.checkedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  RelationCompanion.insert({
+  GonePageCompanion.insert({
     required String provider,
     required int providerId,
-    required String json,
     required int checkedAt,
     this.rowid = const Value.absent(),
   }) : provider = Value(provider),
        providerId = Value(providerId),
-       json = Value(json),
        checkedAt = Value(checkedAt);
-  static Insertable<Relation> custom({
+  static Insertable<GonePage> custom({
     Expression<String>? provider,
     Expression<int>? providerId,
-    Expression<String>? json,
     Expression<int>? checkedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (provider != null) 'provider': provider,
       if (providerId != null) 'provider_id': providerId,
-      if (json != null) 'json': json,
       if (checkedAt != null) 'checked_at': checkedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  RelationCompanion copyWith({
+  GonePageCompanion copyWith({
     Value<String>? provider,
     Value<int>? providerId,
-    Value<String>? json,
     Value<int>? checkedAt,
     Value<int>? rowid,
   }) {
-    return RelationCompanion(
+    return GonePageCompanion(
       provider: provider ?? this.provider,
       providerId: providerId ?? this.providerId,
-      json: json ?? this.json,
       checkedAt: checkedAt ?? this.checkedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -1293,9 +1295,6 @@ class RelationCompanion extends UpdateCompanion<Relation> {
     if (providerId.present) {
       map['provider_id'] = Variable<int>(providerId.value);
     }
-    if (json.present) {
-      map['json'] = Variable<String>(json.value);
-    }
     if (checkedAt.present) {
       map['checked_at'] = Variable<int>(checkedAt.value);
     }
@@ -1307,10 +1306,9 @@ class RelationCompanion extends UpdateCompanion<Relation> {
 
   @override
   String toString() {
-    return (StringBuffer('RelationCompanion(')
+    return (StringBuffer('GonePageCompanion(')
           ..write('provider: $provider, ')
           ..write('providerId: $providerId, ')
-          ..write('json: $json, ')
           ..write('checkedAt: $checkedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1986,7 +1984,7 @@ abstract class _$DetailsDatabase extends GeneratedDatabase {
     'idx_franchise_root',
     'CREATE INDEX idx_franchise_root ON franchise_link (root_provider, root_provider_id)',
   );
-  late final RelationTable relation = RelationTable(this);
+  late final GonePageTable gonePage = GonePageTable(this);
   late final ScanScheduleTable scanSchedule = ScanScheduleTable(this);
   late final Index idxScanDue = Index(
     'idx_scan_due',
@@ -2001,7 +1999,7 @@ abstract class _$DetailsDatabase extends GeneratedDatabase {
     detail,
     franchiseLink,
     idxFranchiseRoot,
-    relation,
+    gonePage,
     scanSchedule,
     idxScanDue,
     searchCache,
@@ -2013,6 +2011,7 @@ typedef $DetailTableCreateCompanionBuilder = DetailCompanion Function({
   required int providerId,
   required int fetchedAt,
   required String json,
+  Value<bool> isFull,
   Value<int> rowid,
 });
 typedef $DetailTableUpdateCompanionBuilder = DetailCompanion Function({
@@ -2020,6 +2019,7 @@ typedef $DetailTableUpdateCompanionBuilder = DetailCompanion Function({
   Value<int> providerId,
   Value<int> fetchedAt,
   Value<String> json,
+  Value<bool> isFull,
   Value<int> rowid,
 });
 
@@ -2049,6 +2049,11 @@ class $DetailTableFilterComposer
 
   ColumnFilters<String> get json => $composableBuilder(
     column: $table.json,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isFull => $composableBuilder(
+    column: $table.isFull,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2127,6 +2132,11 @@ class $DetailTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isFull => $composableBuilder(
+    column: $table.isFull,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get title => $composableBuilder(
     column: $table.title,
     builder: (column) => ColumnOrderings(column),
@@ -2196,6 +2206,9 @@ class $DetailTableAnnotationComposer
   GeneratedColumn<String> get json =>
       $composableBuilder(column: $table.json, builder: (column) => column);
 
+  GeneratedColumn<bool> get isFull =>
+      $composableBuilder(column: $table.isFull, builder: (column) => column);
+
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
 
@@ -2262,12 +2275,14 @@ class $DetailTableTableManager
                 Value<int> providerId = const Value.absent(),
                 Value<int> fetchedAt = const Value.absent(),
                 Value<String> json = const Value.absent(),
+                Value<bool> isFull = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DetailCompanion(
                 provider: provider,
                 providerId: providerId,
                 fetchedAt: fetchedAt,
                 json: json,
+                isFull: isFull,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2276,12 +2291,14 @@ class $DetailTableTableManager
                 required int providerId,
                 required int fetchedAt,
                 required String json,
+                Value<bool> isFull = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DetailCompanion.insert(
                 provider: provider,
                 providerId: providerId,
                 fetchedAt: fetchedAt,
                 json: json,
+                isFull: isFull,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -2517,24 +2534,22 @@ typedef $FranchiseLinkTableProcessedTableManager =
       FranchiseLink,
       PrefetchHooks Function()
     >;
-typedef $RelationTableCreateCompanionBuilder = RelationCompanion Function({
+typedef $GonePageTableCreateCompanionBuilder = GonePageCompanion Function({
   required String provider,
   required int providerId,
-  required String json,
   required int checkedAt,
   Value<int> rowid,
 });
-typedef $RelationTableUpdateCompanionBuilder = RelationCompanion Function({
+typedef $GonePageTableUpdateCompanionBuilder = GonePageCompanion Function({
   Value<String> provider,
   Value<int> providerId,
-  Value<String> json,
   Value<int> checkedAt,
   Value<int> rowid,
 });
 
-class $RelationTableFilterComposer
-    extends Composer<_$DetailsDatabase, RelationTable> {
-  $RelationTableFilterComposer({
+class $GonePageTableFilterComposer
+    extends Composer<_$DetailsDatabase, GonePageTable> {
+  $GonePageTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2551,20 +2566,15 @@ class $RelationTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get json => $composableBuilder(
-    column: $table.json,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<int> get checkedAt => $composableBuilder(
     column: $table.checkedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
 
-class $RelationTableOrderingComposer
-    extends Composer<_$DetailsDatabase, RelationTable> {
-  $RelationTableOrderingComposer({
+class $GonePageTableOrderingComposer
+    extends Composer<_$DetailsDatabase, GonePageTable> {
+  $GonePageTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2581,20 +2591,15 @@ class $RelationTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get json => $composableBuilder(
-    column: $table.json,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<int> get checkedAt => $composableBuilder(
     column: $table.checkedAt,
     builder: (column) => ColumnOrderings(column),
   );
 }
 
-class $RelationTableAnnotationComposer
-    extends Composer<_$DetailsDatabase, RelationTable> {
-  $RelationTableAnnotationComposer({
+class $GonePageTableAnnotationComposer
+    extends Composer<_$DetailsDatabase, GonePageTable> {
+  $GonePageTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2609,53 +2614,48 @@ class $RelationTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get json =>
-      $composableBuilder(column: $table.json, builder: (column) => column);
-
   GeneratedColumn<int> get checkedAt =>
       $composableBuilder(column: $table.checkedAt, builder: (column) => column);
 }
 
-class $RelationTableTableManager
+class $GonePageTableTableManager
     extends
         RootTableManager<
           _$DetailsDatabase,
-          RelationTable,
-          Relation,
-          $RelationTableFilterComposer,
-          $RelationTableOrderingComposer,
-          $RelationTableAnnotationComposer,
-          $RelationTableCreateCompanionBuilder,
-          $RelationTableUpdateCompanionBuilder,
+          GonePageTable,
+          GonePage,
+          $GonePageTableFilterComposer,
+          $GonePageTableOrderingComposer,
+          $GonePageTableAnnotationComposer,
+          $GonePageTableCreateCompanionBuilder,
+          $GonePageTableUpdateCompanionBuilder,
           (
-            Relation,
-            BaseReferences<_$DetailsDatabase, RelationTable, Relation>,
+            GonePage,
+            BaseReferences<_$DetailsDatabase, GonePageTable, GonePage>,
           ),
-          Relation,
+          GonePage,
           PrefetchHooks Function()
         > {
-  $RelationTableTableManager(_$DetailsDatabase db, RelationTable table)
+  $GonePageTableTableManager(_$DetailsDatabase db, GonePageTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $RelationTableFilterComposer($db: db, $table: table),
+              $GonePageTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $RelationTableOrderingComposer($db: db, $table: table),
+              $GonePageTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $RelationTableAnnotationComposer($db: db, $table: table),
+              $GonePageTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> provider = const Value.absent(),
                 Value<int> providerId = const Value.absent(),
-                Value<String> json = const Value.absent(),
                 Value<int> checkedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => RelationCompanion(
+              }) => GonePageCompanion(
                 provider: provider,
                 providerId: providerId,
-                json: json,
                 checkedAt: checkedAt,
                 rowid: rowid,
               ),
@@ -2663,21 +2663,19 @@ class $RelationTableTableManager
               ({
                 required String provider,
                 required int providerId,
-                required String json,
                 required int checkedAt,
                 Value<int> rowid = const Value.absent(),
-              }) => RelationCompanion.insert(
+              }) => GonePageCompanion.insert(
                 provider: provider,
                 providerId: providerId,
-                json: json,
                 checkedAt: checkedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<RelationTable, Relation>(table),
-                  BaseReferences<_$DetailsDatabase, RelationTable, Relation>(
+                  e.readTable<GonePageTable, GonePage>(table),
+                  BaseReferences<_$DetailsDatabase, GonePageTable, GonePage>(
                     db,
                     table,
                     e,
@@ -2690,18 +2688,18 @@ class $RelationTableTableManager
       );
 }
 
-typedef $RelationTableProcessedTableManager =
+typedef $GonePageTableProcessedTableManager =
     ProcessedTableManager<
       _$DetailsDatabase,
-      RelationTable,
-      Relation,
-      $RelationTableFilterComposer,
-      $RelationTableOrderingComposer,
-      $RelationTableAnnotationComposer,
-      $RelationTableCreateCompanionBuilder,
-      $RelationTableUpdateCompanionBuilder,
-      (Relation, BaseReferences<_$DetailsDatabase, RelationTable, Relation>),
-      Relation,
+      GonePageTable,
+      GonePage,
+      $GonePageTableFilterComposer,
+      $GonePageTableOrderingComposer,
+      $GonePageTableAnnotationComposer,
+      $GonePageTableCreateCompanionBuilder,
+      $GonePageTableUpdateCompanionBuilder,
+      (GonePage, BaseReferences<_$DetailsDatabase, GonePageTable, GonePage>),
+      GonePage,
       PrefetchHooks Function()
     >;
 typedef $ScanScheduleTableCreateCompanionBuilder =
@@ -3096,8 +3094,8 @@ class $DetailsDatabaseManager {
       $DetailTableTableManager(_db, _db.detail);
   $FranchiseLinkTableTableManager get franchiseLink =>
       $FranchiseLinkTableTableManager(_db, _db.franchiseLink);
-  $RelationTableTableManager get relation =>
-      $RelationTableTableManager(_db, _db.relation);
+  $GonePageTableTableManager get gonePage =>
+      $GonePageTableTableManager(_db, _db.gonePage);
   $ScanScheduleTableTableManager get scanSchedule =>
       $ScanScheduleTableTableManager(_db, _db.scanSchedule);
   $SearchCacheTableManager get searchCache =>

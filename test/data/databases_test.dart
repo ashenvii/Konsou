@@ -90,8 +90,7 @@ void main() {
     },
   );
 
-  // hand-written to the documented field shape; step 4 swaps in a saved response
-  final frierenJson = File('test/data/mal_detail_frieren.json')
+  final frierenJson = File('test/mal/samples/frieren_full.json')
       .readAsStringSync();
 
   Future<void> saveDetail(String json, {int providerId = 52991}) {
@@ -121,7 +120,7 @@ void main() {
     expect(row.startDate, '2023-09-29');
     expect(
       row.coverUrl,
-      'https://cdn.myanimelist.net/images/anime/1015/138006l.jpg',
+      'https://cdn.myanimelist.net/images/anime/1015/138006l.webp',
     );
     expect(row.nsfw, 'white');
   });
