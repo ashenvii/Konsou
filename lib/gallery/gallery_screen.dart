@@ -8,6 +8,7 @@ import '../components/app_menu.dart';
 import '../components/icon_square_button.dart';
 import '../components/panel.dart';
 import '../components/status_mark.dart';
+import 'library_rows_section.dart';
 import '../library/entry_status.dart';
 import '../design/tokens.dart';
 import '../icons/app_icon.dart';
@@ -139,6 +140,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ),
             const _Section('Menu and controls'),
             const _MenuControls(),
+            const _Section('Library rows and cards'),
+            const LibraryRowsSection(),
             const _Section('Icons'),
             const _Icons(),
             const SizedBox(height: Tokens.space3),

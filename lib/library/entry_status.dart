@@ -4,17 +4,20 @@ const watchingStatuses = {'watching', 'rewatching'};
 /// What the user is doing with an entry. [value] is what the record stores,
 /// MAL's own words, so import and export match.
 enum EntryStatus {
-  watching('watching'),
-  planned('plan_to_watch'),
-  completed('completed'),
-  onHold('on_hold'),
-  dropped('dropped'),
-  rewatching('rewatching'),
-  notInterested('not_interested');
+  watching('watching', 'Watching'),
+  planned('plan_to_watch', 'Planned'),
+  completed('completed', 'Completed'),
+  onHold('on_hold', 'On hold'),
+  dropped('dropped', 'Dropped'),
+  rewatching('rewatching', 'Rewatching'),
+  notInterested('not_interested', 'Not interested');
 
-  const EntryStatus(this.value);
+  const EntryStatus(this.value, this.label);
 
   final String value;
+
+  /// The word the screens show.
+  final String label;
 
   static EntryStatus parse(String stored) =>
       values.firstWhere((status) => status.value == stored);

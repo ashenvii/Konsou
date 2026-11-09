@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/gallery/gallery_screen.dart';
+import 'package:konsou/gallery/library_rows_section.dart';
 import 'package:konsou/app/routes.dart';
 import 'package:konsou/main.dart';
 import 'package:konsou/shell/app_rail.dart';
@@ -67,6 +68,31 @@ void main() {
       ),
       size: const Size(1100, 1900),
       path: '$folder/gallery.png',
+    );
+  }, skip: folder == null);
+
+  testWidgets('render the library rows and cards', (tester) async {
+    await loadAppFonts();
+    await renderPng(
+      tester,
+      child: const MediaQuery(
+        data: MediaQueryData(size: Size(1100, 1400)),
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: DefaultTextStyle(
+            style: TextStyle(fontFamily: Tokens.sans, color: Tokens.ink),
+            child: ColoredBox(
+              color: Tokens.ground,
+              child: Padding(
+                padding: EdgeInsets.all(Tokens.space5),
+                child: LibraryRowsSection(),
+              ),
+            ),
+          ),
+        ),
+      ),
+      size: const Size(1100, 1400),
+      path: '$folder/library_rows.png',
     );
   }, skip: folder == null);
 }

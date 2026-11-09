@@ -20,6 +20,7 @@ const _mayImport = <String, Set<String>>{
   'sync': {'sync', 'data', 'import', 'net'},
   'screens': {
     'screens',
+    'app',
     'design',
     'components',
     'icons',

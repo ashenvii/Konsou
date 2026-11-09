@@ -14,6 +14,22 @@ abstract final class AppText {
     color: color,
   );
 
+  /// The small line under a title.
+  static TextStyle caption(Color color) => TextStyle(
+    fontFamily: Tokens.sans,
+    fontSize: Tokens.text2,
+    height: 1,
+    color: color,
+  );
+
+  /// Counts and scores beside a row: small, mono.
+  static TextStyle figure(Color color) => TextStyle(
+    fontFamily: Tokens.mono,
+    fontSize: Tokens.text2,
+    height: 1,
+    color: color,
+  );
+
   /// Numbers inside a count badge.
   static TextStyle count(Color color) => TextStyle(
     fontFamily: Tokens.mono,

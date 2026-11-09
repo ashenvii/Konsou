@@ -140,6 +140,17 @@ abstract final class AppIcons {
     ],
   );
 
+  /// A score: a four-armed star, straight and diagonal strokes through the
+  /// middle (a true five-point star needs other angles).
+  static const star = IconDef(
+    lines: [
+      ((8, 1), (8, 15)),
+      ((1, 8), (15, 8)),
+      ((4, 4), (12, 12)),
+      ((12, 4), (4, 12)),
+    ],
+  );
+
   /// Planned: a bookmark.
   static const planned = IconDef(
     lines: [
@@ -203,6 +214,7 @@ abstract final class AppIcons {
     'chevronDown': chevronDown,
     'check': check,
     'more': more,
+    'star': star,
     'planned': planned,
     'onHold': onHold,
     'dropped': dropped,
