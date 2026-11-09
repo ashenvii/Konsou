@@ -119,7 +119,11 @@ void main() {
     expect(row.episodes, 28);
     expect(row.startDate, '2023-09-29');
     expect(
-      row.coverUrl,
+      row.coverMediumUrl,
+      'https://cdn.myanimelist.net/images/anime/1015/138006.webp',
+    );
+    expect(
+      row.coverLargeUrl,
       'https://cdn.myanimelist.net/images/anime/1015/138006l.webp',
     );
     expect(row.nsfw, 'white');

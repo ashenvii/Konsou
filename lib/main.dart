@@ -22,8 +22,10 @@ import 'shell/window_memory.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isWindows) await _setUpWindow();
+  final folder = await getApplicationSupportDirectory();
   final services = Services(
-    databases: await openDatabases(await getApplicationSupportDirectory()),
+    databases: await openDatabases(folder),
+    coversFolder: Directory('${folder.path}${Platform.pathSeparator}covers'),
     keys: const Keys.fromBuild(),
     client: http.Client(),
     tokenStore: SecureTokenStore(),

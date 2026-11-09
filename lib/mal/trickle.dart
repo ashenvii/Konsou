@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' show Variable;
 
 import '../data/record_database.dart';
+import '../net/drain_queue.dart';
 import 'detail_request.dart';
 import 'matching.dart';
 import 'request_gate.dart';
@@ -36,18 +37,14 @@ class Trickle {
   /// [stop] is called.
   Future<void> run() async {
     _stopped = false;
-    // titles that failed this run, so one bad page cannot hold the trickle
-    final failed = <int>{};
-    while (!_stopped) {
-      final malId = await _nextTitle(failed);
-      if (malId == null) return matching.run();
-      final outcome = await detailRequest.fetch(
-        malId,
-        lane: Lane.trickle,
-        full: false,
-      );
-      if (outcome == FetchOutcome.failed) failed.add(malId);
-    }
+    final finished = await drainQueue<int>(
+      isStopped: () => _stopped,
+      next: _nextTitle,
+      work: (malId) async =>
+          await detailRequest.fetch(malId, lane: Lane.trickle, full: false) ==
+          FetchOutcome.failed,
+    );
+    if (finished) await matching.run();
   }
 
   void stop() {

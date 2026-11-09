@@ -173,22 +173,35 @@ class DetailTable extends Table with TableInfo<DetailTable, Detail> {
     $customConstraints:
         'GENERATED ALWAYS AS (json_extract(json, \'\$.start_date\')) VIRTUAL',
   );
-  static const VerificationMeta _coverUrlMeta = const VerificationMeta(
-    'coverUrl',
+  static const VerificationMeta _coverMediumUrlMeta = const VerificationMeta(
+    'coverMediumUrl',
   );
-  late final GeneratedColumn<String> coverUrl = GeneratedColumn<String>(
-    'cover_url',
+  late final GeneratedColumn<String> coverMediumUrl = GeneratedColumn<String>(
+    'cover_medium_url',
     aliasedName,
     true,
     generatedAs: GeneratedAs(
-      const CustomExpression(
-        'COALESCE(json_extract(json, \'\$.main_picture.large\'), json_extract(json, \'\$.main_picture.medium\'))',
-      ),
+      const CustomExpression('json_extract(json, \'\$.main_picture.medium\')'),
       false,
     ),
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-    $customConstraints: 'GENERATED ALWAYS AS (COALESCE(json_extract(json, \'\$.main_picture.large\'), json_extract(json, \'\$.main_picture.medium\'))) VIRTUAL',
+    $customConstraints: 'GENERATED ALWAYS AS (json_extract(json, \'\$.main_picture.medium\')) VIRTUAL',
+  );
+  static const VerificationMeta _coverLargeUrlMeta = const VerificationMeta(
+    'coverLargeUrl',
+  );
+  late final GeneratedColumn<String> coverLargeUrl = GeneratedColumn<String>(
+    'cover_large_url',
+    aliasedName,
+    true,
+    generatedAs: GeneratedAs(
+      const CustomExpression('json_extract(json, \'\$.main_picture.large\')'),
+      false,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'GENERATED ALWAYS AS (json_extract(json, \'\$.main_picture.large\')) VIRTUAL',
   );
   static const VerificationMeta _nsfwMeta = const VerificationMeta('nsfw');
   late final GeneratedColumn<String> nsfw = GeneratedColumn<String>(
@@ -218,7 +231,8 @@ class DetailTable extends Table with TableInfo<DetailTable, Detail> {
     airingStatus,
     episodes,
     startDate,
-    coverUrl,
+    coverMediumUrl,
+    coverLargeUrl,
     nsfw,
   ];
   @override
@@ -322,10 +336,22 @@ class DetailTable extends Table with TableInfo<DetailTable, Detail> {
         startDate.isAcceptableOrUnknown(data['start_date']!, _startDateMeta),
       );
     }
-    if (data.containsKey('cover_url')) {
+    if (data.containsKey('cover_medium_url')) {
       context.handle(
-        _coverUrlMeta,
-        coverUrl.isAcceptableOrUnknown(data['cover_url']!, _coverUrlMeta),
+        _coverMediumUrlMeta,
+        coverMediumUrl.isAcceptableOrUnknown(
+          data['cover_medium_url']!,
+          _coverMediumUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cover_large_url')) {
+      context.handle(
+        _coverLargeUrlMeta,
+        coverLargeUrl.isAcceptableOrUnknown(
+          data['cover_large_url']!,
+          _coverLargeUrlMeta,
+        ),
       );
     }
     if (data.containsKey('nsfw')) {
@@ -391,9 +417,13 @@ class DetailTable extends Table with TableInfo<DetailTable, Detail> {
         DriftSqlType.string,
         data['${effectivePrefix}start_date'],
       ),
-      coverUrl: attachedDatabase.typeMapping.read(
+      coverMediumUrl: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}cover_url'],
+        data['${effectivePrefix}cover_medium_url'],
+      ),
+      coverLargeUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cover_large_url'],
       ),
       nsfw: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -432,7 +462,8 @@ class Detail extends DataClass implements Insertable<Detail> {
   /// mal sends 0 when the count is not known yet
   final int? episodes;
   final String? startDate;
-  final String? coverUrl;
+  final String? coverMediumUrl;
+  final String? coverLargeUrl;
   final String? nsfw;
   const Detail({
     required this.provider,
@@ -447,7 +478,8 @@ class Detail extends DataClass implements Insertable<Detail> {
     this.airingStatus,
     this.episodes,
     this.startDate,
-    this.coverUrl,
+    this.coverMediumUrl,
+    this.coverLargeUrl,
     this.nsfw,
   });
   @override
@@ -489,7 +521,8 @@ class Detail extends DataClass implements Insertable<Detail> {
       airingStatus: serializer.fromJson<String?>(json['airing_status']),
       episodes: serializer.fromJson<int?>(json['episodes']),
       startDate: serializer.fromJson<String?>(json['start_date']),
-      coverUrl: serializer.fromJson<String?>(json['cover_url']),
+      coverMediumUrl: serializer.fromJson<String?>(json['cover_medium_url']),
+      coverLargeUrl: serializer.fromJson<String?>(json['cover_large_url']),
       nsfw: serializer.fromJson<String?>(json['nsfw']),
     );
   }
@@ -509,7 +542,8 @@ class Detail extends DataClass implements Insertable<Detail> {
       'airing_status': serializer.toJson<String?>(airingStatus),
       'episodes': serializer.toJson<int?>(episodes),
       'start_date': serializer.toJson<String?>(startDate),
-      'cover_url': serializer.toJson<String?>(coverUrl),
+      'cover_medium_url': serializer.toJson<String?>(coverMediumUrl),
+      'cover_large_url': serializer.toJson<String?>(coverLargeUrl),
       'nsfw': serializer.toJson<String?>(nsfw),
     };
   }
@@ -527,7 +561,8 @@ class Detail extends DataClass implements Insertable<Detail> {
     Value<String?> airingStatus = const Value.absent(),
     Value<int?> episodes = const Value.absent(),
     Value<String?> startDate = const Value.absent(),
-    Value<String?> coverUrl = const Value.absent(),
+    Value<String?> coverMediumUrl = const Value.absent(),
+    Value<String?> coverLargeUrl = const Value.absent(),
     Value<String?> nsfw = const Value.absent(),
   }) => Detail(
     provider: provider ?? this.provider,
@@ -544,7 +579,12 @@ class Detail extends DataClass implements Insertable<Detail> {
     airingStatus: airingStatus.present ? airingStatus.value : this.airingStatus,
     episodes: episodes.present ? episodes.value : this.episodes,
     startDate: startDate.present ? startDate.value : this.startDate,
-    coverUrl: coverUrl.present ? coverUrl.value : this.coverUrl,
+    coverMediumUrl: coverMediumUrl.present
+        ? coverMediumUrl.value
+        : this.coverMediumUrl,
+    coverLargeUrl: coverLargeUrl.present
+        ? coverLargeUrl.value
+        : this.coverLargeUrl,
     nsfw: nsfw.present ? nsfw.value : this.nsfw,
   );
   @override
@@ -562,7 +602,8 @@ class Detail extends DataClass implements Insertable<Detail> {
           ..write('airingStatus: $airingStatus, ')
           ..write('episodes: $episodes, ')
           ..write('startDate: $startDate, ')
-          ..write('coverUrl: $coverUrl, ')
+          ..write('coverMediumUrl: $coverMediumUrl, ')
+          ..write('coverLargeUrl: $coverLargeUrl, ')
           ..write('nsfw: $nsfw')
           ..write(')'))
         .toString();
@@ -582,7 +623,8 @@ class Detail extends DataClass implements Insertable<Detail> {
     airingStatus,
     episodes,
     startDate,
-    coverUrl,
+    coverMediumUrl,
+    coverLargeUrl,
     nsfw,
   );
   @override
@@ -601,7 +643,8 @@ class Detail extends DataClass implements Insertable<Detail> {
           other.airingStatus == this.airingStatus &&
           other.episodes == this.episodes &&
           other.startDate == this.startDate &&
-          other.coverUrl == this.coverUrl &&
+          other.coverMediumUrl == this.coverMediumUrl &&
+          other.coverLargeUrl == this.coverLargeUrl &&
           other.nsfw == this.nsfw);
 }
 
@@ -2727,6 +2770,527 @@ class SearchCacheCompanion extends UpdateCompanion<SearchCacheRow> {
   }
 }
 
+class CoverTable extends Table with TableInfo<CoverTable, Cover> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  CoverTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _providerMeta = const VerificationMeta(
+    'provider',
+  );
+  late final GeneratedColumn<String> provider = GeneratedColumn<String>(
+    'provider',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _providerIdMeta = const VerificationMeta(
+    'providerId',
+  );
+  late final GeneratedColumn<int> providerId = GeneratedColumn<int>(
+    'provider_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _sizeMeta = const VerificationMeta('size');
+  late final GeneratedColumn<String> size = GeneratedColumn<String>(
+    'size',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (size IN (\'medium\', \'large\'))',
+  );
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _fileNameMeta = const VerificationMeta(
+    'fileName',
+  );
+  late final GeneratedColumn<String> fileName = GeneratedColumn<String>(
+    'file_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _bytesMeta = const VerificationMeta('bytes');
+  late final GeneratedColumn<int> bytes = GeneratedColumn<int>(
+    'bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  late final GeneratedColumn<int> fetchedAt = GeneratedColumn<int>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _shownAtMeta = const VerificationMeta(
+    'shownAt',
+  );
+  late final GeneratedColumn<int> shownAt = GeneratedColumn<int>(
+    'shown_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    provider,
+    providerId,
+    size,
+    url,
+    fileName,
+    bytes,
+    fetchedAt,
+    shownAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cover';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Cover> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('provider')) {
+      context.handle(
+        _providerMeta,
+        provider.isAcceptableOrUnknown(data['provider']!, _providerMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_providerMeta);
+    }
+    if (data.containsKey('provider_id')) {
+      context.handle(
+        _providerIdMeta,
+        providerId.isAcceptableOrUnknown(data['provider_id']!, _providerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_providerIdMeta);
+    }
+    if (data.containsKey('size')) {
+      context.handle(
+        _sizeMeta,
+        size.isAcceptableOrUnknown(data['size']!, _sizeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeMeta);
+    }
+    if (data.containsKey('url')) {
+      context.handle(
+        _urlMeta,
+        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_urlMeta);
+    }
+    if (data.containsKey('file_name')) {
+      context.handle(
+        _fileNameMeta,
+        fileName.isAcceptableOrUnknown(data['file_name']!, _fileNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileNameMeta);
+    }
+    if (data.containsKey('bytes')) {
+      context.handle(
+        _bytesMeta,
+        bytes.isAcceptableOrUnknown(data['bytes']!, _bytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bytesMeta);
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fetchedAtMeta);
+    }
+    if (data.containsKey('shown_at')) {
+      context.handle(
+        _shownAtMeta,
+        shownAt.isAcceptableOrUnknown(data['shown_at']!, _shownAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_shownAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {provider, providerId, size};
+  @override
+  Cover map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Cover(
+      provider: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provider'],
+      )!,
+      providerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}provider_id'],
+      )!,
+      size: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}size'],
+      )!,
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      )!,
+      fileName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_name'],
+      )!,
+      bytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bytes'],
+      )!,
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}fetched_at'],
+      )!,
+      shownAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}shown_at'],
+      )!,
+    );
+  }
+
+  @override
+  CoverTable createAlias(String alias) {
+    return CoverTable(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'PRIMARY KEY(provider, provider_id, size)',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class Cover extends DataClass implements Insertable<Cover> {
+  final String provider;
+  final int providerId;
+  final String size;
+  final String url;
+
+  /// the picture link the file came from
+  final String fileName;
+  final int bytes;
+  final int fetchedAt;
+  final int shownAt;
+  const Cover({
+    required this.provider,
+    required this.providerId,
+    required this.size,
+    required this.url,
+    required this.fileName,
+    required this.bytes,
+    required this.fetchedAt,
+    required this.shownAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['provider'] = Variable<String>(provider);
+    map['provider_id'] = Variable<int>(providerId);
+    map['size'] = Variable<String>(size);
+    map['url'] = Variable<String>(url);
+    map['file_name'] = Variable<String>(fileName);
+    map['bytes'] = Variable<int>(bytes);
+    map['fetched_at'] = Variable<int>(fetchedAt);
+    map['shown_at'] = Variable<int>(shownAt);
+    return map;
+  }
+
+  CoverCompanion toCompanion(bool nullToAbsent) {
+    return CoverCompanion(
+      provider: Value(provider),
+      providerId: Value(providerId),
+      size: Value(size),
+      url: Value(url),
+      fileName: Value(fileName),
+      bytes: Value(bytes),
+      fetchedAt: Value(fetchedAt),
+      shownAt: Value(shownAt),
+    );
+  }
+
+  factory Cover.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Cover(
+      provider: serializer.fromJson<String>(json['provider']),
+      providerId: serializer.fromJson<int>(json['provider_id']),
+      size: serializer.fromJson<String>(json['size']),
+      url: serializer.fromJson<String>(json['url']),
+      fileName: serializer.fromJson<String>(json['file_name']),
+      bytes: serializer.fromJson<int>(json['bytes']),
+      fetchedAt: serializer.fromJson<int>(json['fetched_at']),
+      shownAt: serializer.fromJson<int>(json['shown_at']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'provider': serializer.toJson<String>(provider),
+      'provider_id': serializer.toJson<int>(providerId),
+      'size': serializer.toJson<String>(size),
+      'url': serializer.toJson<String>(url),
+      'file_name': serializer.toJson<String>(fileName),
+      'bytes': serializer.toJson<int>(bytes),
+      'fetched_at': serializer.toJson<int>(fetchedAt),
+      'shown_at': serializer.toJson<int>(shownAt),
+    };
+  }
+
+  Cover copyWith({
+    String? provider,
+    int? providerId,
+    String? size,
+    String? url,
+    String? fileName,
+    int? bytes,
+    int? fetchedAt,
+    int? shownAt,
+  }) => Cover(
+    provider: provider ?? this.provider,
+    providerId: providerId ?? this.providerId,
+    size: size ?? this.size,
+    url: url ?? this.url,
+    fileName: fileName ?? this.fileName,
+    bytes: bytes ?? this.bytes,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+    shownAt: shownAt ?? this.shownAt,
+  );
+  Cover copyWithCompanion(CoverCompanion data) {
+    return Cover(
+      provider: data.provider.present ? data.provider.value : this.provider,
+      providerId: data.providerId.present
+          ? data.providerId.value
+          : this.providerId,
+      size: data.size.present ? data.size.value : this.size,
+      url: data.url.present ? data.url.value : this.url,
+      fileName: data.fileName.present ? data.fileName.value : this.fileName,
+      bytes: data.bytes.present ? data.bytes.value : this.bytes,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+      shownAt: data.shownAt.present ? data.shownAt.value : this.shownAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Cover(')
+          ..write('provider: $provider, ')
+          ..write('providerId: $providerId, ')
+          ..write('size: $size, ')
+          ..write('url: $url, ')
+          ..write('fileName: $fileName, ')
+          ..write('bytes: $bytes, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('shownAt: $shownAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    provider,
+    providerId,
+    size,
+    url,
+    fileName,
+    bytes,
+    fetchedAt,
+    shownAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Cover &&
+          other.provider == this.provider &&
+          other.providerId == this.providerId &&
+          other.size == this.size &&
+          other.url == this.url &&
+          other.fileName == this.fileName &&
+          other.bytes == this.bytes &&
+          other.fetchedAt == this.fetchedAt &&
+          other.shownAt == this.shownAt);
+}
+
+class CoverCompanion extends UpdateCompanion<Cover> {
+  final Value<String> provider;
+  final Value<int> providerId;
+  final Value<String> size;
+  final Value<String> url;
+  final Value<String> fileName;
+  final Value<int> bytes;
+  final Value<int> fetchedAt;
+  final Value<int> shownAt;
+  final Value<int> rowid;
+  const CoverCompanion({
+    this.provider = const Value.absent(),
+    this.providerId = const Value.absent(),
+    this.size = const Value.absent(),
+    this.url = const Value.absent(),
+    this.fileName = const Value.absent(),
+    this.bytes = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.shownAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CoverCompanion.insert({
+    required String provider,
+    required int providerId,
+    required String size,
+    required String url,
+    required String fileName,
+    required int bytes,
+    required int fetchedAt,
+    required int shownAt,
+    this.rowid = const Value.absent(),
+  }) : provider = Value(provider),
+       providerId = Value(providerId),
+       size = Value(size),
+       url = Value(url),
+       fileName = Value(fileName),
+       bytes = Value(bytes),
+       fetchedAt = Value(fetchedAt),
+       shownAt = Value(shownAt);
+  static Insertable<Cover> custom({
+    Expression<String>? provider,
+    Expression<int>? providerId,
+    Expression<String>? size,
+    Expression<String>? url,
+    Expression<String>? fileName,
+    Expression<int>? bytes,
+    Expression<int>? fetchedAt,
+    Expression<int>? shownAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (provider != null) 'provider': provider,
+      if (providerId != null) 'provider_id': providerId,
+      if (size != null) 'size': size,
+      if (url != null) 'url': url,
+      if (fileName != null) 'file_name': fileName,
+      if (bytes != null) 'bytes': bytes,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+      if (shownAt != null) 'shown_at': shownAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CoverCompanion copyWith({
+    Value<String>? provider,
+    Value<int>? providerId,
+    Value<String>? size,
+    Value<String>? url,
+    Value<String>? fileName,
+    Value<int>? bytes,
+    Value<int>? fetchedAt,
+    Value<int>? shownAt,
+    Value<int>? rowid,
+  }) {
+    return CoverCompanion(
+      provider: provider ?? this.provider,
+      providerId: providerId ?? this.providerId,
+      size: size ?? this.size,
+      url: url ?? this.url,
+      fileName: fileName ?? this.fileName,
+      bytes: bytes ?? this.bytes,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+      shownAt: shownAt ?? this.shownAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (provider.present) {
+      map['provider'] = Variable<String>(provider.value);
+    }
+    if (providerId.present) {
+      map['provider_id'] = Variable<int>(providerId.value);
+    }
+    if (size.present) {
+      map['size'] = Variable<String>(size.value);
+    }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    if (fileName.present) {
+      map['file_name'] = Variable<String>(fileName.value);
+    }
+    if (bytes.present) {
+      map['bytes'] = Variable<int>(bytes.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<int>(fetchedAt.value);
+    }
+    if (shownAt.present) {
+      map['shown_at'] = Variable<int>(shownAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CoverCompanion(')
+          ..write('provider: $provider, ')
+          ..write('providerId: $providerId, ')
+          ..write('size: $size, ')
+          ..write('url: $url, ')
+          ..write('fileName: $fileName, ')
+          ..write('bytes: $bytes, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('shownAt: $shownAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$DetailsDatabase extends GeneratedDatabase {
   _$DetailsDatabase(QueryExecutor e) : super(e);
   $DetailsDatabaseManager get managers => $DetailsDatabaseManager(this);
@@ -2745,6 +3309,7 @@ abstract class _$DetailsDatabase extends GeneratedDatabase {
   late final MatchSuggestionTable matchSuggestion = MatchSuggestionTable(this);
   late final MatchAttemptTable matchAttempt = MatchAttemptTable(this);
   late final SearchCache searchCache = SearchCache(this);
+  late final CoverTable cover = CoverTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2759,6 +3324,7 @@ abstract class _$DetailsDatabase extends GeneratedDatabase {
     matchSuggestion,
     matchAttempt,
     searchCache,
+    cover,
   ];
 }
 
@@ -2848,8 +3414,13 @@ class $DetailTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get coverUrl => $composableBuilder(
-    column: $table.coverUrl,
+  ColumnFilters<String> get coverMediumUrl => $composableBuilder(
+    column: $table.coverMediumUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get coverLargeUrl => $composableBuilder(
+    column: $table.coverLargeUrl,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2928,8 +3499,13 @@ class $DetailTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get coverUrl => $composableBuilder(
-    column: $table.coverUrl,
+  ColumnOrderings<String> get coverMediumUrl => $composableBuilder(
+    column: $table.coverMediumUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get coverLargeUrl => $composableBuilder(
+    column: $table.coverLargeUrl,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -2992,8 +3568,15 @@ class $DetailTableAnnotationComposer
   GeneratedColumn<String> get startDate =>
       $composableBuilder(column: $table.startDate, builder: (column) => column);
 
-  GeneratedColumn<String> get coverUrl =>
-      $composableBuilder(column: $table.coverUrl, builder: (column) => column);
+  GeneratedColumn<String> get coverMediumUrl => $composableBuilder(
+    column: $table.coverMediumUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get coverLargeUrl => $composableBuilder(
+    column: $table.coverLargeUrl,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get nsfw =>
       $composableBuilder(column: $table.nsfw, builder: (column) => column);
@@ -4276,6 +4859,266 @@ typedef $SearchCacheProcessedTableManager =
       SearchCacheRow,
       PrefetchHooks Function()
     >;
+typedef $CoverTableCreateCompanionBuilder = CoverCompanion Function({
+  required String provider,
+  required int providerId,
+  required String size,
+  required String url,
+  required String fileName,
+  required int bytes,
+  required int fetchedAt,
+  required int shownAt,
+  Value<int> rowid,
+});
+typedef $CoverTableUpdateCompanionBuilder = CoverCompanion Function({
+  Value<String> provider,
+  Value<int> providerId,
+  Value<String> size,
+  Value<String> url,
+  Value<String> fileName,
+  Value<int> bytes,
+  Value<int> fetchedAt,
+  Value<int> shownAt,
+  Value<int> rowid,
+});
+
+class $CoverTableFilterComposer
+    extends Composer<_$DetailsDatabase, CoverTable> {
+  $CoverTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bytes => $composableBuilder(
+    column: $table.bytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get shownAt => $composableBuilder(
+    column: $table.shownAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $CoverTableOrderingComposer
+    extends Composer<_$DetailsDatabase, CoverTable> {
+  $CoverTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bytes => $composableBuilder(
+    column: $table.bytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get shownAt => $composableBuilder(
+    column: $table.shownAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $CoverTableAnnotationComposer
+    extends Composer<_$DetailsDatabase, CoverTable> {
+  $CoverTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get provider =>
+      $composableBuilder(column: $table.provider, builder: (column) => column);
+
+  GeneratedColumn<int> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get size =>
+      $composableBuilder(column: $table.size, builder: (column) => column);
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<String> get fileName =>
+      $composableBuilder(column: $table.fileName, builder: (column) => column);
+
+  GeneratedColumn<int> get bytes =>
+      $composableBuilder(column: $table.bytes, builder: (column) => column);
+
+  GeneratedColumn<int> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get shownAt =>
+      $composableBuilder(column: $table.shownAt, builder: (column) => column);
+}
+
+class $CoverTableTableManager
+    extends
+        RootTableManager<
+          _$DetailsDatabase,
+          CoverTable,
+          Cover,
+          $CoverTableFilterComposer,
+          $CoverTableOrderingComposer,
+          $CoverTableAnnotationComposer,
+          $CoverTableCreateCompanionBuilder,
+          $CoverTableUpdateCompanionBuilder,
+          (Cover, BaseReferences<_$DetailsDatabase, CoverTable, Cover>),
+          Cover,
+          PrefetchHooks Function()
+        > {
+  $CoverTableTableManager(_$DetailsDatabase db, CoverTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $CoverTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $CoverTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $CoverTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> provider = const Value.absent(),
+                Value<int> providerId = const Value.absent(),
+                Value<String> size = const Value.absent(),
+                Value<String> url = const Value.absent(),
+                Value<String> fileName = const Value.absent(),
+                Value<int> bytes = const Value.absent(),
+                Value<int> fetchedAt = const Value.absent(),
+                Value<int> shownAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CoverCompanion(
+                provider: provider,
+                providerId: providerId,
+                size: size,
+                url: url,
+                fileName: fileName,
+                bytes: bytes,
+                fetchedAt: fetchedAt,
+                shownAt: shownAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String provider,
+                required int providerId,
+                required String size,
+                required String url,
+                required String fileName,
+                required int bytes,
+                required int fetchedAt,
+                required int shownAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CoverCompanion.insert(
+                provider: provider,
+                providerId: providerId,
+                size: size,
+                url: url,
+                fileName: fileName,
+                bytes: bytes,
+                fetchedAt: fetchedAt,
+                shownAt: shownAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<CoverTable, Cover>(table),
+                  BaseReferences<_$DetailsDatabase, CoverTable, Cover>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $CoverTableProcessedTableManager =
+    ProcessedTableManager<
+      _$DetailsDatabase,
+      CoverTable,
+      Cover,
+      $CoverTableFilterComposer,
+      $CoverTableOrderingComposer,
+      $CoverTableAnnotationComposer,
+      $CoverTableCreateCompanionBuilder,
+      $CoverTableUpdateCompanionBuilder,
+      (Cover, BaseReferences<_$DetailsDatabase, CoverTable, Cover>),
+      Cover,
+      PrefetchHooks Function()
+    >;
 
 class $DetailsDatabaseManager {
   final _$DetailsDatabase _db;
@@ -4294,4 +5137,5 @@ class $DetailsDatabaseManager {
       $MatchAttemptTableTableManager(_db, _db.matchAttempt);
   $SearchCacheTableManager get searchCache =>
       $SearchCacheTableManager(_db, _db.searchCache);
+  $CoverTableTableManager get cover => $CoverTableTableManager(_db, _db.cover);
 }

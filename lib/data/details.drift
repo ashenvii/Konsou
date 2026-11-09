@@ -20,9 +20,10 @@ CREATE TABLE detail (
   episodes        INTEGER GENERATED ALWAYS AS (
                     NULLIF(json_extract(json, '$.num_episodes'), 0)) VIRTUAL,
   start_date      TEXT GENERATED ALWAYS AS (json_extract(json, '$.start_date')) VIRTUAL,
-  cover_url       TEXT GENERATED ALWAYS AS (COALESCE(
-                    json_extract(json, '$.main_picture.large'),
-                    json_extract(json, '$.main_picture.medium'))) VIRTUAL,
+  cover_medium_url TEXT GENERATED ALWAYS AS (
+                    json_extract(json, '$.main_picture.medium')) VIRTUAL,
+  cover_large_url  TEXT GENERATED ALWAYS AS (
+                    json_extract(json, '$.main_picture.large')) VIRTUAL,
   nsfw            TEXT GENERATED ALWAYS AS (json_extract(json, '$.nsfw')) VIRTUAL,
   PRIMARY KEY (provider, provider_id)
 ) AS Detail;
@@ -82,3 +83,16 @@ CREATE TABLE search_cache (
   results     TEXT NOT NULL,
   cached_at   INTEGER NOT NULL
 ) AS SearchCacheRow;
+
+-- a cover file kept on the device; the file lives in the covers folder
+CREATE TABLE cover (
+  provider     TEXT NOT NULL,
+  provider_id  INTEGER NOT NULL,
+  size         TEXT NOT NULL CHECK (size IN ('medium', 'large')),
+  url          TEXT NOT NULL,       -- the picture link the file came from
+  file_name    TEXT NOT NULL,
+  bytes        INTEGER NOT NULL,
+  fetched_at   INTEGER NOT NULL,
+  shown_at     INTEGER NOT NULL,    -- the pool drops the least recently shown first
+  PRIMARY KEY (provider, provider_id, size)
+) AS Cover;

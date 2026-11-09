@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:konsou/app/keys.dart';
 import 'package:konsou/app/services.dart';
 import 'package:konsou/data/databases.dart';
+import 'package:konsou/data/details_database.dart';
 import 'package:konsou/data/record_database.dart';
 import 'package:konsou/mal/request_gate.dart';
 import 'package:konsou/sync/google_sign_in.dart';
@@ -75,6 +76,7 @@ void main() {
   Services build(Keys keys) => Services(
     databases: databases,
     keys: keys,
+    coversFolder: Directory('${folder.path}/covers'),
     client: routed(),
     tokenStore: store,
     openBrowser: (_) async {},
@@ -128,6 +130,25 @@ void main() {
     expect(services.sync, isNull);
   });
 
+  test('fetches the covers of entries whose details are in', () async {
+    await addEntry('a', malId: 1);
+    final details = databases.details;
+    await details
+        .into(details.detail)
+        .insert(
+          DetailCompanion.insert(
+            provider: 'mal',
+            providerId: 1,
+            fetchedAt: 1,
+            json:
+                '{"main_picture": {"medium": '
+                '"https://cdn.myanimelist.net/images/anime/1/1.webp"}}',
+          ),
+        );
+    await build(_allKeys).start();
+    expect(asked, ['cover 1.webp']);
+  });
+
   test('stop ends the chain and runs the close sync', () async {
     signIn();
     final services = build(_allKeys);
@@ -147,6 +168,14 @@ class _RoutedClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    if (request.url.host == 'cdn.myanimelist.net') {
+      _asked.add('cover ${request.url.pathSegments.last}');
+      return http.StreamedResponse(
+        Stream.value(const [1, 2, 3]),
+        200,
+        headers: {'content-type': 'image/webp'},
+      );
+    }
     if (request.url.host != 'api.myanimelist.net') {
       _asked.add('google');
       return _google.send(request);

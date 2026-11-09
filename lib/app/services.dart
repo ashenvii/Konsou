@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:http/http.dart' as http;
 
+import '../covers/cover_store.dart';
+import '../covers/cover_trickle.dart';
 import '../data/databases.dart';
 import '../mal/detail_request.dart';
 import '../mal/franchise_scan.dart';
@@ -13,11 +17,12 @@ import '../sync/google_sign_in.dart';
 import 'keys.dart';
 
 /// The background work, built once at launch: sync, then the trickle (details,
-/// then matching), then the franchise scan.
+/// then matching), then the covers, then the franchise scan.
 class Services {
   Services({
     required this.databases,
     required this.keys,
+    required this.coversFolder,
     required http.Client client,
     required TokenStore tokenStore,
     required Future<void> Function(Uri url) openBrowser,
@@ -60,16 +65,28 @@ class Services {
         detailRequest: detailRequest,
         matching: matching!,
       );
+      coverTrickle = CoverTrickle(
+        databases: databases,
+        store: CoverStore(
+          databases: databases,
+          folder: coversFolder,
+          client: client,
+          // the image server is not the API: its own gate
+          gate: RequestGate(),
+        ),
+      );
       scan = FranchiseScan(databases: databases, detailRequest: detailRequest);
     }
   }
 
   final Databases databases;
   final Keys keys;
+  final Directory coversFolder;
   GoogleSignIn? signIn;
   DriveSync? sync;
   Matching? matching;
   Trickle? trickle;
+  CoverTrickle? coverTrickle;
   FranchiseScan? scan;
   var _stopped = false;
 
@@ -79,6 +96,8 @@ class Services {
     if (_stopped) return;
     await trickle?.run();
     if (_stopped) return;
+    await coverTrickle?.run();
+    if (_stopped) return;
     await scan?.run();
   }
 
@@ -86,6 +105,7 @@ class Services {
   Future<void> stop() async {
     _stopped = true;
     trickle?.stop();
+    coverTrickle?.stop();
     await sync?.runBeforeClose();
     sync?.dispose();
   }
