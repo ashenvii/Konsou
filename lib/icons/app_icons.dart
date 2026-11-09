@@ -53,8 +53,62 @@ abstract final class AppIcons {
     ],
   );
 
+  /// Library in the rail: four squares in a grid.
+  static const library = IconDef(
+    lines: [
+      ((2, 2), (7, 2)),
+      ((7, 2), (7, 7)),
+      ((7, 7), (2, 7)),
+      ((2, 7), (2, 2)),
+      ((9, 2), (14, 2)),
+      ((14, 2), (14, 7)),
+      ((14, 7), (9, 7)),
+      ((9, 7), (9, 2)),
+      ((2, 9), (7, 9)),
+      ((7, 9), (7, 14)),
+      ((7, 14), (2, 14)),
+      ((2, 14), (2, 9)),
+      ((9, 9), (14, 9)),
+      ((14, 9), (14, 14)),
+      ((14, 14), (9, 14)),
+      ((9, 14), (9, 9)),
+    ],
+  );
+
+  /// Watching in the rail: a play triangle.
+  static const watching = IconDef(
+    lines: [((4, 2), (4, 14)), ((4, 2), (10, 8)), ((10, 8), (4, 14))],
+  );
+
+  /// Schedule in the rail: a calendar with two rings.
+  static const schedule = IconDef(
+    lines: [
+      ((2, 3), (14, 3)),
+      ((14, 3), (14, 14)),
+      ((14, 14), (2, 14)),
+      ((2, 14), (2, 3)),
+      ((2, 6), (14, 6)),
+      ((5, 1), (5, 4)),
+      ((11, 1), (11, 4)),
+    ],
+  );
+
+  /// Settings in the rail: three sliders, each with a square knob.
+  static const settings = IconDef(
+    fills: [
+      [(9, 2), (11, 2), (11, 4), (9, 4)],
+      [(4, 7), (6, 7), (6, 9), (4, 9)],
+      [(10, 12), (12, 12), (12, 14), (10, 14)],
+    ],
+    lines: [((2, 3), (14, 3)), ((2, 8), (14, 8)), ((2, 13), (14, 13))],
+  );
+
   static const all = <String, IconDef>{
     'nekomimi': nekomimi,
     'discover': discover,
+    'library': library,
+    'watching': watching,
+    'schedule': schedule,
+    'settings': settings,
   };
 }

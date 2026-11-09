@@ -52,6 +52,14 @@ _Avoid_: Main chain, backbone, seasons (for the set)
 A title with no sequel or prequel of its own that belongs to exactly one franchise, such as an OVA, movie, recap or special.
 _Avoid_: Side story (MAL's narrower word), bonus
 
+**Current season**:
+The title in a franchise's story the user is on: the latest one not finished, or the last one once all are finished. A franchise's Library row and Watching row stand for it.
+_Avoid_: Active season, latest season
+
+**Cover**:
+A title's picture from the provider, kept on the device so it shows offline.
+_Avoid_: Poster, artwork, thumbnail
+
 **Relation**:
 One of the provider's connections between two titles, such as sequel, prequel or side story.
 _Avoid_: Link (taken by not linked), edge

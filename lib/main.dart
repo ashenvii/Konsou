@@ -1,20 +1,20 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app/keys.dart';
+import 'app/providers.dart';
+import 'app/routes.dart';
 import 'app/secure_token_store.dart';
 import 'app/services.dart';
 import 'data/databases.dart';
-
 import 'design/tokens.dart';
-import 'gallery/gallery_screen.dart';
-import 'shell/app_shell.dart';
 import 'shell/native_window.dart';
 import 'shell/window_config.dart';
 import 'shell/window_memory.dart';
@@ -29,7 +29,12 @@ Future<void> main() async {
     tokenStore: SecureTokenStore(),
     openBrowser: (url) => launchUrl(url, mode: LaunchMode.externalApplication),
   );
-  runApp(KonsouApp(services: services));
+  runApp(
+    ProviderScope(
+      overrides: [servicesProvider.overrideWithValue(services)],
+      child: KonsouApp(router: buildRouter(beforeClose: services.stop)),
+    ),
+  );
   services.start();
 }
 
@@ -62,49 +67,24 @@ Future<void> _setUpWindow() async {
 }
 
 class KonsouApp extends StatelessWidget {
-  const KonsouApp({super.key, required this.services});
+  const KonsouApp({super.key, required this.router});
 
-  final Services services;
+  final GoRouter router;
 
   @override
   Widget build(BuildContext context) {
-    return WidgetsApp(
+    return WidgetsApp.router(
       color: Tokens.ground,
       title: WindowConfig.title,
-      pageRouteBuilder: <T>(settings, builder) => PageRouteBuilder<T>(
-        settings: settings,
-        pageBuilder: (context, _, _) => builder(context),
-      ),
-      home: DefaultTextStyle(
+      routerConfig: router,
+      debugShowCheckedModeBanner: false,
+      builder: (context, child) => DefaultTextStyle(
         style: const TextStyle(
           fontFamily: Tokens.sans,
           fontSize: Tokens.text3,
           color: Tokens.ink,
         ),
-        child: AppShell(
-          beforeClose: services.stop,
-          child: const _FirstScreen(),
-        ),
-      ),
-    );
-  }
-}
-
-/// The gallery is the first screen in debug builds.
-class _FirstScreen extends StatelessWidget {
-  const _FirstScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    if (kDebugMode) return const GalleryScreen();
-    return const Center(
-      child: Text(
-        'Window shell. Nothing here yet.',
-        style: TextStyle(
-          fontFamily: Tokens.mono,
-          fontSize: Tokens.text2,
-          color: Tokens.inkSoft,
-        ),
+        child: child!,
       ),
     );
   }

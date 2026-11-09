@@ -1,0 +1,62 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
+
+import '../components/app_button.dart';
+import '../gallery/gallery_screen.dart';
+import '../shell/app_rail.dart';
+import '../shell/app_shell.dart';
+import 'title_page.dart';
+
+const galleryPath = '/gallery';
+
+/// One route for each place in the rail, inside the app frame. The gallery has
+/// its own route in debug builds. Back is always the router's own.
+GoRouter buildRouter({Future<void> Function()? beforeClose}) {
+  return GoRouter(
+    initialLocation: libraryPath,
+    routes: [
+      ShellRoute(
+        builder: (context, state, child) => AppShell(
+          beforeClose: beforeClose,
+          rail: AppRail(
+            location: state.matchedLocation,
+            onSelect: (path) => context.go(path),
+          ),
+          child: child,
+        ),
+        routes: [
+          for (final destination in [...railDestinations, settingsDestination])
+            GoRoute(
+              path: destination.path,
+              pageBuilder: (context, state) => NoTransitionPage(
+                child: destination.path == settingsPath
+                    ? TitlePage(
+                        destination.label,
+                        action: kDebugMode ? const _OpenGallery() : null,
+                      )
+                    : TitlePage(destination.label),
+              ),
+            ),
+          if (kDebugMode)
+            GoRoute(
+              path: galleryPath,
+              pageBuilder: (context, state) =>
+                  const NoTransitionPage(child: GalleryScreen()),
+            ),
+        ],
+      ),
+    ],
+  );
+}
+
+/// Until Settings is built, its page opens the gallery in debug builds.
+class _OpenGallery extends StatelessWidget {
+  const _OpenGallery();
+
+  @override
+  Widget build(BuildContext context) => AppButton(
+    label: 'Open gallery',
+    onPressed: () => context.go(galleryPath),
+  );
+}

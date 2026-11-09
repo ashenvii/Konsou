@@ -40,6 +40,8 @@ abstract final class Tokens {
   static const double barHeight = 36;
   static const double railWidth = 48;
   static const double railItemSize = 36;
+  // The icon inside a rail item, the size the gallery already drew it at.
+  static const double railIconSize = 20;
   static const double windowButtonWidth = 40;
   static const double windowIconSize = 10;
 

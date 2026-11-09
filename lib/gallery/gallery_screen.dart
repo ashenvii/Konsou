@@ -199,9 +199,9 @@ class _Icons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const mascot = AppIcons.nekomimi;
-    return const Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
+    return const Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      runSpacing: Tokens.space3,
       children: [
         AppIcon(mascot, size: 20, color: Tokens.mint, lineColor: Tokens.ground),
         SizedBox(width: Tokens.space5),
@@ -212,9 +212,37 @@ class _Icons extends StatelessWidget {
           child: SizedBox.square(
             dimension: Tokens.railItemSize,
             child: Center(
-              child: AppIcon(AppIcons.discover, size: 20, color: Tokens.ground),
+              child: AppIcon(
+                AppIcons.discover,
+                size: Tokens.railIconSize,
+                color: Tokens.ground,
+              ),
             ),
           ),
+        ),
+        SizedBox(width: Tokens.space5),
+        AppIcon(
+          AppIcons.library,
+          size: Tokens.railIconSize,
+          color: Tokens.inkMuted,
+        ),
+        SizedBox(width: Tokens.space3),
+        AppIcon(
+          AppIcons.watching,
+          size: Tokens.railIconSize,
+          color: Tokens.inkMuted,
+        ),
+        SizedBox(width: Tokens.space3),
+        AppIcon(
+          AppIcons.schedule,
+          size: Tokens.railIconSize,
+          color: Tokens.inkMuted,
+        ),
+        SizedBox(width: Tokens.space3),
+        AppIcon(
+          AppIcons.settings,
+          size: Tokens.railIconSize,
+          color: Tokens.inkMuted,
         ),
       ],
     );

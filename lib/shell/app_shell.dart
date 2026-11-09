@@ -13,9 +13,12 @@ import 'window_memory.dart';
 /// the content area, which shows [child]. Layout comes from
 /// notes/design/screens/shell.md.
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.child, this.beforeClose});
+  const AppShell({super.key, required this.child, this.rail, this.beforeClose});
 
   final Widget child;
+
+  /// The left rail, on Windows. Phones get their own frame later.
+  final Widget? rail;
 
   /// Runs when Close is pressed, before the window quits.
   final Future<void> Function()? beforeClose;
@@ -146,7 +149,7 @@ class _AppShellState extends State<AppShell> with WindowListener {
             Expanded(
               child: Row(
                 children: [
-                  const SizedBox(width: Tokens.railWidth),
+                  SizedBox(width: Tokens.railWidth, child: widget.rail),
                   Expanded(child: widget.child),
                 ],
               ),
