@@ -53,7 +53,7 @@ A title with no sequel or prequel of its own that belongs to exactly one franchi
 _Avoid_: Side story (MAL's narrower word), bonus
 
 **Current season**:
-The title in a franchise's story the user is on: the latest one not finished, or the last one once all are finished. A franchise's Library row and Watching row stand for it.
+The title in a franchise the user is on: the earliest one being watched, else the earliest planned, else the earliest on hold, else the latest of the rest. A franchise's Library row and Watching row stand for it.
 _Avoid_: Active season, latest season
 
 **Cover**:
