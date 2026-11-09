@@ -234,12 +234,14 @@ void main() {
     () {
       final merged = mergeBothWays(
         SyncRecord(
+          entries: [buildEntry('x')],
           completions: [
             buildCompletion('x', 0, 100, estimated: true),
             buildCompletion('x', 1, 900),
           ],
         ),
         SyncRecord(
+          entries: [buildEntry('x')],
           completions: [
             buildCompletion('x', 0, 500),
             buildCompletion('x', 1, 700),
@@ -252,8 +254,14 @@ void main() {
 
   test('seen and dismissed only turn on', () {
     final merged = mergeBothWays(
-      SyncRecord(alerts: [buildAlert('x', 2, seen: 1)]),
-      SyncRecord(alerts: [buildAlert('x', 2, dismissed: 1)]),
+      SyncRecord(
+        entries: [buildEntry('x')],
+        alerts: [buildAlert('x', 2, seen: 1)],
+      ),
+      SyncRecord(
+        entries: [buildEntry('x')],
+        alerts: [buildAlert('x', 2, dismissed: 1)],
+      ),
     );
     expect(merged.alerts.single['seen'], 1);
     expect(merged.alerts.single['dismissed'], 1);
@@ -277,6 +285,28 @@ void main() {
       ),
     );
     expect(merged.declines.map((row) => row['provider_id']), [1, 2]);
+  });
+
+  test('finished watches and alerts drop with their removed entry', () {
+    final merged = mergeBothWays(
+      SyncRecord(
+        entries: [buildEntry('x'), buildEntry('gone')],
+        completions: [
+          buildCompletion('x', 0, 5),
+          buildCompletion('gone', 0, 5),
+        ],
+        alerts: [buildAlert('x', 1), buildAlert('gone', 2)],
+      ),
+      SyncRecord(
+        entries: [buildEntry('x')],
+        completions: [buildCompletion('gone', 1, 6)],
+        deletions: [
+          {'entry_id': 'gone', 'deleted_at': 4},
+        ],
+      ),
+    );
+    expect(merged.completions.map((row) => row['entry_id']), ['x']);
+    expect(merged.alerts.map((row) => row['entry_id']), ['x']);
   });
 
   test('a setting takes the side that changed it last', () {

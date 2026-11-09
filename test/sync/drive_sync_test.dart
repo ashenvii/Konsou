@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/data/databases.dart';
 import 'package:konsou/data/edit_clock.dart';
+import 'package:konsou/library/entry_edits.dart';
 import 'package:konsou/sync/drive_client.dart';
 import 'package:konsou/sync/drive_sync.dart';
 import 'package:konsou/sync/google_sign_in.dart';
@@ -198,6 +199,34 @@ void main() {
       await pc.sync.run();
 
       expect((await pc.readRecord()).entries.single['episodes_watched'], 2);
+    },
+  );
+
+  test(
+    'a removal on one device clears the other, finished watches too',
+    () async {
+      final pc = await buildDevice();
+      final phone = await buildDevice();
+      await pc.save(
+        SyncRecord(
+          entries: [buildEntry('a', malId: 1), buildEntry('b', malId: 2)],
+          completions: [buildCompletion('a', 0, 5), buildCompletion('b', 0, 5)],
+          alerts: [buildAlert('a', 9)],
+        ),
+      );
+      await pc.sync.run();
+      await phone.sync.run();
+      expect((await phone.readRecord()).completions, hasLength(2));
+
+      await EntryEdits(databases: pc.databases, now: () => _now).remove(['a']);
+      await pc.sync.run();
+      await phone.sync.run();
+
+      final onPhone = await phone.readRecord();
+      expect(onPhone.entries.map((row) => row['entry_id']), ['b']);
+      expect(onPhone.completions.map((row) => row['entry_id']), ['b']);
+      expect(onPhone.alerts, isEmpty);
+      expect(onPhone.deletions.map((row) => row['entry_id']), ['a']);
     },
   );
 

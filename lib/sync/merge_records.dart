@@ -45,12 +45,18 @@ SyncRecord mergeRecords(SyncRecord a, SyncRecord b) {
   return SyncRecord(
     entries: entries,
     completions: _unionRows(
-      [...a.completions, ...b.completions].map(rekey),
+      [
+        ...a.completions,
+        ...b.completions,
+      ].map(rekey).where((row) => alive.contains(row['entry_id'])),
       (row) => '${row['entry_id']} ${row['watch_number']}',
       _mergeCompletion,
     ),
     alerts: _unionRows(
-      [...a.alerts, ...b.alerts].map(rekey),
+      [
+        ...a.alerts,
+        ...b.alerts,
+      ].map(rekey).where((row) => alive.contains(row['entry_id'])),
       (row) => jsonEncode([
         row['entry_id'],
         row['related_provider'],
