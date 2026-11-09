@@ -103,6 +103,47 @@ final class CoverStoreProvider
 
 String _$coverStoreHash() => r'23429bac3b1807ecb78efaeef448c14e9d28e935';
 
+/// The MAL id of each cover as its file is saved, so a blank cover on screen
+/// can swap in the picture.
+
+@ProviderFor(coverSaved)
+final coverSavedProvider = CoverSavedProvider._();
+
+/// The MAL id of each cover as its file is saved, so a blank cover on screen
+/// can swap in the picture.
+
+final class CoverSavedProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
+    with $FutureModifier<int>, $StreamProvider<int> {
+  /// The MAL id of each cover as its file is saved, so a blank cover on screen
+  /// can swap in the picture.
+  CoverSavedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'coverSavedProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$coverSavedHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<int> create(Ref ref) {
+    return coverSaved(ref);
+  }
+}
+
+String _$coverSavedHash() => r'c327a734ca2863986a60f0b3390a385cb5cb8b3d';
+
 /// A cover's file: kept on the device, or fetched now ahead of the background
 /// trickle. Null while the title has no details or no picture, or offline.
 

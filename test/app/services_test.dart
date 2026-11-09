@@ -168,6 +168,21 @@ void main() {
     },
   );
 
+  test('screens hear about saved covers and fresh data', () async {
+    await addEntry('a', malId: 1);
+    await addDetailWithCover(1);
+    final services = build(_allKeys);
+    final covers = <int>[];
+    var changes = 0;
+    services.coverSaved.listen(covers.add);
+    services.dataChanged.listen((_) => changes++);
+    await services.start();
+    await Future<void>.delayed(Duration.zero);
+    expect(covers, [1]);
+    // after sync, after the cover, and at the end of the chain
+    expect(changes, greaterThanOrEqualTo(2));
+  });
+
   test('stop ends the chain and runs the close sync', () async {
     signIn();
     final services = build(_allKeys);

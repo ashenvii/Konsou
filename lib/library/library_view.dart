@@ -68,3 +68,6 @@ int _byScore(LibraryRow first, LibraryRow second) {
   if (secondScore == null) return -1;
   return secondScore.compareTo(firstScore);
 }
+
+/// How the Library draws its rows. Remembered between runs.
+enum LibraryLayout { grid, list }

@@ -28,6 +28,7 @@ class CoverStore {
     required this.client,
     required this.gate,
     this.poolLimit = defaultPoolLimit,
+    this.onSaved,
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
 
@@ -39,6 +40,10 @@ class CoverStore {
   /// never hold up the API requests.
   final RequestGate gate;
   final int poolLimit;
+
+  /// Runs with the MAL id when a cover file has just been saved, so a screen
+  /// showing the blank can swap in the picture.
+  final void Function(int malId)? onSaved;
   final DateTime Function() _now;
 
   DetailsDatabase get _details => databases.details;
@@ -105,6 +110,7 @@ class CoverStore {
             shownAt: at,
           ),
         );
+    onSaved?.call(malId);
     return CoverOutcome.fetched;
   }
 

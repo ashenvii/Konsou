@@ -22,6 +22,12 @@ class CoverView extends ConsumerWidget {
       pixelRatio: MediaQuery.devicePixelRatioOf(context),
     );
     final file = ref.watch(coverFileProvider(id, size)).value;
+    // a cover saved after this one was drawn blank: read it again
+    ref.listen(coverSavedProvider, (_, saved) {
+      if (file == null && saved.asData?.value == id) {
+        ref.invalidate(coverFileProvider(id, size));
+      }
+    });
     return CoverImage(width: width, file: file);
   }
 }

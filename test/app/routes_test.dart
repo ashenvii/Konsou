@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:konsou/app/library_providers.dart';
 import 'package:konsou/app/providers.dart';
+import 'package:konsou/library/library_row.dart';
 import 'package:konsou/app/routes.dart';
 import 'package:konsou/main.dart';
 import 'package:konsou/shell/app_rail.dart';
@@ -19,7 +21,14 @@ void main() {
   Future<void> pumpApp(WidgetTester tester) async {
     final router = buildRouter();
     addTearDown(router.dispose);
-    await tester.pumpWidget(KonsouApp(router: router));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          libraryRowsProvider.overrideWith((ref) async => <LibraryRow>[]),
+        ],
+        child: KonsouApp(router: router),
+      ),
+    );
     // the shell ignores window events for a moment after it opens
     await tester.pump(WindowConfig.restoreSettle);
     await tester.pumpAndSettle();

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -64,6 +65,7 @@ class Services {
         record: databases.record,
         detailRequest: detailRequest,
         matching: matching!,
+        onProgress: notifyDataChanged,
       );
       coverStore = CoverStore(
         databases: databases,
@@ -71,8 +73,13 @@ class Services {
         client: client,
         // the image server is not the API: its own, faster gate
         gate: RequestGate(gap: coverRequestGap),
+        onSaved: _coverSaved.add,
       );
-      coverTrickle = CoverTrickle(databases: databases, store: coverStore!);
+      coverTrickle = CoverTrickle(
+        databases: databases,
+        store: coverStore!,
+        onProgress: notifyDataChanged,
+      );
       scan = FranchiseScan(databases: databases, detailRequest: detailRequest);
     }
   }
@@ -88,16 +95,30 @@ class Services {
   CoverTrickle? coverTrickle;
   FranchiseScan? scan;
   var _stopped = false;
+  final _dataChanged = StreamController<void>.broadcast();
+  final _coverSaved = StreamController<int>.broadcast();
+
+  /// Fires when the background work has saved something the screens show:
+  /// details, a match, a franchise. Screens reload their rows on it.
+  Stream<void> get dataChanged => _dataChanged.stream;
+
+  /// Tells the screens that something they show has been saved.
+  void notifyDataChanged() => _dataChanged.add(null);
+
+  /// The MAL id of each cover file as it is saved.
+  Stream<int> get coverSaved => _coverSaved.stream;
 
   /// Runs the chain once and returns when it ends or [stop] is called.
   Future<void> start() async {
     await sync?.run();
+    notifyDataChanged();
     if (_stopped) return;
     await trickle?.run();
     if (_stopped) return;
     await coverTrickle?.run();
     if (_stopped) return;
     await scan?.run();
+    notifyDataChanged();
   }
 
   /// Ends the chain and gives sync its close run, which has its own limit.

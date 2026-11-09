@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../components/app_button.dart';
 import '../gallery/gallery_screen.dart';
+import '../screens/library/library_screen.dart';
 import '../shell/app_rail.dart';
 import '../shell/app_shell.dart';
 import 'title_page.dart';
@@ -30,12 +31,18 @@ GoRouter buildRouter({Future<void> Function()? beforeClose}) {
             GoRoute(
               path: destination.path,
               pageBuilder: (context, state) => NoTransitionPage(
-                child: destination.path == settingsPath
-                    ? TitlePage(
-                        destination.label,
-                        action: kDebugMode ? const _OpenGallery() : null,
-                      )
-                    : TitlePage(destination.label),
+                child: switch (destination.path) {
+                  libraryPath => LibraryScreen(
+                    onDiscover: () => context.go(discoverPath),
+                    // the Detail page is not built yet
+                    onOpen: (_) {},
+                  ),
+                  settingsPath => TitlePage(
+                    destination.label,
+                    action: kDebugMode ? const _OpenGallery() : null,
+                  ),
+                  _ => TitlePage(destination.label),
+                },
               ),
             ),
           if (kDebugMode)

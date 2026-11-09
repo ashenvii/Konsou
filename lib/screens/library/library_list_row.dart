@@ -3,7 +3,6 @@ import 'package:flutter/widgets.dart';
 import '../../app/cover_view.dart';
 import '../../components/app_checkbox.dart';
 import '../../components/one_line_text.dart';
-import '../../components/pressable.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../icons/app_icon.dart';
@@ -11,6 +10,7 @@ import '../../icons/app_icons.dart';
 import '../../library/entry_status.dart';
 import '../../library/library_row.dart';
 import '../../library/row_labels.dart';
+import 'row_tap_area.dart';
 
 /// One entry (or one franchise standing for its current season) in the
 /// Library's list view. Left to right: the box that completes it, the cover,
@@ -37,7 +37,7 @@ class LibraryListRow extends StatelessWidget {
   /// The box was pressed: true to complete, false to put it back.
   final ValueChanged<bool> onCheck;
 
-  /// A right click, with the pointer position in window coordinates.
+  /// A right click or a long press, with the position in window coordinates.
   final ValueChanged<Offset> onContextMenu;
 
   /// The button at the end that opens the menu; the screen builds it.
@@ -55,57 +55,55 @@ class LibraryListRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final completed = row.status == EntryStatus.completed.value;
     final status = EntryStatus.parse(row.status).label;
-    return Pressable(
-      onPressed: onOpen,
-      builder: (context, state) => GestureDetector(
-        onSecondaryTapDown: (details) => onContextMenu(details.globalPosition),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final narrow = constraints.maxWidth < _narrow;
-            final line = [
-              typeYearLine(row),
-              seasonsText(row),
-              if (showStatus && narrow) status,
-            ].whereType<String>().where((part) => part.isNotEmpty).join(' · ');
-            return Container(
-              height: Tokens.listRowHeight,
-              padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
-              color: state.hovered || state.focused ? Tokens.surface : null,
-              child: Row(
-                children: [
-                  AppCheckbox(
-                    value: completed ? CheckValue.checked : CheckValue.empty,
-                    onChanged: (value) => onCheck(value == CheckValue.checked),
-                  ),
-                  const SizedBox(width: Tokens.space3),
-                  CoverView(malId: row.malId, width: Tokens.listCoverWidth),
-                  const SizedBox(width: Tokens.space3),
-                  Expanded(
-                    child: _Titles(row: row, line: line),
-                  ),
-                  if (showStatus && !narrow)
-                    SizedBox(
-                      width: _statusWidth,
-                      child: OneLineText(
-                        status,
-                        style: AppText.caption(Tokens.inkSoft),
-                      ),
-                    ),
+    return RowTapArea(
+      onOpen: onOpen,
+      onContextMenu: onContextMenu,
+      builder: (context, state) => LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < _narrow;
+          final line = [
+            typeYearLine(row),
+            seasonsText(row),
+            if (showStatus && narrow) status,
+          ].whereType<String>().where((part) => part.isNotEmpty).join(' · ');
+          return Container(
+            height: Tokens.listRowHeight,
+            padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
+            color: state.hovered || state.focused ? Tokens.surface : null,
+            child: Row(
+              children: [
+                AppCheckbox(
+                  value: completed ? CheckValue.checked : CheckValue.empty,
+                  onChanged: (value) => onCheck(value == CheckValue.checked),
+                ),
+                const SizedBox(width: Tokens.space3),
+                CoverView(malId: row.malId, width: Tokens.listCoverWidth),
+                const SizedBox(width: Tokens.space3),
+                Expanded(
+                  child: _Titles(row: row, line: line),
+                ),
+                if (showStatus && !narrow)
                   SizedBox(
-                    width: _progressWidth,
+                    width: _statusWidth,
                     child: OneLineText(
-                      progressText(row),
-                      align: TextAlign.right,
-                      style: AppText.figure(Tokens.inkSoft),
+                      status,
+                      style: AppText.caption(Tokens.inkSoft),
                     ),
                   ),
-                  SizedBox(width: _scoreWidth, child: _Score(row.score)),
-                  menu,
-                ],
-              ),
-            );
-          },
-        ),
+                SizedBox(
+                  width: _progressWidth,
+                  child: OneLineText(
+                    progressText(row),
+                    align: TextAlign.right,
+                    style: AppText.figure(Tokens.inkSoft),
+                  ),
+                ),
+                SizedBox(width: _scoreWidth, child: _Score(row.score)),
+                menu,
+              ],
+            ),
+          );
+        },
       ),
     );
   }

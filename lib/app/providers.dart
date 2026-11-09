@@ -18,6 +18,11 @@ Services services(Ref ref) => throw UnimplementedError('override in main');
 @Riverpod(keepAlive: true)
 CoverStore? coverStore(Ref ref) => ref.watch(servicesProvider).coverStore;
 
+/// The MAL id of each cover as its file is saved, so a blank cover on screen
+/// can swap in the picture.
+@Riverpod(keepAlive: true)
+Stream<int> coverSaved(Ref ref) => ref.watch(servicesProvider).coverSaved;
+
 /// A cover's file: kept on the device, or fetched now ahead of the background
 /// trickle. Null while the title has no details or no picture, or offline.
 @riverpod

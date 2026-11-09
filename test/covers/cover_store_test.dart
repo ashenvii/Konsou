@@ -37,7 +37,11 @@ void main() {
     folder.deleteSync(recursive: true);
   });
 
-  CoverStore buildStore({int poolLimit = 1000, bool throws = false}) {
+  CoverStore buildStore({
+    int poolLimit = 1000,
+    bool throws = false,
+    void Function(int malId)? onSaved,
+  }) {
     final client = MockClient((request) async {
       asked.add(request.url.toString());
       if (throws) throw http.ClientException('offline');
@@ -54,6 +58,7 @@ void main() {
       client: client,
       gate: RequestGate(wait: (_) async {}),
       poolLimit: poolLimit,
+      onSaved: onSaved,
       now: () => now,
     );
   }
@@ -134,6 +139,20 @@ void main() {
           .getSingle();
       expect((row.url, row.bytes, row.size), (_mediumUrl, 100, 'medium'));
     });
+
+    test(
+      'tells who is listening when a file is saved, and only then',
+      () async {
+        await saveDetail(10, _json());
+        final saved = <int>[];
+        final store = buildStore(onSaved: saved.add);
+        await store.fetchCover(10, CoverSize.medium, lane: Lane.screen);
+        expect(saved, [10]);
+        // the same link again is already kept: nothing new was saved
+        await store.fetchCover(10, CoverSize.medium, lane: Lane.screen);
+        expect(saved, [10]);
+      },
+    );
 
     test('large comes from the large link', () async {
       await saveDetail(10, _json());

@@ -42,7 +42,7 @@ LibraryRow _row({
   seasonsTotal: seasonsTotal,
 );
 
-final _samples = [
+final sampleRows = [
   _row(
     name: 'Sousou no Frieren',
     status: 'watching',
@@ -118,7 +118,7 @@ class LibraryRowsSection extends StatelessWidget {
             spacing: Tokens.space4,
             runSpacing: Tokens.space4,
             children: [
-              for (final row in _samples.take(6))
+              for (final row in sampleRows.take(6))
                 SizedBox(
                   width: Tokens.gridCardMinWidth,
                   child: LibraryGridCard(
@@ -131,7 +131,7 @@ class LibraryRowsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: Tokens.space5),
-          for (final row in _samples)
+          for (final row in sampleRows)
             LibraryListRow(
               row: row,
               showStatus: true,
@@ -141,7 +141,7 @@ class LibraryRowsSection extends StatelessWidget {
               menu: MoreButton(onPressed: () {}),
             ),
           const SizedBox(height: Tokens.space5),
-          for (final row in _samples.take(2))
+          for (final row in sampleRows.take(2))
             LibraryListRow(
               row: row,
               showStatus: false,

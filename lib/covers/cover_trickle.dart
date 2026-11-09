@@ -8,10 +8,13 @@ import 'cover_store.dart';
 /// background once its details are in. Newest change first, so what the user
 /// is working on comes before the old shelf.
 class CoverTrickle {
-  CoverTrickle({required this.databases, required this.store});
+  CoverTrickle({required this.databases, required this.store, this.onProgress});
 
   final Databases databases;
   final CoverStore store;
+
+  /// Runs after each cover is tried.
+  final void Function()? onProgress;
   var _stopped = false;
 
   /// Runs until every entry has its cover, or [stop] is called, then trims the
@@ -26,6 +29,7 @@ class CoverTrickle {
       work: (malId) async =>
           await store.fetchCover(malId, CoverSize.medium, lane: Lane.trickle) !=
           CoverOutcome.fetched,
+      onItem: onProgress,
     );
     await store.trimPool();
   }

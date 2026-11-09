@@ -2,13 +2,13 @@ import 'package:flutter/widgets.dart';
 
 import '../../app/cover_view.dart';
 import '../../components/one_line_text.dart';
-import '../../components/pressable.dart';
 import '../../components/status_mark.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../library/entry_status.dart';
 import '../../library/library_row.dart';
 import '../../library/row_labels.dart';
+import 'row_tap_area.dart';
 
 /// One entry (or franchise) as a cover card in the Library's grid view. The
 /// card is as wide as the grid gives it and the cover fills that width.
@@ -27,45 +27,43 @@ class LibraryGridCard extends StatelessWidget {
   final bool showStatus;
   final VoidCallback onOpen;
 
-  /// A right click, with the pointer position in window coordinates.
+  /// A right click or a long press, with the position in window coordinates.
   final ValueChanged<Offset> onContextMenu;
 
   @override
   Widget build(BuildContext context) {
-    return Pressable(
-      onPressed: onOpen,
-      builder: (context, state) => GestureDetector(
-        onSecondaryTapDown: (details) => onContextMenu(details.globalPosition),
-        child: LayoutBuilder(
-          builder: (context, constraints) => Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  CoverView(malId: row.malId, width: constraints.maxWidth),
-                  Positioned(
-                    left: Tokens.space2,
-                    top: Tokens.space2,
-                    child: _Chip(row: row, showStatus: showStatus),
-                  ),
-                ],
-              ),
-              const SizedBox(height: Tokens.space2),
-              OneLineText(
-                titleText(row),
-                style: AppText.label(
-                  row.name.isEmpty ? Tokens.inkMuted : Tokens.ink,
-                  bold: true,
+    return RowTapArea(
+      onOpen: onOpen,
+      onContextMenu: onContextMenu,
+      builder: (context, state) => LayoutBuilder(
+        builder: (context, constraints) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                CoverView(malId: row.malId, width: constraints.maxWidth),
+                Positioned(
+                  left: Tokens.space2,
+                  top: Tokens.space2,
+                  child: _Chip(row: row, showStatus: showStatus),
                 ),
+              ],
+            ),
+            const SizedBox(height: Tokens.space2),
+            OneLineText(
+              titleText(row),
+              style: AppText.label(
+                row.name.isEmpty ? Tokens.inkMuted : Tokens.ink,
+                bold: true,
               ),
-              const SizedBox(height: Tokens.space1),
-              OneLineText(
-                typeYearLine(row),
-                style: AppText.caption(Tokens.inkMuted),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: Tokens.space1),
+            OneLineText(
+              typeYearLine(row),
+              style: AppText.caption(Tokens.inkMuted),
+            ),
+          ],
         ),
       ),
     );

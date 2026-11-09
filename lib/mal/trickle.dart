@@ -24,12 +24,16 @@ class Trickle {
     required this.record,
     required this.detailRequest,
     required this.matching,
+    this.onProgress,
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
 
   final RecordDatabase record;
   final DetailRequest detailRequest;
   final Matching matching;
+
+  /// Runs after each title's details are fetched.
+  final void Function()? onProgress;
   final DateTime Function() _now;
   var _stopped = false;
 
@@ -43,6 +47,7 @@ class Trickle {
       work: (malId) async =>
           await detailRequest.fetch(malId, lane: Lane.trickle, full: false) ==
           FetchOutcome.failed,
+      onItem: onProgress,
     );
     if (finished) await matching.run();
   }
