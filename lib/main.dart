@@ -2,7 +2,15 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
+
+import 'app/keys.dart';
+import 'app/secure_token_store.dart';
+import 'app/services.dart';
+import 'data/databases.dart';
 
 import 'design/tokens.dart';
 import 'gallery/gallery_screen.dart';
@@ -14,7 +22,15 @@ import 'shell/window_memory.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isWindows) await _setUpWindow();
-  runApp(const KonsouApp());
+  final services = Services(
+    databases: await openDatabases(await getApplicationSupportDirectory()),
+    keys: const Keys.fromBuild(),
+    client: http.Client(),
+    tokenStore: SecureTokenStore(),
+    openBrowser: (url) => launchUrl(url, mode: LaunchMode.externalApplication),
+  );
+  runApp(KonsouApp(services: services));
+  services.start();
 }
 
 Future<void> _setUpWindow() async {
@@ -46,7 +62,9 @@ Future<void> _setUpWindow() async {
 }
 
 class KonsouApp extends StatelessWidget {
-  const KonsouApp({super.key});
+  const KonsouApp({super.key, required this.services});
+
+  final Services services;
 
   @override
   Widget build(BuildContext context) {
@@ -57,13 +75,16 @@ class KonsouApp extends StatelessWidget {
         settings: settings,
         pageBuilder: (context, _, _) => builder(context),
       ),
-      home: const DefaultTextStyle(
-        style: TextStyle(
+      home: DefaultTextStyle(
+        style: const TextStyle(
           fontFamily: Tokens.sans,
           fontSize: Tokens.text3,
           color: Tokens.ink,
         ),
-        child: AppShell(child: _FirstScreen()),
+        child: AppShell(
+          beforeClose: services.stop,
+          child: const _FirstScreen(),
+        ),
       ),
     );
   }

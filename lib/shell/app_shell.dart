@@ -13,9 +13,12 @@ import 'window_memory.dart';
 /// the content area, which shows [child]. Layout comes from
 /// notes/design/screens/shell.md.
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.child});
+  const AppShell({super.key, required this.child, this.beforeClose});
 
   final Widget child;
+
+  /// Runs when Close is pressed, before the window quits.
+  final Future<void> Function()? beforeClose;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -60,6 +63,11 @@ class _AppShellState extends State<AppShell> with WindowListener {
       } catch (_) {
         // Losing the last window position must never stop the app closing.
       }
+    }
+    try {
+      await widget.beforeClose?.call();
+    } catch (_) {
+      // a failed shutdown step must never stop the app closing
     }
     await windowManager.close();
   }
