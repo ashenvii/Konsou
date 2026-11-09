@@ -65,16 +65,14 @@ class Services {
         detailRequest: detailRequest,
         matching: matching!,
       );
-      coverTrickle = CoverTrickle(
+      coverStore = CoverStore(
         databases: databases,
-        store: CoverStore(
-          databases: databases,
-          folder: coversFolder,
-          client: client,
-          // the image server is not the API: its own, faster gate
-          gate: RequestGate(gap: coverRequestGap),
-        ),
+        folder: coversFolder,
+        client: client,
+        // the image server is not the API: its own, faster gate
+        gate: RequestGate(gap: coverRequestGap),
       );
+      coverTrickle = CoverTrickle(databases: databases, store: coverStore!);
       scan = FranchiseScan(databases: databases, detailRequest: detailRequest);
     }
   }
@@ -86,6 +84,7 @@ class Services {
   DriveSync? sync;
   Matching? matching;
   Trickle? trickle;
+  CoverStore? coverStore;
   CoverTrickle? coverTrickle;
   FranchiseScan? scan;
   var _stopped = false;
