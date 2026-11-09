@@ -4,6 +4,8 @@ import '../components/app_button.dart';
 import '../components/app_checkbox.dart';
 import '../components/app_tab.dart';
 import '../components/count_badge.dart';
+import '../components/app_menu.dart';
+import '../components/icon_square_button.dart';
 import '../components/panel.dart';
 import '../components/status_mark.dart';
 import '../library/entry_status.dart';
@@ -135,6 +137,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 ),
               ),
             ),
+            const _Section('Menu and controls'),
+            const _MenuControls(),
             const _Section('Icons'),
             const _Icons(),
             const SizedBox(height: Tokens.space3),
@@ -180,6 +184,112 @@ class _Section extends StatelessWidget {
     padding: const EdgeInsets.only(top: Tokens.space5, bottom: Tokens.space3),
     child: _Heading(title),
   );
+}
+
+/// The Library's controls: tabs with a menu tab, sort, the view switch, and the
+/// status menu drawn open.
+class _MenuControls extends StatelessWidget {
+  const _MenuControls();
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: Tokens.space5,
+      runSpacing: Tokens.space4,
+      crossAxisAlignment: WrapCrossAlignment.start,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Wrap(
+              children: [
+                AppTab(
+                  label: 'All',
+                  selected: true,
+                  count: 412,
+                  onPressed: () {},
+                ),
+                AppTab(
+                  label: 'Watching',
+                  selected: false,
+                  count: 9,
+                  onPressed: () {},
+                ),
+                AppTab(
+                  label: 'Planned',
+                  selected: false,
+                  count: 80,
+                  onPressed: () {},
+                ),
+                AppTab(
+                  label: 'Completed',
+                  selected: false,
+                  count: 300,
+                  onPressed: () {},
+                ),
+                AppTab(
+                  label: 'More',
+                  selected: false,
+                  opensMenu: true,
+                  onPressed: () {},
+                ),
+              ],
+            ),
+            const SizedBox(height: Tokens.space3),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppButton(
+                  label: 'Recent',
+                  kind: ButtonKind.secondary,
+                  opensMenu: true,
+                  onPressed: () {},
+                ),
+                const SizedBox(width: Tokens.space3),
+                IconSquareButton(
+                  icon: AppIcons.grid,
+                  label: 'Grid view',
+                  selected: true,
+                  onPressed: () {},
+                ),
+                const SizedBox(width: Tokens.space1),
+                IconSquareButton(
+                  icon: AppIcons.list,
+                  label: 'List view',
+                  onPressed: () {},
+                ),
+              ],
+            ),
+            const SizedBox(height: Tokens.space3),
+            AppMenu(
+              entries: [
+                MenuEntry(label: 'Recent', selected: true, onPressed: () {}),
+                MenuEntry(label: 'Title', onPressed: () {}),
+                MenuEntry(label: 'Score', onPressed: () {}),
+                MenuEntry(label: 'Added', onPressed: () {}),
+              ],
+            ),
+          ],
+        ),
+        AppMenu(
+          entries: [
+            MenuEntry(label: 'Watching', shortcut: '1', onPressed: () {}),
+            MenuEntry(label: 'Planned', shortcut: '2', onPressed: () {}),
+            MenuEntry(label: 'Completed', shortcut: '3', onPressed: () {}),
+            MenuEntry(label: 'On hold', shortcut: '4', onPressed: () {}),
+            MenuEntry(label: '+ Episode', onPressed: () {}),
+            MenuEntry(label: 'Open details', onPressed: () {}),
+            MenuEntry(
+              label: 'Remove from list',
+              destructive: true,
+              onPressed: () {},
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 /// Every icon by name, drawn large, and the status marks at their real size.

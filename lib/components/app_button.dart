@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
+import 'menu_chevron.dart';
 import 'pressable.dart';
 
 enum ButtonKind { primary, secondary }
@@ -13,11 +14,15 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.kind = ButtonKind.primary,
+    this.opensMenu = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final ButtonKind kind;
+
+  /// Shows a chevron after the label, for a button that opens a menu.
+  final bool opensMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -36,12 +41,20 @@ class AppButton extends StatelessWidget {
         color: fill,
         child: Center(
           widthFactor: 1,
-          child: Text(
-            label,
-            maxLines: 1,
-            softWrap: false,
-            overflow: TextOverflow.ellipsis,
-            style: AppText.label(ink, bold: primary && enabled),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.label(ink, bold: primary && enabled),
+                ),
+              ),
+              if (opensMenu) MenuChevron(color: ink),
+            ],
           ),
         ),
       ),
