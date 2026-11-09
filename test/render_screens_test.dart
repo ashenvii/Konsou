@@ -1,7 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:konsou/design/tokens.dart';
+import 'package:konsou/gallery/gallery_screen.dart';
 import 'package:konsou/app/routes.dart';
 import 'package:konsou/main.dart';
 import 'package:konsou/shell/app_rail.dart';
@@ -45,5 +48,25 @@ void main() {
       );
       await tester.pump(WindowConfig.restoreSettle);
     }
+  }, skip: folder == null);
+
+  testWidgets('render the gallery', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await loadAppFonts();
+    await renderPng(
+      tester,
+      child: const MediaQuery(
+        data: MediaQueryData(size: Size(1100, 1900)),
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: DefaultTextStyle(
+            style: TextStyle(fontFamily: Tokens.sans, color: Tokens.ink),
+            child: ColoredBox(color: Tokens.ground, child: GalleryScreen()),
+          ),
+        ),
+      ),
+      size: const Size(1100, 1900),
+      path: '$folder/gallery.png',
+    );
   }, skip: folder == null);
 }

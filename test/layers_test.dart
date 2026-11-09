@@ -9,8 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 const _mayImport = <String, Set<String>>{
   'design': {'design'},
   'icons': {'icons', 'design'},
-  'components': {'components', 'design', 'icons'},
+  'components': {'components', 'design', 'icons', 'library'},
   'shell': {'shell', 'design', 'components', 'icons'},
+  'library': {'library', 'data', 'search'},
   'data': {'data'},
   'import': {'import', 'data'},
   'search': {'search', 'data'},
@@ -22,6 +23,7 @@ const _mayImport = <String, Set<String>>{
     'design',
     'components',
     'icons',
+    'library',
     'data',
     'import',
     'mal',
@@ -32,7 +34,7 @@ const _mayImport = <String, Set<String>>{
 };
 
 /// Folders on the data side, which may not import any Flutter package.
-const _dataSide = {'data', 'import', 'mal', 'search', 'sync', 'net'};
+const _dataSide = {'data', 'import', 'mal', 'search', 'sync', 'net', 'library'};
 
 /// Whatever is not in a folder above (main.dart, gallery) is wiring and may
 /// import anything.

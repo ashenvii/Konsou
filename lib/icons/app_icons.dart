@@ -103,6 +103,94 @@ abstract final class AppIcons {
     lines: [((2, 3), (14, 3)), ((2, 8), (14, 8)), ((2, 13), (14, 13))],
   );
 
+  /// Grid view: four solid squares.
+  static const grid = IconDef(
+    fills: [
+      [(2, 2), (7, 2), (7, 7), (2, 7)],
+      [(9, 2), (14, 2), (14, 7), (9, 7)],
+      [(2, 9), (7, 9), (7, 14), (2, 14)],
+      [(9, 9), (14, 9), (14, 14), (9, 14)],
+    ],
+  );
+
+  /// List view: three rows, each a dot and a line.
+  static const list = IconDef(
+    fills: [
+      [(2, 2), (4, 2), (4, 4), (2, 4)],
+      [(2, 7), (4, 7), (4, 9), (2, 9)],
+      [(2, 12), (4, 12), (4, 14), (2, 14)],
+    ],
+    lines: [((6, 3), (14, 3)), ((6, 8), (14, 8)), ((6, 13), (14, 13))],
+  );
+
+  /// Opens a menu.
+  static const chevronDown = IconDef(
+    lines: [((3, 6), (8, 11)), ((8, 11), (13, 6))],
+  );
+
+  /// The Completed mark, and a checked box.
+  static const check = IconDef(lines: [((3, 8), (6, 11)), ((6, 11), (13, 4))]);
+
+  /// The three dots that open an entry's menu.
+  static const more = IconDef(
+    fills: [
+      [(7, 2), (9, 2), (9, 4), (7, 4)],
+      [(7, 7), (9, 7), (9, 9), (7, 9)],
+      [(7, 12), (9, 12), (9, 14), (7, 14)],
+    ],
+  );
+
+  /// Planned: a bookmark.
+  static const planned = IconDef(
+    lines: [
+      ((4, 2), (12, 2)),
+      ((12, 2), (12, 14)),
+      ((12, 14), (8, 10)),
+      ((8, 10), (4, 14)),
+      ((4, 14), (4, 2)),
+    ],
+  );
+
+  /// On hold: a pause.
+  static const onHold = IconDef(
+    fills: [
+      [(4, 2), (7, 2), (7, 14), (4, 14)],
+      [(9, 2), (12, 2), (12, 14), (9, 14)],
+    ],
+  );
+
+  /// Dropped: a cross.
+  static const dropped = IconDef(
+    lines: [((3, 3), (13, 13)), ((13, 3), (3, 13))],
+  );
+
+  /// Not interested: a circle with a slash.
+  static const notInterested = IconDef(
+    lines: [
+      ((5, 2), (11, 2)),
+      ((11, 2), (14, 5)),
+      ((14, 5), (14, 11)),
+      ((14, 11), (11, 14)),
+      ((11, 14), (5, 14)),
+      ((5, 14), (2, 11)),
+      ((2, 11), (2, 5)),
+      ((2, 5), (5, 2)),
+      ((5, 11), (11, 5)),
+    ],
+  );
+
+  /// Rewatching: one arrow each way.
+  static const rewatching = IconDef(
+    lines: [
+      ((3, 5), (12, 5)),
+      ((10, 3), (12, 5)),
+      ((10, 7), (12, 5)),
+      ((13, 11), (4, 11)),
+      ((6, 9), (4, 11)),
+      ((6, 13), (4, 11)),
+    ],
+  );
+
   static const all = <String, IconDef>{
     'nekomimi': nekomimi,
     'discover': discover,
@@ -110,5 +198,15 @@ abstract final class AppIcons {
     'watching': watching,
     'schedule': schedule,
     'settings': settings,
+    'grid': grid,
+    'list': list,
+    'chevronDown': chevronDown,
+    'check': check,
+    'more': more,
+    'planned': planned,
+    'onHold': onHold,
+    'dropped': dropped,
+    'notInterested': notInterested,
+    'rewatching': rewatching,
   };
 }

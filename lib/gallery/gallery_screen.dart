@@ -5,6 +5,8 @@ import '../components/app_checkbox.dart';
 import '../components/app_tab.dart';
 import '../components/count_badge.dart';
 import '../components/panel.dart';
+import '../components/status_mark.dart';
+import '../library/entry_status.dart';
 import '../design/tokens.dart';
 import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
@@ -135,6 +137,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ),
             const _Section('Icons'),
             const _Icons(),
+            const SizedBox(height: Tokens.space3),
+            const _IconSheet(),
             const SizedBox(height: Tokens.space2),
             const _Note(
               'Straight lines on a fixed grid, only 90 and 45 degrees. '
@@ -176,6 +180,53 @@ class _Section extends StatelessWidget {
     padding: const EdgeInsets.only(top: Tokens.space5, bottom: Tokens.space3),
     child: _Heading(title),
   );
+}
+
+/// Every icon by name, drawn large, and the status marks at their real size.
+class _IconSheet extends StatelessWidget {
+  const _IconSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: Tokens.space5,
+          runSpacing: Tokens.space4,
+          children: [
+            for (final entry in AppIcons.all.entries)
+              if (entry.key != 'nekomimi')
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppIcon(entry.value, size: 40, color: Tokens.ink),
+                    const SizedBox(height: Tokens.space1),
+                    _Note(entry.key),
+                  ],
+                ),
+          ],
+        ),
+        const SizedBox(height: Tokens.space4),
+        Wrap(
+          spacing: Tokens.space5,
+          runSpacing: Tokens.space3,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            for (final status in EntryStatus.values)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  StatusMark(status),
+                  const SizedBox(width: Tokens.space2),
+                  _Note(status.value),
+                ],
+              ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 class _Note extends StatelessWidget {

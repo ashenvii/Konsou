@@ -42,6 +42,8 @@ abstract final class Tokens {
   static const double railItemSize = 36;
   // The icon inside a rail item, the size the gallery already drew it at.
   static const double railIconSize = 20;
+  // Small icons inside text and controls: status marks, chevrons, dots.
+  static const double iconSize = 16;
   static const double windowButtonWidth = 40;
   static const double windowIconSize = 10;
 
@@ -54,4 +56,9 @@ abstract final class Tokens {
   static const double focusRing = 2;
   // Smallest area a finger can hit, on touch screens (Android guideline).
   static const double touchTarget = 48;
+
+  // The Library, first guesses from the loading screenshot, to be tuned.
+  static const double gridCardMinWidth = 168;
+  static const double listRowHeight = 72;
+  static const double listCoverWidth = 40;
 }
