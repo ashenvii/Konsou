@@ -6,7 +6,6 @@ import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
 import '../icons/icon_def.dart';
 
-/// One place the rail can go.
 class RailDestination {
   const RailDestination(this.path, this.label, this.icon);
 
@@ -38,7 +37,6 @@ const settingsDestination = RailDestination(
 class AppRail extends StatelessWidget {
   const AppRail({super.key, required this.location, required this.onSelect});
 
-  /// The path of the page showing now.
   final String location;
   final ValueChanged<String> onSelect;
 

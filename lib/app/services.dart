@@ -71,8 +71,8 @@ class Services {
           databases: databases,
           folder: coversFolder,
           client: client,
-          // the image server is not the API: its own gate
-          gate: RequestGate(),
+          // the image server is not the API: its own, faster gate
+          gate: RequestGate(gap: coverRequestGap),
         ),
       );
       scan = FranchiseScan(databases: databases, detailRequest: detailRequest);

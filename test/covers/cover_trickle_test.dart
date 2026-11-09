@@ -129,6 +129,16 @@ void main() {
     expect(asked, [_url(1, 'jpg')]);
   });
 
+  test('a cover whose file was deleted is fetched again', () async {
+    await addEntry('a', 1, changedAt: 10);
+    final store = buildStore();
+    await CoverTrickle(databases: databases, store: store).run();
+    (await store.readCover(1, CoverSize.medium))!.deleteSync();
+    asked.clear();
+    await CoverTrickle(databases: databases, store: store).run();
+    expect(asked, [_url(1)]);
+  });
+
   test('a failed cover does not hold up the rest or repeat', () async {
     await addEntry('a', 1, changedAt: 20);
     await addEntry('b', 2, changedAt: 10);

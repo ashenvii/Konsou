@@ -1,4 +1,3 @@
-/// MAL keeps each cover at two sizes.
 enum CoverSize { medium, large }
 
 /// How many pixels wide MAL's medium file is.

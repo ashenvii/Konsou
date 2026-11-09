@@ -4,6 +4,7 @@ import '../data/databases.dart';
 import '../data/record_database.dart';
 import 'fold_franchises.dart';
 import 'library_row.dart';
+import 'title_language.dart';
 
 /// Every entry with what its details say, one row per entry, in no order.
 Future<List<LibraryEntry>> loadLibraryEntries(

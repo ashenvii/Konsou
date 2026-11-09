@@ -6,7 +6,7 @@ import 'package:konsou/data/databases.dart';
 import 'package:konsou/data/details_database.dart';
 import 'package:konsou/data/record_database.dart';
 import 'package:konsou/import/import_old_list.dart';
-import 'package:konsou/library/library_row.dart';
+import 'package:konsou/library/title_language.dart';
 import 'package:konsou/library/library_view.dart';
 import 'package:konsou/library/load_library.dart';
 

@@ -113,6 +113,27 @@ void main() {
     );
   });
 
+  test(
+    'the latest of the rest is the latest dated season, not an undated one',
+    () {
+      expect(
+        only([
+          entry('s1', 'completed', franchise: 7, date: '2020'),
+          entry('s2', 'completed', franchise: 7, date: '2021'),
+          entry('s3', 'completed', franchise: 7),
+        ]).entryId,
+        's2',
+      );
+      expect(
+        only([
+          entry('a', 'completed', franchise: 7, added: 1),
+          entry('b', 'completed', franchise: 7, added: 2),
+        ]).entryId,
+        'b',
+      );
+    },
+  );
+
   test('undated seasons come last, then the older entry', () {
     expect(
       only([

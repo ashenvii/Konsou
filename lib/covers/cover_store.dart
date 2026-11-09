@@ -12,6 +12,10 @@ import 'cover_size.dart';
 /// many bytes before the least recently shown go.
 const defaultPoolLimit = 150 * 1024 * 1024;
 
+/// Time between cover downloads. MAL asks for 0.5 seconds on its API; its
+/// image server publishes no limit, so covers go five times faster.
+const coverRequestGap = Duration(milliseconds: 100);
+
 enum CoverOutcome { fetched, current, none, failed }
 
 /// Cover files kept on the device, one folder, named by MAL id and size. The
@@ -43,14 +47,13 @@ class CoverStore {
   Future<File?> readCover(int malId, CoverSize size) async {
     final row = await _readRow(malId, size);
     if (row == null) return null;
-    final file = File('${folder.path}${Platform.pathSeparator}${row.fileName}');
+    final file = _fileOf(row.fileName);
     if (!file.existsSync()) {
       await _deleteRow(malId, size);
       return null;
     }
-    await (_details.update(_details.cover)..where(_is(malId, size))).write(
-      CoverCompanion(shownAt: Value(_now().millisecondsSinceEpoch)),
-    );
+    await (_details.update(_details.cover)..where(_coverFilter(malId, size)))
+        .write(CoverCompanion(shownAt: Value(_now().millisecondsSinceEpoch)));
     return file;
   }
 
@@ -105,6 +108,17 @@ class CoverStore {
     return CoverOutcome.fetched;
   }
 
+  /// Forgets covers whose file is gone, so the cover trickle fetches them
+  /// again.
+  Future<void> forgetMissingFiles() async {
+    final rows = await _details.select(_details.cover).get();
+    for (final row in rows) {
+      if (!_fileOf(row.fileName).existsSync()) {
+        await _deleteRow(row.providerId, CoverSize.values.byName(row.size));
+      }
+    }
+  }
+
   /// Drops the least recently shown pool covers until the pool fits. The pool
   /// is every large cover and every cover of a title no entry points to.
   Future<void> trimPool() async {
@@ -128,7 +142,10 @@ class CoverStore {
     }
   }
 
-  Expression<bool> Function(CoverTable) _is(int malId, CoverSize size) =>
+  Expression<bool> Function(CoverTable) _coverFilter(
+    int malId,
+    CoverSize size,
+  ) =>
       (row) =>
           row.provider.equals('mal') &
           row.providerId.equals(malId) &
@@ -136,10 +153,10 @@ class CoverStore {
 
   Future<Cover?> _readRow(int malId, CoverSize size) => (_details.select(
     _details.cover,
-  )..where(_is(malId, size))).getSingleOrNull();
+  )..where(_coverFilter(malId, size))).getSingleOrNull();
 
   Future<void> _deleteRow(int malId, CoverSize size) =>
-      (_details.delete(_details.cover)..where(_is(malId, size))).go();
+      (_details.delete(_details.cover)..where(_coverFilter(malId, size))).go();
 
   Future<String?> _readUrl(int malId, CoverSize size) async {
     final row =

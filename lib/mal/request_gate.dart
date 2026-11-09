@@ -16,11 +16,14 @@ enum Lane { screen, trickle }
 /// apart, and slower after errors.
 class RequestGate {
   RequestGate({
+    this.gap = requestGap,
     DateTime Function()? now,
     Future<void> Function(Duration duration)? wait,
   }) : _now = now ?? DateTime.now,
        _wait = wait ?? Future<void>.delayed;
 
+  /// Time between the start of one request and the start of the next.
+  final Duration gap;
   final DateTime Function() _now;
   final Future<void> Function(Duration duration) _wait;
   final _screen = Queue<_Job>();
@@ -52,7 +55,7 @@ class RequestGate {
       final job = _screen.isNotEmpty
           ? _screen.removeFirst()
           : _trickle.removeFirst();
-      _nextStart = _now().add(requestGap);
+      _nextStart = _now().add(gap);
       try {
         final response = await job.request();
         if (response.statusCode == 429 || response.statusCode >= 500) {

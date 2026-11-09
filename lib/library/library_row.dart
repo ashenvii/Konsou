@@ -1,17 +1,3 @@
-/// Which title name to show. Stored as the `title_language` setting.
-enum TitleLanguage {
-  romaji,
-  english,
-  japanese;
-
-  /// The stored words are the old app's: romaji, english and native.
-  static TitleLanguage parse(String? stored) => switch (stored) {
-    'english' => english,
-    'native' || 'japanese' => japanese,
-    _ => romaji,
-  };
-}
-
 /// One entry as the Library reads it, before franchises are folded.
 class LibraryEntry {
   const LibraryEntry({
@@ -66,10 +52,8 @@ class LibraryRow {
     this.seasonsTotal,
   });
 
-  /// The entry this row stands for.
   final LibraryEntry current;
 
-  /// Every entry the row covers, the one above included.
   final List<String> entryIds;
 
   /// The newest add and the newest change among those entries.
@@ -99,15 +83,3 @@ class LibraryRow {
 
   bool get isFranchise => seasonsTotal != null;
 }
-
-enum LibraryTab {
-  all,
-  watching,
-  planned,
-  completed,
-  onHold,
-  dropped,
-  notInterested,
-}
-
-enum LibrarySort { recent, title, score, added }

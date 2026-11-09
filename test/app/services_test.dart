@@ -71,13 +71,14 @@ void main() {
     email: 'owner@example.com',
   );
 
-  http.Client routed() => _RoutedClient(google.client, asked);
+  http.Client routed({void Function()? onMal}) =>
+      _RoutedClient(google.client, asked, onMal: onMal);
 
-  Services build(Keys keys) => Services(
+  Services build(Keys keys, {void Function()? onMal}) => Services(
     databases: databases,
     keys: keys,
     coversFolder: Directory('${folder.path}/covers'),
-    client: routed(),
+    client: routed(onMal: onMal),
     tokenStore: store,
     openBrowser: (_) async {},
     gate: RequestGate(wait: (_) async {}),
@@ -130,24 +131,42 @@ void main() {
     expect(services.sync, isNull);
   });
 
-  test('fetches the covers of entries whose details are in', () async {
-    await addEntry('a', malId: 1);
+  Future<void> addDetailWithCover(int malId) {
     final details = databases.details;
-    await details
+    return details
         .into(details.detail)
         .insert(
           DetailCompanion.insert(
             provider: 'mal',
-            providerId: 1,
+            providerId: malId,
             fetchedAt: 1,
             json:
                 '{"main_picture": {"medium": '
-                '"https://cdn.myanimelist.net/images/anime/1/1.webp"}}',
+                '"https://cdn.myanimelist.net/images/anime/1/$malId.webp"}}',
           ),
         );
+  }
+
+  test('details come first, then covers', () async {
+    await addEntry('a', malId: 1);
+    await addEntry('b', malId: 2);
+    await addDetailWithCover(2);
     await build(_allKeys).start();
-    expect(asked, ['cover 1.webp']);
+    expect(asked, ['mal 1', 'cover 2.webp']);
   });
+
+  test(
+    'stop during the trickle leaves the covers and the scan alone',
+    () async {
+      await addEntry('a', malId: 1);
+      await addEntry('b', malId: 2);
+      await addDetailWithCover(2);
+      late Services services;
+      services = build(_allKeys, onMal: () => services.stop());
+      await services.start();
+      expect(asked, ['mal 1']);
+    },
+  );
 
   test('stop ends the chain and runs the close sync', () async {
     signIn();
@@ -161,7 +180,10 @@ void main() {
 
 /// MAL answers go to [asked]; everything else is the fake Google.
 class _RoutedClient extends http.BaseClient {
-  _RoutedClient(this._google, this._asked);
+  _RoutedClient(this._google, this._asked, {this.onMal});
+
+  /// Called when a MAL request arrives, to act in the middle of the chain.
+  final void Function()? onMal;
 
   final http.Client _google;
   final List<String> _asked;
@@ -181,6 +203,7 @@ class _RoutedClient extends http.BaseClient {
       return _google.send(request);
     }
     _asked.add('mal ${request.url.pathSegments.last}');
+    onMal?.call();
     return http.StreamedResponse(Stream.value(const []), 404);
   }
 }

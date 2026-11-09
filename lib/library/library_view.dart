@@ -1,11 +1,24 @@
 import '../search/title_words.dart';
+import 'entry_status.dart';
 import 'library_row.dart';
+
+enum LibraryTab {
+  all,
+  watching,
+  planned,
+  completed,
+  onHold,
+  dropped,
+  notInterested,
+}
+
+enum LibrarySort { recent, title, score, added }
 
 /// Whether a row shows in [tab]. All holds everything but Not interested;
 /// Watching holds Rewatching too.
 bool isInTab(LibraryRow row, LibraryTab tab) => switch (tab) {
   LibraryTab.all => row.status != 'not_interested',
-  LibraryTab.watching => row.status == 'watching' || row.status == 'rewatching',
+  LibraryTab.watching => watchingStatuses.contains(row.status),
   LibraryTab.planned => row.status == 'plan_to_watch',
   LibraryTab.completed => row.status == 'completed',
   LibraryTab.onHold => row.status == 'on_hold',
@@ -26,32 +39,32 @@ Map<LibraryTab, int> countTabs(List<LibraryRow> rows) => {
 /// A to Z. Ties fall back to the title, then the entry, so the order never
 /// shifts between redraws.
 List<LibraryRow> sortRows(List<LibraryRow> rows, LibrarySort sort) {
-  int byTitle(LibraryRow a, LibraryRow b) {
-    final byName = foldWords(a.name)
+  int byTitle(LibraryRow first, LibraryRow second) {
+    final byName = foldWords(first.name)
         .join(' ')
-        .compareTo(foldWords(b.name).join(' '));
-    return byName != 0 ? byName : a.entryId.compareTo(b.entryId);
+        .compareTo(foldWords(second.name).join(' '));
+    return byName != 0 ? byName : first.entryId.compareTo(second.entryId);
   }
 
-  int compare(LibraryRow a, LibraryRow b) {
+  int compare(LibraryRow first, LibraryRow second) {
     final byKey = switch (sort) {
-      LibrarySort.recent => b.changedAt.compareTo(a.changedAt),
-      LibrarySort.added => b.addedAt.compareTo(a.addedAt),
-      LibrarySort.score => _byScore(a, b),
+      LibrarySort.recent => second.changedAt.compareTo(first.changedAt),
+      LibrarySort.added => second.addedAt.compareTo(first.addedAt),
+      LibrarySort.score => _byScore(first, second),
       LibrarySort.title => 0,
     };
-    return byKey != 0 ? byKey : byTitle(a, b);
+    return byKey != 0 ? byKey : byTitle(first, second);
   }
 
   return [...rows]..sort(compare);
 }
 
 /// Highest score first, unscored last.
-int _byScore(LibraryRow a, LibraryRow b) {
-  final aScore = a.score;
-  final bScore = b.score;
-  if (aScore == bScore) return 0;
-  if (aScore == null) return 1;
-  if (bScore == null) return -1;
-  return bScore.compareTo(aScore);
+int _byScore(LibraryRow first, LibraryRow second) {
+  final firstScore = first.score;
+  final secondScore = second.score;
+  if (firstScore == secondScore) return 0;
+  if (firstScore == null) return 1;
+  if (secondScore == null) return -1;
+  return secondScore.compareTo(firstScore);
 }

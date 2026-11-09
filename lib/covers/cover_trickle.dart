@@ -18,6 +18,7 @@ class CoverTrickle {
   /// pool.
   Future<void> run() async {
     _stopped = false;
+    await store.forgetMissingFiles();
     await drainQueue<int>(
       isStopped: () => _stopped,
       next: _nextTitle,

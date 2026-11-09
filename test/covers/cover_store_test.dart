@@ -95,6 +95,10 @@ void main() {
         );
   }
 
+  test('the pool holds 150 MB by default', () {
+    expect(defaultPoolLimit, 150 * 1024 * 1024);
+  });
+
   group('size', () {
     test('medium while the drawn picture fits its 225 pixels', () {
       expect(chooseCoverSize(drawnWidth: 100, pixelRatio: 2), CoverSize.medium);

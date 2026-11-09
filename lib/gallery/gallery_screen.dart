@@ -8,6 +8,7 @@ import '../components/panel.dart';
 import '../design/tokens.dart';
 import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
+import '../shell/app_rail.dart';
 
 /// Every token and every component built so far, on one scrolling page. The
 /// first screen in debug builds. Add a component here when it is built.
@@ -199,15 +200,25 @@ class _Icons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const mascot = AppIcons.nekomimi;
-    return const Wrap(
+    return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       runSpacing: Tokens.space3,
       children: [
-        AppIcon(mascot, size: 20, color: Tokens.mint, lineColor: Tokens.ground),
-        SizedBox(width: Tokens.space5),
-        AppIcon(mascot, size: 96, color: Tokens.mint, lineColor: Tokens.ground),
-        SizedBox(width: Tokens.space5),
-        ColoredBox(
+        const AppIcon(
+          mascot,
+          size: 20,
+          color: Tokens.mint,
+          lineColor: Tokens.ground,
+        ),
+        const SizedBox(width: Tokens.space5),
+        const AppIcon(
+          mascot,
+          size: 96,
+          color: Tokens.mint,
+          lineColor: Tokens.ground,
+        ),
+        const SizedBox(width: Tokens.space5),
+        const ColoredBox(
           color: Tokens.amber,
           child: SizedBox.square(
             dimension: Tokens.railItemSize,
@@ -220,30 +231,16 @@ class _Icons extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: Tokens.space5),
-        AppIcon(
-          AppIcons.library,
-          size: Tokens.railIconSize,
-          color: Tokens.inkMuted,
-        ),
-        SizedBox(width: Tokens.space3),
-        AppIcon(
-          AppIcons.watching,
-          size: Tokens.railIconSize,
-          color: Tokens.inkMuted,
-        ),
-        SizedBox(width: Tokens.space3),
-        AppIcon(
-          AppIcons.schedule,
-          size: Tokens.railIconSize,
-          color: Tokens.inkMuted,
-        ),
-        SizedBox(width: Tokens.space3),
-        AppIcon(
-          AppIcons.settings,
-          size: Tokens.railIconSize,
-          color: Tokens.inkMuted,
-        ),
+        const SizedBox(width: Tokens.space5),
+        for (final destination in [...railDestinations, settingsDestination])
+          Padding(
+            padding: const EdgeInsets.only(right: Tokens.space3),
+            child: AppIcon(
+              destination.icon,
+              size: Tokens.railIconSize,
+              color: Tokens.inkMuted,
+            ),
+          ),
       ],
     );
   }
