@@ -74,3 +74,6 @@ devtools_options.yaml
 
 # Resource compiler temp files
 windows/runner/RC??????
+
+# rendered screen images for looking at on a phone
+shots/
