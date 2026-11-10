@@ -25,6 +25,9 @@ Future<Databases> openDatabases(Directory folder) async {
   final recordFile = File('${folder.path}${separator}konsou.db');
   final detailsPath = '${folder.path}${separator}details.db';
 
+  if (discardBrokenDetails(detailsPath)) {
+    stderr.writeln('details.db failed its check and was rebuilt');
+  }
   final details = DetailsDatabase(
     NativeDatabase.createInBackground(File(detailsPath), setup: _setUp),
   );
@@ -42,6 +45,31 @@ Future<Databases> openDatabases(Directory folder) async {
   );
   await record.customSelect('SELECT 1').get();
   return Databases(record, details);
+}
+
+/// details.db holds only what can be fetched again, so a copy that fails the
+/// database's own check is deleted (with its side files) and rebuilt, instead
+/// of leaving the Library unreadable. Returns true when it was discarded. The
+/// record, konsou.db, is never touched.
+bool discardBrokenDetails(String path) {
+  if (!File(path).existsSync()) return false;
+  var broken = false;
+  try {
+    final raw = sqlite3.open(path);
+    try {
+      broken = raw.select('PRAGMA quick_check').first.values.first != 'ok';
+    } finally {
+      raw.close();
+    }
+  } on SqliteException {
+    broken = true;
+  }
+  if (!broken) return false;
+  for (final suffix in ['', '-wal', '-shm']) {
+    final file = File('$path$suffix');
+    if (file.existsSync()) file.deleteSync();
+  }
+  return true;
 }
 
 void _setUp(Database raw) {

@@ -14,6 +14,15 @@ abstract final class AppText {
     color: color,
   );
 
+  /// A page's name at the top left.
+  static const heading = TextStyle(
+    fontFamily: Tokens.sans,
+    fontWeight: FontWeight.w700,
+    fontSize: Tokens.text5,
+    height: 1,
+    color: Tokens.ink,
+  );
+
   /// The small line under a title.
   static TextStyle caption(Color color) => TextStyle(
     fontFamily: Tokens.sans,

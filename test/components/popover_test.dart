@@ -25,14 +25,14 @@ void main() {
       );
     });
 
-    test('pulled back in from the right edge', () {
+    test('hangs off the right edge of the anchor near the window edge', () {
       expect(
         placePopover(
           anchor: const Rect.fromLTWH(700, 40, 80, 36),
           child: child,
           area: area,
         ),
-        const Offset(600, 76),
+        const Offset(580, 76),
       );
     });
 
@@ -155,42 +155,50 @@ void main() {
   group('popover', () {
     var picked = '';
 
-    Future<void> pumpPopover(WidgetTester tester) {
+    // [overlayAt] moves the overlay in from the window's corner, the way the
+    // shell's rail and bar do for the page's overlay
+    Future<void> pumpPopover(
+      WidgetTester tester, {
+      Offset overlayAt = Offset.zero,
+    }) {
       picked = '';
       return tester.pumpWidget(
         Directionality(
           textDirection: TextDirection.ltr,
           child: MediaQuery(
             data: const MediaQueryData(size: Size(800, 600)),
-            child: Overlay(
-              initialEntries: [
-                OverlayEntry(
-                  builder: (context) => Align(
-                    alignment: Alignment.topLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 100, top: 100),
-                      child: AppPopover(
-                        builder: (context, handle) => AppButton(
-                          label: 'Sort',
-                          kind: ButtonKind.secondary,
-                          onPressed: handle.open,
-                        ),
-                        popoverBuilder: (context, handle) => AppMenu(
-                          entries: [
-                            MenuEntry(
-                              label: 'Title',
-                              onPressed: () {
-                                picked = 'title';
-                                handle.close();
-                              },
-                            ),
-                          ],
+            child: Padding(
+              padding: EdgeInsets.only(left: overlayAt.dx, top: overlayAt.dy),
+              child: Overlay(
+                initialEntries: [
+                  OverlayEntry(
+                    builder: (context) => Align(
+                      alignment: Alignment.topLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 100, top: 100),
+                        child: AppPopover(
+                          builder: (context, handle) => AppButton(
+                            label: 'Sort',
+                            kind: ButtonKind.secondary,
+                            onPressed: handle.open,
+                          ),
+                          popoverBuilder: (context, handle) => AppMenu(
+                            entries: [
+                              MenuEntry(
+                                label: 'Title',
+                                onPressed: () {
+                                  picked = 'title';
+                                  handle.close();
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -203,6 +211,17 @@ void main() {
       await tester.tap(find.text('Sort'));
       await tester.pump();
       expect(find.byType(AppMenu), findsOneWidget);
+      final anchor = tester.getRect(find.byType(AppButton));
+      final menu = tester.getTopLeft(find.byType(AppMenu));
+      expect(menu, Offset(anchor.left, anchor.bottom));
+    });
+
+    testWidgets('opens under its anchor when the overlay is moved in', (
+      tester,
+    ) async {
+      await pumpPopover(tester, overlayAt: const Offset(48, 36));
+      await tester.tap(find.text('Sort'));
+      await tester.pump();
       final anchor = tester.getRect(find.byType(AppButton));
       final menu = tester.getTopLeft(find.byType(AppMenu));
       expect(menu, Offset(anchor.left, anchor.bottom));

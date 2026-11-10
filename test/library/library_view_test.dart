@@ -73,14 +73,6 @@ void main() {
     expect(ids(sorted), ['b', 'c', 'a']);
   });
 
-  test('added: newest first', () {
-    final sorted = sortRows([
-      row('a', 'watching', added: 10),
-      row('b', 'watching', added: 30),
-    ], LibrarySort.added);
-    expect(ids(sorted), ['b', 'a']);
-  });
-
   test('title: A to Z, ignoring case and punctuation', () {
     final sorted = sortRows([
       row('1', 'watching', name: 'Zetsuen'),
@@ -88,16 +80,6 @@ void main() {
       row('3', 'watching', name: 'Re:Zero'),
     ], LibrarySort.title);
     expect(ids(sorted), ['2', '3', '1']);
-  });
-
-  test('score: highest first, unscored last, ties by title', () {
-    final sorted = sortRows([
-      row('a', 'watching', name: 'A'),
-      row('b', 'watching', name: 'B', score: 7),
-      row('c', 'watching', name: 'C', score: 9),
-      row('d', 'watching', name: 'D', score: 7),
-    ], LibrarySort.score);
-    expect(ids(sorted), ['c', 'b', 'd', 'a']);
   });
 
   test('equal rows keep one order however they arrive', () {

@@ -6,6 +6,8 @@ import '../components/app_tab.dart';
 import '../components/count_badge.dart';
 import '../components/app_menu.dart';
 import '../components/icon_square_button.dart';
+import '../components/page_frame.dart';
+import '../components/page_title.dart';
 import '../components/panel.dart';
 import '../components/status_mark.dart';
 import 'library_rows_section.dart';
@@ -13,6 +15,7 @@ import '../library/entry_status.dart';
 import '../design/tokens.dart';
 import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
+import '../icons/score_star.dart';
 import '../shell/app_rail.dart';
 
 /// Every token and every component built so far, on one scrolling page. The
@@ -35,19 +38,23 @@ class _GalleryScreenState extends State<GalleryScreen> {
     // adds nothing.
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(Tokens.space5),
+        padding: PageFrame.top.copyWith(bottom: Tokens.space5),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _Heading('Gallery', size: Tokens.text5),
-            const _Note('Every token and component built so far.'),
+            const PageTitle('Gallery'),
+            const _Note(
+              'Every token and component built so far: the foundations, the '
+              'controls, the parts a page is built from, then the icons. The '
+              'mint scrollbar on the right is the one every page gets.',
+            ),
             const _Section('Colors'),
             const _Colors(),
             const _Section('Type'),
             const _Type(),
             const _Section('Space'),
             const _Space(),
-            const _Section('Shell sizes'),
+            const _Section('Sizes'),
             const _Sizes(),
             const _Section('Button'),
             Wrap(
@@ -138,8 +145,16 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 ),
               ),
             ),
-            const _Section('Menu and controls'),
-            const _MenuControls(),
+            const _Section('Page header'),
+            const _PageHeader(),
+            const SizedBox(height: Tokens.space2),
+            const _Note(
+              'One line, centred: the page title and its status switcher, the '
+              'layout switch in the middle, the sort on the right. Both menu '
+              'buttons open their menu right under themselves.',
+            ),
+            const _Section('Menus'),
+            const _Menus(),
             const _Section('Library rows and cards'),
             const LibraryRowsSection(),
             const _Section('Icons'),
@@ -149,8 +164,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
             const SizedBox(height: Tokens.space2),
             const _Note(
               'Straight lines on a fixed grid, only 90 and 45 degrees. '
-              'Nekomimi at 20 (logo size) and 96; Discover at 20 on the amber '
-              'rail item.',
+              'Nekomimi at 20 (logo size) and 96; the score star, the one icon '
+              'off the grid, at 16 and 64; Discover at 20 on the amber rail '
+              'item.',
             ),
           ],
         ),
@@ -160,10 +176,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
 }
 
 class _Heading extends StatelessWidget {
-  const _Heading(this.text, {this.size = Tokens.text4});
+  const _Heading(this.text);
 
   final String text;
-  final double size;
 
   @override
   Widget build(BuildContext context) => Text(
@@ -171,7 +186,7 @@ class _Heading extends StatelessWidget {
     style: TextStyle(
       fontFamily: Tokens.sans,
       fontWeight: FontWeight.w700,
-      fontSize: size,
+      fontSize: Tokens.text4,
       color: Tokens.ink,
     ),
   );
@@ -191,8 +206,62 @@ class _Section extends StatelessWidget {
 
 /// The Library's controls: tabs with a menu tab, sort, the view switch, and the
 /// status menu drawn open.
-class _MenuControls extends StatelessWidget {
-  const _MenuControls();
+/// The Library's top row, as it is on the page.
+class _PageHeader extends StatelessWidget {
+  const _PageHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    // drawn at a desktop width and shrunk to fit a phone, as a picture of
+    // the real row
+    return Panel(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          width: 900,
+          child: Row(
+            children: [
+              const PageTitle('Library'),
+              const SizedBox(width: Tokens.space4),
+              AppButton(
+                label: 'Watching',
+                kind: ButtonKind.secondary,
+                opensMenu: true,
+                count: 571,
+                onPressed: () {},
+              ),
+              const Spacer(),
+              IconSquareButton(
+                icon: AppIcons.grid,
+                label: 'Grid view',
+                selected: true,
+                onPressed: () {},
+              ),
+              const SizedBox(width: Tokens.space1),
+              IconSquareButton(
+                icon: AppIcons.list,
+                label: 'List view',
+                onPressed: () {},
+              ),
+              const Spacer(),
+              AppButton(
+                label: 'Recent',
+                kind: ButtonKind.secondary,
+                opensMenu: true,
+                onPressed: () {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The status menu, the sort menu and a row's menu.
+class _Menus extends StatelessWidget {
+  const _Menus();
 
   @override
   Widget build(BuildContext context) {
@@ -201,78 +270,21 @@ class _MenuControls extends StatelessWidget {
       runSpacing: Tokens.space4,
       crossAxisAlignment: WrapCrossAlignment.start,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Wrap(
-              children: [
-                AppTab(
-                  label: 'All',
-                  selected: true,
-                  count: 412,
-                  onPressed: () {},
-                ),
-                AppTab(
-                  label: 'Watching',
-                  selected: false,
-                  count: 9,
-                  onPressed: () {},
-                ),
-                AppTab(
-                  label: 'Planned',
-                  selected: false,
-                  count: 80,
-                  onPressed: () {},
-                ),
-                AppTab(
-                  label: 'Completed',
-                  selected: false,
-                  count: 300,
-                  onPressed: () {},
-                ),
-                AppTab(
-                  label: 'More',
-                  selected: false,
-                  opensMenu: true,
-                  onPressed: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: Tokens.space3),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AppButton(
-                  label: 'Recent',
-                  kind: ButtonKind.secondary,
-                  opensMenu: true,
-                  onPressed: () {},
-                ),
-                const SizedBox(width: Tokens.space3),
-                IconSquareButton(
-                  icon: AppIcons.grid,
-                  label: 'Grid view',
-                  selected: true,
-                  onPressed: () {},
-                ),
-                const SizedBox(width: Tokens.space1),
-                IconSquareButton(
-                  icon: AppIcons.list,
-                  label: 'List view',
-                  onPressed: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: Tokens.space3),
-            AppMenu(
-              entries: [
-                MenuEntry(label: 'Recent', selected: true, onPressed: () {}),
-                MenuEntry(label: 'Title', onPressed: () {}),
-                MenuEntry(label: 'Score', onPressed: () {}),
-                MenuEntry(label: 'Added', onPressed: () {}),
-              ],
-            ),
+        AppMenu(
+          entries: [
+            MenuEntry(label: 'All  3357', onPressed: () {}),
+            MenuEntry(label: 'Watching  571', selected: true, onPressed: () {}),
+            MenuEntry(label: 'Planned  1606', onPressed: () {}),
+            MenuEntry(label: 'Completed  2421', onPressed: () {}),
+            MenuEntry(label: 'On hold  12', onPressed: () {}),
+            MenuEntry(label: 'Dropped  3', onPressed: () {}),
+            MenuEntry(label: 'Not interested  40', onPressed: () {}),
+          ],
+        ),
+        AppMenu(
+          entries: [
+            MenuEntry(label: 'Recent', selected: true, onPressed: () {}),
+            MenuEntry(label: 'A to Z', onPressed: () {}),
           ],
         ),
         AppMenu(
@@ -381,6 +393,10 @@ class _Icons extends StatelessWidget {
           color: Tokens.mint,
           lineColor: Tokens.ground,
         ),
+        const SizedBox(width: Tokens.space5),
+        const ScoreStar(size: Tokens.iconSize, color: Tokens.amber),
+        const SizedBox(width: Tokens.space3),
+        const ScoreStar(size: 64, color: Tokens.amber),
         const SizedBox(width: Tokens.space5),
         const ColoredBox(
           color: Tokens.amber,
@@ -580,6 +596,8 @@ class _Sizes extends StatelessWidget {
     ('badgeSize', Tokens.badgeSize),
     ('checkboxSize', Tokens.checkboxSize),
     ('touchTarget', Tokens.touchTarget),
+    ('scrollbarWidth', Tokens.scrollbarWidth),
+    ('resizeEdge', Tokens.resizeEdge),
   ];
 
   @override

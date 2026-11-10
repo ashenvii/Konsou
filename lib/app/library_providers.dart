@@ -12,8 +12,9 @@ import 'providers.dart';
 part 'library_providers.g.dart';
 
 /// Rows are reloaded at most this often while the background work saves
-/// things, so a trickle of 400 titles does not redraw the page 400 times.
-const libraryReloadGap = Duration(seconds: 1);
+/// things. A reload reads about 6500 entries on the UI thread (100 to 150 ms),
+/// so a short gap made the window stutter while the trickle ran.
+const libraryReloadGap = Duration(seconds: 10);
 
 /// The Library's rows, franchises folded. Reloads itself while the background
 /// work saves details, matches and franchises. An edit reloads it at once with
@@ -49,7 +50,21 @@ class LibraryTabChoice extends _$LibraryTabChoice {
   @override
   LibraryTab build() => LibraryTab.all;
 
-  void select(LibraryTab tab) => state = tab;
+  void select(LibraryTab tab) {
+    state = tab;
+    // rows an edit left in view only stay until the tab changes
+    ref.invalidate(libraryKeptProvider);
+  }
+}
+
+/// Rows an edit moved out of the tab they are shown in. They stay in view
+/// until the tab changes or the page is left, so the owner sees the change.
+@riverpod
+class LibraryKept extends _$LibraryKept {
+  @override
+  Set<String> build() => {};
+
+  void keep(String entryId) => state = {...state, entryId};
 }
 
 /// The Library's sort, kept while the app runs.

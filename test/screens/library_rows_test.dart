@@ -7,7 +7,7 @@ import 'package:konsou/components/cover_image.dart';
 import 'package:konsou/components/status_mark.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/icons/app_icon.dart';
-import 'package:konsou/icons/app_icons.dart';
+import 'package:konsou/icons/score_star.dart';
 import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/library/library_row.dart';
 import 'package:konsou/screens/library/library_grid_card.dart';
@@ -101,12 +101,7 @@ void main() {
       expect(find.text('TV · 2023'), findsOneWidget);
       expect(find.text('4 / 12'), findsOneWidget);
       expect(find.text('9'), findsOneWidget);
-      expect(
-        tester
-            .widgetList<AppIcon>(find.byType(AppIcon))
-            .any((icon) => icon.def == AppIcons.star),
-        isTrue,
-      );
+      expect(find.byType(ScoreStar), findsOneWidget);
       expect(find.byKey(const Key('menu')), findsOneWidget);
     });
 
@@ -128,12 +123,7 @@ void main() {
 
     testWidgets('no score leaves no star', (tester) async {
       await pump(tester, listRow(row(score: null)));
-      expect(
-        tester
-            .widgetList<AppIcon>(find.byType(AppIcon))
-            .any((icon) => icon.def == AppIcons.star),
-        isFalse,
-      );
+      expect(find.byType(ScoreStar), findsNothing);
     });
 
     testWidgets('a franchise shows its season count under the title', (

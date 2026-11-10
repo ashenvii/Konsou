@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/app/library_providers.dart';
 import 'package:konsou/app/providers.dart';
 import 'package:konsou/components/app_checkbox.dart';
-import 'package:konsou/components/app_tab.dart';
+import 'package:konsou/components/app_button.dart';
 import 'package:konsou/components/more_button.dart';
 import 'package:konsou/library/entry_edits.dart';
 import 'package:konsou/library/entry_status.dart';
@@ -94,6 +94,7 @@ void main() {
     WidgetTester tester,
     List<LibraryRow>? rows, {
     Size size = const Size(1100, 800),
+    List<LibraryRow> Function()? live,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -102,7 +103,9 @@ void main() {
       ProviderScope(
         overrides: [
           libraryRowsProvider.overrideWith(
-            (ref) => rows == null
+            (ref) => live != null
+                ? Future.value(live())
+                : rows == null
                 ? Completer<List<LibraryRow>>().future
                 : Future.value(rows),
           ),
@@ -146,40 +149,58 @@ void main() {
       card.row.name,
   ];
 
-  testWidgets('tabs show counts, and All leaves out Not interested', (
-    tester,
-  ) async {
+  // the status switcher is the button that carries a count
+  final switcherButton = find.byWidgetPredicate(
+    (widget) => widget is AppButton && widget.count != null,
+  );
+
+  Future<void> choose(WidgetTester tester, String entry) async {
+    // the heading's switcher opens the menu; entries read "Name  count"
+    await tester.tap(switcherButton);
+    await tester.pump();
+    await tester.tap(find.text(entry));
+    await tester.pump();
+  }
+
+  testWidgets('the heading shows the status and its count', (tester) async {
     await pumpScreen(tester, sample);
-    final tabs = tester.widgetList<AppTab>(find.byType(AppTab)).toList();
-    expect(
-      [for (final t in tabs) t.label],
-      ['All', 'Watching', 'Planned', 'Completed', 'More'],
-    );
-    expect([for (final t in tabs) t.count].take(4), [4, 1, 1, 1]);
+    final switcher = tester.widget<AppButton>(switcherButton);
+    expect(switcher.label, 'All');
+    // All leaves out Not interested
+    expect(switcher.count, 4);
   });
 
-  testWidgets('a tab keeps only its own rows', (tester) async {
+  testWidgets('the menu lists every status with its count', (tester) async {
+    await pumpScreen(tester, sample);
+    await tester.tap(switcherButton);
+    await tester.pump();
+    for (final entry in [
+      'All  4',
+      'Watching  1',
+      'Planned  1',
+      'Completed  1',
+      'On hold  1',
+      'Dropped  0',
+      'Not interested  1',
+    ]) {
+      expect(find.text(entry), findsOneWidget);
+    }
+  });
+
+  testWidgets('a status keeps only its own rows', (tester) async {
     await pumpScreen(tester, sample);
     expect(find.byType(LibraryGridCard), findsNWidgets(4));
-    await tester.tap(find.text('Planned'));
-    await tester.pump();
+    await choose(tester, 'Planned  1');
     expect(find.byType(LibraryGridCard), findsOneWidget);
     expect(find.text('Bravo'), findsOneWidget);
+    expect(tester.widget<AppButton>(switcherButton).label, 'Planned');
   });
 
-  testWidgets('More holds the other three, with their counts', (tester) async {
+  testWidgets('Not interested shows its rows when chosen', (tester) async {
     await pumpScreen(tester, sample);
-    await tester.tap(find.text('More'));
-    await tester.pump();
-    expect(find.text('On hold  1'), findsOneWidget);
-    expect(find.text('Dropped  0'), findsOneWidget);
-    expect(find.text('Not interested  1'), findsOneWidget);
-    await tester.tap(find.text('Not interested  1'));
-    await tester.pump();
+    await choose(tester, 'Not interested  1');
     expect(find.text('Echo'), findsOneWidget);
     expect(find.byType(LibraryGridCard), findsOneWidget);
-    // the More tab now carries the chosen name
-    expect(find.text('Not interested'), findsOneWidget);
   });
 
   testWidgets('the status shows on the All tab only', (tester) async {
@@ -190,30 +211,24 @@ void main() {
           .every((card) => card.showStatus),
       isTrue,
     );
-    await tester.tap(find.text('Watching'));
-    await tester.pump();
+    await choose(tester, 'Watching  1');
     expect(
       tester.widget<LibraryGridCard>(find.byType(LibraryGridCard)).showStatus,
       isFalse,
     );
   });
 
-  testWidgets('sort by title puts A first, by score the highest', (
-    tester,
-  ) async {
+  testWidgets('the sort offers Recent and A to Z only', (tester) async {
     await pumpScreen(tester, sample);
     // Recent: the newest change first
     expect(order(tester).first, 'Delta');
     await tester.tap(find.text('Recent'));
     await tester.pump();
-    await tester.tap(find.text('Title'));
+    expect(find.text('Score'), findsNothing);
+    expect(find.text('Added'), findsNothing);
+    await tester.tap(find.text('A to Z'));
     await tester.pump();
     expect(order(tester), ['Alpha', 'Bravo', 'Charlie', 'Delta']);
-    await tester.tap(find.text('Title'));
-    await tester.pump();
-    await tester.tap(find.text('Score'));
-    await tester.pump();
-    expect(order(tester).take(2), ['Bravo', 'Alpha']);
   });
 
   testWidgets('the list switch shows rows and is remembered', (tester) async {
@@ -238,8 +253,7 @@ void main() {
 
   testWidgets('a tab with nothing in it says so', (tester) async {
     await pumpScreen(tester, [row('a', 'watching')]);
-    await tester.tap(find.text('Completed'));
-    await tester.pump();
+    await choose(tester, 'Completed  0');
     expect(find.text('Nothing here.'), findsOneWidget);
     expect(find.text('Your library is empty.'), findsNothing);
   });
@@ -265,6 +279,33 @@ void main() {
     expect(edits.calls, ['status a onHold']);
     // the menu closed
     expect(find.text('Open details'), findsNothing);
+  });
+
+  testWidgets('an edited row stays in its tab until the tab changes', (
+    tester,
+  ) async {
+    var rows = [
+      row('a', 'watching', name: 'Alpha'),
+      row('b', 'plan_to_watch', name: 'Bravo'),
+    ];
+    await pumpScreen(tester, null, live: () => rows);
+    await choose(tester, 'Planned  1');
+    await tester.pump();
+    expect(find.text('Bravo'), findsOneWidget);
+    // the real edit would change the record; here the next read shows it
+    rows = [rows.first, row('b', 'completed', name: 'Bravo')];
+    await tester.tap(find.text('Bravo'), buttons: kSecondaryButton);
+    await tester.pump();
+    await tester.tap(find.text('Completed').last);
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+    expect(edits.calls, ['status b completed']);
+    expect(find.text('Bravo'), findsOneWidget);
+    // leaving the tab lets it go
+    await choose(tester, 'Watching  1');
+    await choose(tester, 'Planned  0');
+    expect(find.text('Bravo'), findsNothing);
   });
 
   testWidgets('the box completes, and unticking puts it back', (tester) async {

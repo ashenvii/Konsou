@@ -12,7 +12,7 @@ enum LibraryTab {
   notInterested,
 }
 
-enum LibrarySort { recent, title, score, added }
+enum LibrarySort { recent, title }
 
 /// Whether a row shows in [tab]. All holds everything but Not interested;
 /// Watching holds Rewatching too.
@@ -26,47 +26,40 @@ bool isInTab(LibraryRow row, LibraryTab tab) => switch (tab) {
   LibraryTab.notInterested => row.status == 'not_interested',
 };
 
-List<LibraryRow> rowsInTab(List<LibraryRow> rows, LibraryTab tab) => [
+/// The rows of [tab]. A row in [keep] stays in view even after an edit moved
+/// it out of the tab, so the change can be seen.
+List<LibraryRow> rowsInTab(
+  List<LibraryRow> rows,
+  LibraryTab tab, {
+  Set<String> keep = const {},
+}) => [
   for (final row in rows)
-    if (isInTab(row, tab)) row,
+    if (isInTab(row, tab) || keep.contains(row.entryId)) row,
 ];
 
 Map<LibraryTab, int> countTabs(List<LibraryRow> rows) => {
   for (final tab in LibraryTab.values) tab: rowsInTab(rows, tab).length,
 };
 
-/// Recent, Added and Score start with the newest or highest; Title runs
-/// A to Z. Ties fall back to the title, then the entry, so the order never
-/// shifts between redraws.
+/// Recent starts with the newest change; Title runs A to Z. Ties fall back
+/// to the title, then the entry, so the order never shifts between redraws.
 List<LibraryRow> sortRows(List<LibraryRow> rows, LibrarySort sort) {
+  // fold each title once, not on every comparison
+  final keys = {for (final row in rows) row: foldWords(row.name).join(' ')};
   int byTitle(LibraryRow first, LibraryRow second) {
-    final byName = foldWords(first.name)
-        .join(' ')
-        .compareTo(foldWords(second.name).join(' '));
+    final byName = keys[first]!.compareTo(keys[second]!);
     return byName != 0 ? byName : first.entryId.compareTo(second.entryId);
   }
 
   int compare(LibraryRow first, LibraryRow second) {
     final byKey = switch (sort) {
       LibrarySort.recent => second.changedAt.compareTo(first.changedAt),
-      LibrarySort.added => second.addedAt.compareTo(first.addedAt),
-      LibrarySort.score => _byScore(first, second),
       LibrarySort.title => 0,
     };
     return byKey != 0 ? byKey : byTitle(first, second);
   }
 
   return [...rows]..sort(compare);
-}
-
-/// Highest score first, unscored last.
-int _byScore(LibraryRow first, LibraryRow second) {
-  final firstScore = first.score;
-  final secondScore = second.score;
-  if (firstScore == secondScore) return 0;
-  if (firstScore == null) return 1;
-  if (secondScore == null) return -1;
-  return secondScore.compareTo(firstScore);
 }
 
 /// How the Library draws its rows. Remembered between runs.

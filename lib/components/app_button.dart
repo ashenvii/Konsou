@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
+import 'count_badge.dart';
 import 'menu_chevron.dart';
 import 'pressable.dart';
 
@@ -15,6 +16,7 @@ class AppButton extends StatelessWidget {
     required this.onPressed,
     this.kind = ButtonKind.primary,
     this.opensMenu = false,
+    this.count,
   });
 
   final String label;
@@ -23,6 +25,9 @@ class AppButton extends StatelessWidget {
 
   /// Shows a chevron after the label, for a button that opens a menu.
   final bool opensMenu;
+
+  /// A count badge at the end, such as the number of entries a choice holds.
+  final int? count;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +59,10 @@ class AppButton extends StatelessWidget {
                 ),
               ),
               if (opensMenu) MenuChevron(color: ink),
+              if (count != null) ...[
+                const SizedBox(width: Tokens.space2),
+                CountBadge(count!, onAccent: primary && enabled),
+              ],
             ],
           ),
         ),

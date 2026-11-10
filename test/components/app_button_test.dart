@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/app_button.dart';
+import 'package:konsou/components/count_badge.dart';
 import 'package:konsou/design/tokens.dart';
 
 import '../support/pump_widget.dart';
@@ -28,6 +29,22 @@ void main() {
       ),
     );
     expect(fillOf(tester, find.byType(AppButton)), Tokens.surface);
+  });
+
+  testWidgets('a count shows in a badge after the label', (tester) async {
+    await pumpWidget(
+      tester,
+      AppButton(
+        label: 'Watching',
+        kind: ButtonKind.secondary,
+        opensMenu: true,
+        count: 571,
+        onPressed: () {},
+      ),
+    );
+    expect(find.byType(CountBadge), findsOneWidget);
+    expect(find.text('571'), findsOneWidget);
+    expect(tester.getSize(find.byType(AppButton)).height, Tokens.controlHeight);
   });
 
   testWidgets('width is the label plus 16 each side', (tester) async {

@@ -81,7 +81,7 @@ An entry whose details have not been fetched yet.
 _Avoid_: Placeholder, skeleton (for the state)
 
 **Library**:
-The screen that lists every entry. It has the tabs All, Watching, Planned and Completed, a dropdown for the other statuses, a sort and a grid or list view, and no filters.
+The screen that lists every entry. Its top row is the title with a status switcher (All, Watching, Planned, Completed, On hold, Dropped, Not interested, each with its count), a grid or list switch, and a sort (Recent or A to Z). A find box that narrows the list by a typed word is planned; it is not a Browse filter.
 _Avoid_: My List, Collection
 
 **Watching**:

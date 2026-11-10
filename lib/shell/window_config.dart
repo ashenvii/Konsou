@@ -4,6 +4,7 @@ import 'dart:ui';
 /// the look.
 abstract final class WindowConfig {
   static const Size startSize = Size(1280, 800);
+
   static const Size minSize = Size(960, 600);
   static const Offset startPosition = Offset(80, 80);
   static const String title = 'Konsou';

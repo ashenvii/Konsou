@@ -43,14 +43,22 @@ class _AppPopoverState extends State<AppPopover> implements PopoverHandle {
   @override
   bool get isOpen => _open;
 
+  // The overlay the popover is drawn in need not start at the window's corner
+  // (the shell's rail and bar sit outside the page's overlay), so positions
+  // are measured from the overlay, not the window.
+  RenderBox get _overlayBox =>
+      Overlay.of(context).context.findRenderObject()! as RenderBox;
+
   @override
   void open() {
     final box = context.findRenderObject()! as RenderBox;
-    _show(box.localToGlobal(Offset.zero) & box.size);
+    final topLeft = box.localToGlobal(Offset.zero, ancestor: _overlayBox);
+    _show(topLeft & box.size);
   }
 
   @override
-  void openAt(Offset globalPosition) => _show(globalPosition & Size.zero);
+  void openAt(Offset globalPosition) =>
+      _show(_overlayBox.globalToLocal(globalPosition) & Size.zero);
 
   void _show(Rect anchor) {
     setState(() {

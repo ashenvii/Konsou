@@ -42,6 +42,9 @@ Future<void> renderPng(
   final key = GlobalKey();
   await tester.pumpWidget(RepaintBoundary(key: key, child: child));
   await tester.pump(const Duration(seconds: 2));
+  // a scrollbar shows its thumb one frame after the first layout
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 500));
   await tester.runAsync(() async {
     final boundary =
         key.currentContext!.findRenderObject()! as RenderRepaintBoundary;

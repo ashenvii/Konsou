@@ -13,6 +13,7 @@ import 'app/providers.dart';
 import 'app/routes.dart';
 import 'app/secure_token_store.dart';
 import 'app/services.dart';
+import 'components/app_scroll_behavior.dart';
 import 'data/databases.dart';
 import 'design/tokens.dart';
 import 'shell/native_window.dart';
@@ -80,13 +81,17 @@ class KonsouApp extends StatelessWidget {
       title: WindowConfig.title,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
-      builder: (context, child) => DefaultTextStyle(
-        style: const TextStyle(
-          fontFamily: Tokens.sans,
-          fontSize: Tokens.text3,
-          color: Tokens.ink,
+      // one scroll behavior for every page, so there is one scrollbar
+      builder: (context, child) => ScrollConfiguration(
+        behavior: const AppScrollBehavior(),
+        child: DefaultTextStyle(
+          style: const TextStyle(
+            fontFamily: Tokens.sans,
+            fontSize: Tokens.text3,
+            color: Tokens.ink,
+          ),
+          child: child!,
         ),
-        child: child!,
       ),
     );
   }

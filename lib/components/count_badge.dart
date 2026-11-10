@@ -3,9 +3,9 @@ import 'package:flutter/widgets.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 
-/// A small mint count. Anything above 99 reads 99+. [onAccent] is for a
-/// badge on an amber fill, where mint would vanish: it turns dark with a
-/// mint number.
+/// A small mint count, always the real number; the badge grows to fit it.
+/// [onAccent] is for a badge on an amber fill, where mint would vanish: it
+/// turns dark with a mint number.
 class CountBadge extends StatelessWidget {
   const CountBadge(this.count, {super.key, this.onAccent = false});
 
@@ -14,7 +14,7 @@ class CountBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = count > 99 ? '99+' : '$count';
+    final text = '$count';
     return Semantics(
       label: '$count',
       excludeSemantics: true,

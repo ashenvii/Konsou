@@ -22,8 +22,8 @@ void main() {
     expect(size.height, Tokens.badgeSize);
   });
 
-  testWidgets('above 99 reads 99+', (tester) async {
-    await pumpWidget(tester, const CountBadge(250));
-    expect(find.text('99+'), findsOneWidget);
+  testWidgets('a big count shows in full', (tester) async {
+    await pumpWidget(tester, const CountBadge(6481));
+    expect(find.text('6481'), findsOneWidget);
   });
 }

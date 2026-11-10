@@ -56,6 +56,11 @@ abstract final class Tokens {
   static const double focusRing = 2;
   // Smallest area a finger can hit, on touch screens (Android guideline).
   static const double touchTarget = 48;
+  static const double scrollbarWidth = 10;
+
+  /// The strip along each window edge that resizes the window. Anything that
+  /// sits against an edge, such as a scrollbar, stays out of it.
+  static const double resizeEdge = 6;
 
   // The Library, first guesses from the loading screenshot, to be tuned.
   static const double gridCardMinWidth = 168;

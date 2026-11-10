@@ -2,15 +2,23 @@ import 'dart:math';
 import 'dart:ui';
 
 /// Where the top left of a popover goes: under [anchor], lined up with its
-/// left edge, pulled back inside [area] when it would run off the right, and
-/// flipped above the anchor when there is no room below. Never negative, so a
+/// left edge; lined up with its right edge instead when the left alignment
+/// would run off the right of [area], so it still hangs off the thing that was
+/// clicked; flipped above the anchor when there is no room below. Never negative, so a
 /// menu opened from a wide anchor cannot land off screen.
 Offset placePopover({
   required Rect anchor,
   required Size child,
   required Size area,
 }) {
-  final x = max(0.0, min(anchor.left, area.width - child.width));
+  final fitsLeftAligned = anchor.left + child.width <= area.width;
+  final x = max(
+    0.0,
+    min(
+      fitsLeftAligned ? anchor.left : anchor.right - child.width,
+      area.width - child.width,
+    ),
+  );
   final below = anchor.bottom;
   final double y;
   if (below + child.height <= area.height) {

@@ -5,8 +5,7 @@ import '../../components/app_checkbox.dart';
 import '../../components/one_line_text.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
-import '../../icons/app_icon.dart';
-import '../../icons/app_icons.dart';
+import '../../icons/score_star.dart';
 import '../../library/entry_status.dart';
 import '../../library/library_row.dart';
 import '../../library/row_labels.dart';
@@ -159,7 +158,7 @@ class _Score extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        AppIcon(AppIcons.star, size: Tokens.iconSize, color: Tokens.inkMuted),
+        ScoreStar(size: Tokens.iconSize, color: Tokens.amber),
         const SizedBox(width: Tokens.space1),
         Text('$score', style: AppText.figure(Tokens.ink)),
       ],

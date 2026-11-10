@@ -5,10 +5,11 @@ import '../../app/library_providers.dart';
 import '../../components/app_button.dart';
 import '../../components/app_menu.dart';
 import '../../components/app_popover.dart';
-import '../../components/app_tab.dart';
 import '../../components/cover_image.dart';
 import '../../components/icon_square_button.dart';
 import '../../components/more_button.dart';
+import '../../components/page_frame.dart';
+import '../../components/page_title.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../icons/app_icons.dart';
@@ -20,20 +21,6 @@ import 'entry_menu.dart';
 import 'grid_layout.dart';
 import 'library_grid_card.dart';
 import 'library_list_row.dart';
-
-/// The tabs in the row; the rest sit under More.
-const _mainTabs = [
-  LibraryTab.all,
-  LibraryTab.watching,
-  LibraryTab.planned,
-  LibraryTab.completed,
-];
-
-const _moreTabs = [
-  LibraryTab.onHold,
-  LibraryTab.dropped,
-  LibraryTab.notInterested,
-];
 
 String _tabLabel(LibraryTab tab) => switch (tab) {
   LibraryTab.all => 'All',
@@ -47,14 +34,12 @@ String _tabLabel(LibraryTab tab) => switch (tab) {
 
 String _sortLabel(LibrarySort sort) => switch (sort) {
   LibrarySort.recent => 'Recent',
-  LibrarySort.title => 'Title',
-  LibrarySort.score => 'Score',
-  LibrarySort.added => 'Added',
+  LibrarySort.title => 'A to Z',
 };
 
-/// The Library: tabs with counts, sort, grid or list, and the menu of each
-/// row. [onDiscover] is the button of an empty library; [onOpen] opens an
-/// entry's details.
+/// The Library: a top row with the status switcher, the grid or list switch
+/// and the sort, then the rows, each with its menu. [onDiscover] is the
+/// button of an empty library; [onOpen] opens an entry's details.
 class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({
     super.key,
@@ -70,67 +55,84 @@ class LibraryScreen extends ConsumerWidget {
     final loaded = ref.watch(libraryRowsProvider);
     final tab = ref.watch(libraryTabChoiceProvider);
     final sort = ref.watch(librarySortChoiceProvider);
+    final kept = ref.watch(libraryKeptProvider);
     final layout =
         ref.watch(libraryLayoutChoiceProvider).value ?? LibraryLayout.grid;
     // keeps showing the old rows while a reload runs
     final all = loaded.value;
     final counts = all == null ? null : countTabs(all);
-    return Padding(
-      padding: const EdgeInsets.all(Tokens.space5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Library',
-            style: TextStyle(
-              fontFamily: Tokens.sans,
-              fontWeight: FontWeight.w700,
-              fontSize: Tokens.text5,
-              color: Tokens.ink,
-            ),
-          ),
-          const SizedBox(height: Tokens.space4),
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            runSpacing: Tokens.space3,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: PageFrame.top,
+          // one line, everything centred on it: the heading and its status
+          // switcher on the left, the layout switch in the middle, the sort
+          // on the right
+          child: Row(
             children: [
-              _Tabs(
-                selected: tab,
-                counts: counts,
-                onSelect: ref.read(libraryTabChoiceProvider.notifier).select,
+              Expanded(
+                // a window narrower than the minimum shrinks the heading a
+                // little instead of overflowing
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const PageTitle('Library'),
+                      const SizedBox(width: Tokens.space4),
+                      _StatusSwitcher(
+                        selected: tab,
+                        counts: counts,
+                        onSelect: ref
+                            .read(libraryTabChoiceProvider.notifier)
+                            .select,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              _Controls(
-                sort: sort,
+              _LayoutSwitch(
                 layout: layout,
-                onSort: ref.read(librarySortChoiceProvider.notifier).select,
                 onLayout: ref.read(libraryLayoutChoiceProvider.notifier).select,
+              ),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: _SortButton(
+                    sort: sort,
+                    onSort: ref.read(librarySortChoiceProvider.notifier).select,
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: Tokens.space4),
-          Expanded(
-            child: all == null
-                ? (loaded.hasError
-                      ? const _Message('Your library could not be read.')
-                      : const _Skeleton())
-                : _Rows(
-                    rows: sortRows(rowsInTab(all, tab), sort),
-                    libraryIsEmpty: all.isEmpty,
-                    showStatus: tab == LibraryTab.all,
-                    layout: layout,
-                    onDiscover: onDiscover,
-                    onOpen: onOpen,
-                  ),
-          ),
-        ],
-      ),
+        ),
+        Expanded(
+          child: all == null
+              ? (loaded.hasError
+                    ? const _Message('Your library could not be read.')
+                    : const _Skeleton())
+              : _Rows(
+                  rows: sortRows(rowsInTab(all, tab, keep: kept), sort),
+                  keptIds: kept,
+                  libraryIsEmpty: all.isEmpty,
+                  showStatus: tab == LibraryTab.all,
+                  layout: layout,
+                  onDiscover: onDiscover,
+                  onOpen: onOpen,
+                ),
+        ),
+      ],
     );
   }
 }
 
-class _Tabs extends StatelessWidget {
-  const _Tabs({
+/// The status the Library shows, with its count. Works like the sort button:
+/// a click opens the menu of every status and its count right under it.
+class _StatusSwitcher extends StatelessWidget {
+  const _StatusSwitcher({
     required this.selected,
     required this.counts,
     required this.onSelect,
@@ -142,54 +144,83 @@ class _Tabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inMore = _moreTabs.contains(selected);
-    return Wrap(
-      children: [
-        for (final tab in _mainTabs)
-          AppTab(
-            label: _tabLabel(tab),
+    return _ChoiceButton(
+      label: _tabLabel(selected),
+      count: counts?[selected],
+      choices: [
+        for (final tab in LibraryTab.values)
+          (
+            label: '${_tabLabel(tab)}  ${counts?[tab] ?? 0}',
             selected: tab == selected,
-            count: counts?[tab],
-            onPressed: () => onSelect(tab),
+            pick: () => onSelect(tab),
           ),
-        AppPopover(
-          builder: (context, handle) => AppTab(
-            label: inMore ? _tabLabel(selected) : 'More',
-            selected: inMore,
-            count: inMore ? (counts ?? const {})[selected] : null,
-            opensMenu: true,
-            onPressed: handle.open,
-          ),
-          popoverBuilder: (context, handle) => AppMenu(
-            entries: [
-              for (final tab in _moreTabs)
-                MenuEntry(
-                  label: '${_tabLabel(tab)}  ${counts?[tab] ?? 0}',
-                  selected: tab == selected,
-                  onPressed: () {
-                    onSelect(tab);
-                    handle.close();
-                  },
-                ),
-            ],
-          ),
-        ),
       ],
     );
   }
 }
 
-class _Controls extends StatelessWidget {
-  const _Controls({
-    required this.sort,
-    required this.layout,
-    required this.onSort,
-    required this.onLayout,
-  });
+/// A secondary button that opens a menu of choices under itself. The status
+/// switcher and the sort are both one of these.
+class _ChoiceButton extends StatelessWidget {
+  const _ChoiceButton({required this.label, required this.choices, this.count});
+
+  final String label;
+  final int? count;
+  final List<({String label, bool selected, VoidCallback pick})> choices;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPopover(
+      builder: (context, handle) => AppButton(
+        label: label,
+        kind: ButtonKind.secondary,
+        opensMenu: true,
+        count: count,
+        onPressed: handle.open,
+      ),
+      popoverBuilder: (context, handle) => AppMenu(
+        entries: [
+          for (final choice in choices)
+            MenuEntry(
+              label: choice.label,
+              selected: choice.selected,
+              onPressed: () {
+                choice.pick();
+                handle.close();
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SortButton extends StatelessWidget {
+  const _SortButton({required this.sort, required this.onSort});
 
   final LibrarySort sort;
-  final LibraryLayout layout;
   final ValueChanged<LibrarySort> onSort;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ChoiceButton(
+      label: _sortLabel(sort),
+      choices: [
+        for (final choice in LibrarySort.values)
+          (
+            label: _sortLabel(choice),
+            selected: choice == sort,
+            pick: () => onSort(choice),
+          ),
+      ],
+    );
+  }
+}
+
+class _LayoutSwitch extends StatelessWidget {
+  const _LayoutSwitch({required this.layout, required this.onLayout});
+
+  final LibraryLayout layout;
   final ValueChanged<LibraryLayout> onLayout;
 
   @override
@@ -197,28 +228,6 @@ class _Controls extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppPopover(
-          builder: (context, handle) => AppButton(
-            label: _sortLabel(sort),
-            kind: ButtonKind.secondary,
-            opensMenu: true,
-            onPressed: handle.open,
-          ),
-          popoverBuilder: (context, handle) => AppMenu(
-            entries: [
-              for (final choice in LibrarySort.values)
-                MenuEntry(
-                  label: _sortLabel(choice),
-                  selected: choice == sort,
-                  onPressed: () {
-                    onSort(choice);
-                    handle.close();
-                  },
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(width: Tokens.space3),
         IconSquareButton(
           icon: AppIcons.grid,
           label: 'Grid view',
@@ -245,15 +254,49 @@ class _Message extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: Tokens.space5),
-        Text(text, style: AppText.label(Tokens.inkSoft)),
-        if (action != null) ...[const SizedBox(height: Tokens.space4), action!],
-      ],
+    return Padding(
+      padding: PageFrame.content,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: Tokens.space5),
+          Text(text, style: AppText.label(Tokens.inkSoft)),
+          if (action != null) ...[
+            const SizedBox(height: Tokens.space4),
+            action!,
+          ],
+        ],
+      ),
     );
   }
+}
+
+/// The grid at the page's width: its layout and the view that draws it. The
+/// rows and the loading skeleton both use it.
+Widget _grid({
+  required int Function(GridLayout layout) itemCount,
+  required Widget Function(GridLayout layout, int index) itemBuilder,
+  ScrollPhysics? physics,
+}) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      final layout = GridLayout.forWidth(
+        constraints.maxWidth - PageFrame.content.horizontal,
+      );
+      return GridView.builder(
+        padding: PageFrame.content,
+        physics: physics,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: layout.columns,
+          mainAxisSpacing: GridLayout.gap,
+          crossAxisSpacing: GridLayout.gap,
+          mainAxisExtent: layout.cardHeight,
+        ),
+        itemCount: itemCount(layout),
+        itemBuilder: (context, index) => itemBuilder(layout, index),
+      );
+    },
+  );
 }
 
 /// Blank covers in the grid's shape while the first read runs.
@@ -261,45 +304,37 @@ class _Skeleton extends StatelessWidget {
   const _Skeleton();
 
   @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final layout = GridLayout.forWidth(constraints.maxWidth);
-        return GridView.builder(
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: _delegate(layout),
-          itemCount: layout.columns * 2,
-          itemBuilder: (context, index) => CoverImage(width: layout.cardWidth),
-        );
-      },
-    );
-  }
+  Widget build(BuildContext context) => _grid(
+    physics: const NeverScrollableScrollPhysics(),
+    itemCount: (layout) => layout.columns * 2,
+    itemBuilder: (layout, index) => CoverImage(width: layout.cardWidth),
+  );
 }
-
-SliverGridDelegate _delegate(GridLayout layout) =>
-    SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: layout.columns,
-      mainAxisSpacing: GridLayout.gap,
-      crossAxisSpacing: GridLayout.gap,
-      mainAxisExtent: layout.cardHeight,
-    );
 
 class _Rows extends StatelessWidget {
   const _Rows({
     required this.rows,
     required this.libraryIsEmpty,
     required this.showStatus,
+    required this.keptIds,
     required this.layout,
     required this.onDiscover,
     required this.onOpen,
   });
 
   final List<LibraryRow> rows;
+
+  /// Rows an edit moved out of this status; they show their status so the
+  /// change can be seen.
+  final Set<String> keptIds;
   final bool libraryIsEmpty;
   final bool showStatus;
   final LibraryLayout layout;
   final VoidCallback onDiscover;
   final ValueChanged<String> onOpen;
+
+  bool _statusShown(LibraryRow row) =>
+      showStatus || keptIds.contains(row.entryId);
 
   @override
   Widget build(BuildContext context) {
@@ -311,22 +346,41 @@ class _Rows extends StatelessWidget {
     }
     if (rows.isEmpty) return const _Message('Nothing here.');
 
-    if (layout == LibraryLayout.list) {
-      return ListView.builder(
-        itemExtent: Tokens.listRowHeight,
-        itemCount: rows.length,
-        itemBuilder: (context, index) => _RowMenu(
+    if (layout == LibraryLayout.grid) {
+      return _grid(
+        itemCount: (_) => rows.length,
+        itemBuilder: (_, index) => _RowMenu(
           row: rows[index],
           onOpen: onOpen,
-          builder: (context, handle) => LibraryListRow(
+          builder: (context, handle) => LibraryGridCard(
             row: rows[index],
-            showStatus: showStatus,
+            showStatus: _statusShown(rows[index]),
             onOpen: () => onOpen(rows[index].entryId),
+            onContextMenu: handle.openAt,
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: PageFrame.content,
+      itemExtent: Tokens.listRowHeight,
+      itemCount: rows.length,
+      itemBuilder: (context, index) {
+        final row = rows[index];
+        return _RowMenu(
+          row: row,
+          onOpen: onOpen,
+          builder: (context, handle) => LibraryListRow(
+            row: row,
+            showStatus: _statusShown(row),
+            onOpen: () => onOpen(row.entryId),
             onCheck: (done) => _edit(
               context,
+              row,
               (e) => done
-                  ? e.setStatus(rows[index].entryId, EntryStatus.completed)
-                  : e.uncheck(rows[index].entryId),
+                  ? e.setStatus(row.entryId, EntryStatus.completed)
+                  : e.uncheck(row.entryId),
             ),
             onContextMenu: handle.openAt,
             menu: Builder(
@@ -337,26 +391,6 @@ class _Rows extends StatelessWidget {
                   handle.openAt(box.localToGlobal(Offset(0, box.size.height)));
                 },
               ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final grid = GridLayout.forWidth(constraints.maxWidth);
-        return GridView.builder(
-          gridDelegate: _delegate(grid),
-          itemCount: rows.length,
-          itemBuilder: (context, index) => _RowMenu(
-            row: rows[index],
-            onOpen: onOpen,
-            builder: (context, handle) => LibraryGridCard(
-              row: rows[index],
-              showStatus: showStatus,
-              onOpen: () => onOpen(rows[index].entryId),
-              onContextMenu: handle.openAt,
             ),
           ),
         );
@@ -370,10 +404,14 @@ class _Rows extends StatelessWidget {
 /// waits for the toast.
 Future<void> _edit(
   BuildContext context,
-  Future<Object?> Function(EntryEdits edits) action,
-) async {
+  LibraryRow row,
+  Future<Object?> Function(EntryEdits edits) action, {
+  bool keepInView = true,
+}) async {
   final scope = ProviderScope.containerOf(context);
   await action(scope.read(entryEditsProvider));
+  // the row stays where it is, showing its new status, until the tab changes
+  if (keepInView) scope.read(libraryKeptProvider.notifier).keep(row.entryId);
   scope.invalidate(libraryRowsProvider);
 }
 
@@ -399,11 +437,17 @@ class _RowMenu extends StatelessWidget {
         row: row,
         onClose: handle.close,
         onStatus: (status) =>
-            _edit(context, (e) => e.setStatus(row.entryId, status)),
-        onAddEpisode: () => _edit(context, (e) => e.addEpisode(row.entryId)),
-        onRewatch: () => _edit(context, (e) => e.rewatch(row.entryId)),
+            _edit(context, row, (e) => e.setStatus(row.entryId, status)),
+        onAddEpisode: () =>
+            _edit(context, row, (e) => e.addEpisode(row.entryId)),
+        onRewatch: () => _edit(context, row, (e) => e.rewatch(row.entryId)),
         onOpen: () => onOpen(row.entryId),
-        onRemove: () => _edit(context, (e) => e.remove(row.entryIds)),
+        onRemove: () => _edit(
+          context,
+          row,
+          (e) => e.remove(row.entryIds),
+          keepInView: false,
+        ),
       ),
     );
   }

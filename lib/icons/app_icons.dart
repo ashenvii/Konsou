@@ -75,9 +75,10 @@ abstract final class AppIcons {
     ],
   );
 
-  /// Watching in the rail: a play triangle.
+  /// Watching in the rail: a play triangle, set right so its weight, not its
+  /// box, sits in the middle.
   static const watching = IconDef(
-    lines: [((4, 2), (4, 14)), ((4, 2), (10, 8)), ((10, 8), (4, 14))],
+    lines: [((6, 2), (6, 14)), ((6, 2), (12, 8)), ((12, 8), (6, 14))],
   );
 
   /// Schedule in the rail: a calendar with two rings.
@@ -137,17 +138,6 @@ abstract final class AppIcons {
       [(7, 2), (9, 2), (9, 4), (7, 4)],
       [(7, 7), (9, 7), (9, 9), (7, 9)],
       [(7, 12), (9, 12), (9, 14), (7, 14)],
-    ],
-  );
-
-  /// A score: a four-armed star, straight and diagonal strokes through the
-  /// middle (a true five-point star needs other angles).
-  static const star = IconDef(
-    lines: [
-      ((8, 1), (8, 15)),
-      ((1, 8), (15, 8)),
-      ((4, 4), (12, 12)),
-      ((12, 4), (4, 12)),
     ],
   );
 
@@ -214,7 +204,6 @@ abstract final class AppIcons {
     'chevronDown': chevronDown,
     'check': check,
     'more': more,
-    'star': star,
     'planned': planned,
     'onHold': onHold,
     'dropped': dropped,

@@ -5,6 +5,8 @@ import 'package:flutter/widgets.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../design/tokens.dart';
+import '../icons/app_icon.dart';
+import '../icons/app_icons.dart';
 import 'window_buttons.dart';
 import 'window_config.dart';
 import 'window_memory.dart';
@@ -136,6 +138,7 @@ class _AppShellState extends State<AppShell> with WindowListener {
       );
     }
     return DragToResizeArea(
+      resizeEdgeSize: Tokens.resizeEdge,
       child: ColoredBox(
         color: Tokens.ground,
         child: Column(
@@ -187,7 +190,19 @@ class _TopBar extends StatelessWidget {
                 onDoubleTap: onToggleMaximize,
                 child: Row(
                   children: [
-                    const SizedBox(width: Tokens.space4),
+                    // the mascot is centred over the rail's icons and the
+                    // wordmark starts at the rail's edge
+                    const SizedBox(
+                      width: Tokens.railWidth,
+                      child: Center(
+                        child: AppIcon(
+                          AppIcons.nekomimi,
+                          size: Tokens.railIconSize,
+                          color: Tokens.mint,
+                          lineColor: Tokens.ground,
+                        ),
+                      ),
+                    ),
                     const Text(
                       WindowConfig.title,
                       style: TextStyle(

@@ -140,7 +140,7 @@ final class LibraryTabChoiceProvider
   }
 }
 
-String _$libraryTabChoiceHash() => r'8897f3d6db81c938b141cf99352ff6ae33d0eaba';
+String _$libraryTabChoiceHash() => r'71e48f51518353c8c0d421a05b435cd8a2708faa';
 
 /// The tab the Library is on, kept while the app runs.
 
@@ -155,6 +155,68 @@ abstract class _$LibraryTabChoice extends $Notifier<LibraryTab> {
             as $ClassProviderElement<
               AnyNotifier<LibraryTab, LibraryTab>,
               LibraryTab,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// Rows an edit moved out of the tab they are shown in. They stay in view
+/// until the tab changes or the page is left, so the owner sees the change.
+
+@ProviderFor(LibraryKept)
+final libraryKeptProvider = LibraryKeptProvider._();
+
+/// Rows an edit moved out of the tab they are shown in. They stay in view
+/// until the tab changes or the page is left, so the owner sees the change.
+final class LibraryKeptProvider
+    extends $NotifierProvider<LibraryKept, Set<String>> {
+  /// Rows an edit moved out of the tab they are shown in. They stay in view
+  /// until the tab changes or the page is left, so the owner sees the change.
+  LibraryKeptProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'libraryKeptProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$libraryKeptHash();
+
+  @$internal
+  @override
+  LibraryKept create() => LibraryKept();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Set<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Set<String>>(value),
+    );
+  }
+}
+
+String _$libraryKeptHash() => r'f023d053fbfd5f5d282c9a21a7ef79165249b97a';
+
+/// Rows an edit moved out of the tab they are shown in. They stay in view
+/// until the tab changes or the page is left, so the owner sees the change.
+
+abstract class _$LibraryKept extends $Notifier<Set<String>> {
+  Set<String> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<String>, Set<String>>,
+              Set<String>,
               Object?,
               Object?
             >;
