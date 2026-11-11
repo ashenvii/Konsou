@@ -137,11 +137,23 @@ The dropdown that opens from the Nekomimi and Konsou button. It holds what's new
 _Avoid_: Logo menu
 
 **Detail page**:
-The full page for one title, with its hero, tabs and, when the title is on the list, the entry bar.
+The full page for one title, with its hero, the tabs Overview, Watch order and My entry, and the entry bar. For a not-linked entry it shows the page picker instead of the tabs.
 _Avoid_: Anime page, details view
 
+**My entry**:
+The Detail page tab with the user's own record of a title: star rating, notes, finished watches, started date, and Rewatch, Wrong title and Remove. Shown only for a title on the list.
+_Avoid_: My list, Edit, Your entry
+
+**Watch order**:
+The Detail page tab listing every title of a franchise in the order to watch it, each with the user's status and progress.
+_Avoid_: Related, series order, timeline
+
+**Page picker**:
+Where the user picks a provider page for a not-linked entry: the suggestions, "None of these", and a search.
+_Avoid_: Link dialog, match screen
+
 **Entry bar**:
-The bar fixed to the bottom of the detail page for a title on the list. It shows the status and steps the episode count.
+The bar fixed to the bottom of the detail page. For a title on the list it shows the status and steps the episode count; for one not on the list it holds Add to list.
 _Avoid_: Footer, mini player
 
 **Streamer mode**:
