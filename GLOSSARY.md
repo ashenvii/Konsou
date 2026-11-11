@@ -81,8 +81,24 @@ An entry whose details have not been fetched yet.
 _Avoid_: Placeholder, skeleton (for the state)
 
 **Library**:
-The screen that lists every entry. Its top row is the title with a status switcher (All, Watching, Planned, Completed, On hold, Dropped, Not interested, each with its count), a grid or list switch, and a sort (Recent or A to Z). A find box that narrows the list by a typed word is planned; it is not a Browse filter.
+The screen that lists every entry. Its top row is the title, then the status word as a switcher (All, Watching, Planned, Completed, On hold, Dropped, Not interested, each with its count), a grid or list switch, Find, and a sort (Recent or A to Z).
 _Avoid_: My List, Collection
+
+**Find**:
+The Library's box that narrows the list to entries with a typed title. It is not a Filter.
+_Avoid_: Filter, search (for this box)
+
+**Skeleton**:
+The stand-in drawn where something is still loading, with a light band sweeping left to right.
+_Avoid_: Placeholder, shimmer (for the component)
+
+**Key cap**:
+A key drawn like a keyboard key, wherever a shortcut is shown.
+_Avoid_: Shortcut hint, badge
+
+**Hold to remove**:
+Removing by holding the Remove row until its red bar fills, in place of a second click.
+_Avoid_: Confirm, are you sure
 
 **Watching**:
 Both a status an entry can have and a screen. The screen shows what is ready to watch and what is waiting for its next episode.
@@ -165,5 +181,5 @@ Watching a Completed entry again. It sets the status to Rewatching and restarts 
 _Avoid_: Repeat
 
 **Toast**:
-A short message at the bottom of the screen with an optional action. It never closes while the pointer is on it or while a review is open.
+A short message at the bottom of the screen with an optional action, such as Undo. It never closes while the pointer is on it or while a review is open.
 _Avoid_: Snackbar, notification
