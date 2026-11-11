@@ -180,6 +180,14 @@ _Avoid_: Safe mode, adult filter
 Watching a Completed entry again. It sets the status to Rewatching and restarts the episode count, and the earlier completion stays on record.
 _Avoid_: Repeat
 
+**Bell**:
+The title bar button that lists alerts: new seasons and extras found by the franchise scan, and earlier titles left unmarked.
+_Avoid_: Notifications, inbox
+
+**Review**:
+The small window from a toast that lists the earlier titles of a franchise to mark as completed after a later one is finished.
+_Avoid_: Catch-up, backfill
+
 **Toast**:
 A short message at the bottom of the screen with an optional action, such as Undo. It never closes while the pointer is on it or while a review is open.
 _Avoid_: Snackbar, notification
