@@ -58,16 +58,35 @@ class _IconPainter extends CustomPainter {
     Paint stroke(double width) => Paint()
       ..color = lineColor
       ..strokeWidth = unit * width
-      ..strokeCap = StrokeCap.square
+      ..strokeCap = StrokeCap.butt
+      ..strokeJoin = StrokeJoin.miter
       ..style = PaintingStyle.stroke;
-    final main = stroke(def.lineWidth);
-    for (final (a, b) in def.lines) {
-      canvas.drawLine(at(a), at(b), main);
+    // lines that meet are drawn as one path, so a corner is a joint and not
+    // two square ends sticking out past each other
+    void drawLines(List<GridLine> lines, Paint paint) {
+      Path? path;
+      GridPoint? start;
+      GridPoint? end;
+      void finish() {
+        if (path == null) return;
+        if (end == start) path.close();
+        canvas.drawPath(path, paint);
+      }
+
+      for (final (a, b) in lines) {
+        if (path == null || a != end) {
+          finish();
+          path = Path()..moveTo(at(a).dx, at(a).dy);
+          start = a;
+        }
+        path.lineTo(at(b).dx, at(b).dy);
+        end = b;
+      }
+      finish();
     }
-    final thin = stroke(def.thinWidth);
-    for (final (a, b) in def.thinLines) {
-      canvas.drawLine(at(a), at(b), thin);
-    }
+
+    drawLines(def.lines, stroke(def.lineWidth));
+    drawLines(def.thinLines, stroke(def.thinWidth));
   }
 
   @override

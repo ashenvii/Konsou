@@ -1,35 +1,31 @@
-import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart' show VoidCallback;
 
 import '../data/databases.dart';
+import '../data/record_database.dart' show Entry;
 import '../library/earlier_titles.dart';
 import '../library/entry_edits.dart';
 import '../library/entry_status.dart';
 import '../library/load_library.dart';
-import '../library/title_language.dart';
 import 'find_earlier_titles.dart';
 import 'toast_host.dart';
 import 'toast_words.dart';
 
-/// What the screens call to change an entry. It runs the edit, tells the user
-/// what came of it with a toast (an Undo for a change, the reason for a
-/// refusal), and after a title is finished checks for earlier ones to mark.
 class EntryActions {
   EntryActions({
     required this.databases,
     required this.edits,
     required this.show,
-    required this.dismiss,
+    required this.answerReview,
     this.onEdited,
   });
 
   final Databases databases;
   final EntryEdits edits;
-  final void Function(ToastMessage message) show;
-  final void Function() dismiss;
+  final ToastSink show;
 
-  /// Runs after any change this class makes, an Undo included, so a screen
-  /// showing the entries can reload.
-  final void Function()? onEdited;
+  final ToastSink answerReview;
+
+  final VoidCallback? onEdited;
 
   Future<EditResult> setStatus(String entryId, EntryStatus target) =>
       _run(entryId, () => edits.setStatus(entryId, target));
@@ -43,27 +39,63 @@ class EntryActions {
   Future<EditResult> rewatch(String entryId) =>
       _run(entryId, () => edits.rewatch(entryId));
 
-  /// Removes entries for good. No toast and no Undo: holding the button was
-  /// the confirmation.
-  Future<void> remove(List<String> entryIds) => edits.remove(entryIds);
-
-  /// Marks the ticked earlier titles from the review.
-  Future<void> acceptReview(List<EarlierTitle> titles) async {
-    dismiss();
-    if (titles.isEmpty) return;
-    final undo = await edits.markEarlier(titles);
+  Future<void> remove(List<String> entryIds) async {
+    await edits.remove(entryIds);
     onEdited?.call();
-    show(ToastMessage(reviewMarked(titles.length), undo: _undoable(undo.run)));
+    show(ToastMessage(removed(entryIds.length)));
   }
 
-  /// "Not now": keeps a reminder for the bell.
+  Future<void> acceptReview(
+    ReviewOffer offer,
+    List<EarlierTitle> chosen,
+  ) async {
+    if (chosen.isEmpty) return;
+    final undo = await edits.markEarlier(chosen);
+    onEdited?.call();
+    answerReview(
+      ToastMessage(
+        reviewMarked(chosen.length),
+        undo: _backToReview(offer, undo.run),
+        rateEntryId: offer.entryId,
+      ),
+    );
+  }
+
   Future<void> notNow(ReviewOffer offer) async {
-    dismiss();
-    await edits.saveEarlierUnmarked(offer.entryId, offer.titles);
-    show(ToastMessage(reviewSavedForLater));
+    final saved = await edits.saveEarlierUnmarked(offer.entryId, offer.titles);
+    answerReview(
+      ToastMessage(
+        reviewSavedForLater,
+        undo: _backToReview(offer, saved.run),
+        rateEntryId: offer.entryId,
+      ),
+    );
   }
 
-  /// A rating from the review toast; null clears it.
+  Undo _backToReview(ReviewOffer offer, Undo takeBack) => () async {
+    await takeBack();
+    onEdited?.call();
+    show(_reviewToast(offer, rating: await _score(offer.entryId)));
+  };
+
+  ToastMessage _reviewToast(ReviewOffer offer, {int? rating}) {
+    final undoFinish = offer.undoFinish;
+    return ToastMessage(
+      reviewOffered(offer.titles.length),
+      undo: undoFinish == null ? null : _undoable(undoFinish),
+      review: offer,
+      rateEntryId: offer.entryId,
+      rating: rating,
+      onMissed: () => edits.saveEarlierUnmarked(offer.entryId, offer.titles),
+    );
+  }
+
+  Future<int?> _score(String entryId) async => (await _entry(entryId))?.score;
+
+  Future<Entry?> _entry(String entryId) => (databases.record.select(
+    databases.record.entry,
+  )..where((row) => row.entryId.equals(entryId))).getSingleOrNull();
+
   Future<void> rate(String entryId, int? score) async {
     await edits.setScore(entryId, score);
     onEdited?.call();
@@ -80,8 +112,7 @@ class EntryActions {
     onEdited?.call();
     final changed = was.status != now.status || was.episodes != now.episodes;
     if (!changed) {
-      final reason = refusal(result);
-      if (reason != null) show(ToastMessage(reason));
+      _explainRefusal(result);
       return result;
     }
     final finished =
@@ -90,16 +121,18 @@ class EntryActions {
     if (finished && await _offerEarlier(entryId, before)) return result;
     if (result != EditResult.done) {
       // the episode went in but the show could not be finished
-      final reason = refusal(result);
-      if (reason != null) show(ToastMessage(reason));
+      _explainRefusal(result);
       return result;
     }
     show(ToastMessage(_describe(was, now), undo: _undoable(before.run)));
     return result;
   }
 
-  /// After a finish: auto-marks earlier titles or shows the review toast.
-  /// True when it showed a toast of its own.
+  void _explainRefusal(EditResult result) {
+    final reason = refusal(result);
+    if (reason != null) show(ToastMessage(reason));
+  }
+
   Future<bool> _offerEarlier(String entryId, UndoEdit finish) async {
     final language = await readTitleLanguage(databases.record);
     final titles = await findEarlierTitles(databases, entryId, language);
@@ -118,40 +151,16 @@ class EntryActions {
       );
       return true;
     }
-    final name = await _nameOf(entryId, language);
     show(
-      ToastMessage(
-        reviewOffered(name, titles.length),
-        undo: _undoable(finish.run),
-        review: ReviewOffer(entryId: entryId, titles: titles),
+      _reviewToast(
+        ReviewOffer(entryId: entryId, titles: titles, undoFinish: finish.run),
       ),
     );
     return true;
   }
 
-  Future<String> _nameOf(String entryId, TitleLanguage language) async {
-    final rows = await databases.record
-        .customSelect(
-          '''
-          SELECT detail.title, detail.title_english, detail.title_japanese,
-            NULL AS name
-          FROM entry_reference reference
-          JOIN details.detail detail ON detail.provider = 'mal'
-            AND detail.provider_id = reference.provider_id
-          WHERE reference.entry_id = ? AND reference.provider = 'mal'
-          ''',
-          variables: [Variable.withString(entryId)],
-        )
-        .get();
-    if (rows.isEmpty) return unnamedTitle;
-    final name = pickTitleName(rows.first, language);
-    return name.isEmpty ? unnamedTitle : name;
-  }
-
   Future<({EntryStatus status, int episodes})> _progress(String entryId) async {
-    final entry = await (databases.record.select(
-      databases.record.entry,
-    )..where((row) => row.entryId.equals(entryId))).getSingle();
+    final entry = (await _entry(entryId))!;
     return (
       status: EntryStatus.parse(entry.status),
       episodes: entry.episodesWatched,
@@ -165,7 +174,7 @@ class EntryActions {
       ? episodeAdded(now.episodes)
       : markedAs(now.status);
 
-  Future<void> Function() _undoable(Future<void> Function() run) => () async {
+  Undo _undoable(Undo run) => () async {
     await run();
     onEdited?.call();
   };

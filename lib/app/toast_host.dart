@@ -1,32 +1,48 @@
-import 'dart:async';
-
+import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../components/countdown.dart';
 import '../library/earlier_titles.dart';
 
 part 'toast_host.g.dart';
 
-/// How long a message stays, and one that offers an action.
-const toastMessageTime = Duration(seconds: 5);
-const toastActionTime = Duration(seconds: 8);
+typedef ToastSink = void Function(ToastMessage message);
 
-/// The review a toast offers after a title is finished: [titles] are the
-/// earlier ones not marked, [entryId] is the title just finished.
+typedef Undo = Future<void> Function();
+
+const toastMessageTime = Duration(seconds: 4);
+const toastActionTime = Duration(seconds: 6);
+
 class ReviewOffer {
-  const ReviewOffer({required this.entryId, required this.titles});
+  const ReviewOffer({
+    required this.entryId,
+    required this.titles,
+    this.undoFinish,
+  });
 
   final String entryId;
   final List<EarlierTitle> titles;
+
+  final Undo? undoFinish;
 }
 
-/// One toast. [undo] gives it an Undo action; [review] makes it the review
-/// toast, with the stars and the Review button.
 class ToastMessage {
-  ToastMessage(this.text, {this.undo, this.review});
+  ToastMessage(
+    this.text, {
+    this.undo,
+    this.review,
+    this.rateEntryId,
+    this.rating,
+    this.onMissed,
+  });
 
   final String text;
-  final Future<void> Function()? undo;
+  final Undo? undo;
   final ReviewOffer? review;
+  final String? rateEntryId;
+
+  final int? rating;
+  final VoidCallback? onMissed;
 
   bool get hasAction => undo != null || review != null;
   Duration get lifetime => hasAction ? toastActionTime : toastMessageTime;
@@ -42,100 +58,99 @@ class ToastState {
 
   final ToastMessage? shown;
 
-  /// The score given from the review toast, once it has been given.
   final int? rating;
   final bool pointerOver;
   final bool reviewOpen;
 
   bool get held => pointerOver || reviewOpen;
+
+  ToastState copyWith({
+    int? rating,
+    bool clearRating = false,
+    bool? pointerOver,
+    bool? reviewOpen,
+  }) => ToastState(
+    shown: shown,
+    rating: clearRating ? null : (rating ?? this.rating),
+    pointerOver: pointerOver ?? this.pointerOver,
+    reviewOpen: reviewOpen ?? this.reviewOpen,
+  );
 }
 
-/// The app's one toast at a time. A new toast replaces the one showing,
-/// except the review toast: others wait behind it, and only the newest
-/// waits. The timer runs only while neither the pointer is on the toast nor
-/// review is open; once both let go it starts over.
 @Riverpod(keepAlive: true)
 class ToastHost extends _$ToastHost {
-  Timer? _timer;
-  ToastMessage? _waiting;
+  late final Countdown time = Countdown(onDone: dismiss);
 
   @override
   ToastState build() {
-    ref.onDispose(() => _timer?.cancel());
+    ref.onDispose(time.dispose);
     return const ToastState();
   }
 
   void show(ToastMessage message) {
-    if (state.shown?.review != null) {
-      _waiting = message;
-      return;
-    }
-    _open(message);
+    _missed();
+    _replaceWith(message, message.rating);
   }
 
-  void _open(ToastMessage message) {
-    state = ToastState(shown: message);
-    _restartTimer();
+  void answerReview(ToastMessage message) =>
+      _replaceWith(message, message.rating ?? state.rating);
+
+  void _replaceWith(ToastMessage message, int? rating) {
+    state = ToastState(
+      shown: message,
+      rating: rating,
+      pointerOver: state.pointerOver,
+    );
+    _restart(message);
   }
 
-  void dismiss() {
-    _timer?.cancel();
-    final next = _waiting;
-    _waiting = null;
-    if (next != null) {
-      _open(next);
-    } else {
-      state = const ToastState();
-    }
+  void dismiss({bool missed = true}) {
+    if (missed) _missed();
+    time.cancel();
+    state = const ToastState();
   }
 
   void setPointerOver(bool over) {
     if (state.shown == null || state.pointerOver == over) return;
-    state = ToastState(
-      shown: state.shown,
-      rating: state.rating,
-      pointerOver: over,
-      reviewOpen: state.reviewOpen,
-    );
-    _restartTimer();
+    state = state.copyWith(pointerOver: over);
+    _follow();
   }
 
   void setReviewOpen(bool open) {
     if (state.shown == null || state.reviewOpen == open) return;
-    state = ToastState(
-      shown: state.shown,
-      rating: state.rating,
-      pointerOver: state.pointerOver,
-      reviewOpen: open,
-    );
-    _restartTimer();
+    state = state.copyWith(reviewOpen: open);
+    _follow();
   }
 
-  /// A rating from the review toast, or null when it was cleared. It does not
-  /// close the toast or touch its timer.
   void rate(int? score) {
-    if (state.shown == null) return;
-    state = ToastState(
-      shown: state.shown,
-      rating: score,
-      pointerOver: state.pointerOver,
-      reviewOpen: state.reviewOpen,
-    );
+    final shown = state.shown;
+    if (shown == null) return;
+    state = score == null
+        ? state.copyWith(clearRating: true)
+        : state.copyWith(rating: score);
+    _restart(shown);
   }
 
-  /// Runs the Undo of the toast showing, if it has one, and closes it.
   Future<bool> undoNewest() async {
     final undo = state.shown?.undo;
     if (undo == null) return false;
-    dismiss();
+    dismiss(missed: false);
     await undo();
     return true;
   }
 
-  void _restartTimer() {
-    _timer?.cancel();
+  void _missed() {
     final shown = state.shown;
-    if (shown == null || state.held) return;
-    _timer = Timer(shown.lifetime, dismiss);
+    if (shown?.review != null) shown!.onMissed?.call();
+  }
+
+  void _restart(ToastMessage message) {
+    time.start(message.lifetime);
+    _follow();
+  }
+
+  void _follow() {
+    if (state.shown == null) return;
+    state.held ? time.pause() : time.resume();
   }
 }

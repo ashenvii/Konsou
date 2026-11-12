@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/app_menu.dart';
+import 'package:konsou/components/hold_row.dart';
 import 'package:konsou/icons/app_icon.dart';
 import 'package:konsou/library/library_row.dart';
 import 'package:konsou/screens/library/entry_menu.dart';
@@ -64,7 +65,7 @@ void main() {
       ],
     );
     expect(labels(tester), containsAll(['Dropped', 'Not interested']));
-    expect(labels(tester).last, 'Remove from list');
+    expect(labels(tester).last, 'Hold to remove');
   });
 
   testWidgets('the current status has the check', (tester) async {
@@ -112,24 +113,59 @@ void main() {
     expect(taken, ['rewatch', 'close']);
   });
 
-  testWidgets('Remove asks in place first, and the second press removes', (
-    tester,
-  ) async {
+  testWidgets('Remove runs only after it is held for a second', (tester) async {
     await pumpMenu(tester, row());
-    await tester.tap(find.text('Remove from list'));
+    // a click does nothing
+    await tester.tap(find.text('Hold to remove').first);
     await tester.pump();
     expect(taken, isEmpty);
-    expect(find.text('Remove from list'), findsNothing);
-    expect(find.text('Are you sure?'), findsOneWidget);
-    await tester.tap(find.text('Are you sure?'));
+    // let go early and nothing runs
+    final early = await tester.startGesture(
+      tester.getCenter(find.text('Hold to remove').first),
+    );
+    await tester.pump(const Duration(milliseconds: 600));
+    await early.up();
+    await tester.pump(const Duration(seconds: 2));
+    expect(taken, isEmpty);
+    // held the whole time it removes
+    final held = await tester.startGesture(
+      tester.getCenter(find.text('Hold to remove').first),
+    );
+    await tester.pump(); // the fill starts timing on this frame
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(taken, isEmpty);
+    await tester.pump(const Duration(milliseconds: 600));
     expect(taken, ['remove', 'close']);
+    await held.up();
+  });
+
+  testWidgets('Enter held on the row removes too', (tester) async {
+    await pumpMenu(tester, row());
+    bool onHoldRow() =>
+        FocusManager.instance.primaryFocus?.context
+            ?.findAncestorWidgetOfExactType<HoldRow>() !=
+        null;
+    // the nearest Focus above the label is the row's own
+    Focus.of(tester.element(find.text('Hold to remove').first)).requestFocus();
+    await tester.pump();
+    expect(onHoldRow(), isTrue);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    // let go before the second is up: nothing runs
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.enter);
+    await tester.pump(const Duration(seconds: 2));
+    expect(taken, isEmpty);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1100));
+    expect(taken, ['remove', 'close']);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.enter);
   });
 
   testWidgets('a franchise says how many it removes', (tester) async {
     await pumpMenu(tester, row(seasons: 3));
-    await tester.tap(find.text('Remove from list'));
-    await tester.pump();
-    expect(find.text('Remove all 3?'), findsOneWidget);
+    expect(find.text('Hold to remove all 3'), findsWidgets);
   });
 
   testWidgets('keys 1 to 4 set a status and close', (tester) async {

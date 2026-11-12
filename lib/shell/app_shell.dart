@@ -1,9 +1,9 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../components/countdown.dart';
 import '../design/tokens.dart';
 import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
@@ -11,18 +11,21 @@ import 'window_buttons.dart';
 import 'window_config.dart';
 import 'window_memory.dart';
 
-/// The frame around every screen: top bar (also the title bar), left rail and
-/// the content area, which shows [child]. Layout comes from
-/// notes/design/screens/shell.md.
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.child, this.rail, this.beforeClose});
+  const AppShell({
+    super.key,
+    required this.child,
+    this.rail,
+    this.overlay,
+    this.beforeClose,
+  });
 
   final Widget child;
 
-  /// The left rail, on Windows. Phones get their own frame later.
   final Widget? rail;
 
-  /// Runs when Close is pressed, before the window quits.
+  final Widget Function(double leftInset)? overlay;
+
   final Future<void> Function()? beforeClose;
 
   @override
@@ -30,11 +33,14 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> with WindowListener {
-  // The maximized flag comes from the window events only. Asking the window
-  // during the startup restore gives a wrong answer and wipes the saved state.
+  // trust window events for maximized: asking during restore wipes the save
   bool _maximized = false;
   bool _restoring = true;
-  Timer? _saveTimer;
+  // saving the window's place waits for it to stop moving
+  late final Countdown _saveWait = Countdown(onDone: _save);
+  late final Countdown _restoreWait = Countdown(
+    onDone: () => _restoring = false,
+  );
 
   @override
   void initState() {
@@ -44,29 +50,29 @@ class _AppShellState extends State<AppShell> with WindowListener {
     WindowMemory.load().then((saved) {
       if (!mounted) return;
       setState(() => _maximized = saved?.maximized ?? false);
-      // First run: remember the real starting size right away, so a later
-      // restore from maximized has something to return to.
+      // first run: save the real size so restoring from maximized has one
       if (saved == null) _save();
     });
-    // Ignore the resize and move events caused by restoring the window.
-    Future<void>.delayed(WindowConfig.restoreSettle, () => _restoring = false);
+    // ignore the resize and move events caused by restoring the window.
+    _restoreWait.start(WindowConfig.restoreSettle);
   }
 
   @override
   void dispose() {
-    _saveTimer?.cancel();
+    _saveWait.dispose();
+    _restoreWait.dispose();
     if (Platform.isWindows) windowManager.removeListener(this);
     super.dispose();
   }
 
   Future<void> _close() async {
-    // Save a change made in the last moments before quitting.
-    if (_saveTimer?.isActive ?? false) {
-      _saveTimer!.cancel();
+    // save a change made in the last moments before quitting.
+    if (_saveWait.running) {
+      _saveWait.cancel();
       try {
         await _save();
       } catch (_) {
-        // Losing the last window position must never stop the app closing.
+        // losing the last window position must never stop the app closing.
       }
     }
     try {
@@ -97,14 +103,13 @@ class _AppShellState extends State<AppShell> with WindowListener {
 
   void _scheduleSave() {
     if (_restoring) return;
-    _saveTimer?.cancel();
-    _saveTimer = Timer(WindowConfig.saveDelay, _save);
+    _saveWait.start(WindowConfig.saveDelay);
   }
 
   Future<void> _save() async {
     final old = await WindowMemory.load();
     if (_maximized) {
-      // Keep the last normal size and position, only flip the flag.
+      // keep the last normal size and position, only flip the flag.
       await WindowMemory(
         size: old?.size ?? WindowConfig.startSize,
         position: old?.position ?? WindowConfig.startPosition,
@@ -129,12 +134,20 @@ class _AppShellState extends State<AppShell> with WindowListener {
 
   @override
   Widget build(BuildContext context) {
-    // The own title bar and window controls exist on Windows only.
+    // the own title bar and window controls exist on Windows only.
     if (!Platform.isWindows) {
-      // Keep clear of a phone's status bar, notch and gesture bar.
+      // keep clear of a phone's status bar, notch and gesture bar.
       return ColoredBox(
         color: Tokens.ground,
-        child: SafeArea(child: widget.child),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Positioned.fill(child: widget.child),
+              if (widget.overlay != null)
+                Positioned.fill(child: widget.overlay!(0)),
+            ],
+          ),
+        ),
       );
     }
     return DragToResizeArea(
@@ -143,17 +156,52 @@ class _AppShellState extends State<AppShell> with WindowListener {
         color: Tokens.ground,
         child: Column(
           children: [
-            _TopBar(
-              maximized: _maximized,
-              onMinimize: windowManager.minimize,
-              onToggleMaximize: _toggleMaximize,
-              onClose: _close,
+            DecoratedBox(
+              decoration: BoxDecoration(gradient: _barTint),
+              child: _TopBar(
+                maximized: _maximized,
+                onMinimize: windowManager.minimize,
+                onToggleMaximize: _toggleMaximize,
+                onClose: _close,
+              ),
             ),
             Expanded(
-              child: Row(
+              child: Stack(
                 children: [
-                  SizedBox(width: Tokens.railWidth, child: widget.rail),
-                  Expanded(child: widget.child),
+                  Positioned.fill(
+                    child: Row(
+                      children: [
+                        DecoratedBox(
+                          decoration: BoxDecoration(gradient: _railTint),
+                          child: SizedBox(
+                            width: Tokens.railWidth,
+                            child: widget.rail,
+                          ),
+                        ),
+                        Expanded(child: widget.child),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    left: Tokens.railWidth,
+                    right: 0,
+                    top: 0,
+                    height: 1,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(gradient: _barLine),
+                    ),
+                  ),
+                  Positioned(
+                    left: Tokens.railWidth,
+                    top: 0,
+                    bottom: 0,
+                    width: 1,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(gradient: _railLine),
+                    ),
+                  ),
+                  if (widget.overlay != null)
+                    Positioned.fill(child: widget.overlay!(Tokens.railWidth)),
                 ],
               ),
             ),
@@ -163,6 +211,34 @@ class _AppShellState extends State<AppShell> with WindowListener {
     );
   }
 }
+
+// the frame fades into the page so the page is not caged
+Color _tint(double alpha) => Tokens.surface.withValues(alpha: alpha);
+Color _line(double alpha) => Tokens.line.withValues(alpha: alpha);
+
+final _barTint = LinearGradient(
+  colors: [_tint(0.55), _tint(0.22), _tint(0)],
+  stops: const [0, 0.12, 0.38],
+);
+
+final _railTint = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: [_tint(0.55), _tint(0.22), _tint(0), _tint(0), _tint(0.3)],
+  stops: const [0, 0.3, 0.55, 0.82, 1],
+);
+
+final _barLine = LinearGradient(
+  colors: [_line(1), _line(1), _line(0), _line(0), _line(1)],
+  stops: const [0, 0.06, 0.35, 0.82, 1],
+);
+
+final _railLine = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: [_line(1), _line(1), _line(0), _line(0), _line(1)],
+  stops: const [0, 0.04, 0.45, 0.85, 1],
+);
 
 class _TopBar extends StatelessWidget {
   const _TopBar({
@@ -190,14 +266,13 @@ class _TopBar extends StatelessWidget {
                 onDoubleTap: onToggleMaximize,
                 child: Row(
                   children: [
-                    // the mascot is centred over the rail's icons and the
-                    // wordmark starts at the rail's edge
+                    // the mascot sits over the rail icons, the wordmark at the rail edge
                     const SizedBox(
                       width: Tokens.railWidth,
                       child: Center(
                         child: AppIcon(
                           AppIcons.nekomimi,
-                          size: Tokens.railIconSize,
+                          size: Tokens.iconSize,
                           color: Tokens.mint,
                           lineColor: Tokens.ground,
                         ),

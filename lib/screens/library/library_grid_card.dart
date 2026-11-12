@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../../app/cover_view.dart';
+import '../../components/hover_mark.dart';
 import '../../components/one_line_text.dart';
 import '../../components/status_mark.dart';
 import '../../design/text_styles.dart';
@@ -10,8 +11,6 @@ import '../../library/library_row.dart';
 import '../../library/row_labels.dart';
 import 'row_tap_area.dart';
 
-/// One entry (or franchise) as a cover card in the Library's grid view. The
-/// card is as wide as the grid gives it and the cover fills that width.
 class LibraryGridCard extends StatelessWidget {
   const LibraryGridCard({
     super.key,
@@ -23,11 +22,9 @@ class LibraryGridCard extends StatelessWidget {
 
   final LibraryRow row;
 
-  /// On for the All tab: the chip then starts with the status mark.
   final bool showStatus;
   final VoidCallback onOpen;
 
-  /// A right click or a long press, with the position in window coordinates.
   final ValueChanged<Offset> onContextMenu;
 
   @override
@@ -40,15 +37,22 @@ class LibraryGridCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
-              children: [
-                CoverView(malId: row.malId, width: constraints.maxWidth),
-                Positioned(
-                  left: Tokens.space2,
-                  top: Tokens.space2,
-                  child: _Chip(row: row, showStatus: showStatus),
-                ),
-              ],
+            HoverMark(
+              on: state.hovered || state.focused,
+              child: Stack(
+                children: [
+                  CoverView(
+                    malId: row.malId,
+                    width: constraints.maxWidth,
+                    loading: row.isLoadingDetails,
+                  ),
+                  Positioned(
+                    left: Tokens.space2,
+                    top: Tokens.space2,
+                    child: _Chip(row: row, showStatus: showStatus),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: Tokens.space2),
             OneLineText(
@@ -70,8 +74,6 @@ class LibraryGridCard extends StatelessWidget {
   }
 }
 
-/// The black chip over the cover's corner: the status mark on the All tab, and
-/// the count. Nothing is drawn when there is neither.
 class _Chip extends StatelessWidget {
   const _Chip({required this.row, required this.showStatus});
 
@@ -100,7 +102,7 @@ class _Chip extends StatelessWidget {
             if (showStatus && count.isNotEmpty)
               const SizedBox(width: Tokens.space1),
             if (count.isNotEmpty)
-              Text(count, style: AppText.figure(Tokens.ink)),
+              Text(count, style: AppText.tally(Tokens.ink, size: Tokens.text2)),
           ],
         ),
       ),

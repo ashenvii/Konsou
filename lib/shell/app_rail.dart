@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../components/hover_mark.dart';
 import '../components/pressable.dart';
 import '../design/tokens.dart';
 import '../icons/app_icon.dart';
@@ -20,7 +21,6 @@ const discoverPath = '/discover';
 const schedulePath = '/schedule';
 const settingsPath = '/settings';
 
-/// Top to bottom. Settings sits at the bottom, apart from the rest.
 const railDestinations = [
   RailDestination(libraryPath, 'Library', AppIcons.library),
   RailDestination(watchingPath, 'Watching', AppIcons.watching),
@@ -33,7 +33,6 @@ const settingsDestination = RailDestination(
   AppIcons.settings,
 );
 
-/// The left rail: icons only, the active one a filled amber square.
 class AppRail extends StatelessWidget {
   const AppRail({super.key, required this.location, required this.onSelect});
 
@@ -87,20 +86,37 @@ class _RailItem extends StatelessWidget {
         child: Pressable(
           onPressed: () => onSelect(destination.path),
           selected: active,
-          focusColor: active ? Tokens.ground : Tokens.ink,
-          builder: (context, state) => ColoredBox(
-            color: active ? Tokens.amber : Tokens.ground,
-            child: SizedBox.square(
-              dimension: Tokens.railItemSize,
-              child: Center(
-                child: AppIcon(
-                  destination.icon,
-                  size: Tokens.railIconSize,
-                  color: active
-                      ? Tokens.ground
-                      : (state.hovered ? Tokens.ink : Tokens.inkMuted),
+          builder: (context, state) => SizedBox(
+            width: Tokens.railWidth,
+            height: Tokens.railItemSize,
+            child: Stack(
+              children: [
+                Center(
+                  child: HoverMark(
+                    on: state.hovered,
+                    child: SizedBox.square(
+                      dimension: Tokens.railItemSize,
+                      child: Center(
+                        child: AppIcon(
+                          destination.icon,
+                          size: Tokens.iconSize,
+                          color: active
+                              ? Tokens.amber
+                              : (state.hovered ? Tokens.ink : Tokens.inkMuted),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                if (active)
+                  const Positioned(
+                    right: 0,
+                    top: Tokens.space2,
+                    bottom: Tokens.space2,
+                    width: Tokens.hoverEdge,
+                    child: ColoredBox(color: Tokens.amber),
+                  ),
+              ],
             ),
           ),
         ),

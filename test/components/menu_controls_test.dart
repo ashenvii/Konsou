@@ -57,9 +57,7 @@ void main() {
       );
     });
 
-    testWidgets('selected is amber with a dark icon, else surface', (
-      tester,
-    ) async {
+    testWidgets('selected is an amber icon with no box', (tester) async {
       await pumpWidget(
         tester,
         Row(
@@ -79,14 +77,18 @@ void main() {
           ],
         ),
       );
-      expect(fillOf(tester, find.bySemanticsLabel('Grid view')), Tokens.amber);
-      expect(
-        fillOf(tester, find.bySemanticsLabel('List view')),
-        Tokens.surface,
-      );
-      final icons = tester.widgetList<AppIcon>(find.byType(AppIcon)).toList();
-      expect(icons.first.color, Tokens.ground);
-      expect(icons.last.color, Tokens.inkMuted);
+      Color iconOf(String label) => tester
+          .widget<AppIcon>(
+            find.descendant(
+              of: find.bySemanticsLabel(label),
+              matching: find.byType(AppIcon),
+            ),
+          )
+          .color;
+      // no boxes: the chosen one is an amber icon, the other muted
+      expect(iconOf('Grid view'), Tokens.amber);
+      expect(iconOf('List view'), Tokens.inkMuted);
+      expect(fillOf(tester, find.bySemanticsLabel('List view')), isNull);
     });
 
     testWidgets('a tap runs it', (tester) async {

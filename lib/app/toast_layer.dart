@@ -1,10 +1,12 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../components/app_button.dart';
-import '../components/app_popover.dart';
+import '../components/close_on_escape.dart';
+import 'cover_view.dart';
 import '../components/earlier_review.dart';
 import '../components/star_rating.dart';
+import '../components/text_action.dart';
+import '../components/toast_timer.dart';
 import '../components/toast_view.dart';
 import '../design/tokens.dart';
 import 'library_providers.dart';
@@ -12,137 +14,132 @@ import 'toast_host.dart';
 import 'toast_words.dart';
 
 const _reviewWords = EarlierReviewWords(
+  heading: reviewHeading,
   extrasHeading: extrasHeading,
   notNow: notNowLabel,
   mark: markButton,
+  storiesHeading: storiesHeading,
+  all: selectAllLabel,
+  none: selectNoneLabel,
+  selected: selectedCount,
+  mediaType: mediaTypeLabel,
+  episodes: episodeCount,
+  status: earlierStatusLabel,
 );
 
-/// Draws the app's toast over [child], at the bottom centre of the area it
-/// fills, [Tokens.space4] up. [child] is the page area, so the toast never
-/// covers the rail. The toast is announced to screen readers and never takes
-/// focus.
 class ToastLayer extends ConsumerWidget {
-  const ToastLayer({super.key, required this.child});
+  const ToastLayer({super.key, this.leftInset = 0});
 
-  final Widget child;
+  final double leftInset;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(toastHostProvider);
     final shown = state.shown;
+    final host = ref.read(toastHostProvider.notifier);
+    final review = shown?.review;
+    final reviewOpen = review != null && state.reviewOpen;
     return Stack(
       children: [
-        Positioned.fill(child: child),
+        if (reviewOpen)
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => host.setReviewOpen(false),
+              child: ColoredBox(color: Tokens.ground.withValues(alpha: 0.72)),
+            ),
+          ),
         if (shown != null)
           Positioned(
-            left: Tokens.space4,
+            left: leftInset + Tokens.space4,
             right: Tokens.space4,
+            top: Tokens.space4,
             bottom: Tokens.space4,
             child: Align(
               alignment: Alignment.bottomCenter,
               child: MouseRegion(
-                onEnter: (_) =>
-                    ref.read(toastHostProvider.notifier).setPointerOver(true),
-                onExit: (_) =>
-                    ref.read(toastHostProvider.notifier).setPointerOver(false),
-                child: _Toast(shown: shown, rating: state.rating),
+                onEnter: (_) => host.setPointerOver(true),
+                onExit: (_) => host.setPointerOver(false),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: Tokens.toastMaxWidth,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: reviewOpen
+                        ? CrossAxisAlignment.stretch
+                        : CrossAxisAlignment.center,
+                    children: [
+                      if (reviewOpen) ...[
+                        Flexible(
+                          child: CloseOnEscape(
+                            onClose: () => host.setReviewOpen(false),
+                            child: FocusScope(
+                              autofocus: true,
+                              child: EarlierReview(
+                                titles: review.titles,
+                                words: _reviewWords,
+                                cover: (title, width) =>
+                                    CoverView(malId: title.malId, width: width),
+                                onMark: (chosen) => ref
+                                    .read(entryActionsProvider)
+                                    .acceptReview(review, chosen),
+                                onNotNow: () => ref
+                                    .read(entryActionsProvider)
+                                    .notNow(review),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: Tokens.space2),
+                      ],
+                      _toast(ref, state, shown, host),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
       ],
     );
   }
-}
 
-class _Toast extends ConsumerWidget {
-  const _Toast({required this.shown, required this.rating});
-
-  final ToastMessage shown;
-  final int? rating;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final review = shown.review;
-    // the review popover opens above the whole toast, so it anchors to it
-    if (review == null) return _view(ref, null);
-    return AppPopover(
-      key: ObjectKey(shown),
-      gap: Tokens.space2,
-      builder: (context, handle) => _view(ref, handle),
-      popoverBuilder: (context, handle) => _HoldsToast(
-        child: EarlierReview(
-          titles: review.titles,
-          words: _reviewWords,
-          onMark: (chosen) {
-            handle.close();
-            ref.read(entryActionsProvider).acceptReview(chosen);
-          },
-          onNotNow: () {
-            handle.close();
-            ref.read(entryActionsProvider).notNow(review);
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _view(WidgetRef ref, PopoverHandle? reviewPopover) {
-    final host = ref.read(toastHostProvider.notifier);
-    final review = shown.review;
+  Widget _toast(
+    WidgetRef ref,
+    ToastState state,
+    ToastMessage shown,
+    ToastHost host,
+  ) {
+    final rateEntryId = shown.rateEntryId;
     return ToastView(
-      message: rating != null ? rated(rating!) : shown.text,
+      // a toast with stars keeps one width, so it never changes size
+      wide: rateEntryId != null,
+      message: shown.text,
       closeLabel: closeToastLabel,
       onClose: host.dismiss,
-      actionLabel: shown.undo == null ? null : undoLabel,
-      onAction: shown.undo == null ? null : host.undoNewest,
-      footer: review == null
+      actions: [
+        if (shown.review != null)
+          TextAction(
+            label: reviewLabel,
+            quiet: true,
+            onPressed: () => host.setReviewOpen(true),
+          ),
+        if (shown.undo != null)
+          TextAction(label: undoLabel, onPressed: host.undoNewest),
+      ],
+      footer: rateEntryId == null
           ? null
-          : Row(
-              children: [
-                StarRating(
-                  value: rating,
-                  labelFor: rateStarLabel,
-                  hint: rateHint,
-                  clearLabel: clearRatingLabel,
-                  onChanged: (score) {
-                    host.rate(score);
-                    ref.read(entryActionsProvider).rate(review.entryId, score);
-                  },
-                ),
-                const Spacer(),
-                AppButton(label: reviewLabel, onPressed: reviewPopover?.open),
-              ],
+          : StarRating(
+              spread: true,
+              value: state.rating,
+              labelFor: rateStarLabel,
+              clearLabel: clearRatingLabel,
+              onChanged: (score) {
+                host.rate(score);
+                ref.read(entryActionsProvider).rate(rateEntryId, score);
+              },
             ),
+      timer: ToastTimer(countdown: host.time),
     );
   }
-}
-
-/// Tells the host review is open for as long as it is on screen.
-class _HoldsToast extends ConsumerStatefulWidget {
-  const _HoldsToast({required this.child});
-
-  final Widget child;
-
-  @override
-  ConsumerState<_HoldsToast> createState() => _HoldsToastState();
-}
-
-class _HoldsToastState extends ConsumerState<_HoldsToast> {
-  late final ToastHost _host = ref.read(toastHostProvider.notifier);
-
-  @override
-  void initState() {
-    super.initState();
-    // after the build, since this changes a provider
-    Future.microtask(() => _host.setReviewOpen(true));
-  }
-
-  @override
-  void dispose() {
-    Future.microtask(() => _host.setReviewOpen(false));
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
 }

@@ -6,15 +6,11 @@ import 'package:http/http.dart' as http;
 import '../data/details_database.dart';
 import 'request_gate.dart';
 
-/// What the trickle asks for: enough for the Library, Watching and the
-/// franchise walk.
 const shortDetailFields =
     'id,title,main_picture,alternative_titles,start_date,end_date,nsfw,'
     'media_type,status,num_episodes,average_episode_duration,start_season,'
     'broadcast,related_anime{media_type,status,start_date,num_episodes}';
 
-/// What a detail page asks for. videos and the theme songs are not in MAL's
-/// documented list; they work today and may stop.
 const fullDetailFields =
     '$shortDetailFields,synopsis,mean,rank,popularity,num_list_users,'
     'num_scoring_users,genres,created_at,updated_at,source,rating,pictures,'
@@ -23,14 +19,10 @@ const fullDetailFields =
 
 enum FetchOutcome { fetched, gone, failed }
 
-/// How long a gone page is left alone before it is checked again.
 const goneRecheck = Duration(days: 30);
 
-/// MAL statuses whose details change weekly.
 const changingStatuses = {'currently_airing', 'not_yet_aired'};
 
-/// The one place a MAL detail request is built. Callers send it through the
-/// request gate.
 Future<http.Response> getDetail(
   http.Client client, {
   required String clientId,
@@ -41,7 +33,6 @@ Future<http.Response> getDetail(
   headers: {'X-MAL-CLIENT-ID': clientId},
 );
 
-/// Fetches one title's details from MAL and saves what came back.
 class DetailRequest {
   DetailRequest({
     required this.clientId,
@@ -61,6 +52,7 @@ class DetailRequest {
     int malId, {
     required Lane lane,
     required bool full,
+    bool Function()? wanted,
   }) async {
     final http.Response response;
     try {
@@ -72,6 +64,7 @@ class DetailRequest {
           malId: malId,
           fields: full ? fullDetailFields : shortDetailFields,
         ),
+        wanted: wanted,
       );
     } on Exception {
       return FetchOutcome.failed;
@@ -114,8 +107,6 @@ class DetailRequest {
   }
 }
 
-/// Whether a title on screen should be fetched again. Airing and upcoming
-/// titles change weekly; finished ones almost never.
 bool isStale({
   required String? airingStatus,
   required int fetchedAt,

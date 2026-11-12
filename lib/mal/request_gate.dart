@@ -5,15 +5,14 @@ import 'package:http/http.dart' as http;
 
 import '../net/backoff.dart';
 
-/// MAL publishes no rate limit; this is the gap its API club asks for,
-/// counted from the start of one request to the start of the next.
 const requestGap = Duration(milliseconds: 500);
 
-/// Screen requests go ahead of every waiting trickle request.
 enum Lane { screen, trickle }
 
-/// Every request to MAL goes through one gate: one at a time, [requestGap]
-/// apart, and slower after errors.
+class RequestCancelled implements Exception {
+  const RequestCancelled();
+}
+
 class RequestGate {
   RequestGate({
     this.gap = requestGap,
@@ -22,7 +21,6 @@ class RequestGate {
   }) : _now = now ?? DateTime.now,
        _wait = wait ?? Future<void>.delayed;
 
-  /// Time between the start of one request and the start of the next.
   final Duration gap;
   final DateTime Function() _now;
   final Future<void> Function(Duration duration) _wait;
@@ -34,9 +32,10 @@ class RequestGate {
 
   Future<http.Response> send(
     Lane lane,
-    Future<http.Response> Function() request,
-  ) {
-    final job = _Job(request);
+    Future<http.Response> Function() request, {
+    bool Function()? wanted,
+  }) {
+    final job = _Job(request, wanted);
     (lane == Lane.screen ? _screen : _trickle).add(job);
     _run();
     return job.done.future;
@@ -52,9 +51,8 @@ class RequestGate {
         if (untilNext > Duration.zero) await _wait(untilNext);
       }
       // picked after the wait, so a screen request that arrived meanwhile wins
-      final job = _screen.isNotEmpty
-          ? _screen.removeFirst()
-          : _trickle.removeFirst();
+      final job = _next();
+      if (job == null) continue;
       _nextStart = _now().add(gap);
       try {
         final response = await job.request();
@@ -72,12 +70,24 @@ class RequestGate {
     _running = false;
   }
 
+  _Job? _next() {
+    while (_screen.isNotEmpty || _trickle.isNotEmpty) {
+      final job = _screen.isNotEmpty
+          ? _screen.removeLast()
+          : _trickle.removeFirst();
+      if (job.wanted?.call() ?? true) return job;
+      job.done.completeError(const RequestCancelled());
+    }
+    return null;
+  }
+
   void _slowDown() => _nextStart = _now().add(_backoff.next());
 }
 
 class _Job {
-  _Job(this.request);
+  _Job(this.request, this.wanted);
 
   final Future<http.Response> Function() request;
+  final bool Function()? wanted;
   final done = Completer<http.Response>();
 }

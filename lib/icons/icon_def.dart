@@ -1,21 +1,12 @@
-/// A point on the icon grid. Whole numbers only.
 typedef GridPoint = (int, int);
 
-/// One straight line between two grid points.
 typedef GridLine = (GridPoint, GridPoint);
 
-/// An icon as straight lines on a fixed grid of [columns] by [rows] units.
-/// [fills] are closed shapes painted solid, [lines] are strokes [lineWidth]
-/// units thick, and [thinLines] are strokes [thinWidth] units thick for fine
-/// detail.
-/// [shades] are closed shapes painted in the line color over the fills, such
-/// as the dark inside of an ear. Every edge must be horizontal, vertical or 45
-/// degrees. [badEdges] reports the ones that are not.
 class IconDef {
   const IconDef({
     this.columns = 16,
     int? rows,
-    this.lineWidth = 1,
+    this.lineWidth = 1.5,
     this.thinWidth = 1,
     this.fills = const [],
     this.shades = const [],
@@ -32,7 +23,6 @@ class IconDef {
   final List<GridLine> lines;
   final List<GridLine> thinLines;
 
-  /// Every edge that breaks the angle rule or leaves the grid, as text.
   List<String> badEdges() {
     final problems = <String>[];
     void check(String where, GridPoint a, GridPoint b) {

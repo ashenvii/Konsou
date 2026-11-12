@@ -19,7 +19,7 @@ void main() {
     expect(taps, 1);
   });
 
-  testWidgets('secondary sits on the surface fill', (tester) async {
+  testWidgets('secondary has no box at rest', (tester) async {
     await pumpWidget(
       tester,
       AppButton(
@@ -28,7 +28,7 @@ void main() {
         onPressed: () {},
       ),
     );
-    expect(fillOf(tester, find.byType(AppButton)), Tokens.surface);
+    expect(fillOf(tester, find.byType(AppButton)), isNull);
   });
 
   testWidgets('a count shows in a badge after the label', (tester) async {
@@ -72,6 +72,6 @@ void main() {
 
   testWidgets('disabled primary drops the amber', (tester) async {
     await pumpWidget(tester, const AppButton(label: 'Save', onPressed: null));
-    expect(fillOf(tester, find.byType(AppButton)), Tokens.surface);
+    expect(fillOf(tester, find.byType(AppButton)), isNull);
   });
 }

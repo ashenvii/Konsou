@@ -4,8 +4,6 @@ import '../design/tokens.dart';
 import '../icons/app_icon.dart';
 import '../icons/icon_def.dart';
 
-/// One icon centred in a control-sized square. The shared body of the icon
-/// buttons; the button around it brings the press, the fill and the label.
 class IconCell extends StatelessWidget {
   const IconCell({
     super.key,

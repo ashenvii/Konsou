@@ -92,4 +92,10 @@ void main() {
       ids(sortRows(input, LibrarySort.recent)),
     );
   });
+
+  test('Find keeps the rows with a matching entry; null keeps all', () {
+    expect(ids(rowsMatching(rows, {'b', 'd'})), ['b', 'd']);
+    expect(ids(rowsMatching(rows, const {})), isEmpty);
+    expect(rowsMatching(rows, null), rows);
+  });
 }

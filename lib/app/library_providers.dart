@@ -1,42 +1,44 @@
-import 'dart:async';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../components/countdown.dart';
 import '../library/entry_edits.dart';
 import '../library/library_row.dart';
 import '../library/library_view.dart';
 import '../library/load_library.dart';
+import '../search/entry_search.dart';
 import 'entry_actions.dart';
 import 'providers.dart';
 import 'toast_host.dart';
 
 part 'library_providers.g.dart';
 
-/// Rows are reloaded at most this often while the background work saves
-/// things. A reload reads about 6500 entries on the UI thread (100 to 150 ms),
-/// so a short gap made the window stutter while the trickle ran.
 const libraryReloadGap = Duration(seconds: 10);
 
-/// The Library's rows, franchises folded. Reloads itself while the background
-/// work saves details, matches and franchises. An edit reloads it at once with
-/// `ref.invalidate`.
+const libraryScreenReloadGap = Duration(milliseconds: 1500);
+
 @riverpod
 Future<List<LibraryRow>> libraryRows(Ref ref) async {
   final services = ref.watch(servicesProvider);
-  Timer? pending;
+  // one reload per gap, not one per save
+  final slow = Countdown(onDone: ref.invalidateSelf);
+  final quick = Countdown(onDone: ref.invalidateSelf);
   final listener = services.dataChanged.listen((_) {
-    pending ??= Timer(libraryReloadGap, ref.invalidateSelf);
+    if (!slow.running) slow.start(libraryReloadGap);
+  });
+  final screenListener = services.screenDataChanged.listen((_) {
+    if (!quick.running) quick.start(libraryScreenReloadGap);
   });
   ref.onDispose(() {
-    pending?.cancel();
+    slow.dispose();
+    quick.dispose();
     listener.cancel();
+    screenListener.cancel();
   });
   final databases = services.databases;
   return loadLibraryRows(databases, await readTitleLanguage(databases.record));
 }
 
-/// The edits a Library screen can make. Each one tells sync a change was made.
 @Riverpod(keepAlive: true)
 EntryEdits entryEdits(Ref ref) {
   final services = ref.watch(servicesProvider);
@@ -46,8 +48,6 @@ EntryEdits entryEdits(Ref ref) {
   );
 }
 
-/// What screens call to change an entry: the edit, then the toast that tells
-/// what came of it, then the check for earlier titles.
 @Riverpod(keepAlive: true)
 EntryActions entryActions(Ref ref) {
   final host = ref.watch(toastHostProvider.notifier);
@@ -55,12 +55,11 @@ EntryActions entryActions(Ref ref) {
     databases: ref.watch(servicesProvider).databases,
     edits: ref.watch(entryEditsProvider),
     show: host.show,
-    dismiss: host.dismiss,
+    answerReview: host.answerReview,
     onEdited: () => ref.invalidate(libraryRowsProvider),
   );
 }
 
-/// The tab the Library is on, kept while the app runs.
 @Riverpod(keepAlive: true)
 class LibraryTabChoice extends _$LibraryTabChoice {
   @override
@@ -73,8 +72,6 @@ class LibraryTabChoice extends _$LibraryTabChoice {
   }
 }
 
-/// Rows an edit moved out of the tab they are shown in. They stay in view
-/// until the tab changes or the page is left, so the owner sees the change.
 @riverpod
 class LibraryKept extends _$LibraryKept {
   @override
@@ -83,7 +80,55 @@ class LibraryKept extends _$LibraryKept {
   void keep(String entryId) => state = {...state, entryId};
 }
 
-/// The Library's sort, kept while the app runs.
+@riverpod
+class LibraryFindChoice extends _$LibraryFindChoice {
+  @override
+  String? build() => null;
+
+  void open() => state ??= '';
+
+  void change(String text) => state = text;
+
+  void close() => state = null;
+}
+
+@riverpod
+Future<EntrySearch> entrySearch(Ref ref) async {
+  ref.watch(libraryRowsProvider);
+  final search = EntrySearch(ref.watch(servicesProvider).databases);
+  await search.refresh();
+  return search;
+}
+
+@riverpod
+Future<Set<String>?> libraryFindMatches(Ref ref) async {
+  final query = ref.watch(libraryFindChoiceProvider)?.trim() ?? '';
+  if (query.isEmpty) return null;
+  final search = await ref.watch(entrySearchProvider.future);
+  return search.findEntries(query).toSet();
+}
+
+@Riverpod(keepAlive: true)
+class LibraryHoveredRow extends _$LibraryHoveredRow {
+  @override
+  String? build() => null;
+
+  void set(String entryId) => state = entryId;
+
+  void clear(String entryId) {
+    if (state == entryId) state = null;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class LibraryLetterJump extends _$LibraryLetterJump {
+  @override
+  ({String letter, int count})? build() => null;
+
+  void to(String letter) =>
+      state = (letter: letter, count: (state?.count ?? 0) + 1);
+}
+
 @Riverpod(keepAlive: true)
 class LibrarySortChoice extends _$LibrarySortChoice {
   @override
@@ -94,7 +139,6 @@ class LibrarySortChoice extends _$LibrarySortChoice {
 
 const _layoutKey = 'library.layout';
 
-/// Grid or list, remembered on this device. Grid until the user picks.
 @Riverpod(keepAlive: true)
 class LibraryLayoutChoice extends _$LibraryLayoutChoice {
   @override

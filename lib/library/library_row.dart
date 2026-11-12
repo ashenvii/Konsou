@@ -38,6 +38,42 @@ class LibraryEntry {
   /// the entry yet.
   final int? franchiseId;
   final bool isExtra;
+
+  @override
+  bool operator ==(Object other) =>
+      other is LibraryEntry &&
+      other.entryId == entryId &&
+      other.name == name &&
+      other.status == status &&
+      other.episodesWatched == episodesWatched &&
+      other.addedAt == addedAt &&
+      other.changedAt == changedAt &&
+      other.score == score &&
+      other.malId == malId &&
+      other.hasDetails == hasDetails &&
+      other.episodes == episodes &&
+      other.mediaType == mediaType &&
+      other.startDate == startDate &&
+      other.franchiseId == franchiseId &&
+      other.isExtra == isExtra;
+
+  @override
+  int get hashCode => Object.hash(
+    entryId,
+    name,
+    status,
+    episodesWatched,
+    addedAt,
+    changedAt,
+    score,
+    malId,
+    hasDetails,
+    episodes,
+    mediaType,
+    startDate,
+    franchiseId,
+    isExtra,
+  );
 }
 
 /// One row of the Library: an entry, or a franchise standing for the season
@@ -82,4 +118,50 @@ class LibraryRow {
   bool get isLoadingDetails => current.malId != null && !current.hasDetails;
 
   bool get isFranchise => seasonsTotal != null;
+
+  @override
+  bool operator ==(Object other) =>
+      other is LibraryRow &&
+      other.current == current &&
+      _sameItems(other.entryIds, entryIds) &&
+      other.addedAt == addedAt &&
+      other.changedAt == changedAt &&
+      other.seasonsDone == seasonsDone &&
+      other.seasonsTotal == seasonsTotal;
+
+  @override
+  int get hashCode => Object.hash(
+    current,
+    Object.hashAll(entryIds),
+    addedAt,
+    changedAt,
+    seasonsDone,
+    seasonsTotal,
+  );
+}
+
+/// The rows as the screen holds them. Two snapshots with the same rows are
+/// equal, so a reload that found nothing new does not rebuild the screen.
+class RowsSnapshot {
+  const RowsSnapshot(this.rows);
+
+  final List<LibraryRow>? rows;
+
+  @override
+  bool operator ==(Object other) =>
+      other is RowsSnapshot && _sameItems(other.rows, rows);
+
+  @override
+  int get hashCode => Object.hashAll(rows ?? const []);
+}
+
+bool _sameItems<T>(List<T>? first, List<T>? second) {
+  if (identical(first, second)) return true;
+  if (first == null || second == null || first.length != second.length) {
+    return false;
+  }
+  for (var i = 0; i < first.length; i++) {
+    if (first[i] != second[i]) return false;
+  }
+  return true;
 }

@@ -40,9 +40,28 @@ void main() {
               child: Overlay(
                 initialEntries: [
                   OverlayEntry(
-                    builder: (_) => const ColoredBox(
+                    builder: (_) => ColoredBox(
                       color: Tokens.ground,
-                      child: ToastLayer(child: SizedBox.expand()),
+                      child: Stack(
+                        children: [
+                          // something to dim: a page of blocks
+                          Positioned.fill(
+                            child: Wrap(
+                              spacing: Tokens.space4,
+                              runSpacing: Tokens.space4,
+                              children: [
+                                for (var i = 0; i < 24; i++)
+                                  const SizedBox(
+                                    width: Tokens.gridCardMinWidth,
+                                    height: Tokens.gridCardMinWidth,
+                                    child: ColoredBox(color: Tokens.surface),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const Positioned.fill(child: ToastLayer()),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -54,41 +73,70 @@ void main() {
     );
     final host = container.read(toastHostProvider.notifier);
 
-    host.show(ToastMessage('Marked as Completed', undo: () async {}));
+    host.show(ToastMessage('Completed', undo: () async {}));
     await tester.pump();
     await capturePng(tester, key, '$folder/toast_undo.png');
 
-    host.show(ToastMessage('It has not aired yet.'));
+    host.show(ToastMessage('Not aired yet.'));
     await tester.pump();
     await capturePng(tester, key, '$folder/toast_message.png');
 
     host.show(
       ToastMessage(
-        'Frieren Season 2 completed. 3 earlier titles are not marked.',
+        'Completed. 3 earlier not marked.',
         undo: () async {},
+        rateEntryId: 'e',
         review: const ReviewOffer(
           entryId: 'e',
           titles: [
             EarlierTitle(
               malId: 1,
-              name: 'Frieren Season 1',
+              name: 'Bakemonogatari',
               isExtra: false,
               mediaType: 'tv',
-              startDate: '2023-09-29',
+              startDate: '2009-07-03',
+              episodes: 15,
             ),
             EarlierTitle(
               malId: 2,
-              name: 'Frieren: Specials',
+              name: 'Kizumonogatari I: Tekketsu-hen',
+              isExtra: false,
+              mediaType: 'movie',
+              startDate: '2016-01-08',
+              episodes: 1,
+              status: 'plan_to_watch',
+            ),
+            EarlierTitle(
+              malId: 4,
+              name: 'Nisemonogatari',
               isExtra: false,
               mediaType: 'tv',
-              startDate: '2024-01-01',
+              startDate: '2012-01-07',
+              episodes: 11,
+              status: 'dropped',
+            ),
+            EarlierTitle(
+              malId: 5,
+              name: 'Monogatari Series: Second Season',
+              isExtra: false,
+              mediaType: 'tv',
+              startDate: '2013-07-06',
+              episodes: 26,
             ),
             EarlierTitle(
               malId: 3,
-              name: 'Frieren: Recap',
+              name: 'Hanamonogatari',
               isExtra: true,
               mediaType: 'special',
-              startDate: '2023-12-01',
+              startDate: '2014-08-16',
+              episodes: 5,
+            ),
+            EarlierTitle(
+              malId: 6,
+              name: 'Bakemonogatari: Mayoi Snail Recap and a long title that runs over',
+              isExtra: true,
+              mediaType: 'ova',
+              startDate: '2011-01-01',
             ),
           ],
         ),

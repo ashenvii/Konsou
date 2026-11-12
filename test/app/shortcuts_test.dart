@@ -2,7 +2,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:konsou/app/library_providers.dart';
 import 'package:konsou/app/shortcuts.dart';
+import 'package:konsou/library/library_view.dart';
 import 'package:konsou/app/toast_host.dart';
 
 void main() {
@@ -13,15 +15,19 @@ void main() {
     addTearDown(container.dispose);
   });
 
-  Future<void> pumpApp(WidgetTester tester) => tester.pumpWidget(
-    UncontrolledProviderScope(
-      container: container,
-      child: const Directionality(
-        textDirection: TextDirection.ltr,
-        child: AppShortcuts(child: SizedBox.expand()),
-      ),
-    ),
-  );
+  Future<void> pumpApp(WidgetTester tester, {bool libraryOpen = false}) =>
+      tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: AppShortcuts(
+              libraryOpen: libraryOpen,
+              child: const SizedBox.expand(),
+            ),
+          ),
+        ),
+      );
 
   testWidgets('Ctrl+Z runs the Undo of the toast showing', (tester) async {
     await pumpApp(tester);
@@ -35,6 +41,24 @@ void main() {
     await tester.pump();
     expect(undone, 1);
     expect(container.read(toastHostProvider).shown, isNull);
+  });
+
+  testWidgets('Alt+4 shows Completed on the Library, and only there', (
+    tester,
+  ) async {
+    Future<void> altFour() async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.pump();
+    }
+
+    await pumpApp(tester);
+    await altFour();
+    expect(container.read(libraryTabChoiceProvider), LibraryTab.all);
+    await pumpApp(tester, libraryOpen: true);
+    await altFour();
+    expect(container.read(libraryTabChoiceProvider), LibraryTab.completed);
   });
 
   testWidgets('Ctrl+Z with no toast does nothing', (tester) async {

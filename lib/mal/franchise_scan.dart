@@ -8,17 +8,12 @@ import 'franchise_grouping.dart';
 import 'request_gate.dart';
 import 'saved_titles.dart';
 
-/// How long until a franchise is checked again: weekly while anything in it
-/// is airing or upcoming, otherwise doubling with each unchanged check.
 Duration getRecheckInterval({required bool airing, required int quietStreak}) {
   if (airing) return const Duration(days: 7);
   final days = 7 * pow(2, min(quietStreak, 5));
   return Duration(days: min(days.toInt(), 90));
 }
 
-/// Groups the list into franchises from the saved details, fetching story
-/// titles that are not on the list and the parents of titles that are, and
-/// checks each franchise again on its schedule.
 class FranchiseScan {
   FranchiseScan({
     required this.databases,
@@ -36,9 +31,6 @@ class FranchiseScan {
     await _save(state);
   }
 
-  /// Fetches what is missing until every franchise on the list is whole, then
-  /// returns the grouping. Extras are never followed, so their one-sided
-  /// relations cannot pull in more titles.
   Future<_ScanState> _walk() async {
     final failed = <int>{};
     while (true) {
@@ -71,8 +63,6 @@ class FranchiseScan {
     }
   }
 
-  /// Fetches the newest story title of each franchise that is due. Returns
-  /// whether any of them changed, so the walk can pick up new story titles.
   Future<bool> _checkDue(_ScanState state) async {
     final details = databases.details;
     final now = _now().millisecondsSinceEpoch;
@@ -153,8 +143,7 @@ class FranchiseScan {
     });
   }
 
-  // written through the record connection, which has details.db attached, so
-  // it joins a transaction already open there
+  // through the record connection, to join the transaction open there
   Future<void> _writeSchedule(
     int franchiseId, {
     required int quietStreak,
@@ -232,7 +221,6 @@ class _ScanState {
   final Map<String, int> malIdsByEntry;
   final Set<int> gone;
 
-  /// Franchises with at least one entry on the list.
   final Set<int> listFranchises;
 
   bool isStoryInListFranchise(int malId) {
@@ -250,8 +238,6 @@ class _ScanState {
   bool isAiring(int franchiseId) => findMembers(franchiseId)
       .any((malId) => changingStatuses.contains(titles[malId]?.airingStatus));
 
-  /// The story title a new sequel would be listed on: the latest start, with
-  /// undated (upcoming) titles counted as newest.
   int? findNewestStoryTitle(int franchiseId) => sortByStart([
     for (final malId in findMembers(franchiseId))
       if (!places[malId]!.isExtra) titles[malId]!.title,

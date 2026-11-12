@@ -8,20 +8,13 @@ part of 'providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The background work and the databases, built once at launch. `main`
-/// overrides it with the real thing; screens read the databases through it.
 
 @ProviderFor(services)
 final servicesProvider = ServicesProvider._();
 
-/// The background work and the databases, built once at launch. `main`
-/// overrides it with the real thing; screens read the databases through it.
-
 final class ServicesProvider
     extends $FunctionalProvider<Services, Services, Services>
     with $Provider<Services> {
-  /// The background work and the databases, built once at launch. `main`
-  /// overrides it with the real thing; screens read the databases through it.
   ServicesProvider._()
     : super(
         from: null,
@@ -57,17 +50,12 @@ final class ServicesProvider
 
 String _$servicesHash() => r'1afb2ccdfe0ef5053954a999d779b484975b6ed4';
 
-/// Null when no MAL client ID was built in, so no covers can be fetched.
-
 @ProviderFor(coverStore)
 final coverStoreProvider = CoverStoreProvider._();
-
-/// Null when no MAL client ID was built in, so no covers can be fetched.
 
 final class CoverStoreProvider
     extends $FunctionalProvider<CoverStore?, CoverStore?, CoverStore?>
     with $Provider<CoverStore?> {
-  /// Null when no MAL client ID was built in, so no covers can be fetched.
   CoverStoreProvider._()
     : super(
         from: null,
@@ -103,20 +91,12 @@ final class CoverStoreProvider
 
 String _$coverStoreHash() => r'23429bac3b1807ecb78efaeef448c14e9d28e935';
 
-/// The MAL id of each cover as its file is saved, so a blank cover on screen
-/// can swap in the picture.
-
 @ProviderFor(coverSaved)
 final coverSavedProvider = CoverSavedProvider._();
-
-/// The MAL id of each cover as its file is saved, so a blank cover on screen
-/// can swap in the picture.
 
 final class CoverSavedProvider
     extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
     with $FutureModifier<int>, $StreamProvider<int> {
-  /// The MAL id of each cover as its file is saved, so a blank cover on screen
-  /// can swap in the picture.
   CoverSavedProvider._()
     : super(
         from: null,
@@ -144,20 +124,65 @@ final class CoverSavedProvider
 
 String _$coverSavedHash() => r'c327a734ca2863986a60f0b3390a385cb5cb8b3d';
 
-/// A cover's file: kept on the device, or fetched now ahead of the background
-/// trickle. Null while the title has no details or no picture, or offline.
+@ProviderFor(KeptCovers)
+final keptCoversProvider = KeptCoversProvider._();
+
+final class KeptCoversProvider
+    extends $AsyncNotifierProvider<KeptCovers, Map<(int, CoverSize), File>> {
+  KeptCoversProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'keptCoversProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$keptCoversHash();
+
+  @$internal
+  @override
+  KeptCovers create() => KeptCovers();
+}
+
+String _$keptCoversHash() => r'ad7bac2b0120ec5c098da6cc44f413e2ec9288a9';
+
+abstract class _$KeptCovers
+    extends $AsyncNotifier<Map<(int, CoverSize), File>> {
+  FutureOr<Map<(int, CoverSize), File>> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref =
+        this.ref
+            as $Ref<
+              AsyncValue<Map<(int, CoverSize), File>>,
+              Map<(int, CoverSize), File>
+            >;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<Map<(int, CoverSize), File>>,
+                Map<(int, CoverSize), File>
+              >,
+              AsyncValue<Map<(int, CoverSize), File>>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
 
 @ProviderFor(coverFile)
 final coverFileProvider = CoverFileFamily._();
 
-/// A cover's file: kept on the device, or fetched now ahead of the background
-/// trickle. Null while the title has no details or no picture, or offline.
-
 final class CoverFileProvider
     extends $FunctionalProvider<AsyncValue<File?>, File?, FutureOr<File?>>
     with $FutureModifier<File?>, $FutureProvider<File?> {
-  /// A cover's file: kept on the device, or fetched now ahead of the background
-  /// trickle. Null while the title has no details or no picture, or offline.
   CoverFileProvider._({
     required CoverFileFamily super.from,
     required (int, CoverSize) super.argument,
@@ -201,10 +226,7 @@ final class CoverFileProvider
   }
 }
 
-String _$coverFileHash() => r'2630a843b33d886655f352ae91324147358e499b';
-
-/// A cover's file: kept on the device, or fetched now ahead of the background
-/// trickle. Null while the title has no details or no picture, or offline.
+String _$coverFileHash() => r'060c598c943205529d098e5b1963d6b016aebcb7';
 
 final class CoverFileFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<File?>, (int, CoverSize)> {
@@ -217,12 +239,78 @@ final class CoverFileFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// A cover's file: kept on the device, or fetched now ahead of the background
-  /// trickle. Null while the title has no details or no picture, or offline.
-
   CoverFileProvider call(int malId, CoverSize size) =>
       CoverFileProvider._(argument: (malId, size), from: this);
 
   @override
   String toString() => r'coverFileProvider';
+}
+
+@ProviderFor(detailOnScreen)
+final detailOnScreenProvider = DetailOnScreenFamily._();
+
+final class DetailOnScreenProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  DetailOnScreenProvider._({
+    required DetailOnScreenFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'detailOnScreenProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$detailOnScreenHash();
+
+  @override
+  String toString() {
+    return r'detailOnScreenProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<void> create(Ref ref) {
+    final argument = this.argument as int;
+    return detailOnScreen(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DetailOnScreenProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$detailOnScreenHash() => r'ce4c28b396a96dbd2de8fd4b489d0dc71c3cfc48';
+
+final class DetailOnScreenFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<void>, int> {
+  DetailOnScreenFamily._()
+    : super(
+        retry: null,
+        name: r'detailOnScreenProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  DetailOnScreenProvider call(int malId) =>
+      DetailOnScreenProvider._(argument: malId, from: this);
+
+  @override
+  String toString() => r'detailOnScreenProvider';
 }

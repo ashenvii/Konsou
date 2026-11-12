@@ -3,7 +3,6 @@ import 'package:drift/drift.dart';
 import '../data/record_database.dart';
 import 'franchise_grouping.dart';
 
-/// A saved title as the franchise grouping reads it, with MAL's airing status.
 class SavedTitle {
   SavedTitle(this.title, this.airingStatus);
 
@@ -11,8 +10,6 @@ class SavedTitle {
   final String? airingStatus;
 }
 
-/// Saved titles with their relations, all of them or only [malId]. The record
-/// connection has details.db attached.
 Future<Map<int, SavedTitle>> readSavedTitles(
   RecordDatabase record, {
   int? malId,

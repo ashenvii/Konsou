@@ -17,7 +17,7 @@ void main() {
   late EntryEdits edits;
   late EntryActions actions;
   late List<ToastMessage> shown;
-  late int dismissed;
+  late List<ToastMessage> answered;
   late int edited;
 
   setUp(() async {
@@ -25,13 +25,13 @@ void main() {
     databases = await openDatabases(folder);
     edits = EntryEdits(databases: databases);
     shown = [];
-    dismissed = 0;
+    answered = [];
     edited = 0;
     actions = EntryActions(
       databases: databases,
       edits: edits,
       show: shown.add,
-      dismiss: () => dismissed++,
+      answerReview: answered.add,
       onEdited: () => edited++,
     );
   });
@@ -128,15 +128,18 @@ void main() {
     )..where((row) => row.entryId.equals(id))).getSingle();
   }
 
-  test('a mark shows "Marked as X" with Undo, and Undo puts it back', () async {
-    await addTitle(5, '2020-01-01', entryId: 'e5');
-    final result = await actions.setStatus('e5', EntryStatus.onHold);
-    expect(result, EditResult.done);
-    expect(shown.single.text, 'Marked as On hold');
-    expect(shown.single.undo, isNotNull);
-    await shown.single.undo!();
-    expect((await readEntry('e5')).status, 'plan_to_watch');
-  });
+  test(
+    'a mark shows the new status with Undo, and Undo puts it back',
+    () async {
+      await addTitle(5, '2020-01-01', entryId: 'e5');
+      final result = await actions.setStatus('e5', EntryStatus.onHold);
+      expect(result, EditResult.done);
+      expect(shown.single.text, 'On hold');
+      expect(shown.single.undo, isNotNull);
+      await shown.single.undo!();
+      expect((await readEntry('e5')).status, 'plan_to_watch');
+    },
+  );
 
   test('screens are told after an edit and again after its Undo', () async {
     await addTitle(5, '2020-01-01', entryId: 'e5');
@@ -151,7 +154,7 @@ void main() {
     await addTitle(5, '2030-01-01', airing: 'not_yet_aired', entryId: 'e5');
     final result = await actions.setStatus('e5', EntryStatus.completed);
     expect(result, EditResult.notAiredYet);
-    expect(shown.single.text, contains('not aired'));
+    expect(shown.single.text, 'Not aired yet.');
     expect(shown.single.undo, isNull);
     expect((await readEntry('e5')).status, 'plan_to_watch');
   });
@@ -167,7 +170,7 @@ void main() {
   test('an episode on a title that is not being watched says why', () async {
     await addTitle(5, '2020-01-01', entryId: 'e5');
     await actions.addEpisode('e5');
-    expect(shown.single.text, contains('Watching'));
+    expect(shown.single.text, 'Set it to Watching first.');
     expect(shown.single.undo, isNull);
   });
 
@@ -186,7 +189,7 @@ void main() {
   test('finishing with nothing earlier shows only the mark', () async {
     await addTitle(5, '2020-01-01', entryId: 'e5', status: 'watching');
     await actions.setStatus('e5', EntryStatus.completed);
-    expect(shown.single.text, 'Marked as Completed');
+    expect(shown.single.text, 'Completed');
     expect(shown.single.review, isNull);
   });
 
@@ -197,8 +200,9 @@ void main() {
     expect(toast.review, isNotNull);
     expect(toast.review!.entryId, 'e2');
     expect(toast.review!.titles.map((title) => title.malId), [1]);
-    expect(toast.text, contains('1 earlier title'));
-    expect(toast.text, contains('Title 2'));
+    expect(toast.text, 'Completed. 1 earlier not marked.');
+    // the stars rate the title just finished
+    expect(toast.rateEntryId, 'e2');
   });
 
   test('finishing the last episode offers the review too', () async {
@@ -241,7 +245,7 @@ void main() {
     test('marks the earlier titles and says so, with Undo for all', () async {
       await addPair();
       await actions.setStatus('e2', EntryStatus.completed);
-      expect(shown.single.text, 'Also marked 1 earlier title');
+      expect(shown.single.text, 'Also marked 1 earlier');
       expect(shown.single.review, isNull);
       expect((await readEntry('e1')).status, 'completed');
       await shown.single.undo!();
@@ -261,40 +265,98 @@ void main() {
   });
 
   group('the review', () {
-    test(
-      'marking closes the review toast and shows a toast with Undo',
-      () async {
-        await addPair();
-        await actions.setStatus('e2', EntryStatus.completed);
-        final offer = shown.single.review!;
-        shown.clear();
-        await actions.acceptReview(offer.titles);
-        expect(dismissed, 1);
-        expect(shown.single.text, 'Marked 1 earlier title completed');
-        expect((await readEntry('e1')).status, 'completed');
-        await shown.single.undo!();
-        expect((await readEntry('e1')).status, 'plan_to_watch');
-      },
-    );
+    test('marking answers the toast with Undo and keeps its stars', () async {
+      await addPair();
+      await actions.setStatus('e2', EntryStatus.completed);
+      final offer = shown.single.review!;
+      shown.clear();
+      await actions.acceptReview(offer, offer.titles);
+      expect(shown, isEmpty);
+      final answer = answered.single;
+      expect(answer.text, 'Marked 1 earlier');
+      expect(answer.rateEntryId, 'e2');
+      expect(answer.review, isNull);
+      expect((await readEntry('e1')).status, 'completed');
+      await answer.undo!();
+      expect((await readEntry('e1')).status, 'plan_to_watch');
+    });
 
-    test('Not now saves the reminder and says where it went', () async {
+    test('Not now saves the reminder and keeps the stars', () async {
       await addPair();
       await actions.setStatus('e2', EntryStatus.completed);
       final offer = shown.single.review!;
       shown.clear();
       await actions.notNow(offer);
-      expect(dismissed, 1);
-      expect(shown.single.text, contains('bell'));
+      expect(answered.single.text, 'Saved for later.');
+      expect(answered.single.rateEntryId, 'e2');
       final record = databases.record;
       final alerts = await record.select(record.alert).get();
       expect(alerts.single.type, 'earlier_unmarked');
       expect(alerts.single.entryId, 'e2');
     });
 
+    test(
+      'a review left unanswered is kept for the bell when it is missed',
+      () async {
+        await addPair();
+        await actions.setStatus('e2', EntryStatus.completed);
+        shown.single.onMissed!();
+        // let the write finish
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        final record = databases.record;
+        final alerts = await record.select(record.alert).get();
+        expect(alerts.single.type, 'earlier_unmarked');
+      },
+    );
+
+    test(
+      'Undo after Not now drops the reminder and brings the review back',
+      () async {
+        await addPair();
+        await actions.setStatus('e2', EntryStatus.completed);
+        final offer = shown.single.review!;
+        await actions.rate('e2', 7);
+        shown.clear();
+        await actions.notNow(offer);
+        await answered.single.undo!();
+        final record = databases.record;
+        expect(await record.select(record.alert).get(), isEmpty);
+        final back = shown.single;
+        expect(back.review, isNotNull);
+        expect(back.rating, 7);
+        // its Undo still takes the finish back
+        await back.undo!();
+        expect((await readEntry('e2')).status, 'watching');
+      },
+    );
+
+    test(
+      'Undo after Mark takes the marks back and brings the review back',
+      () async {
+        await addPair();
+        await actions.setStatus('e2', EntryStatus.completed);
+        final offer = shown.single.review!;
+        shown.clear();
+        await actions.acceptReview(offer, offer.titles);
+        await answered.single.undo!();
+        expect((await readEntry('e1')).status, 'plan_to_watch');
+        expect(shown.single.review, isNotNull);
+      },
+    );
+
     test('a rating is saved on the finished title', () async {
       await addPair();
       await actions.rate('e2', 8);
       expect((await readEntry('e2')).score, 8);
     });
+  });
+
+  test('removing says so, with no Undo', () async {
+    await addTitle(5, '2020-01-01', entryId: 'e5');
+    await actions.remove(['e5']);
+    expect(shown.single.text, 'Removed');
+    expect(shown.single.undo, isNull);
+    final record = databases.record;
+    expect(await record.select(record.entry).get(), isEmpty);
   });
 }

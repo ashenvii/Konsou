@@ -1,39 +1,37 @@
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import 'close_on_escape.dart';
 import 'popover_placement.dart';
 
-/// What a popover's anchor can do: open under itself or at a pointer, close.
 abstract interface class PopoverHandle {
   bool get isOpen;
 
-  /// Opens under the anchor.
   void open();
 
-  /// Opens with its corner at a pointer position in window coordinates, for a
-  /// right click menu.
   void openAt(Offset globalPosition);
   void close();
 }
 
-/// Something that opens on top of the page: a click outside or Escape closes
-/// it, and it stays on screen. [builder] draws the anchor, [popoverBuilder]
-/// draws what opens. It needs an Overlay above it that fills the window, which
-/// the app's router gives it.
+typedef PopoverBuilder = Widget Function(
+  BuildContext context,
+  PopoverHandle handle,
+);
+
 class AppPopover extends StatefulWidget {
   const AppPopover({
     super.key,
     required this.builder,
     required this.popoverBuilder,
     this.gap = 0,
+    this.onAnchorHover,
   });
 
-  final Widget Function(BuildContext context, PopoverHandle handle) builder;
-  final Widget Function(BuildContext context, PopoverHandle handle)
-  popoverBuilder;
+  final PopoverBuilder builder;
+  final PopoverBuilder popoverBuilder;
 
-  /// Empty space between the anchor and what opens.
   final double gap;
+
+  final ValueChanged<bool>? onAnchorHover;
 
   @override
   State<AppPopover> createState() => _AppPopoverState();
@@ -47,9 +45,7 @@ class _AppPopoverState extends State<AppPopover> implements PopoverHandle {
   @override
   bool get isOpen => _open;
 
-  // The overlay the popover is drawn in need not start at the window's corner
-  // (the shell's rail and bar sit outside the page's overlay), so positions
-  // are measured from the overlay, not the window.
+  // the page's overlay starts below the bar and right of the rail
   RenderBox get _overlayBox =>
       Overlay.of(context).context.findRenderObject()! as RenderBox;
 
@@ -86,6 +82,7 @@ class _AppPopoverState extends State<AppPopover> implements PopoverHandle {
       overlayChildBuilder: (context) => _PopoverLayer(
         anchor: _anchor,
         gap: widget.gap,
+        onAnchorHover: widget.onAnchorHover,
         onClose: close,
         child: widget.popoverBuilder(context, this),
       ),
@@ -98,49 +95,49 @@ class _PopoverLayer extends StatelessWidget {
   const _PopoverLayer({
     required this.anchor,
     required this.gap,
+    required this.onAnchorHover,
     required this.onClose,
     required this.child,
   });
 
   final Rect anchor;
   final double gap;
+  final ValueChanged<bool>? onAnchorHover;
   final VoidCallback onClose;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Shortcuts(
-      shortcuts: const {
-        SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
-      },
-      child: Actions(
-        actions: {
-          DismissIntent: CallbackAction<DismissIntent>(
-            onInvoke: (_) {
-              onClose();
-              return null;
-            },
-          ),
-        },
-        child: FocusScope(
-          autofocus: true,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: onClose,
-                  onSecondaryTap: onClose,
+    return CloseOnEscape(
+      onClose: onClose,
+      child: FocusScope(
+        autofocus: true,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onClose,
+                onSecondaryTap: onClose,
+              ),
+            ),
+            if (onAnchorHover != null)
+              Positioned.fromRect(
+                rect: anchor,
+                child: MouseRegion(
+                  opaque: true,
+                  onEnter: (_) => onAnchorHover!(true),
+                  onExit: (_) => onAnchorHover!(false),
+                  child: GestureDetector(behavior: HitTestBehavior.opaque),
                 ),
               ),
-              Positioned.fill(
-                child: CustomSingleChildLayout(
-                  delegate: _PopoverLayout(anchor, gap),
-                  child: child,
-                ),
+            Positioned.fill(
+              child: CustomSingleChildLayout(
+                delegate: _PopoverLayout(anchor, gap),
+                child: child,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

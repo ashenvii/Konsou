@@ -8,16 +8,9 @@ part of 'library_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The Library's rows, franchises folded. Reloads itself while the background
-/// work saves details, matches and franchises. An edit reloads it at once with
-/// `ref.invalidate`.
 
 @ProviderFor(libraryRows)
 final libraryRowsProvider = LibraryRowsProvider._();
-
-/// The Library's rows, franchises folded. Reloads itself while the background
-/// work saves details, matches and franchises. An edit reloads it at once with
-/// `ref.invalidate`.
 
 final class LibraryRowsProvider
     extends
@@ -27,9 +20,6 @@ final class LibraryRowsProvider
           FutureOr<List<LibraryRow>>
         >
     with $FutureModifier<List<LibraryRow>>, $FutureProvider<List<LibraryRow>> {
-  /// The Library's rows, franchises folded. Reloads itself while the background
-  /// work saves details, matches and franchises. An edit reloads it at once with
-  /// `ref.invalidate`.
   LibraryRowsProvider._()
     : super(
         from: null,
@@ -56,19 +46,14 @@ final class LibraryRowsProvider
   }
 }
 
-String _$libraryRowsHash() => r'70e9493639bfda3a97b0872211ca6842461d06c4';
-
-/// The edits a Library screen can make. Each one tells sync a change was made.
+String _$libraryRowsHash() => r'0b2dc0024a643b06083371e9e1125971f3321bb1';
 
 @ProviderFor(entryEdits)
 final entryEditsProvider = EntryEditsProvider._();
 
-/// The edits a Library screen can make. Each one tells sync a change was made.
-
 final class EntryEditsProvider
     extends $FunctionalProvider<EntryEdits, EntryEdits, EntryEdits>
     with $Provider<EntryEdits> {
-  /// The edits a Library screen can make. Each one tells sync a change was made.
   EntryEditsProvider._()
     : super(
         from: null,
@@ -104,20 +89,12 @@ final class EntryEditsProvider
 
 String _$entryEditsHash() => r'd4e22babeb247de727d6fa7a463b4446518ac353';
 
-/// What screens call to change an entry: the edit, then the toast that tells
-/// what came of it, then the check for earlier titles.
-
 @ProviderFor(entryActions)
 final entryActionsProvider = EntryActionsProvider._();
-
-/// What screens call to change an entry: the edit, then the toast that tells
-/// what came of it, then the check for earlier titles.
 
 final class EntryActionsProvider
     extends $FunctionalProvider<EntryActions, EntryActions, EntryActions>
     with $Provider<EntryActions> {
-  /// What screens call to change an entry: the edit, then the toast that tells
-  /// what came of it, then the check for earlier titles.
   EntryActionsProvider._()
     : super(
         from: null,
@@ -151,17 +128,13 @@ final class EntryActionsProvider
   }
 }
 
-String _$entryActionsHash() => r'd64dc8a082d754da63bb641f06698466845ae6bb';
-
-/// The tab the Library is on, kept while the app runs.
+String _$entryActionsHash() => r'c9c74ba5954903ae3c1928f81bc38e0af79fdd37';
 
 @ProviderFor(LibraryTabChoice)
 final libraryTabChoiceProvider = LibraryTabChoiceProvider._();
 
-/// The tab the Library is on, kept while the app runs.
 final class LibraryTabChoiceProvider
     extends $NotifierProvider<LibraryTabChoice, LibraryTab> {
-  /// The tab the Library is on, kept while the app runs.
   LibraryTabChoiceProvider._()
     : super(
         from: null,
@@ -191,8 +164,6 @@ final class LibraryTabChoiceProvider
 
 String _$libraryTabChoiceHash() => r'71e48f51518353c8c0d421a05b435cd8a2708faa';
 
-/// The tab the Library is on, kept while the app runs.
-
 abstract class _$LibraryTabChoice extends $Notifier<LibraryTab> {
   LibraryTab build();
   @$mustCallSuper
@@ -211,18 +182,11 @@ abstract class _$LibraryTabChoice extends $Notifier<LibraryTab> {
   }
 }
 
-/// Rows an edit moved out of the tab they are shown in. They stay in view
-/// until the tab changes or the page is left, so the owner sees the change.
-
 @ProviderFor(LibraryKept)
 final libraryKeptProvider = LibraryKeptProvider._();
 
-/// Rows an edit moved out of the tab they are shown in. They stay in view
-/// until the tab changes or the page is left, so the owner sees the change.
 final class LibraryKeptProvider
     extends $NotifierProvider<LibraryKept, Set<String>> {
-  /// Rows an edit moved out of the tab they are shown in. They stay in view
-  /// until the tab changes or the page is left, so the owner sees the change.
   LibraryKeptProvider._()
     : super(
         from: null,
@@ -252,9 +216,6 @@ final class LibraryKeptProvider
 
 String _$libraryKeptHash() => r'f023d053fbfd5f5d282c9a21a7ef79165249b97a';
 
-/// Rows an edit moved out of the tab they are shown in. They stay in view
-/// until the tab changes or the page is left, so the owner sees the change.
-
 abstract class _$LibraryKept extends $Notifier<Set<String>> {
   Set<String> build();
   @$mustCallSuper
@@ -273,15 +234,258 @@ abstract class _$LibraryKept extends $Notifier<Set<String>> {
   }
 }
 
-/// The Library's sort, kept while the app runs.
+@ProviderFor(LibraryFindChoice)
+final libraryFindChoiceProvider = LibraryFindChoiceProvider._();
+
+final class LibraryFindChoiceProvider
+    extends $NotifierProvider<LibraryFindChoice, String?> {
+  LibraryFindChoiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'libraryFindChoiceProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$libraryFindChoiceHash();
+
+  @$internal
+  @override
+  LibraryFindChoice create() => LibraryFindChoice();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String?>(value),
+    );
+  }
+}
+
+String _$libraryFindChoiceHash() => r'49e6c3fdb83d17a0f6a251c180ff702c1e0e668b';
+
+abstract class _$LibraryFindChoice extends $Notifier<String?> {
+  String? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<String?, String?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String?, String?>,
+              String?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(entrySearch)
+final entrySearchProvider = EntrySearchProvider._();
+
+final class EntrySearchProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<EntrySearch>,
+          EntrySearch,
+          FutureOr<EntrySearch>
+        >
+    with $FutureModifier<EntrySearch>, $FutureProvider<EntrySearch> {
+  EntrySearchProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'entrySearchProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$entrySearchHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<EntrySearch> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<EntrySearch> create(Ref ref) {
+    return entrySearch(ref);
+  }
+}
+
+String _$entrySearchHash() => r'72b59e93eb4651b7c09f48999e641133fe064653';
+
+@ProviderFor(libraryFindMatches)
+final libraryFindMatchesProvider = LibraryFindMatchesProvider._();
+
+final class LibraryFindMatchesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Set<String>?>,
+          Set<String>?,
+          FutureOr<Set<String>?>
+        >
+    with $FutureModifier<Set<String>?>, $FutureProvider<Set<String>?> {
+  LibraryFindMatchesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'libraryFindMatchesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$libraryFindMatchesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<Set<String>?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Set<String>?> create(Ref ref) {
+    return libraryFindMatches(ref);
+  }
+}
+
+String _$libraryFindMatchesHash() =>
+    r'843894374a5adf2133c8da7e3f075c101a742062';
+
+@ProviderFor(LibraryHoveredRow)
+final libraryHoveredRowProvider = LibraryHoveredRowProvider._();
+
+final class LibraryHoveredRowProvider
+    extends $NotifierProvider<LibraryHoveredRow, String?> {
+  LibraryHoveredRowProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'libraryHoveredRowProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$libraryHoveredRowHash();
+
+  @$internal
+  @override
+  LibraryHoveredRow create() => LibraryHoveredRow();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String?>(value),
+    );
+  }
+}
+
+String _$libraryHoveredRowHash() => r'3bccbdf9203266a31861dd16b2bb305ade60a011';
+
+abstract class _$LibraryHoveredRow extends $Notifier<String?> {
+  String? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<String?, String?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String?, String?>,
+              String?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(LibraryLetterJump)
+final libraryLetterJumpProvider = LibraryLetterJumpProvider._();
+
+final class LibraryLetterJumpProvider
+    extends
+        $NotifierProvider<LibraryLetterJump, ({int count, String letter})?> {
+  LibraryLetterJumpProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'libraryLetterJumpProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$libraryLetterJumpHash();
+
+  @$internal
+  @override
+  LibraryLetterJump create() => LibraryLetterJump();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(({int count, String letter})? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<({int count, String letter})?>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$libraryLetterJumpHash() => r'cad6df7729f4438ee156e4bfca02f354d6e9142c';
+
+abstract class _$LibraryLetterJump
+    extends $Notifier<({int count, String letter})?> {
+  ({int count, String letter})? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref =
+        this.ref
+            as $Ref<
+              ({int count, String letter})?,
+              ({int count, String letter})?
+            >;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                ({int count, String letter})?,
+                ({int count, String letter})?
+              >,
+              ({int count, String letter})?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
 
 @ProviderFor(LibrarySortChoice)
 final librarySortChoiceProvider = LibrarySortChoiceProvider._();
 
-/// The Library's sort, kept while the app runs.
 final class LibrarySortChoiceProvider
     extends $NotifierProvider<LibrarySortChoice, LibrarySort> {
-  /// The Library's sort, kept while the app runs.
   LibrarySortChoiceProvider._()
     : super(
         from: null,
@@ -311,8 +515,6 @@ final class LibrarySortChoiceProvider
 
 String _$librarySortChoiceHash() => r'4bbe84d5bcd80a355f15722e80035eb093a8b206';
 
-/// The Library's sort, kept while the app runs.
-
 abstract class _$LibrarySortChoice extends $Notifier<LibrarySort> {
   LibrarySort build();
   @$mustCallSuper
@@ -331,15 +533,11 @@ abstract class _$LibrarySortChoice extends $Notifier<LibrarySort> {
   }
 }
 
-/// Grid or list, remembered on this device. Grid until the user picks.
-
 @ProviderFor(LibraryLayoutChoice)
 final libraryLayoutChoiceProvider = LibraryLayoutChoiceProvider._();
 
-/// Grid or list, remembered on this device. Grid until the user picks.
 final class LibraryLayoutChoiceProvider
     extends $AsyncNotifierProvider<LibraryLayoutChoice, LibraryLayout> {
-  /// Grid or list, remembered on this device. Grid until the user picks.
   LibraryLayoutChoiceProvider._()
     : super(
         from: null,
@@ -361,8 +559,6 @@ final class LibraryLayoutChoiceProvider
 
 String _$libraryLayoutChoiceHash() =>
     r'54b2943451e1196c95249bcc997d462867f03615';
-
-/// Grid or list, remembered on this device. Grid until the user picks.
 
 abstract class _$LibraryLayoutChoice extends $AsyncNotifier<LibraryLayout> {
   FutureOr<LibraryLayout> build();

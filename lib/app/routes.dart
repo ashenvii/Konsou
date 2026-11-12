@@ -13,21 +13,21 @@ import 'toast_layer.dart';
 
 const galleryPath = '/gallery';
 
-/// One route for each place in the rail, inside the app frame. The gallery has
-/// its own route in debug builds. Back is always the router's own.
 GoRouter buildRouter({Future<void> Function()? beforeClose}) {
   return GoRouter(
     initialLocation: libraryPath,
     routes: [
       ShellRoute(
         builder: (context, state, child) => AppShortcuts(
+          libraryOpen: state.matchedLocation == libraryPath,
           child: AppShell(
             beforeClose: beforeClose,
             rail: AppRail(
               location: state.matchedLocation,
               onSelect: (path) => context.go(path),
             ),
-            child: ToastLayer(child: child),
+            overlay: (inset) => ToastLayer(leftInset: inset),
+            child: child,
           ),
         ),
         routes: [
@@ -61,7 +61,6 @@ GoRouter buildRouter({Future<void> Function()? beforeClose}) {
   );
 }
 
-/// Until Settings is built, its page opens the gallery in debug builds.
 class _OpenGallery extends StatelessWidget {
   const _OpenGallery();
 

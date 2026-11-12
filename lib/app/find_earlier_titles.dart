@@ -7,13 +7,8 @@ import '../library/title_language.dart';
 import '../mal/franchise_grouping.dart';
 import '../mal/saved_titles.dart';
 
-/// Statuses that already count as watched, or that the user muted. A title
-/// with one of these is never offered.
 const _skipped = {'completed', 'rewatching', 'not_interested'};
 
-/// The titles of [entryId]'s franchise released before it that are not
-/// Completed, on the list or not: the earlier stories by date, then the
-/// earlier extras by date. Empty when the entry has no franchise.
 Future<List<EarlierTitle>> findEarlierTitles(
   Databases databases,
   String entryId,
@@ -80,6 +75,7 @@ Future<List<EarlierTitle>> findEarlierTitles(
         mediaType: title.mediaType,
         startDate: title.startDate,
         episodes: names[title.id]?.episodes,
+        status: entry?.status,
       ),
     );
   }

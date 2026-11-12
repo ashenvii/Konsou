@@ -4,11 +4,8 @@ import 'package:flutter/widgets.dart';
 import '../../components/app_menu.dart';
 import '../../library/entry_status.dart';
 import '../../library/library_row.dart';
+import 'status_keys.dart';
 
-/// The menu of one Library row: set a status (keys 1 to 4 do the first four),
-/// add an episode while watching, rewatch a finished title, open details and
-/// remove. Removing asks in place first ("Are you sure?", or "Remove all 3?"
-/// for a franchise). Every action runs and then calls [onClose].
 class EntryMenu extends StatefulWidget {
   const EntryMenu({
     super.key,
@@ -29,7 +26,6 @@ class EntryMenu extends StatefulWidget {
   final VoidCallback onRemove;
   final VoidCallback onClose;
 
-  /// The statuses with a number key, in key order.
   static const keyed = [
     EntryStatus.watching,
     EntryStatus.planned,
@@ -42,8 +38,6 @@ class EntryMenu extends StatefulWidget {
 }
 
 class _EntryMenuState extends State<EntryMenu> {
-  var _confirming = false;
-
   bool get _watching => watchingStatuses.contains(widget.row.status);
 
   void _run(VoidCallback action) {
@@ -57,17 +51,35 @@ class _EntryMenuState extends State<EntryMenu> {
   Widget build(BuildContext context) {
     final current = EntryStatus.parse(widget.row.status);
     final seasons = widget.row.entryIds.length;
-    MenuEntry statusEntry(EntryStatus status, {String? key}) => MenuEntry(
+    MenuEntry statusEntry(
+      EntryStatus status, {
+      String? key,
+      bool dividerAbove = false,
+    }) => MenuEntry(
       label: status.label,
       shortcut: key,
       selected: status == current,
+      dividerAbove: dividerAbove,
       onPressed: () => _status(status),
     );
+    // the same groups as the Library's status menu
+    var firstAction = true;
+    MenuEntry action(String label, VoidCallback onPressed, {String? key}) {
+      final entry = MenuEntry(
+        label: label,
+        shortcut: key,
+        dividerAbove: firstAction,
+        onPressed: onPressed,
+      );
+      firstAction = false;
+      return entry;
+    }
+
     return CallbackShortcuts(
       bindings: {
         for (final (index, status) in EntryMenu.keyed.indexed) ...{
-          SingleActivator(_digits[index]): () => _status(status),
-          SingleActivator(_numpad[index]): () => _status(status),
+          SingleActivator(digitKeys[index]): () => _status(status),
+          SingleActivator(numpadKeys[index]): () => _status(status),
         },
         if (_watching) ...{
           // the plus on the main row is shift and the equals key
@@ -82,31 +94,28 @@ class _EntryMenuState extends State<EntryMenu> {
         child: AppMenu(
           entries: [
             for (final (index, status) in EntryMenu.keyed.indexed)
-              statusEntry(status, key: '${index + 1}'),
+              // a hairline before On hold
+              statusEntry(
+                status,
+                key: '${index + 1}',
+                dividerAbove: status == EntryStatus.onHold,
+              ),
             statusEntry(EntryStatus.dropped),
             statusEntry(EntryStatus.notInterested),
             if (_watching)
-              MenuEntry(
-                label: '+ Episode',
-                onPressed: () => _run(widget.onAddEpisode),
-              ),
+              action('+ Episode', () => _run(widget.onAddEpisode), key: '+'),
             if (current == EntryStatus.completed)
-              MenuEntry(
-                label: 'Rewatch',
-                onPressed: () => _run(widget.onRewatch),
-              ),
+              action('Rewatch', () => _run(widget.onRewatch)),
+            action('Open details', () => _run(widget.onOpen)),
             MenuEntry(
-              label: 'Open details',
-              onPressed: () => _run(widget.onOpen),
-            ),
-            MenuEntry(
-              label: !_confirming
-                  ? 'Remove from list'
-                  : (seasons > 1 ? 'Remove all $seasons?' : 'Are you sure?'),
+              label: seasons > 1
+                  ? 'Hold to remove all $seasons'
+                  : 'Hold to remove',
               destructive: true,
-              onPressed: _confirming
-                  ? () => _run(widget.onRemove)
-                  : () => setState(() => _confirming = true),
+              hold: true,
+              dividerAbove: true,
+              holdHint: 'Hold for a second. It cannot be undone.',
+              onPressed: () => _run(widget.onRemove),
             ),
           ],
         ),
@@ -114,17 +123,3 @@ class _EntryMenuState extends State<EntryMenu> {
     );
   }
 }
-
-const _digits = [
-  LogicalKeyboardKey.digit1,
-  LogicalKeyboardKey.digit2,
-  LogicalKeyboardKey.digit3,
-  LogicalKeyboardKey.digit4,
-];
-
-const _numpad = [
-  LogicalKeyboardKey.numpad1,
-  LogicalKeyboardKey.numpad2,
-  LogicalKeyboardKey.numpad3,
-  LogicalKeyboardKey.numpad4,
-];

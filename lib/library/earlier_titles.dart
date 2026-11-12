@@ -1,5 +1,3 @@
-/// A title released before one the user just finished, in the same franchise
-/// and not marked Completed. [entryId] is null when it is not on the list.
 class EarlierTitle {
   const EarlierTitle({
     required this.malId,
@@ -9,6 +7,7 @@ class EarlierTitle {
     this.mediaType,
     this.startDate,
     this.episodes,
+    this.status,
   });
 
   final int malId;
@@ -18,4 +17,8 @@ class EarlierTitle {
   final String? mediaType;
   final String? startDate;
   final int? episodes;
+
+  /// What it is on the list as, in the record's own words, or null when it
+  /// is not on the list at all.
+  final String? status;
 }

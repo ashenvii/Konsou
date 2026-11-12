@@ -14,8 +14,6 @@ enum LibraryTab {
 
 enum LibrarySort { recent, title }
 
-/// Whether a row shows in [tab]. All holds everything but Not interested;
-/// Watching holds Rewatching too.
 bool isInTab(LibraryRow row, LibraryTab tab) => switch (tab) {
   LibraryTab.all => row.status != 'not_interested',
   LibraryTab.watching => watchingStatuses.contains(row.status),
@@ -26,8 +24,6 @@ bool isInTab(LibraryRow row, LibraryTab tab) => switch (tab) {
   LibraryTab.notInterested => row.status == 'not_interested',
 };
 
-/// The rows of [tab]. A row in [keep] stays in view even after an edit moved
-/// it out of the tab, so the change can be seen.
 List<LibraryRow> rowsInTab(
   List<LibraryRow> rows,
   LibraryTab tab, {
@@ -37,15 +33,27 @@ List<LibraryRow> rowsInTab(
     if (isInTab(row, tab) || keep.contains(row.entryId)) row,
 ];
 
+List<LibraryRow> rowsMatching(List<LibraryRow> rows, Set<String>? matches) {
+  if (matches == null) return rows;
+  return [
+    for (final row in rows)
+      if (row.entryIds.any(matches.contains)) row,
+  ];
+}
+
 Map<LibraryTab, int> countTabs(List<LibraryRow> rows) => {
   for (final tab in LibraryTab.values) tab: rowsInTab(rows, tab).length,
 };
 
-/// Recent starts with the newest change; Title runs A to Z. Ties fall back
-/// to the title, then the entry, so the order never shifts between redraws.
+// folding is the slow part of a sort that runs every rebuild, so keep it
+final _foldedTitles = <String, String>{};
+
+String _foldedTitle(String name) =>
+    _foldedTitles[name] ??= foldWords(name).join(' ');
+
 List<LibraryRow> sortRows(List<LibraryRow> rows, LibrarySort sort) {
   // fold each title once, not on every comparison
-  final keys = {for (final row in rows) row: foldWords(row.name).join(' ')};
+  final keys = {for (final row in rows) row: _foldedTitle(row.name)};
   int byTitle(LibraryRow first, LibraryRow second) {
     final byName = keys[first]!.compareTo(keys[second]!);
     return byName != 0 ? byName : first.entryId.compareTo(second.entryId);
@@ -62,5 +70,4 @@ List<LibraryRow> sortRows(List<LibraryRow> rows, LibrarySort sort) {
   return [...rows]..sort(compare);
 }
 
-/// How the Library draws its rows. Remembered between runs.
 enum LibraryLayout { grid, list }

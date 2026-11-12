@@ -52,6 +52,41 @@ void main() {
     expect(order, ['trickle 1', 'screen', 'trickle 2']);
   });
 
+  test('on the screen lane the newest request goes first', () async {
+    final order = <String>[];
+    Future<http.Response> named(String name) {
+      order.add(name);
+      return time.respond(200);
+    }
+
+    await Future.wait([
+      gate.send(Lane.screen, () => named('old')),
+      gate.send(Lane.screen, () => named('middle')),
+      gate.send(Lane.screen, () => named('new')),
+    ]);
+    // the first started at once, the rest newest first
+    expect(order, ['old', 'new', 'middle']);
+  });
+
+  test('a request nobody wants any more is dropped, not sent', () async {
+    var wanted = true;
+    final sent = <String>[];
+    // the first request goes out at once, so the next two have to wait
+    final first = gate.send(Lane.screen, () => time.respond(200));
+    final dropped = gate.send(Lane.screen, () async {
+      sent.add('dropped');
+      return time.respond(200);
+    }, wanted: () => wanted);
+    final kept = gate.send(Lane.screen, () async {
+      sent.add('kept');
+      return time.respond(200);
+    });
+    wanted = false;
+    await expectLater(dropped, throwsA(isA<RequestCancelled>()));
+    await Future.wait([first, kept]);
+    expect(sent, ['kept']);
+  });
+
   test('server errors double the wait and a success resets it', () async {
     for (final status in [500, 429, 200, 200, 503]) {
       await gate.send(Lane.trickle, () => time.respond(status));

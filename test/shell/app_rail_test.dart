@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/design/tokens.dart';
+import 'package:konsou/icons/app_icon.dart';
 import 'package:konsou/shell/app_rail.dart';
 
 import '../support/pump_widget.dart';
@@ -35,28 +36,36 @@ void main() {
     expect(settings, greaterThan(library));
   });
 
-  testWidgets('only the page showing is amber, on a 36 square', (tester) async {
+  Color iconOf(WidgetTester tester, String label) => tester
+      .widget<AppIcon>(
+        find.descendant(
+          of: find.bySemanticsLabel(label),
+          matching: find.byType(AppIcon),
+        ),
+      )
+      .color;
+
+  testWidgets('only the page showing is amber, with a mark on the edge', (
+    tester,
+  ) async {
     await pumpRail(tester, discoverPath);
-    final active = find.bySemanticsLabel('Discover');
-    expect(fillOf(tester, active), Tokens.amber);
-    expect(
-      tester.getSize(
-        find.descendant(of: active, matching: find.byType(ColoredBox)).first,
+    expect(iconOf(tester, 'Discover'), Tokens.amber);
+    final mark = find.descendant(
+      of: find.bySemanticsLabel('Discover'),
+      matching: find.byWidgetPredicate(
+        (widget) => widget is ColoredBox && widget.color == Tokens.amber,
       ),
-      const Size.square(Tokens.railItemSize),
     );
+    expect(tester.getSize(mark).width, Tokens.hoverEdge);
     for (final label in ['Library', 'Watching', 'Schedule', 'Settings']) {
-      expect(fillOf(tester, find.bySemanticsLabel(label)), isNot(Tokens.amber));
+      expect(iconOf(tester, label), Tokens.inkMuted);
     }
   });
 
   testWidgets('Library is active only on its own path', (tester) async {
     await pumpRail(tester, watchingPath);
-    expect(
-      fillOf(tester, find.bySemanticsLabel('Library')),
-      isNot(Tokens.amber),
-    );
-    expect(fillOf(tester, find.bySemanticsLabel('Watching')), Tokens.amber);
+    expect(iconOf(tester, 'Library'), Tokens.inkMuted);
+    expect(iconOf(tester, 'Watching'), Tokens.amber);
   });
 
   testWidgets('a tap names the place', (tester) async {

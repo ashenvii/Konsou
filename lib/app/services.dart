@@ -17,8 +17,6 @@ import '../sync/drive_sync.dart';
 import '../sync/google_sign_in.dart';
 import 'keys.dart';
 
-/// The background work, built once at launch: sync, then the trickle (details,
-/// then matching), then the covers, then the franchise scan.
 class Services {
   Services({
     required this.databases,
@@ -46,7 +44,7 @@ class Services {
     }
     if (keys.hasMal) {
       final requestGate = gate ?? RequestGate();
-      final detailRequest = DetailRequest(
+      final detailRequest = this.detailRequest = DetailRequest(
         clientId: keys.malClientId,
         client: client,
         gate: requestGate,
@@ -89,6 +87,7 @@ class Services {
   final Directory coversFolder;
   GoogleSignIn? signIn;
   DriveSync? sync;
+  DetailRequest? detailRequest;
   Matching? matching;
   Trickle? trickle;
   CoverStore? coverStore;
@@ -97,18 +96,18 @@ class Services {
   var _stopped = false;
   final _dataChanged = StreamController<void>.broadcast();
   final _coverSaved = StreamController<int>.broadcast();
+  final _screenDataChanged = StreamController<void>.broadcast();
 
-  /// Fires when the background work has saved something the screens show:
-  /// details, a match, a franchise. Screens reload their rows on it.
   Stream<void> get dataChanged => _dataChanged.stream;
 
-  /// Tells the screens that something they show has been saved.
   void notifyDataChanged() => _dataChanged.add(null);
 
-  /// The MAL id of each cover file as it is saved.
+  Stream<void> get screenDataChanged => _screenDataChanged.stream;
+
+  void notifyScreenDataChanged() => _screenDataChanged.add(null);
+
   Stream<int> get coverSaved => _coverSaved.stream;
 
-  /// Runs the chain once and returns when it ends or [stop] is called.
   Future<void> start() async {
     await sync?.run();
     notifyDataChanged();
@@ -121,7 +120,6 @@ class Services {
     notifyDataChanged();
   }
 
-  /// Ends the chain and gives sync its close run, which has its own limit.
   Future<void> stop() async {
     _stopped = true;
     trickle?.stop();

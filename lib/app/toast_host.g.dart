@@ -8,23 +8,11 @@ part of 'toast_host.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The app's one toast at a time. A new toast replaces the one showing,
-/// except the review toast: others wait behind it, and only the newest
-/// waits. The timer runs only while neither the pointer is on the toast nor
-/// review is open; once both let go it starts over.
 
 @ProviderFor(ToastHost)
 final toastHostProvider = ToastHostProvider._();
 
-/// The app's one toast at a time. A new toast replaces the one showing,
-/// except the review toast: others wait behind it, and only the newest
-/// waits. The timer runs only while neither the pointer is on the toast nor
-/// review is open; once both let go it starts over.
 final class ToastHostProvider extends $NotifierProvider<ToastHost, ToastState> {
-  /// The app's one toast at a time. A new toast replaces the one showing,
-  /// except the review toast: others wait behind it, and only the newest
-  /// waits. The timer runs only while neither the pointer is on the toast nor
-  /// review is open; once both let go it starts over.
   ToastHostProvider._()
     : super(
         from: null,
@@ -52,12 +40,7 @@ final class ToastHostProvider extends $NotifierProvider<ToastHost, ToastState> {
   }
 }
 
-String _$toastHostHash() => r'1fa2cc193678e71c62e387e6d49a727c52b5c77b';
-
-/// The app's one toast at a time. A new toast replaces the one showing,
-/// except the review toast: others wait behind it, and only the newest
-/// waits. The timer runs only while neither the pointer is on the toast nor
-/// review is open; once both let go it starts over.
+String _$toastHostHash() => r'537cb6de8a3ca3cd43f7d41564e611ab5b50b017';
 
 abstract class _$ToastHost extends $Notifier<ToastState> {
   ToastState build();

@@ -8,19 +8,12 @@ import '../data/details_database.dart';
 import '../mal/request_gate.dart';
 import 'cover_size.dart';
 
-/// The pool of large covers and covers of titles not on the list holds this
-/// many bytes before the least recently shown go.
 const defaultPoolLimit = 150 * 1024 * 1024;
 
-/// Time between cover downloads. MAL asks for 0.5 seconds on its API; its
-/// image server publishes no limit, so covers go five times faster.
 const coverRequestGap = Duration(milliseconds: 100);
 
 enum CoverOutcome { fetched, current, none, failed }
 
-/// Cover files kept on the device, one folder, named by MAL id and size. The
-/// medium cover of every entry on the list is always kept; the rest share a
-/// capped pool.
 class CoverStore {
   CoverStore({
     required this.databases,
@@ -36,19 +29,14 @@ class CoverStore {
   final Directory folder;
   final http.Client client;
 
-  /// Covers come from MAL's image server, so they get a gate of their own and
-  /// never hold up the API requests.
   final RequestGate gate;
   final int poolLimit;
 
-  /// Runs with the MAL id when a cover file has just been saved, so a screen
-  /// showing the blank can swap in the picture.
   final void Function(int malId)? onSaved;
   final DateTime Function() _now;
 
   DetailsDatabase get _details => databases.details;
 
-  /// The kept file, or null. Showing it notes the time, for the pool.
   Future<File?> readCover(int malId, CoverSize size) async {
     final row = await _readRow(malId, size);
     if (row == null) return null;
@@ -62,12 +50,11 @@ class CoverStore {
     return file;
   }
 
-  /// Keeps this cover from the picture link in the title's details, unless
-  /// that exact link is already kept. A changed link replaces the old file.
   Future<CoverOutcome> fetchCover(
     int malId,
     CoverSize size, {
     required Lane lane,
+    bool Function()? wanted,
   }) async {
     final url = await _readUrl(malId, size);
     if (url == null) return CoverOutcome.none;
@@ -78,7 +65,11 @@ class CoverStore {
 
     final http.Response response;
     try {
-      response = await gate.send(lane, () => client.get(Uri.parse(url)));
+      response = await gate.send(
+        lane,
+        () => client.get(Uri.parse(url)),
+        wanted: wanted,
+      );
     } on Exception {
       return CoverOutcome.failed;
     }
@@ -114,8 +105,23 @@ class CoverStore {
     return CoverOutcome.fetched;
   }
 
-  /// Forgets covers whose file is gone, so the cover trickle fetches them
-  /// again.
+  Future<Map<(int, CoverSize), File>> readKept() async {
+    final rows = await (_details.select(
+      _details.cover,
+    )..where((row) => row.provider.equals('mal'))).get();
+    return {
+      for (final row in rows)
+        (row.providerId, CoverSize.values.byName(row.size)): _fileOf(
+          row.fileName,
+        ),
+    };
+  }
+
+  Future<File?> keptFile(int malId, CoverSize size) async {
+    final row = await _readRow(malId, size);
+    return row == null ? null : _fileOf(row.fileName);
+  }
+
   Future<void> forgetMissingFiles() async {
     final rows = await _details.select(_details.cover).get();
     for (final row in rows) {
@@ -125,8 +131,6 @@ class CoverStore {
     }
   }
 
-  /// Drops the least recently shown pool covers until the pool fits. The pool
-  /// is every large cover and every cover of a title no entry points to.
   Future<void> trimPool() async {
     final rows = await databases.record.customSelect('''
       SELECT cover.provider_id, cover.size, cover.file_name, cover.bytes

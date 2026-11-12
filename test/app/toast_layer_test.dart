@@ -9,9 +9,12 @@ import 'package:konsou/app/toast_layer.dart';
 import 'package:konsou/components/app_checkbox.dart';
 import 'package:konsou/components/earlier_review.dart';
 import 'package:konsou/components/star_rating.dart';
+import 'package:konsou/components/toast_timer.dart';
 import 'package:konsou/components/toast_view.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/library/earlier_titles.dart';
+
+import '../support/render_png.dart' show loadAppFonts;
 
 class FakeActions implements EntryActions {
   final calls = <String>[];
@@ -21,8 +24,10 @@ class FakeActions implements EntryActions {
       calls.add('rate $entryId $score');
 
   @override
-  Future<void> acceptReview(List<EarlierTitle> titles) async =>
-      calls.add('mark ${titles.map((t) => t.malId).join(',')}');
+  Future<void> acceptReview(
+    ReviewOffer offer,
+    List<EarlierTitle> chosen,
+  ) async => calls.add('mark ${chosen.map((t) => t.malId).join(',')}');
 
   @override
   Future<void> notNow(ReviewOffer offer) async => calls.add('not now');
@@ -70,6 +75,8 @@ void main() {
   });
 
   Future<void> pumpLayer(WidgetTester tester) async {
+    // the real fonts, since the stars and the button share one row
+    await loadAppFonts();
     tester.view
       ..physicalSize = const Size(900, 700)
       ..devicePixelRatio = 1;
@@ -80,11 +87,7 @@ void main() {
         child: Directionality(
           textDirection: TextDirection.ltr,
           child: Overlay(
-            initialEntries: [
-              OverlayEntry(
-                builder: (_) => const ToastLayer(child: SizedBox.expand()),
-              ),
-            ],
+            initialEntries: [OverlayEntry(builder: (_) => const ToastLayer())],
           ),
         ),
       ),
@@ -102,7 +105,7 @@ void main() {
     tester,
   ) async {
     await pumpLayer(tester);
-    host().show(ToastMessage('Marked as Completed'));
+    host().show(ToastMessage('Completed'));
     await tester.pump();
     final box = tester.getRect(find.byType(ToastView));
     expect(box.bottom, 700 - Tokens.space4);
@@ -115,7 +118,7 @@ void main() {
 
   testToast('the X closes it', (tester) async {
     await pumpLayer(tester);
-    host().show(ToastMessage('Marked as Completed'));
+    host().show(ToastMessage('Completed'));
     await tester.pump();
     await tester.tap(find.bySemanticsLabel('Close'));
     await tester.pump();
@@ -140,19 +143,72 @@ void main() {
     expect(find.text('Undo'), findsNothing);
   });
 
-  testToast('the pointer on the toast holds its timer', (tester) async {
+  testToast('a toast goes after 4 seconds, 6 with an action', (tester) async {
     await pumpLayer(tester);
-    host().show(ToastMessage('Marked'));
+    host().show(ToastMessage('Not aired yet.'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 3900));
+    expect(find.byType(ToastView), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(ToastView), findsNothing);
+    host().show(ToastMessage('Completed', undo: () async {}));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 5900));
+    expect(find.byType(ToastView), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(ToastView), findsNothing);
+  });
+
+  testToast('the pointer pauses the time and leaving carries on from there', (
+    tester,
+  ) async {
+    await pumpLayer(tester);
+    host().show(ToastMessage('Completed'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
     await mouse.addPointer(location: tester.getCenter(find.byType(ToastView)));
     await tester.pump();
     expect(container.read(toastHostProvider).pointerOver, isTrue);
-    await tester.pump(const Duration(seconds: 10));
+    await tester.pump(const Duration(seconds: 30));
     expect(find.byType(ToastView), findsOneWidget);
     await mouse.moveTo(const Offset(5, 5));
     await tester.pump();
-    await tester.pump(toastMessageTime);
+    // one second was left when it stopped, not a fresh four
+    await tester.pump(const Duration(milliseconds: 900));
+    expect(find.byType(ToastView), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(ToastView), findsNothing);
+  });
+
+  testToast('a star starts the time over but it stays held until the pointer '
+      'leaves', (tester) async {
+    await pumpLayer(tester);
+    host().show(
+      ToastMessage(
+        'Completed. 3 earlier not marked.',
+        review: const ReviewOffer(entryId: 'e9', titles: _titles),
+        rateEntryId: 'e9',
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 5));
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(tester.getCenter(find.bySemanticsLabel('Rate 8')));
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Rate 8'));
+    await tester.pump();
+    expect(host().time.share, 1);
+    expect(host().time.running, isFalse);
+    await tester.pump(const Duration(seconds: 30));
+    expect(find.byType(ToastView), findsOneWidget);
+    await mouse.moveTo(const Offset(5, 5));
+    await tester.pump();
+    expect(host().time.running, isTrue);
+    await tester.pump(const Duration(milliseconds: 5900));
+    expect(find.byType(ToastView), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 200));
     expect(find.byType(ToastView), findsNothing);
   });
 
@@ -161,27 +217,144 @@ void main() {
       await pumpLayer(tester);
       host().show(
         ToastMessage(
-          'Show completed. 3 earlier titles are not marked.',
+          'Completed. 3 earlier not marked.',
           review: const ReviewOffer(entryId: 'e9', titles: _titles),
+          rateEntryId: 'e9',
         ),
       );
       await tester.pump();
     }
 
-    testToast('has ten stars and a Review button', (tester) async {
+    testToast('the bar shows the time left and holds while review is open', (
+      tester,
+    ) async {
+      await showReview(tester);
+      expect(find.byType(ToastTimer), findsOneWidget);
+      expect(host().time.running, isTrue);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.text('Review'));
+      await tester.pump();
+      await tester.pump();
+      expect(host().time.running, isFalse);
+      // closing it without an answer carries on, it does not start over
+      host().setReviewOpen(false);
+      await tester.pump();
+      expect(host().time.running, isTrue);
+      expect(host().time.share, lessThan(1));
+    });
+
+    testToast('a review left alone is told it was missed; an answer is not', (
+      tester,
+    ) async {
+      var missed = 0;
+      await pumpLayer(tester);
+      ToastMessage offer() => ToastMessage(
+        'Completed. 3 earlier not marked.',
+        review: const ReviewOffer(entryId: 'e9', titles: _titles),
+        rateEntryId: 'e9',
+        onMissed: () => missed++,
+      );
+      host().show(offer());
+      await tester.pump();
+      await tester.tap(find.bySemanticsLabel('Close'));
+      await tester.pump();
+      expect(missed, 1);
+      // answered: the answer takes its place and nothing is missed
+      host().show(offer());
+      await tester.pump();
+      host().answerReview(ToastMessage('Marked 3 earlier', rateEntryId: 'e9'));
+      await tester.pump();
+      host().dismiss();
+      await tester.pump();
+      expect(missed, 1);
+      // an Undo of the finish is not a miss either
+      host().show(
+        ToastMessage(
+          'Completed. 3 earlier not marked.',
+          undo: () async {},
+          review: const ReviewOffer(entryId: 'e9', titles: _titles),
+          onMissed: () => missed++,
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.text('Undo'));
+      await tester.pump();
+      expect(missed, 1);
+      // timing out is
+      host().show(offer());
+      await tester.pump();
+      await tester.pump(toastActionTime);
+      expect(missed, 2);
+    });
+
+    testToast('review is a modal: the scrim catches clicks and closes it', (
+      tester,
+    ) async {
+      var behind = 0;
+      await loadAppFonts();
+      tester.view
+        ..physicalSize = const Size(900, 700)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Overlay(
+              initialEntries: [
+                OverlayEntry(
+                  builder: (_) => Stack(
+                    children: [
+                      Positioned.fill(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => behind++,
+                        ),
+                      ),
+                      const Positioned.fill(child: ToastLayer()),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      host().show(
+        ToastMessage(
+          'Completed. 3 earlier not marked.',
+          review: const ReviewOffer(entryId: 'e9', titles: _titles),
+          rateEntryId: 'e9',
+        ),
+      );
+      await tester.pump();
+      // before the review opens the page behind can be clicked
+      await tester.tapAt(const Offset(20, 20));
+      expect(behind, 1);
+      await tester.tap(find.text('Review'));
+      await tester.pump();
+      await tester.pump();
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pump();
+      // the click went to the scrim, which closed the review, not to the page
+      expect(behind, 1);
+      expect(find.byType(EarlierReview), findsNothing);
+      expect(container.read(toastHostProvider).reviewOpen, isFalse);
+    });
+
+    testToast('has ten stars and a Review word', (tester) async {
       await showReview(tester);
       expect(find.byType(StarRating), findsOneWidget);
       expect(find.text('Review'), findsOneWidget);
     });
 
-    testToast('a star rates the finished title and the message follows', (
-      tester,
-    ) async {
+    testToast('a star rates the finished title', (tester) async {
       await showReview(tester);
       await tester.tap(find.bySemanticsLabel('Rate 8'));
       await tester.pump();
       expect(actions.calls, ['rate e9 8']);
-      expect(find.text('Rated 8'), findsOneWidget);
+      expect(container.read(toastHostProvider).rating, 8);
       expect(find.byType(ToastView), findsOneWidget);
     });
 
@@ -189,19 +362,32 @@ void main() {
       tester,
     ) async {
       await showReview(tester);
-      expect(find.text('Rate it'), findsOneWidget);
+      // the caption is the last text in the rating; the others only hold width
+      String? caption() => tester
+          .widgetList<Text>(
+            find.descendant(
+              of: find.byType(StarRating),
+              matching: find.byType(Text),
+            ),
+          )
+          .last
+          .data;
+      final width = tester.getSize(find.byType(StarRating)).width;
+      // nothing is said until the pointer or a score gives it something
+      expect(caption(), '');
       final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await mouse.addPointer(location: Offset.zero);
       await mouse.moveTo(tester.getCenter(find.bySemanticsLabel('Rate 8')));
       await tester.pump();
-      expect(find.text('8'), findsOneWidget);
+      expect(caption(), '8');
       await tester.tap(find.bySemanticsLabel('Rate 8'));
       await tester.pump();
-      expect(find.text('Clear'), findsOneWidget);
+      expect(caption(), 'Clear');
+      // the row is the same width whatever the caption, so nothing moves
+      expect(tester.getSize(find.byType(StarRating)).width, width);
       await tester.tap(find.bySemanticsLabel('Rate 8'));
       await tester.pump();
       expect(actions.calls, ['rate e9 8', 'rate e9 null']);
-      expect(find.text('Rated 8'), findsNothing);
     });
 
     testToast('Review opens the list: stories ticked, extras not', (
@@ -214,7 +400,7 @@ void main() {
       expect(find.byType(EarlierReview), findsOneWidget);
       expect(find.text('First Season'), findsOneWidget);
       expect(find.text('Extras'), findsOneWidget);
-      expect(find.text('Mark 2 completed'), findsOneWidget);
+      expect(find.text('Mark 2'), findsOneWidget);
       expect(container.read(toastHostProvider).reviewOpen, isTrue);
     });
 
@@ -240,8 +426,8 @@ void main() {
       final boxes = find.byType(AppCheckbox);
       await tester.tap(boxes.last);
       await tester.pump();
-      expect(find.text('Mark 3 completed'), findsOneWidget);
-      await tester.tap(find.text('Mark 3 completed'));
+      expect(find.text('Mark 3'), findsOneWidget);
+      await tester.tap(find.text('Mark 3'));
       await tester.pump();
       expect(actions.calls, ['mark 1,2,10']);
     });

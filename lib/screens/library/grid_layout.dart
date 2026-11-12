@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/widgets.dart';
+
 import '../../components/cover_image.dart';
 import '../../design/tokens.dart';
 
@@ -18,6 +20,13 @@ class GridLayout {
   final double cardHeight;
 
   static const gap = Tokens.space4;
+
+  SliverGridDelegate get delegate => SliverGridDelegateWithFixedCrossAxisCount(
+    crossAxisCount: columns,
+    mainAxisSpacing: gap,
+    crossAxisSpacing: gap,
+    mainAxisExtent: cardHeight,
+  );
 
   factory GridLayout.forWidth(double width) {
     final columns = max(

@@ -7,24 +7,16 @@ import '../data/record_database.dart';
 import 'earlier_titles.dart';
 import 'entry_status.dart';
 
-/// What came of an edit. Anything but [done] changed nothing, or for an
-/// episode on an airing show only the episode, and says why.
 enum EditResult { done, notAiredYet, stillAiring, notWatching, notCompleted }
 
-/// Takes back one edit or batch of edits. Running it is itself an edit: timed
-/// after everything seen, and sync is told.
 class UndoEdit {
   const UndoEdit(this.run);
 
   final Future<void> Function() run;
 }
 
-/// The settings key for marking earlier titles without asking.
 const autoMarkEarlierKey = 'auto_mark_earlier';
 
-/// What the user does to entries from the Library: change the status, add an
-/// episode, finish, take a finish back, rewatch, remove. Every change is timed
-/// by the edit clock and [onChanged] runs once it is saved, so sync can follow.
 class EntryEdits {
   EntryEdits({
     required this.databases,
@@ -64,9 +56,6 @@ class EntryEdits {
     return EditResult.done;
   }
 
-  /// One more episode for a title being watched. The last one finishes the
-  /// show, unless it is still airing: then the episode is added and the show
-  /// stays as it is.
   Future<EditResult> addEpisode(String entryId) async {
     final facts = await _readFacts(entryId);
     if (!watchingStatuses.contains(facts.status.value)) {
@@ -100,8 +89,6 @@ class EntryEdits {
     return locked ?? EditResult.done;
   }
 
-  /// The Library checkbox turned off: Watching if any episode was watched,
-  /// else Planned. The finished watch it logged is taken back.
   Future<EditResult> uncheck(String entryId) async {
     final facts = await _readFacts(entryId);
     if (facts.status != EntryStatus.completed) return EditResult.done;
@@ -111,8 +98,6 @@ class EntryEdits {
     );
   }
 
-  /// A finished title starts again from zero. The finished watch stays; the
-  /// next finish logs the next one.
   Future<EditResult> rewatch(String entryId) async {
     final facts = await _readFacts(entryId);
     if (facts.status != EntryStatus.completed) return EditResult.notCompleted;
@@ -129,8 +114,6 @@ class EntryEdits {
     return EditResult.done;
   }
 
-  /// Deletes the entries and everything tied to them. Only the removal mark
-  /// stays, so sync can tell the other devices. Covers fall into the pool.
   Future<void> remove(List<String> entryIds) async {
     if (entryIds.isEmpty) return;
     await _record.transaction(() async {
@@ -164,8 +147,6 @@ class EntryEdits {
     onChanged?.call();
   }
 
-  /// Remembers [entryIds] as they are now, for an edit that may be taken back:
-  /// the status, the episodes, the started date and the finished watches.
   Future<UndoEdit> snapshot(List<String> entryIds) async {
     final entries = await (_record.select(
       _record.entry,
@@ -203,7 +184,6 @@ class EntryEdits {
     onChanged?.call();
   }
 
-  /// Sets the score, or clears it with null.
   Future<void> setScore(String entryId, int? score) async {
     await _record.transaction(() async {
       final time = await readEditTime(_record, _now());
@@ -216,9 +196,6 @@ class EntryEdits {
     onChanged?.call();
   }
 
-  /// Marks the earlier titles Completed: episodes filled, one finished watch
-  /// dated now and flagged estimated. A title not on the list is added. The
-  /// returned undo takes the whole batch back.
   Future<UndoEdit> markEarlier(List<EarlierTitle> titles) async {
     final onList = [for (final title in titles) ?title.entryId];
     final restore = await snapshot(onList);
@@ -272,12 +249,25 @@ class EntryEdits {
     });
   }
 
-  /// "Not now" on the review: one alert per earlier title, for the bell. A
-  /// title already alerted about is left as it is.
-  Future<void> saveEarlierUnmarked(
+  Future<UndoEdit> saveEarlierUnmarked(
     String entryId,
     List<EarlierTitle> titles,
   ) async {
+    // reminders already kept stay if this is undone; only new ones go
+    final before = {
+      for (final alert
+          in await (_record.select(_record.alert)..where(
+                (alert) =>
+                    alert.entryId.equals(entryId) &
+                    alert.type.equals('earlier_unmarked'),
+              ))
+              .get())
+        alert.relatedProviderId,
+    };
+    final added = [
+      for (final title in titles)
+        if (!before.contains(title.malId)) title.malId,
+    ];
     await _record.transaction(() async {
       for (final title in titles) {
         await _record
@@ -295,9 +285,18 @@ class EntryEdits {
       }
     });
     onChanged?.call();
+    return UndoEdit(() async {
+      await (_record.delete(_record.alert)..where(
+            (alert) =>
+                alert.entryId.equals(entryId) &
+                alert.type.equals('earlier_unmarked') &
+                alert.relatedProviderId.isIn(added),
+          ))
+          .go();
+      onChanged?.call();
+    });
   }
 
-  /// Whether earlier titles are marked without review. Off until stored as on.
   Future<bool> readAutoMarkEarlier() async {
     final row =
         await (_record.select(_record.setting)

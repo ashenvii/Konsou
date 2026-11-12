@@ -4,7 +4,6 @@ import 'package:flutter/widgets.dart';
 import '../design/tokens.dart';
 import 'touch_target.dart';
 
-/// What a pressable is doing right now, handed to the builder.
 class PressState {
   const PressState({required this.hovered, required this.focused});
 
@@ -12,9 +11,6 @@ class PressState {
   final bool focused;
 }
 
-/// The one place that handles mouse, keyboard and focus for anything you can
-/// press. Buttons, tabs and checkboxes are built on it. A null [onPressed]
-/// means disabled.
 class Pressable extends StatefulWidget {
   const Pressable({
     super.key,
@@ -31,16 +27,13 @@ class Pressable extends StatefulWidget {
   final VoidCallback? onPressed;
   final Widget Function(BuildContext context, PressState state) builder;
 
-  /// What a screen reader says, for a control that is only an icon.
   final String? label;
   final bool? selected;
   final bool? checked;
   final bool autofocus;
 
-  /// The pointer shown over it while enabled. Window controls keep the arrow.
   final MouseCursor cursor;
 
-  /// The focus ring color. Use a dark one on a light fill such as amber.
   final Color focusColor;
 
   @override

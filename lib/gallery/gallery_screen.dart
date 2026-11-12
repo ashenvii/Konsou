@@ -18,8 +18,6 @@ import '../icons/app_icons.dart';
 import '../icons/score_star.dart';
 import '../shell/app_rail.dart';
 
-/// Every token and every component built so far, on one scrolling page. The
-/// first screen in debug builds. Add a component here when it is built.
 class GalleryScreen extends StatefulWidget {
   const GalleryScreen({super.key});
 
@@ -34,8 +32,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // SafeArea keeps the page clear of a phone's status bar. On desktop it
-    // adds nothing.
     return SafeArea(
       child: SingleChildScrollView(
         padding: PageFrame.top.copyWith(bottom: Tokens.space5),
@@ -204,16 +200,12 @@ class _Section extends StatelessWidget {
   );
 }
 
-/// The Library's controls: tabs with a menu tab, sort, the view switch, and the
-/// status menu drawn open.
-/// The Library's top row, as it is on the page.
 class _PageHeader extends StatelessWidget {
   const _PageHeader();
 
   @override
   Widget build(BuildContext context) {
-    // drawn at a desktop width and shrunk to fit a phone, as a picture of
-    // the real row
+    // the real row at desktop width, shrunk to fit a phone
     return Panel(
       child: FittedBox(
         fit: BoxFit.scaleDown,
@@ -259,7 +251,6 @@ class _PageHeader extends StatelessWidget {
   }
 }
 
-/// The status menu, the sort menu and a row's menu.
 class _Menus extends StatelessWidget {
   const _Menus();
 
@@ -307,7 +298,6 @@ class _Menus extends StatelessWidget {
   }
 }
 
-/// Every icon by name, drawn large, and the status marks at their real size.
 class _IconSheet extends StatelessWidget {
   const _IconSheet();
 
@@ -405,7 +395,7 @@ class _Icons extends StatelessWidget {
             child: Center(
               child: AppIcon(
                 AppIcons.discover,
-                size: Tokens.railIconSize,
+                size: Tokens.iconSize,
                 color: Tokens.ground,
               ),
             ),
@@ -417,7 +407,7 @@ class _Icons extends StatelessWidget {
             padding: const EdgeInsets.only(right: Tokens.space3),
             child: AppIcon(
               destination.icon,
-              size: Tokens.railIconSize,
+              size: Tokens.iconSize,
               color: Tokens.inkMuted,
             ),
           ),
@@ -455,7 +445,7 @@ class _Colors extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // The outline keeps ground and surface visible on the page.
+                // the outline keeps ground and surface visible on the page.
                 DecoratedBox(
                   decoration: BoxDecoration(
                     color: color,
@@ -492,7 +482,6 @@ class _Type extends StatelessWidget {
     ('text2', Tokens.text2),
     ('text3', Tokens.text3),
     ('text4', Tokens.text4),
-    ('text5', Tokens.text5),
   ];
 
   @override
@@ -507,8 +496,6 @@ class _Type extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(width: 72, child: _Note('$name ${size.toInt()}')),
-                // Wraps to a second line on a narrow screen instead of
-                // running off the edge.
                 Expanded(
                   child: Wrap(
                     spacing: Tokens.space4,

@@ -6,7 +6,6 @@ import 'fold_franchises.dart';
 import 'library_row.dart';
 import 'title_language.dart';
 
-/// Every entry with what its details say, one row per entry, in no order.
 Future<List<LibraryEntry>> loadLibraryEntries(
   Databases databases,
   TitleLanguage language,
@@ -48,14 +47,11 @@ Future<List<LibraryEntry>> loadLibraryEntries(
   ];
 }
 
-/// The Library's rows, franchises folded.
 Future<List<LibraryRow>> loadLibraryRows(
   Databases databases,
   TitleLanguage language,
 ) async => foldFranchises(await loadLibraryEntries(databases, language));
 
-/// The name a row shows in the user language: the saved name only when no
-/// details are saved.
 String pickTitleName(QueryRow row, TitleLanguage language) {
   String? text(String column) {
     final value = row.read<String?>(column);
@@ -71,7 +67,6 @@ String pickTitleName(QueryRow row, TitleLanguage language) {
   return preferred ?? text('name') ?? '';
 }
 
-/// The user's title language, romaji until they pick another.
 Future<TitleLanguage> readTitleLanguage(RecordDatabase record) async {
   final row =
       await (record.select(record.setting)
