@@ -45,6 +45,11 @@ Future<void> renderPng(
   // a scrollbar shows its thumb one frame after the first layout
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 500));
+  await capturePng(tester, key, path);
+}
+
+/// Saves what the repaint boundary under [key] shows as a PNG at [path].
+Future<void> capturePng(WidgetTester tester, GlobalKey key, String path) async {
   await tester.runAsync(() async {
     final boundary =
         key.currentContext!.findRenderObject()! as RenderRepaintBoundary;

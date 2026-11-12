@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/data/databases.dart';
 import 'package:konsou/data/details_database.dart';
 import 'package:konsou/data/record_database.dart';
+import 'package:konsou/library/earlier_titles.dart';
 import 'package:konsou/library/entry_edits.dart';
 import 'package:konsou/library/entry_status.dart';
 
@@ -463,6 +464,162 @@ void main() {
           );
       await edits.remove(['a']);
       expect(await details.select(details.cover).get(), hasLength(1));
+    });
+  });
+
+  group('undo', () {
+    test(
+      'puts back the status, the episodes and removes the logged watch',
+      () async {
+        await addEntry('a', 'watching', watched: 5, malId: 1, json: _detail());
+        final undo = await edits.snapshot(['a']);
+        await edits.setStatus('a', EntryStatus.completed);
+        await undo.run();
+        final entry = await readEntry('a');
+        expect((entry.status, entry.episodesWatched), ('watching', 5));
+        expect(await readCompletions('a'), isEmpty);
+      },
+    );
+
+    test('brings back a finished watch that was taken back', () async {
+      await addEntry('a', 'watching', watched: 5, malId: 1, json: _detail());
+      await edits.setStatus('a', EntryStatus.completed);
+      final undo = await edits.snapshot(['a']);
+      await edits.uncheck('a');
+      expect(await readCompletions('a'), isEmpty);
+      await undo.run();
+      expect((await readEntry('a')).status, 'completed');
+      expect(await readCompletions('a'), hasLength(1));
+    });
+
+    test(
+      'is a new edit: timed after the one it takes back, and synced',
+      () async {
+        var tick = 0;
+        edits = EntryEdits(
+          databases: databases,
+          onChanged: () => changes++,
+          now: () => _now.add(Duration(seconds: tick++)),
+        );
+        await addEntry('a', 'watching', watched: 5);
+        final undo = await edits.snapshot(['a']);
+        await edits.setStatus('a', EntryStatus.onHold);
+        final before = (await readEntry('a')).progressChangedAt;
+        changes = 0;
+        await undo.run();
+        expect((await readEntry('a')).progressChangedAt, greaterThan(before));
+        expect(changes, 1);
+      },
+    );
+  });
+
+  group('score', () {
+    test('sets, replaces and clears the score, timed on its own', () async {
+      await addEntry('a', 'completed');
+      await edits.setScore('a', 8);
+      var entry = await readEntry('a');
+      expect(entry.score, 8);
+      expect(entry.scoreChangedAt, _now.millisecondsSinceEpoch);
+      expect(entry.progressChangedAt, 5);
+      await edits.setScore('a', null);
+      entry = await readEntry('a');
+      expect(entry.score, isNull);
+      expect(changes, 2);
+    });
+  });
+
+  group('earlier titles', () {
+    EarlierTitle earlier(int malId, {String? entryId, int? episodes = 12}) =>
+        EarlierTitle(
+          malId: malId,
+          entryId: entryId,
+          name: 'T$malId',
+          isExtra: false,
+          episodes: episodes,
+        );
+
+    test('marks a title on the list as an estimated finished watch', () async {
+      await addEntry('a', 'plan_to_watch', malId: 1, json: _detail());
+      await edits.markEarlier([earlier(1, entryId: 'a')]);
+      final entry = await readEntry('a');
+      expect((entry.status, entry.episodesWatched), ('completed', 12));
+      final watch = (await readCompletions('a')).single;
+      expect(watch.isEstimated, isTrue);
+      expect(watch.completedAt, _now.millisecondsSinceEpoch);
+      expect(watch.watchNumber, 0);
+      expect(changes, 1);
+    });
+
+    test('adds a title that is not on the list as Completed', () async {
+      final record = databases.record;
+      await databases.details
+          .into(databases.details.detail)
+          .insert(
+            DetailCompanion.insert(
+              provider: 'mal',
+              providerId: 7,
+              fetchedAt: 1,
+              json: _detail(episodes: 24),
+            ),
+          );
+      await edits.markEarlier([earlier(7, episodes: 24)]);
+      final entries = await record.select(record.entry).get();
+      expect(entries, hasLength(1));
+      final entry = entries.single;
+      expect((entry.status, entry.episodesWatched), ('completed', 24));
+      expect(entry.name, isNull);
+      final refs = await record.select(record.entryReference).get();
+      expect((refs.single.entryId, refs.single.providerId), (entry.entryId, 7));
+      expect((await readCompletions(entry.entryId)).single.isEstimated, isTrue);
+    });
+
+    test('undo takes the whole batch back, including added titles', () async {
+      await addEntry('a', 'plan_to_watch', malId: 1, json: _detail());
+      await databases.details
+          .into(databases.details.detail)
+          .insert(
+            DetailCompanion.insert(
+              provider: 'mal',
+              providerId: 7,
+              fetchedAt: 1,
+              json: _detail(),
+            ),
+          );
+      final undo = await edits.markEarlier([
+        earlier(1, entryId: 'a'),
+        earlier(7),
+      ]);
+      await undo.run();
+      final record = databases.record;
+      expect(await record.select(record.entry).get(), hasLength(1));
+      expect((await readEntry('a')).status, 'plan_to_watch');
+      expect(await readCompletions('a'), isEmpty);
+    });
+
+    test('Not now saves one earlier_unmarked alert per title, once', () async {
+      await addEntry('a', 'completed');
+      final titles = [earlier(1), earlier(2)];
+      await edits.saveEarlierUnmarked('a', titles);
+      await edits.saveEarlierUnmarked('a', titles);
+      final record = databases.record;
+      final alerts = await record.select(record.alert).get();
+      expect(
+        alerts.map((alert) => alert.relatedProviderId),
+        unorderedEquals([1, 2]),
+      );
+      expect(alerts.every((alert) => alert.type == 'earlier_unmarked'), isTrue);
+      expect(alerts.every((alert) => alert.entryId == 'a'), isTrue);
+    });
+
+    test('the auto-mark setting is off until it is stored as on', () async {
+      expect(await edits.readAutoMarkEarlier(), isFalse);
+      final record = databases.record;
+      await record
+          .into(record.setting)
+          .insert(
+            SettingCompanion.insert(key: 'auto_mark_earlier', value: 'true'),
+          );
+      expect(await edits.readAutoMarkEarlier(), isTrue);
     });
   });
 }

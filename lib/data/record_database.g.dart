@@ -1947,7 +1947,7 @@ class AlertTable extends Table with TableInfo<AlertTable, Alert> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL CHECK (type IN (\'sequel\', \'side_story\', \'spin_off\', \'movie\', \'started_airing\'))',
+    $customConstraints: 'NOT NULL CHECK (type IN (\'sequel\', \'side_story\', \'spin_off\', \'movie\', \'started_airing\', \'earlier_unmarked\'))',
   );
   static const VerificationMeta _seenMeta = const VerificationMeta('seen');
   late final GeneratedColumn<bool> seen = GeneratedColumn<bool>(

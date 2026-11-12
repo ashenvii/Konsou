@@ -7,7 +7,9 @@ import '../gallery/gallery_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../shell/app_rail.dart';
 import '../shell/app_shell.dart';
+import 'shortcuts.dart';
 import 'title_page.dart';
+import 'toast_layer.dart';
 
 const galleryPath = '/gallery';
 
@@ -18,13 +20,15 @@ GoRouter buildRouter({Future<void> Function()? beforeClose}) {
     initialLocation: libraryPath,
     routes: [
       ShellRoute(
-        builder: (context, state, child) => AppShell(
-          beforeClose: beforeClose,
-          rail: AppRail(
-            location: state.matchedLocation,
-            onSelect: (path) => context.go(path),
+        builder: (context, state, child) => AppShortcuts(
+          child: AppShell(
+            beforeClose: beforeClose,
+            rail: AppRail(
+              location: state.matchedLocation,
+              onSelect: (path) => context.go(path),
+            ),
+            child: ToastLayer(child: child),
           ),
-          child: child,
         ),
         routes: [
           for (final destination in [...railDestinations, settingsDestination])

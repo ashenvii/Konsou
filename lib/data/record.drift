@@ -64,7 +64,8 @@ CREATE TABLE alert (
   related_provider     TEXT NOT NULL CHECK (related_provider IN ('mal', 'anilist')),
   related_provider_id  INTEGER NOT NULL,
   type                 TEXT NOT NULL CHECK (type IN (
-                         'sequel', 'side_story', 'spin_off', 'movie', 'started_airing')),
+                         'sequel', 'side_story', 'spin_off', 'movie', 'started_airing',
+                         'earlier_unmarked')),
   seen                 BOOLEAN NOT NULL DEFAULT FALSE,
   dismissed            BOOLEAN NOT NULL DEFAULT FALSE,
   created_at           INTEGER NOT NULL,

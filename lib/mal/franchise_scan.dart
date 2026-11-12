@@ -6,6 +6,7 @@ import '../data/databases.dart';
 import 'detail_request.dart';
 import 'franchise_grouping.dart';
 import 'request_gate.dart';
+import 'saved_titles.dart';
 
 /// How long until a franchise is checked again: weekly while anything in it
 /// is airing or upcoming, otherwise doubling with each unchanged check.
@@ -89,7 +90,9 @@ class FranchiseScan {
       );
       if (outcome == FetchOutcome.failed) continue;
       final before = _relationIds(state.titles[newest]);
-      final after = _relationIds((await _readTitles(malId: newest))[newest]);
+      final after = _relationIds(
+        (await readSavedTitles(databases.record, malId: newest))[newest],
+      );
       final changed =
           before.length != after.length || !before.containsAll(after);
       anyChanged = anyChanged || changed;
@@ -175,49 +178,9 @@ class FranchiseScan {
     );
   }
 
-  /// Saved titles with their relations, all of them or only [malId].
-  Future<Map<int, _SavedTitle>> _readTitles({int? malId}) async {
-    final rows = await databases.record
-        .customSelect(
-          '''
-      SELECT detail.provider_id, detail.media_type, detail.start_date,
-             detail.airing_status,
-             json_extract(relation.value, '\$.node.id') AS relation_id,
-             json_extract(relation.value, '\$.relation_type') AS relation_type
-      FROM details.detail
-      LEFT JOIN json_each(detail.json, '\$.related_anime') AS relation
-      WHERE detail.provider = 'mal' AND (? IS NULL OR detail.provider_id = ?)
-      ''',
-          variables: [Variable(malId), Variable(malId)],
-        )
-        .get();
-    final titles = <int, _SavedTitle>{};
-    for (final row in rows) {
-      final id = row.read<int>('provider_id');
-      final saved = titles.putIfAbsent(
-        id,
-        () => _SavedTitle(
-          FranchiseTitle(
-            id: id,
-            mediaType: row.readNullable<String>('media_type'),
-            startDate: row.readNullable<String>('start_date'),
-            relations: [],
-          ),
-          row.readNullable<String>('airing_status'),
-        ),
-      );
-      final relationId = row.readNullable<int>('relation_id');
-      final relationType = row.readNullable<String>('relation_type');
-      if (relationId != null && relationType != null) {
-        saved.title.relations.add(TitleRelation(relationId, relationType));
-      }
-    }
-    return titles;
-  }
-
   Future<_ScanState> _load() async {
     final record = databases.record;
-    final titles = await _readTitles();
+    final titles = await readSavedTitles(record);
     final malIdsByEntry = {
       for (final row in await record.customSelect('''
         SELECT entry_reference.entry_id, entry_reference.provider_id
@@ -249,17 +212,10 @@ class FranchiseScan {
   }
 }
 
-Set<int> _relationIds(_SavedTitle? saved) => {
+Set<int> _relationIds(SavedTitle? saved) => {
   for (final relation in saved?.title.relations ?? const <TitleRelation>[])
     relation.id,
 };
-
-class _SavedTitle {
-  _SavedTitle(this.title, this.airingStatus);
-
-  final FranchiseTitle title;
-  final String? airingStatus;
-}
 
 class _ScanState {
   _ScanState({
@@ -271,7 +227,7 @@ class _ScanState {
          for (final malId in malIdsByEntry.values) ?places[malId]?.franchiseId,
        };
 
-  final Map<int, _SavedTitle> titles;
+  final Map<int, SavedTitle> titles;
   final Map<int, FranchisePlace> places;
   final Map<String, int> malIdsByEntry;
   final Set<int> gone;

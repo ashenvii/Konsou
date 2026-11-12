@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/entry_actions.dart';
 import '../../app/library_providers.dart';
 import '../../components/app_button.dart';
 import '../../components/app_menu.dart';
@@ -13,7 +14,6 @@ import '../../components/page_title.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../icons/app_icons.dart';
-import '../../library/entry_edits.dart';
 import '../../library/entry_status.dart';
 import '../../library/library_row.dart';
 import '../../library/library_view.dart';
@@ -399,17 +399,16 @@ class _Rows extends StatelessWidget {
   }
 }
 
-/// Runs an edit, then reloads the rows so the change shows at once. The result
-/// (an episode that has not aired, say) is not told to the user yet: that
-/// waits for the toast.
+/// Runs an edit through the actions, which show its toast, then reloads the
+/// rows so the change shows at once.
 Future<void> _edit(
   BuildContext context,
   LibraryRow row,
-  Future<Object?> Function(EntryEdits edits) action, {
+  Future<Object?> Function(EntryActions actions) action, {
   bool keepInView = true,
 }) async {
   final scope = ProviderScope.containerOf(context);
-  await action(scope.read(entryEditsProvider));
+  await action(scope.read(entryActionsProvider));
   // the row stays where it is, showing its new status, until the tab changes
   if (keepInView) scope.read(libraryKeptProvider.notifier).keep(row.entryId);
   scope.invalidate(libraryRowsProvider);

@@ -66,4 +66,7 @@ abstract final class Tokens {
   static const double gridCardMinWidth = 168;
   static const double listRowHeight = 72;
   static const double listCoverWidth = 40;
+
+  // The toast, a first guess the owner agreed to (2026-11-12).
+  static const double toastMaxWidth = 480;
 }

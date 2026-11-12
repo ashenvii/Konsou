@@ -2,12 +2,25 @@ import 'package:drift/drift.dart';
 
 import '../data/databases.dart';
 import '../data/edit_clock.dart';
+import '../data/generate_id.dart';
 import '../data/record_database.dart';
+import 'earlier_titles.dart';
 import 'entry_status.dart';
 
 /// What came of an edit. Anything but [done] changed nothing, or for an
 /// episode on an airing show only the episode, and says why.
 enum EditResult { done, notAiredYet, stillAiring, notWatching, notCompleted }
+
+/// Takes back one edit or batch of edits. Running it is itself an edit: timed
+/// after everything seen, and sync is told.
+class UndoEdit {
+  const UndoEdit(this.run);
+
+  final Future<void> Function() run;
+}
+
+/// The settings key for marking earlier titles without asking.
+const autoMarkEarlierKey = 'auto_mark_earlier';
 
 /// What the user does to entries from the Library: change the status, add an
 /// episode, finish, take a finish back, rewatch, remove. Every change is timed
@@ -151,6 +164,148 @@ class EntryEdits {
     onChanged?.call();
   }
 
+  /// Remembers [entryIds] as they are now, for an edit that may be taken back:
+  /// the status, the episodes, the started date and the finished watches.
+  Future<UndoEdit> snapshot(List<String> entryIds) async {
+    final entries = await (_record.select(
+      _record.entry,
+    )..where((row) => row.entryId.isIn(entryIds))).get();
+    final watches = await (_record.select(
+      _record.completion,
+    )..where((row) => row.entryId.isIn(entryIds))).get();
+    return UndoEdit(() => _restore(entries, watches));
+  }
+
+  Future<void> _restore(List<Entry> entries, List<Completion> watches) async {
+    if (entries.isEmpty) return;
+    final ids = {for (final entry in entries) entry.entryId};
+    await _record.transaction(() async {
+      final time = await readEditTime(_record, _now());
+      for (final entry in entries) {
+        await (_record.update(
+          _record.entry,
+        )..where((row) => row.entryId.equals(entry.entryId))).write(
+          EntryCompanion(
+            status: Value(entry.status),
+            episodesWatched: Value(entry.episodesWatched),
+            startedAt: Value(entry.startedAt),
+            progressChangedAt: Value(time),
+          ),
+        );
+      }
+      await (_record.delete(
+        _record.completion,
+      )..where((row) => row.entryId.isIn(ids))).go();
+      for (final watch in watches) {
+        await _record.into(_record.completion).insert(watch);
+      }
+    });
+    onChanged?.call();
+  }
+
+  /// Sets the score, or clears it with null.
+  Future<void> setScore(String entryId, int? score) async {
+    await _record.transaction(() async {
+      final time = await readEditTime(_record, _now());
+      await (_record.update(
+        _record.entry,
+      )..where((row) => row.entryId.equals(entryId))).write(
+        EntryCompanion(score: Value(score), scoreChangedAt: Value(time)),
+      );
+    });
+    onChanged?.call();
+  }
+
+  /// Marks the earlier titles Completed: episodes filled, one finished watch
+  /// dated now and flagged estimated. A title not on the list is added. The
+  /// returned undo takes the whole batch back.
+  Future<UndoEdit> markEarlier(List<EarlierTitle> titles) async {
+    final onList = [for (final title in titles) ?title.entryId];
+    final restore = await snapshot(onList);
+    final created = <String>[];
+    await _record.transaction(() async {
+      final time = await readEditTime(_record, _now());
+      for (final title in titles) {
+        var entryId = title.entryId;
+        if (entryId == null) {
+          entryId = generateId();
+          created.add(entryId);
+          await _record
+              .into(_record.entry)
+              .insert(
+                EntryCompanion.insert(
+                  entryId: entryId,
+                  status: EntryStatus.planned.value,
+                  addedAt: _now().millisecondsSinceEpoch,
+                  progressChangedAt: time,
+                ),
+              );
+          await _record
+              .into(_record.entryReference)
+              .insert(
+                EntryReferenceCompanion.insert(
+                  entryId: entryId,
+                  provider: 'mal',
+                  providerId: title.malId,
+                ),
+              );
+        }
+        final facts = await _readFacts(entryId);
+        if (facts.status == EntryStatus.completed) continue;
+        final episodes = _maxOf(
+          title.episodes ?? facts.total,
+          facts.episodesWatched,
+        );
+        await _writeProgress(
+          entryId,
+          time,
+          status: EntryStatus.completed,
+          episodes: episodes,
+        );
+        await _logCompletion(entryId, facts, episodes, estimated: true);
+      }
+    });
+    onChanged?.call();
+    return UndoEdit(() async {
+      await restore.run();
+      await remove(created);
+    });
+  }
+
+  /// "Not now" on the review: one alert per earlier title, for the bell. A
+  /// title already alerted about is left as it is.
+  Future<void> saveEarlierUnmarked(
+    String entryId,
+    List<EarlierTitle> titles,
+  ) async {
+    await _record.transaction(() async {
+      for (final title in titles) {
+        await _record
+            .into(_record.alert)
+            .insert(
+              AlertCompanion.insert(
+                entryId: entryId,
+                relatedProvider: 'mal',
+                relatedProviderId: title.malId,
+                type: 'earlier_unmarked',
+                createdAt: _now().millisecondsSinceEpoch,
+              ),
+              mode: InsertMode.insertOrIgnore,
+            );
+      }
+    });
+    onChanged?.call();
+  }
+
+  /// Whether earlier titles are marked without review. Off until stored as on.
+  Future<bool> readAutoMarkEarlier() async {
+    final row =
+        await (_record.select(_record.setting)
+              ..where((setting) => setting.key.equals(autoMarkEarlierKey)))
+            .getSingleOrNull();
+    return row?.value == 'true';
+  }
+
   EditResult? _lockFor(_Facts facts, EntryStatus target) {
     if (facts.airing == 'not_yet_aired' &&
         {
@@ -185,8 +340,9 @@ class EntryEdits {
   Future<void> _logCompletion(
     String entryId,
     _Facts facts,
-    int episodes,
-  ) async {
+    int episodes, {
+    bool estimated = false,
+  }) async {
     final latest = await _lastWatchNumber(entryId);
     final seconds = facts.secondsPerEpisode;
     await _record
@@ -200,6 +356,7 @@ class EntryEdits {
             minutesPerEpisode: Value(
               seconds == null || seconds <= 0 ? null : (seconds / 60).round(),
             ),
+            isEstimated: Value(estimated),
           ),
         );
   }

@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
-import '../icons/app_icon.dart';
 import '../icons/icon_def.dart';
+import 'icon_cell.dart';
 import 'pressable.dart';
 
 /// A square button holding one icon. Selected is amber with a dark icon; the
@@ -23,26 +23,19 @@ class IconSquareButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
+    return Pressable(
       label: label,
-      child: Pressable(
-        onPressed: onPressed,
-        selected: selected,
-        focusColor: selected ? Tokens.ground : Tokens.ink,
-        builder: (context, state) => ColoredBox(
-          color: selected ? Tokens.amber : Tokens.surface,
-          child: SizedBox.square(
-            dimension: Tokens.controlHeight,
-            child: Center(
-              child: AppIcon(
-                icon,
-                size: Tokens.railIconSize,
-                color: selected
-                    ? Tokens.ground
-                    : (state.hovered ? Tokens.ink : Tokens.inkMuted),
-              ),
-            ),
-          ),
+      onPressed: onPressed,
+      selected: selected,
+      focusColor: selected ? Tokens.ground : Tokens.ink,
+      builder: (context, state) => ColoredBox(
+        color: selected ? Tokens.amber : Tokens.surface,
+        child: IconCell(
+          icon: icon,
+          size: Tokens.railIconSize,
+          color: selected
+              ? Tokens.ground
+              : (state.hovered ? Tokens.ink : Tokens.inkMuted),
         ),
       ),
     );

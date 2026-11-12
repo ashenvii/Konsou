@@ -31,7 +31,7 @@ Future<List<LibraryEntry>> loadLibraryEntries(
     for (final row in rows)
       LibraryEntry(
         entryId: row.read<String>('entry_id'),
-        name: _pickName(row, language),
+        name: pickTitleName(row, language),
         status: row.read<String>('status'),
         episodesWatched: row.read<int>('episodes_watched'),
         addedAt: row.read<int>('added_at'),
@@ -54,7 +54,9 @@ Future<List<LibraryRow>> loadLibraryRows(
   TitleLanguage language,
 ) async => foldFranchises(await loadLibraryEntries(databases, language));
 
-String _pickName(QueryRow row, TitleLanguage language) {
+/// The name a row shows in the user language: the saved name only when no
+/// details are saved.
+String pickTitleName(QueryRow row, TitleLanguage language) {
   String? text(String column) {
     final value = row.read<String?>(column);
     return value == null || value.isEmpty ? null : value;

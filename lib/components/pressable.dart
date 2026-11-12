@@ -20,6 +20,7 @@ class Pressable extends StatefulWidget {
     super.key,
     required this.onPressed,
     required this.builder,
+    this.label,
     this.selected,
     this.checked,
     this.autofocus = false,
@@ -29,6 +30,9 @@ class Pressable extends StatefulWidget {
 
   final VoidCallback? onPressed;
   final Widget Function(BuildContext context, PressState state) builder;
+
+  /// What a screen reader says, for a control that is only an icon.
+  final String? label;
   final bool? selected;
   final bool? checked;
   final bool autofocus;
@@ -63,6 +67,7 @@ class _PressableState extends State<Pressable> {
     );
     return Semantics(
       button: true,
+      label: widget.label,
       enabled: enabled,
       selected: widget.selected,
       checked: widget.checked,

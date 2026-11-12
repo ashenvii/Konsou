@@ -7,7 +7,9 @@ import '../library/entry_edits.dart';
 import '../library/library_row.dart';
 import '../library/library_view.dart';
 import '../library/load_library.dart';
+import 'entry_actions.dart';
 import 'providers.dart';
+import 'toast_host.dart';
 
 part 'library_providers.g.dart';
 
@@ -41,6 +43,20 @@ EntryEdits entryEdits(Ref ref) {
   return EntryEdits(
     databases: services.databases,
     onChanged: () => services.sync?.noteChange(),
+  );
+}
+
+/// What screens call to change an entry: the edit, then the toast that tells
+/// what came of it, then the check for earlier titles.
+@Riverpod(keepAlive: true)
+EntryActions entryActions(Ref ref) {
+  final host = ref.watch(toastHostProvider.notifier);
+  return EntryActions(
+    databases: ref.watch(servicesProvider).databases,
+    edits: ref.watch(entryEditsProvider),
+    show: host.show,
+    dismiss: host.dismiss,
+    onEdited: () => ref.invalidate(libraryRowsProvider),
   );
 }
 

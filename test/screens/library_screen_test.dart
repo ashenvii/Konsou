@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:konsou/app/entry_actions.dart';
 import 'package:konsou/app/library_providers.dart';
 import 'package:konsou/app/providers.dart';
 import 'package:konsou/components/app_checkbox.dart';
@@ -44,7 +45,7 @@ LibraryRow row(
   changedAt: addedAt,
 );
 
-class FakeEdits implements EntryEdits {
+class FakeEdits implements EntryActions {
   final calls = <String>[];
 
   @override
@@ -109,7 +110,7 @@ void main() {
                 ? Completer<List<LibraryRow>>().future
                 : Future.value(rows),
           ),
-          entryEditsProvider.overrideWithValue(edits),
+          entryActionsProvider.overrideWithValue(edits),
           coverSavedProvider.overrideWith((ref) => const Stream.empty()),
         ],
         child: Directionality(

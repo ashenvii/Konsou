@@ -104,6 +104,55 @@ final class EntryEditsProvider
 
 String _$entryEditsHash() => r'd4e22babeb247de727d6fa7a463b4446518ac353';
 
+/// What screens call to change an entry: the edit, then the toast that tells
+/// what came of it, then the check for earlier titles.
+
+@ProviderFor(entryActions)
+final entryActionsProvider = EntryActionsProvider._();
+
+/// What screens call to change an entry: the edit, then the toast that tells
+/// what came of it, then the check for earlier titles.
+
+final class EntryActionsProvider
+    extends $FunctionalProvider<EntryActions, EntryActions, EntryActions>
+    with $Provider<EntryActions> {
+  /// What screens call to change an entry: the edit, then the toast that tells
+  /// what came of it, then the check for earlier titles.
+  EntryActionsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'entryActionsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$entryActionsHash();
+
+  @$internal
+  @override
+  $ProviderElement<EntryActions> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  EntryActions create(Ref ref) {
+    return entryActions(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(EntryActions value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<EntryActions>(value),
+    );
+  }
+}
+
+String _$entryActionsHash() => r'd64dc8a082d754da63bb641f06698466845ae6bb';
+
 /// The tab the Library is on, kept while the app runs.
 
 @ProviderFor(LibraryTabChoice)
