@@ -67,6 +67,7 @@ class _Toast extends ConsumerWidget {
     if (review == null) return _view(ref, null);
     return AppPopover(
       key: ObjectKey(shown),
+      gap: Tokens.space2,
       builder: (context, handle) => _view(ref, handle),
       popoverBuilder: (context, handle) => _HoldsToast(
         child: EarlierReview(
@@ -101,18 +102,15 @@ class _Toast extends ConsumerWidget {
                 StarRating(
                   value: rating,
                   labelFor: rateStarLabel,
+                  hint: rateHint,
+                  clearLabel: clearRatingLabel,
                   onChanged: (score) {
-                    if (score == null) return;
                     host.rate(score);
                     ref.read(entryActionsProvider).rate(review.entryId, score);
                   },
                 ),
                 const Spacer(),
-                AppButton(
-                  label: reviewLabel,
-                  kind: ButtonKind.secondary,
-                  onPressed: reviewPopover?.open,
-                ),
+                AppButton(label: reviewLabel, onPressed: reviewPopover?.open),
               ],
             ),
     );

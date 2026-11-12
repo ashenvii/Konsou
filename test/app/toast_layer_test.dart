@@ -17,7 +17,7 @@ class FakeActions implements EntryActions {
   final calls = <String>[];
 
   @override
-  Future<void> rate(String entryId, int score) async =>
+  Future<void> rate(String entryId, int? score) async =>
       calls.add('rate $entryId $score');
 
   @override
@@ -183,6 +183,25 @@ void main() {
       expect(actions.calls, ['rate e9 8']);
       expect(find.text('Rated 8'), findsOneWidget);
       expect(find.byType(ToastView), findsOneWidget);
+    });
+
+    testToast('the number follows the pointer, and the score can be cleared', (
+      tester,
+    ) async {
+      await showReview(tester);
+      expect(find.text('Rate it'), findsOneWidget);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(tester.getCenter(find.bySemanticsLabel('Rate 8')));
+      await tester.pump();
+      expect(find.text('8'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Rate 8'));
+      await tester.pump();
+      expect(find.text('Clear'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Rate 8'));
+      await tester.pump();
+      expect(actions.calls, ['rate e9 8', 'rate e9 null']);
+      expect(find.text('Rated 8'), findsNothing);
     });
 
     testToast('Review opens the list: stories ticked, extras not', (

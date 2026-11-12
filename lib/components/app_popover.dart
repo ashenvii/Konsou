@@ -25,11 +25,15 @@ class AppPopover extends StatefulWidget {
     super.key,
     required this.builder,
     required this.popoverBuilder,
+    this.gap = 0,
   });
 
   final Widget Function(BuildContext context, PopoverHandle handle) builder;
   final Widget Function(BuildContext context, PopoverHandle handle)
   popoverBuilder;
+
+  /// Empty space between the anchor and what opens.
+  final double gap;
 
   @override
   State<AppPopover> createState() => _AppPopoverState();
@@ -81,6 +85,7 @@ class _AppPopoverState extends State<AppPopover> implements PopoverHandle {
       controller: _controller,
       overlayChildBuilder: (context) => _PopoverLayer(
         anchor: _anchor,
+        gap: widget.gap,
         onClose: close,
         child: widget.popoverBuilder(context, this),
       ),
@@ -92,11 +97,13 @@ class _AppPopoverState extends State<AppPopover> implements PopoverHandle {
 class _PopoverLayer extends StatelessWidget {
   const _PopoverLayer({
     required this.anchor,
+    required this.gap,
     required this.onClose,
     required this.child,
   });
 
   final Rect anchor;
+  final double gap;
   final VoidCallback onClose;
   final Widget child;
 
@@ -128,7 +135,7 @@ class _PopoverLayer extends StatelessWidget {
               ),
               Positioned.fill(
                 child: CustomSingleChildLayout(
-                  delegate: _PopoverLayout(anchor),
+                  delegate: _PopoverLayout(anchor, gap),
                   child: child,
                 ),
               ),
@@ -141,9 +148,10 @@ class _PopoverLayer extends StatelessWidget {
 }
 
 class _PopoverLayout extends SingleChildLayoutDelegate {
-  _PopoverLayout(this.anchor);
+  _PopoverLayout(this.anchor, this.gap);
 
   final Rect anchor;
+  final double gap;
 
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) =>
@@ -151,9 +159,9 @@ class _PopoverLayout extends SingleChildLayoutDelegate {
 
   @override
   Offset getPositionForChild(Size size, Size childSize) =>
-      placePopover(anchor: anchor, child: childSize, area: size);
+      placePopover(anchor: anchor, child: childSize, area: size, gap: gap);
 
   @override
   bool shouldRelayout(_PopoverLayout oldDelegate) =>
-      oldDelegate.anchor != anchor;
+      oldDelegate.anchor != anchor || oldDelegate.gap != gap;
 }

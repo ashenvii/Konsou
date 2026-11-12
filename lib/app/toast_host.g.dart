@@ -52,7 +52,7 @@ final class ToastHostProvider extends $NotifierProvider<ToastHost, ToastState> {
   }
 }
 
-String _$toastHostHash() => r'd9e09302bca7f721dc8ff7c5ec4451c4129ca81f';
+String _$toastHostHash() => r'1fa2cc193678e71c62e387e6d49a727c52b5c77b';
 
 /// The app's one toast at a time. A new toast replaces the one showing,
 /// except the review toast: others wait behind it, and only the newest

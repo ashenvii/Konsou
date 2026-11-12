@@ -111,9 +111,9 @@ class ToastHost extends _$ToastHost {
     _restartTimer();
   }
 
-  /// A rating from the review toast. It does not close the toast or touch
-  /// its timer.
-  void rate(int score) {
+  /// A rating from the review toast, or null when it was cleared. It does not
+  /// close the toast or touch its timer.
+  void rate(int? score) {
     if (state.shown == null) return;
     state = ToastState(
       shown: state.shown,

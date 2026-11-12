@@ -5,6 +5,7 @@ import '../design/tokens.dart';
 import '../library/earlier_titles.dart';
 import 'app_button.dart';
 import 'app_checkbox.dart';
+import 'text_action.dart';
 
 /// The words the review shows. The screen supplies them, so they live in one
 /// file.
@@ -100,9 +101,8 @@ class _EarlierReviewState extends State<EarlierReview> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  AppButton(
+                  TextAction(
                     label: widget.words.notNow,
-                    kind: ButtonKind.secondary,
                     onPressed: widget.onNotNow,
                   ),
                   const SizedBox(width: Tokens.space2),

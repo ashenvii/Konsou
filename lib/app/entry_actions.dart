@@ -63,8 +63,8 @@ class EntryActions {
     show(ToastMessage(reviewSavedForLater));
   }
 
-  /// A rating from the review toast.
-  Future<void> rate(String entryId, int score) async {
+  /// A rating from the review toast; null clears it.
+  Future<void> rate(String entryId, int? score) async {
     await edits.setScore(entryId, score);
     onEdited?.call();
   }

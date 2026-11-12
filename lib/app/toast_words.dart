@@ -52,6 +52,10 @@ String rated(int score) => 'Rated $score';
 /// What a screen reader says for one of the ten stars.
 String rateStarLabel(int score) => 'Rate $score';
 
+/// Beside the ten stars: before any rating, and over the score already given.
+const rateHint = 'Rate it';
+const clearRatingLabel = 'Clear';
+
 /// The review popover.
 const extrasHeading = 'Extras';
 const notNowLabel = 'Not now';

@@ -47,6 +47,27 @@ void main() {
       );
     });
 
+    test('a gap pushes it away from the anchor, below or above', () {
+      expect(
+        placePopover(
+          anchor: const Rect.fromLTWH(50, 40, 80, 36),
+          child: child,
+          area: area,
+          gap: 8,
+        ),
+        const Offset(50, 84),
+      );
+      expect(
+        placePopover(
+          anchor: const Rect.fromLTWH(50, 540, 80, 36),
+          child: child,
+          area: area,
+          gap: 8,
+        ),
+        const Offset(50, 432),
+      );
+    });
+
     test('never negative, even from a wide anchor or a small area', () {
       expect(
         placePopover(
