@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../components/countdown.dart';
+import '../components/hover_mark.dart';
 import '../components/key_cap.dart';
 import '../components/pressable.dart';
 import '../design/text_styles.dart';
@@ -165,7 +166,7 @@ class _AppShellState extends State<AppShell> with WindowListener {
         child: Column(
           children: [
             DecoratedBox(
-              decoration: BoxDecoration(color: _barTint),
+              decoration: BoxDecoration(gradient: _barTint),
               child: _TopBar(
                 maximized: _maximized,
                 onMinimize: windowManager.minimize,
@@ -225,8 +226,12 @@ class _AppShellState extends State<AppShell> with WindowListener {
 Color _tint(double alpha) => Tokens.surface.withValues(alpha: alpha);
 Color _line(double alpha) => Tokens.line.withValues(alpha: alpha);
 
-// the bar is lit evenly so the search well reads as dropped into it
-final _barTint = _tint(0.6);
+// the bar fades into the page the way the rail does, strongest at the left
+// edge and gone by the middle, so it is not a flat coloured strip
+final _barTint = LinearGradient(
+  colors: [_tint(0.55), _tint(0.22), _tint(0), _tint(0), _tint(0.3)],
+  stops: const [0, 0.3, 0.55, 0.82, 1],
+);
 
 final _railTint = LinearGradient(
   begin: Alignment.topCenter,
@@ -380,41 +385,51 @@ class _QuickSearchButton extends StatelessWidget {
       label: 'Search',
       onPressed: () {},
       builder: (context, state) {
-        final ink = state.hovered ? Tokens.inkSoft : Tokens.inkMuted;
+        final ink = state.hovered ? Tokens.ink : Tokens.inkMuted;
         // a well dropped into the bar: page ground, dark where the bar
-        // overhangs it, a faint lip below
-        return Container(
-          constraints: const BoxConstraints(minWidth: Tokens.quickSearchWidth),
-          height: Tokens.quickSearchHeight,
-          padding: const EdgeInsets.symmetric(horizontal: Tokens.space2),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: Tokens.ground,
-            border: Border(
-              top: const BorderSide(
-                color: Tokens.wellEdge,
-                width: Tokens.hoverEdge,
+        // overhangs it, a faint lip below. The hover is the app's live edge.
+        return HoverMark(
+          on: state.hovered,
+          child: Container(
+            // a fixed size and no alignment: an aligned Container grows to
+            // fill the bar and its fill paints over everything beside it
+            width: Tokens.quickSearchWidth,
+            height: Tokens.quickSearchHeight,
+            padding: const EdgeInsets.symmetric(horizontal: Tokens.space2),
+            decoration: BoxDecoration(
+              // darker than the bar around it, so it reads as dropped in
+              color: Tokens.wellEdge,
+              border: Border(
+                top: const BorderSide(
+                  color: Tokens.wellEdge,
+                  width: Tokens.hoverEdge,
+                ),
+                bottom: BorderSide(color: Tokens.ink.withValues(alpha: 0.06)),
               ),
-              bottom: BorderSide(color: Tokens.ink.withValues(alpha: 0.06)),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppIcon(AppIcons.search, size: Tokens.iconSize, color: ink),
-              const SizedBox(width: Tokens.space2),
-              Text(
-                'Search anime',
-                maxLines: 1,
-                softWrap: false,
-                style: AppText.label(ink),
-              ),
-              const SizedBox(width: Tokens.space4),
-              const KeyCaps('Ctrl+K'),
-            ],
+            child: Row(
+              children: [
+                AppIcon(AppIcons.search, size: Tokens.iconSize, color: ink),
+                const SizedBox(width: Tokens.space2),
+                Expanded(
+                  child: Text(
+                    _searchPlaceholder,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.label(ink),
+                  ),
+                ),
+                const SizedBox(width: Tokens.space2),
+                const KeyCaps('Ctrl+K'),
+              ],
+            ),
           ),
         );
       },
     );
   }
 }
+
+// says what the box does: it looks in the user's list first, then everywhere
+const _searchPlaceholder = 'quick search';
