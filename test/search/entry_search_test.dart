@@ -115,14 +115,6 @@ void main() {
     expect(search.findEntries('rick'), ['rick']);
   });
 
-  test('a limit cuts the answer', () async {
-    for (var number = 1; number <= 5; number++) {
-      await addEntry('e$number', name: 'Monogatari $number');
-    }
-    final search = await loadedSearch();
-    expect(search.findEntries('monogatari', limit: 3), hasLength(3));
-  });
-
   test('recent entries are the last changed, newest first', () async {
     for (var number = 1; number <= 7; number++) {
       await addEntry('e$number', changedAt: number * 10);

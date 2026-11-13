@@ -20,10 +20,12 @@ Future<http.Response> getSearch(
   required String clientId,
   required String query,
   int limit = 10,
+  int offset = 0,
 }) => client.get(
   Uri.https('api.myanimelist.net', '/v2/anime', {
     'q': query,
     'limit': '$limit',
+    if (offset > 0) 'offset': '$offset',
     'fields': searchFields,
   }),
   headers: {'X-MAL-CLIENT-ID': clientId},
@@ -46,6 +48,8 @@ class SearchRequest {
   Future<List<Map<String, dynamic>>?> search(
     String query, {
     required Lane lane,
+    int limit = 10,
+    int offset = 0,
   }) async {
     final runes = query.trim().runes;
     if (runes.length < minQueryLength) return [];
@@ -54,7 +58,13 @@ class SearchRequest {
     try {
       response = await gate.send(
         lane,
-        () => getSearch(client, clientId: clientId, query: sent),
+        () => getSearch(
+          client,
+          clientId: clientId,
+          query: sent,
+          limit: limit,
+          offset: offset,
+        ),
       );
     } on Exception {
       return null;

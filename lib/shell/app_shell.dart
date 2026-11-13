@@ -24,6 +24,7 @@ class AppShell extends StatefulWidget {
     this.overlay,
     this.beforeClose,
     this.openSupport,
+    this.onSearch,
   });
 
   final Widget child;
@@ -36,6 +37,9 @@ class AppShell extends StatefulWidget {
 
   /// Opens the support page from the heart. Null leaves the heart inert.
   final Future<void> Function()? openSupport;
+
+  /// Opens Quick search from the search well.
+  final VoidCallback? onSearch;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -173,6 +177,7 @@ class _AppShellState extends State<AppShell> with WindowListener {
                 onToggleMaximize: _toggleMaximize,
                 onClose: _close,
                 onSupport: widget.openSupport,
+                onSearch: widget.onSearch,
               ),
             ),
             Expanded(
@@ -228,27 +233,28 @@ Color _line(double alpha) => Tokens.line.withValues(alpha: alpha);
 
 // the bar fades into the page the way the rail does, strongest at the left
 // edge and gone by the middle, so it is not a flat coloured strip
-final _barTint = LinearGradient(
-  colors: [_tint(0.55), _tint(0.22), _tint(0), _tint(0), _tint(0.3)],
-  stops: const [0, 0.3, 0.55, 0.82, 1],
-);
+final _tints = [_tint(0.55), _tint(0.22), _tint(0), _tint(0), _tint(0.3)];
+const _tintStops = [0.0, 0.3, 0.55, 0.82, 1.0];
+final _lines = [_line(1), _line(1), _line(0), _line(0), _line(1)];
+
+final _barTint = LinearGradient(colors: _tints, stops: _tintStops);
 
 final _railTint = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
-  colors: [_tint(0.55), _tint(0.22), _tint(0), _tint(0), _tint(0.3)],
-  stops: const [0, 0.3, 0.55, 0.82, 1],
+  colors: _tints,
+  stops: _tintStops,
 );
 
 final _barLine = LinearGradient(
-  colors: [_line(1), _line(1), _line(0), _line(0), _line(1)],
+  colors: _lines,
   stops: const [0, 0.06, 0.35, 0.82, 1],
 );
 
 final _railLine = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
-  colors: [_line(1), _line(1), _line(0), _line(0), _line(1)],
+  colors: _lines,
   stops: const [0, 0.04, 0.45, 0.85, 1],
 );
 
@@ -259,6 +265,7 @@ class _TopBar extends StatelessWidget {
     required this.onToggleMaximize,
     required this.onClose,
     this.onSupport,
+    this.onSearch,
   });
 
   final bool maximized;
@@ -266,6 +273,7 @@ class _TopBar extends StatelessWidget {
   final VoidCallback onToggleMaximize;
   final VoidCallback onClose;
   final Future<void> Function()? onSupport;
+  final VoidCallback? onSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -331,7 +339,7 @@ class _TopBar extends StatelessWidget {
             ],
           ),
           // on top of the drag area, on the window's centre
-          const Center(child: _QuickSearchButton()),
+          Center(child: _QuickSearchButton(onPressed: onSearch)),
         ],
       ),
     );
@@ -375,15 +383,17 @@ class _BarIcon extends StatelessWidget {
 }
 
 /// The search field in the middle of the bar, drawn as a button: icon, the
-/// word, and the shortcut as key caps. It opens Quick search once that exists.
+/// word, and the shortcut as key caps. It opens Quick search.
 class _QuickSearchButton extends StatelessWidget {
-  const _QuickSearchButton();
+  const _QuickSearchButton({this.onPressed});
+
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
     return Pressable(
       label: 'Search',
-      onPressed: () {},
+      onPressed: onPressed ?? () {},
       builder: (context, state) {
         final ink = state.hovered ? Tokens.ink : Tokens.inkMuted;
         // a well dropped into the bar: page ground, dark where the bar

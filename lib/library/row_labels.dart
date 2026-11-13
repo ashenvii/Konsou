@@ -14,9 +14,10 @@ const _typeNames = {
 
 /// The small line under a title: "TV · 2023". A part MAL has not given is left
 /// out; with neither it is empty.
-String typeYearLine(LibraryRow row) {
-  final type = row.mediaType;
-  final date = row.startDate;
+String typeYearLine(LibraryRow row) => typeYear(row.mediaType, row.startDate);
+
+/// The same line from a media type and a start date as MAL gives them.
+String typeYear(String? type, String? date) {
   final parts = [
     if (type != null && type.isNotEmpty) _typeNames[type] ?? _capitalise(type),
     if (date != null && date.length >= 4) date.substring(0, 4),
@@ -28,9 +29,10 @@ String _capitalise(String text) => text[0].toUpperCase() + text.substring(1);
 
 /// Episodes watched out of the total. With no known total, only the watched
 /// count; with nothing to say, empty.
-String progressText(LibraryRow row) {
-  final total = row.episodes;
-  final watched = row.episodesWatched;
+String progressText(LibraryRow row) =>
+    episodeProgress(row.episodesWatched, row.episodes);
+
+String episodeProgress(int watched, int? total) {
   if (total != null && total > 0) return '$watched / $total';
   return watched > 0 ? '$watched' : '';
 }
@@ -49,5 +51,6 @@ String chipCount(LibraryRow row) {
 }
 
 /// The title to draw. An entry whose name has not come in yet says so.
-String titleText(LibraryRow row) =>
-    row.name.isEmpty ? 'Loading details' : row.name;
+String titleText(LibraryRow row) => titleOrLoading(row.name);
+
+String titleOrLoading(String name) => name.isEmpty ? 'Loading details' : name;

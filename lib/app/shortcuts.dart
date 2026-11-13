@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../library/library_view.dart';
 import '../screens/library/library_keys.dart';
 import 'library_providers.dart';
+import 'quick_search_providers.dart';
 import 'toast_host.dart';
 
 class AppShortcut {
@@ -17,6 +18,7 @@ class AppShortcut {
 
 const appShortcuts = [
   AppShortcut('Undo', 'Ctrl+Z', 'While a toast with Undo shows'),
+  AppShortcut('Quick search', 'Ctrl+K', 'Anywhere'),
   AppShortcut('Find a title', 'Ctrl+F', 'Library'),
   AppShortcut('Show All', 'Alt+1', 'Library'),
   AppShortcut('Show Watching', 'Alt+2', 'Library'),
@@ -56,15 +58,17 @@ class AppShortcuts extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // the Library's keys wait while the review is open over it
-    final reviewOpen = ref.watch(
-      toastHostProvider.select((state) => state.reviewOpen),
-    );
-    final libraryActive = libraryOpen && !reviewOpen;
+    // the Library's keys wait while the review or Quick search is open over it
+    final covered =
+        ref.watch(toastHostProvider.select((state) => state.reviewOpen)) ||
+        ref.watch(quickSearchProvider.select((state) => state.open));
+    final libraryActive = libraryOpen && !covered;
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () =>
             ref.read(toastHostProvider.notifier).undoNewest(),
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true): () =>
+            ref.read(quickSearchProvider.notifier).toggle(),
         if (libraryActive) ...{
           const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
               ref.read(libraryFindChoiceProvider.notifier).open(),

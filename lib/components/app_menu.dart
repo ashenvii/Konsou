@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import 'floating_panel.dart';
+import 'hairline.dart';
 import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
 import 'hold_row.dart';
@@ -65,7 +66,7 @@ class AppMenu extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (final entry in entries) ...[
-                if (entry.dividerAbove) const _Hairline(),
+                if (entry.dividerAbove) const Hairline(),
                 entry.hold
                     ? HoldRow(
                         label: entry.label,
@@ -76,7 +77,7 @@ class AppMenu extends StatelessWidget {
                     : _MenuRow(entry, showMarks: marks),
               ],
               if (footnote != null) ...[
-                const _Hairline(),
+                const Hairline(),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: Tokens.space3,
@@ -95,14 +96,6 @@ class AppMenu extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Hairline extends StatelessWidget {
-  const _Hairline();
-
-  @override
-  Widget build(BuildContext context) =>
-      const SizedBox(height: 1, child: ColoredBox(color: Tokens.line));
 }
 
 class _MenuRow extends StatelessWidget {

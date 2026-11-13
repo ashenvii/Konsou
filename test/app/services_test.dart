@@ -179,7 +179,7 @@ void main() {
     await services.start();
     await Future<void>.delayed(Duration.zero);
     expect(covers, [1]);
-    // after sync, after the cover, and at the end of the chain
+    // after sync and at the end of the chain
     expect(changes, greaterThanOrEqualTo(2));
   });
 

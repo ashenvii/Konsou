@@ -47,20 +47,19 @@ KeyEventResult handleLibraryKey(WidgetRef ref, KeyEvent event) {
   final entryId =
       ref.read(libraryHoveredRowProvider) ?? RowMarker.ofFocus()?.entryId;
   if (entryId == null) return KeyEventResult.ignored;
+  // kept before the edit, so the reload the edit starts never drops the row
+  ref.read(libraryKeptProvider.notifier).keep(entryId);
   final actions = ref.read(entryActionsProvider);
-  final done = status != null
-      ? actions.setStatus(entryId, status)
-      : actions.addEpisode(entryId);
-  done.then((_) {
-    ref.read(libraryKeptProvider.notifier).keep(entryId);
-    ref.invalidate(libraryRowsProvider);
-  });
+  if (status != null) {
+    actions.setStatus(entryId, status);
+  } else {
+    actions.addEpisode(entryId);
+  }
   return KeyEventResult.handled;
 }
 
 EntryStatus? _statusFor(LogicalKeyboardKey key) {
-  final index = [...digitKeys, ...numpadKeys].indexOf(key) % digitKeys.length;
-  return [...digitKeys, ...numpadKeys].contains(key)
-      ? EntryMenu.keyed[index]
-      : null;
+  final digit = digitKeys.indexOf(key);
+  final index = digit >= 0 ? digit : numpadKeys.indexOf(key);
+  return index < 0 ? null : EntryMenu.keyed[index];
 }

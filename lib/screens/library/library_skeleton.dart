@@ -20,20 +20,6 @@ class LibrarySkeleton extends StatelessWidget {
   }
 }
 
-class _Line extends StatelessWidget {
-  const _Line({required this.share, required this.height});
-
-  final double share;
-  final double height;
-
-  @override
-  Widget build(BuildContext context) => FractionallySizedBox(
-    widthFactor: share,
-    alignment: Alignment.centerLeft,
-    child: Skeleton(height: height),
-  );
-}
-
 class _GridSkeleton extends StatelessWidget {
   const _GridSkeleton();
 
@@ -57,9 +43,7 @@ class _GridSkeleton extends StatelessWidget {
                 height: CoverImage.heightFor(layout.cardWidth),
               ),
               const SizedBox(height: Tokens.space2),
-              const _Line(share: 0.8, height: Tokens.text3),
-              const SizedBox(height: Tokens.space1),
-              const _Line(share: 0.45, height: Tokens.text2),
+              const SkeletonLines(title: 0.8, line: 0.45, gap: Tokens.space1),
             ],
           ),
         );
@@ -92,17 +76,7 @@ class _ListSkeleton extends StatelessWidget {
               height: CoverImage.heightFor(Tokens.listCoverWidth),
             ),
             const SizedBox(width: Tokens.space3),
-            const Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _Line(share: 0.5, height: Tokens.text3),
-                  SizedBox(height: Tokens.space2),
-                  _Line(share: 0.25, height: Tokens.text2),
-                ],
-              ),
-            ),
+            const Expanded(child: SkeletonLines(title: 0.5, line: 0.25)),
           ],
         ),
       ),

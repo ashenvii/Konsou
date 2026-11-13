@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../components/app_button.dart';
@@ -7,6 +8,8 @@ import '../gallery/gallery_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../shell/app_rail.dart';
 import '../shell/app_shell.dart';
+import 'quick_search_layer.dart';
+import 'quick_search_providers.dart';
 import 'shortcuts.dart';
 import 'title_page.dart';
 import 'toast_layer.dart';
@@ -26,11 +29,19 @@ GoRouter buildRouter({
           child: AppShell(
             beforeClose: beforeClose,
             openSupport: openSupport,
+            onSearch: () => ProviderScope.containerOf(
+              context,
+            ).read(quickSearchProvider.notifier).open(),
             rail: AppRail(
               location: state.matchedLocation,
               onSelect: (path) => context.go(path),
             ),
-            overlay: (inset) => ToastLayer(leftInset: inset),
+            overlay: (inset) => Stack(
+              children: [
+                QuickSearchLayer(onBrowse: () => context.go(discoverPath)),
+                ToastLayer(leftInset: inset),
+              ],
+            ),
             child: child,
           ),
         ),

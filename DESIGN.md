@@ -13,7 +13,7 @@ colors:
   mint: "#3DD6A0"
   red: "#E94D52"
   key-face: "#303B42"
-  key-slab: "#151E23"
+  key-slab: "#262F35"
   well-edge: "#030608"
 typography:
   heading:
@@ -108,7 +108,7 @@ A near-black teal ground with cool grey inks and two signal colors.
 - **Raised Teal** (#121B20): menus and popovers.
 - **Divider Slate** (#262F35): the hairline inside menus. Decoration only.
 - **Ink** (#F4F5F5), **Soft Ink** (#BCC1C4), **Muted Ink** (#748992): main, secondary and meta text.
-- **Key Face** (#303B42) and **Key Slab** (#151E23): the two steps of a key cap. **Well Edge** (#030608): the top cut of the dropped search well.
+- **Key Face** (#303B42) and **Key Slab** (#262F35, the hairline tone, so the key's side shows against the ground): the two steps of a key cap. **Well Edge** (#030608): the top cut of the dropped search well.
 
 ### Named Rules
 **The Rare Color Rule.** Amber, mint and red together cover a small part of any screen. If a screen needs a second place to look, it is wrong.
@@ -163,7 +163,7 @@ Radius is 0 everywhere. No pills, no circles except the mascot's own geometry. I
 - **Style:** Panel Teal, 36 tall, Soft Ink icon, an Esc hint. The top search is the dropped well: Ground fill, 2px Well Edge top, faint lip, centred, with key caps.
 
 ### Key caps
-- **Style:** a Key Face over a 3px Key Slab, mono 11 bold, joined by a muted plus. They size to whatever keys the user sets.
+- **Style:** a Key Face over a 4px Key Slab, mono 11 bold, joined by a muted plus. They size to whatever keys the user sets.
 
 ### Navigation
 - **Style:** the Windows rail holds icons only, amber mark on the active item, mint count badge on Watching. Each icon shows its name in a hover tip beside it (a Raised Teal panel, Ink text, no click taken). Android gets labels on the bottom bar.

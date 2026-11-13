@@ -208,9 +208,13 @@ class EntryEdits {
   /// Sets each earlier title to [status]. Completed fills the episode count
   /// and logs an estimated completion; any other status only sets the status
   /// and keeps the episodes. Titles a lock forbids are skipped and not counted.
+  ///
+  /// [withName] saves each added title's name on its new entry, so a title
+  /// added from a search is readable before its details come in.
   Future<EarlierMark> markEarlier(
     List<EarlierTitle> titles, {
     EntryStatus status = EntryStatus.completed,
+    bool withName = false,
   }) async {
     final onList = [for (final title in titles) ?title.entryId];
     final restore = await snapshot(onList);
@@ -231,6 +235,7 @@ class EntryEdits {
                   status: EntryStatus.planned.value,
                   addedAt: _now().millisecondsSinceEpoch,
                   progressChangedAt: time,
+                  name: withName ? Value(title.name) : const Value.absent(),
                 ),
               );
           await _record

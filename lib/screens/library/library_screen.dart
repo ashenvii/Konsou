@@ -131,8 +131,10 @@ class LibraryScreen extends ConsumerWidget {
                     ? const _Message('Your library could not be read.')
                     : LibrarySkeleton(layout: layout))
               : HoldWhileScrolling(
-                  // a new status, sort or search starts at the top, at once
-                  key: ValueKey('$tab ${sort.name} ${find ?? ''}'),
+                  // a new status, sort, view or search starts at the top, at
+                  // once. the view is here too: swapping the scroll view
+                  // mid-scroll would never report that scroll's end
+                  key: ValueKey('$tab $sort $layout ${find ?? ''}'),
                   value: (
                     rows: RowsSnapshot(
                       sortRows(rowsInTab(all, tab, keep: kept), sort),
@@ -338,32 +340,6 @@ class _FindState extends ConsumerState<_Find> with HoverDelaysState<_Find> {
   }
 }
 
-Widget _grid({
-  required int Function(GridLayout layout) itemCount,
-  required Widget Function(GridLayout layout, int index) itemBuilder,
-  ScrollPhysics? physics,
-}) {
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      final layout = GridLayout.forWidth(
-        constraints.maxWidth - PageFrame.content.horizontal,
-      );
-      return SmoothScroll(
-        builder: (context, controller) => GridView.builder(
-          controller: controller,
-          // rows a screen either side are built, so they load ahead of the view
-          scrollCacheExtent: const ScrollCacheExtent.viewport(1),
-          padding: PageFrame.content,
-          physics: physics,
-          gridDelegate: layout.delegate,
-          itemCount: itemCount(layout),
-          itemBuilder: (context, index) => itemBuilder(layout, index),
-        ),
-      );
-    },
-  );
-}
-
 class _Rows extends StatelessWidget {
   const _Rows({
     required this.rows,
@@ -408,21 +384,30 @@ class _Rows extends StatelessWidget {
       // A to Z keeps the rows under a heading for each letter
       return LetteredRows(rows: rows, layout: layout, itemBuilder: _item);
     }
-    if (layout == LibraryLayout.grid) {
-      return _grid(
-        itemCount: (_) => rows.length,
-        itemBuilder: (_, index) => _item(context, rows[index]),
-      );
-    }
+    // rows a screen either side are built, so they load ahead of the view
+    const ahead = ScrollCacheExtent.viewport(1);
     return SmoothScroll(
-      builder: (context, controller) => ListView.builder(
-        controller: controller,
-        scrollCacheExtent: const ScrollCacheExtent.viewport(1),
-        padding: PageFrame.content,
-        itemExtent: Tokens.listRowHeight,
-        itemCount: rows.length,
-        itemBuilder: (context, index) => _item(context, rows[index]),
-      ),
+      builder: (context, controller) => layout == LibraryLayout.grid
+          ? LayoutBuilder(
+              builder: (context, constraints) => GridView.builder(
+                controller: controller,
+                scrollCacheExtent: ahead,
+                padding: PageFrame.content,
+                gridDelegate: GridLayout.forWidth(
+                  constraints.maxWidth - PageFrame.content.horizontal,
+                ).delegate,
+                itemCount: rows.length,
+                itemBuilder: (context, index) => _item(context, rows[index]),
+              ),
+            )
+          : ListView.builder(
+              controller: controller,
+              scrollCacheExtent: ahead,
+              padding: PageFrame.content,
+              itemExtent: Tokens.listRowHeight,
+              itemCount: rows.length,
+              itemBuilder: (context, index) => _item(context, rows[index]),
+            ),
     );
   }
 
@@ -472,10 +457,10 @@ Future<void> _edit(
   bool keepInView = true,
 }) async {
   final scope = ProviderScope.containerOf(context);
-  await action(scope.read(entryActionsProvider));
-  // the row stays where it is, showing its new status, until the tab changes
+  // the row stays where it is, showing its new status, until the tab changes.
+  // kept before the edit, so the reload the edit starts never drops the row
   if (keepInView) scope.read(libraryKeptProvider.notifier).keep(row.entryId);
-  scope.invalidate(libraryRowsProvider);
+  await action(scope.read(entryActionsProvider));
 }
 
 class _RowMenu extends StatelessWidget {

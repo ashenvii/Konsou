@@ -75,8 +75,8 @@ abstract final class Tokens {
 
   // key cap C, locked by the owner 2026-11-13: a face and a slab under it
   static const Color keyFace = Color(0xFF303B42);
-  static const Color keySlab = Color(0xFF151E23);
-  static const double keyDepth = 3;
+  static const Color keySlab = Color(0xFF262F35);
+  static const double keyDepth = 4;
   static const double keyPadX = 6;
   static const double keyPadY = 2;
 
@@ -84,6 +84,13 @@ abstract final class Tokens {
   static const Color wellEdge = Color(0xFF030608);
   static const double quickSearchWidth = 280;
   static const double quickSearchHeight = 28;
+
+  // the quick search popover, from the wireframe the owner approved 2026-11-13
+  static const double quickPanelWidth = 560;
+  static const double quickPanelMaxHeight = 520;
+  static const double quickFieldHeight = 52;
+  static const double quickFooterHeight = 48;
+  static const double quickCoverWidth = 30;
 
   // line height for text that can wrap onto a second line (owner, 2026-11-13);
   // single-line labels stay at 1 inside their fixed controls.

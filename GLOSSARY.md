@@ -185,9 +185,13 @@ The title bar button that lists alerts: new seasons and extras found by the fran
 _Avoid_: Notifications, inbox
 
 **Review**:
-The small window from a toast that lists the earlier titles of a franchise to mark as completed after a later one is finished.
+The small window from a toast that lists the earlier titles of a franchise to give a status, Completed by default, after a later one is finished.
 _Avoid_: Catch-up, backfill
 
 **Toast**:
 A short message at the bottom of the screen with an optional action, such as Undo. It never closes while the pointer is on it or while a review is open.
 _Avoid_: Snackbar, notification
+
+**Sweep button**:
+A button that is only its text at rest. Every so often one live-color sweep crosses it to say it can be clicked, and on hover its button shape appears. Used for Screenshot in Quick search and Surprise in Discover.
+_Avoid_: Ghost button, shimmer button

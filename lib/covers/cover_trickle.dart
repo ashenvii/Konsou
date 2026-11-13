@@ -8,13 +8,10 @@ import 'cover_store.dart';
 /// background once its details are in. Newest change first, so what the user
 /// is working on comes before the old shelf.
 class CoverTrickle {
-  CoverTrickle({required this.databases, required this.store, this.onProgress});
+  CoverTrickle({required this.databases, required this.store});
 
   final Databases databases;
   final CoverStore store;
-
-  /// Runs after each cover is tried.
-  final void Function()? onProgress;
   var _stopped = false;
 
   /// Runs until every entry has its cover, or [stop] is called, then trims the
@@ -29,7 +26,6 @@ class CoverTrickle {
       work: (malId) async =>
           await store.fetchCover(malId, CoverSize.medium, lane: Lane.trickle) !=
           CoverOutcome.fetched,
-      onItem: onProgress,
     );
     await store.trimPool();
   }
@@ -50,13 +46,11 @@ class CoverTrickle {
       WHERE detail.cover_medium_url IS NOT NULL
         AND detail.cover_medium_url <> ''
         AND (cover.provider_id IS NULL OR cover.url <> detail.cover_medium_url)
+        AND reference.provider_id NOT IN (${skip.join(', ')})
       GROUP BY reference.provider_id
       ORDER BY MAX(entry.updated_at) DESC, reference.provider_id
+      LIMIT 1
       ''').get();
-    for (final row in rows) {
-      final malId = row.read<int>('provider_id');
-      if (!skip.contains(malId)) return malId;
-    }
-    return null;
+    return rows.isEmpty ? null : rows.single.read<int>('provider_id');
   }
 }

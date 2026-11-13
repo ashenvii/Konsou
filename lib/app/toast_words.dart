@@ -24,6 +24,8 @@ String reviewMarkedAs(int n, EntryStatus status) {
 
 const reviewSetTo = 'Set to';
 
+const addedCompleted = 'Added as Completed';
+
 String autoMarked(int n) => 'Also marked $n earlier';
 
 const reviewSavedForLater = 'Saved for later.';

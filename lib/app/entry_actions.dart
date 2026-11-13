@@ -39,6 +39,24 @@ class EntryActions {
   Future<EditResult> rewatch(String entryId) =>
       _run(entryId, () => edits.rewatch(entryId));
 
+  /// Adds a title that is not on the list as Completed, from a search result.
+  /// A title still airing or not yet aired is refused, as the status menu does.
+  Future<void> addCompleted(EarlierTitle title, {String? airing}) async {
+    final locked = switch (airing) {
+      'not_yet_aired' => EditResult.notAiredYet,
+      'currently_airing' => EditResult.stillAiring,
+      _ => null,
+    };
+    if (locked != null) {
+      _explainRefusal(locked);
+      return;
+    }
+    final mark = await edits.markEarlier([title], withName: true);
+    onEdited?.call();
+    if (mark.applied == 0) return;
+    show(ToastMessage(addedCompleted, undo: _undoable(mark.undo.run)));
+  }
+
   Future<void> remove(List<String> entryIds) async {
     await edits.remove(entryIds);
     onEdited?.call();

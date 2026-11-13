@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import 'floating_panel.dart';
+import 'hairline.dart';
 import 'smooth_scroll.dart';
 import '../library/earlier_titles.dart';
 import '../library/entry_status.dart';
@@ -230,7 +231,7 @@ class _GroupHeading extends StatelessWidget {
           const SizedBox(width: Tokens.space2),
           Text('$count', style: AppText.caption(Tokens.inkMuted)),
           const SizedBox(width: Tokens.space3),
-          Expanded(child: Container(height: 1, color: Tokens.line)),
+          const Expanded(child: Hairline()),
         ],
       ),
     );

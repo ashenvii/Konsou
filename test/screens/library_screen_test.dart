@@ -54,33 +54,41 @@ LibraryRow row(
 class FakeEdits implements EntryActions {
   final calls = <String>[];
 
+  // the real actions reload the rows after every edit
+  void Function()? reload;
+
+  void _did(String call) {
+    calls.add(call);
+    reload?.call();
+  }
+
   @override
   Future<EditResult> setStatus(String entryId, EntryStatus target) async {
-    calls.add('status $entryId ${target.name}');
+    _did('status $entryId ${target.name}');
     return EditResult.done;
   }
 
   @override
   Future<EditResult> addEpisode(String entryId) async {
-    calls.add('episode $entryId');
+    _did('episode $entryId');
     return EditResult.done;
   }
 
   @override
   Future<EditResult> uncheck(String entryId) async {
-    calls.add('uncheck $entryId');
+    _did('uncheck $entryId');
     return EditResult.done;
   }
 
   @override
   Future<EditResult> rewatch(String entryId) async {
-    calls.add('rewatch $entryId');
+    _did('rewatch $entryId');
     return EditResult.done;
   }
 
   @override
   Future<void> remove(List<String> entryIds) async {
-    calls.add('remove ${entryIds.join(',')}');
+    _did('remove ${entryIds.join(',')}');
   }
 
   @override
@@ -127,7 +135,9 @@ void main() {
                   ...row.entryIds,
             };
           }),
-          entryActionsProvider.overrideWithValue(edits),
+          entryActionsProvider.overrideWith(
+            (ref) => edits..reload = () => ref.invalidate(libraryRowsProvider),
+          ),
           coverSavedProvider.overrideWith((ref) => const Stream.empty()),
         ],
         child: Directionality(

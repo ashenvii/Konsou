@@ -73,11 +73,8 @@ class Services {
         gate: RequestGate(gap: coverRequestGap),
         onSaved: _coverSaved.add,
       );
-      coverTrickle = CoverTrickle(
-        databases: databases,
-        store: coverStore!,
-        onProgress: notifyDataChanged,
-      );
+      // a saved cover reaches the screen through coverSaved, not a reload
+      coverTrickle = CoverTrickle(databases: databases, store: coverStore!);
       scan = FranchiseScan(databases: databases, detailRequest: detailRequest);
     }
   }

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../data/databases.dart';
 import 'title_index.dart';
+import 'title_words.dart';
 import 'title_tree.dart';
 
 /// Search over the user's own entries, for the Library and Quick search.
@@ -17,14 +18,21 @@ class EntrySearch {
   Future<void> refresh() async => _tree = await loadTitleTree(_databases);
 
   /// Entry ids matching [query], best first. Empty until the first refresh.
-  List<String> findEntries(String query, {int? limit}) {
+  List<String> findEntries(String query) => [
+    for (final hit in _tree?.find(query) ?? const <TitleHit<TitleKey>>[])
+      ?hit.key.entryId,
+  ];
+
+  /// What [typed] reads as after each word is corrected from the titles Konsou
+  /// has seen, or null when that is what was typed or nothing can be told.
+  String? correctedQuery(String typed) {
     final tree = _tree;
-    if (tree == null) return [];
-    final ids = [
-      for (final hit in tree.find(query))
-        if (hit.key.entryId != null) hit.key.entryId!,
-    ];
-    return limit == null || ids.length <= limit ? ids : ids.sublist(0, limit);
+    if (tree == null) return null;
+    final corrected = tree.correctQuery(typed);
+    if (corrected.isEmpty || corrected == foldWords(typed).join(' ')) {
+      return null;
+    }
+    return corrected;
   }
 
   /// The entries changed last, newest first.

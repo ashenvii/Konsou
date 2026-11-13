@@ -1,5 +1,5 @@
-import '../search/title_words.dart';
 import 'library_row.dart';
+import 'library_view.dart';
 
 const letterHeadings = [
   '#',
@@ -36,10 +36,10 @@ String letterLabel(String letter) =>
     letter == '#' ? 'Numbers and symbols' : letter;
 
 String letterOf(String name) {
-  final words = foldWords(name);
-  if (words.isEmpty) return '#';
-  final first = words.first[0].toUpperCase();
-  return letterHeadings.contains(first) && first != '#' ? first : '#';
+  final folded = foldTitle(name);
+  if (folded.isEmpty) return '#';
+  final first = folded[0].toUpperCase();
+  return letterHeadings.contains(first) ? first : '#';
 }
 
 List<({String letter, List<LibraryRow> rows})> groupByLetter(

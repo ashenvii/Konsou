@@ -48,14 +48,13 @@ Map<LibraryTab, int> countTabs(List<LibraryRow> rows) => {
 // folding is the slow part of a sort that runs every rebuild, so keep it
 final _foldedTitles = <String, String>{};
 
-String _foldedTitle(String name) =>
+/// A title as sorting and the letter headings read it.
+String foldTitle(String name) =>
     _foldedTitles[name] ??= foldWords(name).join(' ');
 
 List<LibraryRow> sortRows(List<LibraryRow> rows, LibrarySort sort) {
-  // fold each title once, not on every comparison
-  final keys = {for (final row in rows) row: _foldedTitle(row.name)};
   int byTitle(LibraryRow first, LibraryRow second) {
-    final byName = keys[first]!.compareTo(keys[second]!);
+    final byName = foldTitle(first.name).compareTo(foldTitle(second.name));
     return byName != 0 ? byName : first.entryId.compareTo(second.entryId);
   }
 
