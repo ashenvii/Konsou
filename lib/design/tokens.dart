@@ -2,7 +2,7 @@ import 'package:flutter/painting.dart';
 
 abstract final class Tokens {
   // colors
-  static const Color ground = Color(0xFF080D10);
+  static const Color ground = Color(0xFF060A0D);
   static const Color ink = Color(0xFFF4F5F5);
   static const Color inkSoft = Color(0xFFBCC1C4);
   static const Color inkMuted = Color(0xFF748992);
@@ -10,10 +10,10 @@ abstract final class Tokens {
   static const Color mint = Color(0xFF3DD6A0);
   static const Color red = Color(0xFFE94D52);
   // fill of secondary buttons, fields and panels (approved 2026-11-08).
-  static const Color surface = Color(0xFF0F1F25);
+  static const Color surface = Color(0xFF0E1E24);
   // floating panels and hairlines: even OKLCH steps at ground's hue (owner, 2026-11-12)
   static const Color raised = Color(0xFF121B20);
-  static const Color line = Color(0xFF262F35);
+  static const Color line = Color(0xFF384147);
   static const Color shadow = Color(0x8C000000);
 
   // radius: square everywhere
@@ -81,7 +81,7 @@ abstract final class Tokens {
   static const double keyPadY = 2;
 
   // the quick search button in the top bar
-  static const Color wellEdge = Color(0xFF030608);
+  static const Color wellEdge = Color(0xFF101518);
   static const double quickSearchWidth = 280;
   static const double quickSearchHeight = 28;
 

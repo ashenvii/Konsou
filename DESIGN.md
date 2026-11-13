@@ -2,10 +2,10 @@
 name: Konsou
 description: A flat, square, dark anime tracker where amber marks the chosen thing and mint marks what is live.
 colors:
-  ground: "#080D10"
-  surface: "#0F1F25"
+  ground: "#060A0D"
+  surface: "#0E1E24"
   raised: "#121B20"
-  line: "#262F35"
+  line: "#384147"
   ink: "#F4F5F5"
   ink-soft: "#BCC1C4"
   ink-muted: "#748992"
@@ -14,7 +14,7 @@ colors:
   red: "#E94D52"
   key-face: "#303B42"
   key-slab: "#262F35"
-  well-edge: "#030608"
+  well-edge: "#101518"
 typography:
   heading:
     fontFamily: "IBM Plex Sans, system-ui, sans-serif"
@@ -103,12 +103,12 @@ A near-black teal ground with cool grey inks and two signal colors.
 - **Remove Red** (#E94D52): remove, exclude, sync lost. Never the only cue. Lifted from #E5484D on 2026-11-13 to pass 4.5:1 on every fill (4.54 on panel).
 
 ### Neutral
-- **Night Ground** (#080D10): the page, rail and top bar.
-- **Panel Teal** (#0F1F25): fields, secondary buttons, panels, skeletons.
+- **Night Ground** (#060A0D): the page, rail and top bar.
+- **Panel Teal** (#0E1E24): fields, secondary buttons, panels, skeletons.
 - **Raised Teal** (#121B20): menus and popovers.
-- **Divider Slate** (#262F35): the hairline inside menus. Decoration only.
+- **Divider Slate** (#384147): the hairline inside menus. Decoration only.
 - **Ink** (#F4F5F5), **Soft Ink** (#BCC1C4), **Muted Ink** (#748992): main, secondary and meta text.
-- **Key Face** (#303B42) and **Key Slab** (#262F35, the hairline tone, so the key's side shows against the ground): the two steps of a key cap. **Well Edge** (#030608): the top cut of the dropped search well.
+- **Key Face** (#303B42) and **Key Slab** (#262F35, the hairline tone, so the key's side shows against the ground): the two steps of a key cap. **Well Edge** (#101518): the top cut of the dropped search well.
 
 ### Named Rules
 **The Rare Color Rule.** Amber, mint and red together cover a small part of any screen. If a screen needs a second place to look, it is wrong.

@@ -233,7 +233,7 @@ Color _line(double alpha) => Tokens.line.withValues(alpha: alpha);
 
 // the bar fades into the page the way the rail does, strongest at the left
 // edge and gone by the middle, so it is not a flat coloured strip
-final _tints = [_tint(0.55), _tint(0.22), _tint(0), _tint(0), _tint(0.3)];
+final _tints = [_tint(0.69), _tint(0.28), _tint(0), _tint(0), _tint(0.38)];
 const _tintStops = [0.0, 0.3, 0.55, 0.82, 1.0];
 final _lines = [_line(1), _line(1), _line(0), _line(0), _line(1)];
 
