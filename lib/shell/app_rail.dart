@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../components/hover_mark.dart';
+import '../components/hover_tip.dart';
 import '../components/pressable.dart';
 import '../design/tokens.dart';
 import '../icons/app_icon.dart';
@@ -81,42 +82,47 @@ class _RailItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: Tokens.space2),
-      child: Semantics(
+      child: HoverTip(
         label: destination.label,
-        child: Pressable(
-          onPressed: () => onSelect(destination.path),
-          selected: active,
-          builder: (context, state) => SizedBox(
-            width: Tokens.railWidth,
-            height: Tokens.railItemSize,
-            child: Stack(
-              children: [
-                Center(
-                  child: HoverMark(
-                    on: state.hovered,
-                    child: SizedBox.square(
-                      dimension: Tokens.railItemSize,
-                      child: Center(
-                        child: AppIcon(
-                          destination.icon,
-                          size: Tokens.iconSize,
-                          color: active
-                              ? Tokens.amber
-                              : (state.hovered ? Tokens.ink : Tokens.inkMuted),
+        child: Semantics(
+          label: destination.label,
+          child: Pressable(
+            onPressed: () => onSelect(destination.path),
+            selected: active,
+            builder: (context, state) => SizedBox(
+              width: Tokens.railWidth,
+              height: Tokens.railItemSize,
+              child: Stack(
+                children: [
+                  Center(
+                    child: HoverMark(
+                      on: state.hovered,
+                      child: SizedBox.square(
+                        dimension: Tokens.railItemSize,
+                        child: Center(
+                          child: AppIcon(
+                            destination.icon,
+                            size: Tokens.iconSize,
+                            color: active
+                                ? Tokens.amber
+                                : (state.hovered
+                                      ? Tokens.ink
+                                      : Tokens.inkMuted),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                if (active)
-                  const Positioned(
-                    right: 0,
-                    top: Tokens.space2,
-                    bottom: Tokens.space2,
-                    width: Tokens.hoverEdge,
-                    child: ColoredBox(color: Tokens.amber),
-                  ),
-              ],
+                  if (active)
+                    const Positioned(
+                      right: 0,
+                      top: Tokens.space2,
+                      bottom: Tokens.space2,
+                      width: Tokens.hoverEdge,
+                      child: ColoredBox(color: Tokens.amber),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

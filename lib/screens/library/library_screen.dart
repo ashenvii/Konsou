@@ -10,9 +10,9 @@ import '../../components/app_popover.dart';
 import '../../components/countdown.dart';
 import '../../components/find_field.dart';
 import '../../components/heading_switcher.dart';
-import '../../components/hover_popover.dart';
 import '../../components/icon_square_button.dart';
 import '../../components/more_button.dart';
+import '../../components/menu_switcher.dart';
 import '../../components/page_frame.dart';
 import '../../components/hold_while_scrolling.dart';
 import '../../components/motion.dart';
@@ -101,8 +101,11 @@ class LibraryScreen extends ConsumerWidget {
                 layout: layout,
                 onLayout: ref.read(libraryLayoutChoiceProvider.notifier).select,
               ),
+              // the switch sits on the window's centre, not the page's
+              SizedBox(width: PageFrame.railInset),
               Expanded(
-                child: Align(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -193,40 +196,6 @@ class _StatusSwitcher extends StatelessWidget {
   }
 }
 
-class _ChoiceButton extends StatelessWidget {
-  const _ChoiceButton({required this.label, required this.choices});
-
-  final String label;
-  final List<({String label, bool selected, VoidCallback pick})> choices;
-
-  @override
-  Widget build(BuildContext context) {
-    return HoverPopover(
-      gap: Tokens.space1,
-      builder: (context, handle) => AppButton(
-        label: label,
-        kind: ButtonKind.secondary,
-        opensMenu: true,
-        menuOpen: handle.isOpen,
-        onPressed: handle.open,
-      ),
-      popoverBuilder: (context, handle) => AppMenu(
-        entries: [
-          for (final choice in choices)
-            MenuEntry(
-              label: choice.label,
-              selected: choice.selected,
-              onPressed: () {
-                choice.pick();
-                handle.close();
-              },
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SortButton extends StatelessWidget {
   const _SortButton({required this.sort, required this.onSort});
 
@@ -235,14 +204,15 @@ class _SortButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _ChoiceButton(
-      label: _sortLabel(sort),
-      choices: [
+    return MenuSwitcher(
+      current: _sortLabel(sort),
+      style: AppText.label(Tokens.ink),
+      entries: [
         for (final choice in LibrarySort.values)
-          (
+          MenuEntry(
             label: _sortLabel(choice),
             selected: choice == sort,
-            pick: () => onSort(choice),
+            onPressed: () => onSort(choice),
           ),
       ],
     );

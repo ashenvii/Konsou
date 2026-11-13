@@ -14,6 +14,29 @@ void main() {
     const area = Size(800, 600);
     const child = Size(200, 100);
 
+    test('beside the anchor, centred on it', () {
+      expect(
+        placeBeside(
+          anchor: const Rect.fromLTWH(0, 100, 48, 36),
+          child: const Size(80, 30),
+          area: area,
+          gap: 4,
+        ),
+        const Offset(52, 103),
+      );
+    });
+
+    test('beside the anchor flips left and stays inside, when it must', () {
+      expect(
+        placeBeside(
+          anchor: const Rect.fromLTWH(760, 0, 40, 36),
+          child: const Size(80, 30),
+          area: area,
+        ),
+        const Offset(680, 3),
+      );
+    });
+
     test('under the anchor, lined up on the left', () {
       expect(
         placePopover(

@@ -47,7 +47,7 @@ class ToastView extends StatelessWidget {
                 // announced when it appears, without taking focus
                 child: Semantics(
                   liveRegion: true,
-                  child: Text(message, style: AppText.label(Tokens.ink)),
+                  child: Text(message, style: AppText.paragraph(Tokens.ink)),
                 ),
               ),
             ),

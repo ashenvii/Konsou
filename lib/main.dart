@@ -32,10 +32,18 @@ Future<void> main() async {
     tokenStore: SecureTokenStore(),
     openBrowser: (url) => launchUrl(url, mode: LaunchMode.externalApplication),
   );
+  final support = Uri.tryParse(services.keys.kofiUrl);
   runApp(
     ProviderScope(
       overrides: [servicesProvider.overrideWithValue(services)],
-      child: KonsouApp(router: buildRouter(beforeClose: services.stop)),
+      child: KonsouApp(
+        router: buildRouter(
+          beforeClose: services.stop,
+          openSupport: support == null || !support.hasScheme
+              ? null
+              : () => launchUrl(support, mode: LaunchMode.externalApplication),
+        ),
+      ),
     ),
   );
   services.start();

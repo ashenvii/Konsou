@@ -133,7 +133,7 @@ class _PopoverLayer extends StatelessWidget {
               ),
             Positioned.fill(
               child: CustomSingleChildLayout(
-                delegate: _PopoverLayout(anchor, gap),
+                delegate: AnchoredLayout(anchor, gap, placePopover),
                 child: child,
               ),
             ),
@@ -142,23 +142,4 @@ class _PopoverLayer extends StatelessWidget {
       ),
     );
   }
-}
-
-class _PopoverLayout extends SingleChildLayoutDelegate {
-  _PopoverLayout(this.anchor, this.gap);
-
-  final Rect anchor;
-  final double gap;
-
-  @override
-  BoxConstraints getConstraintsForChild(BoxConstraints constraints) =>
-      constraints.loosen();
-
-  @override
-  Offset getPositionForChild(Size size, Size childSize) =>
-      placePopover(anchor: anchor, child: childSize, area: size, gap: gap);
-
-  @override
-  bool shouldRelayout(_PopoverLayout oldDelegate) =>
-      oldDelegate.anchor != anchor || oldDelegate.gap != gap;
 }

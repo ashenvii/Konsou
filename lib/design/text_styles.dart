@@ -11,15 +11,15 @@ abstract final class AppText {
     color: color,
   );
 
-  static const heading = TextStyle(
+  /// Like [label] but for text that may wrap onto more lines.
+  static TextStyle paragraph(Color color) => TextStyle(
     fontFamily: Tokens.sans,
-    fontWeight: FontWeight.w700,
-    fontSize: Tokens.text4,
-    height: 1,
-    color: Tokens.ink,
+    fontSize: Tokens.text3,
+    height: Tokens.lineHeightWrapped,
+    color: color,
   );
 
-  static const subheading = TextStyle(
+  static const heading = TextStyle(
     fontFamily: Tokens.sans,
     fontWeight: FontWeight.w700,
     fontSize: Tokens.text4,

@@ -13,7 +13,10 @@ import 'toast_layer.dart';
 
 const galleryPath = '/gallery';
 
-GoRouter buildRouter({Future<void> Function()? beforeClose}) {
+GoRouter buildRouter({
+  Future<void> Function()? beforeClose,
+  Future<void> Function()? openSupport,
+}) {
   return GoRouter(
     initialLocation: libraryPath,
     routes: [
@@ -22,6 +25,7 @@ GoRouter buildRouter({Future<void> Function()? beforeClose}) {
           libraryOpen: state.matchedLocation == libraryPath,
           child: AppShell(
             beforeClose: beforeClose,
+            openSupport: openSupport,
             rail: AppRail(
               location: state.matchedLocation,
               onSelect: (path) => context.go(path),

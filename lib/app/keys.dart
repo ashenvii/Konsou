@@ -5,16 +5,21 @@ class Keys {
     required this.malClientId,
     required this.googleClientId,
     required this.googleClientSecret,
+    this.kofiUrl = '',
   });
 
   const Keys.fromBuild()
     : malClientId = const String.fromEnvironment('MAL_CLIENT_ID'),
       googleClientId = const String.fromEnvironment('GOOGLE_CLIENT_ID'),
-      googleClientSecret = const String.fromEnvironment('GOOGLE_CLIENT_SECRET');
+      googleClientSecret = const String.fromEnvironment('GOOGLE_CLIENT_SECRET'),
+      kofiUrl = const String.fromEnvironment('KOFI_URL');
 
   final String malClientId;
   final String googleClientId;
   final String googleClientSecret;
+
+  /// The support page the heart in the top bar opens. Empty leaves it off.
+  final String kofiUrl;
 
   bool get hasMal => malClientId.isNotEmpty;
   bool get hasGoogle => googleClientId.isNotEmpty;

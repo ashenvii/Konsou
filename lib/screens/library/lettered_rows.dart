@@ -160,7 +160,7 @@ class _Heading extends StatelessWidget {
         child: Text(
           letter,
           semanticsLabel: letterLabel(letter),
-          style: AppText.subheading,
+          style: AppText.heading,
         ),
       ),
     );

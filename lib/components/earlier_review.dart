@@ -5,8 +5,11 @@ import '../design/tokens.dart';
 import 'floating_panel.dart';
 import 'smooth_scroll.dart';
 import '../library/earlier_titles.dart';
+import '../library/entry_status.dart';
 import 'app_button.dart';
 import 'app_checkbox.dart';
+import 'app_menu.dart';
+import 'menu_switcher.dart';
 import 'text_action.dart';
 
 class EarlierReviewWords {
@@ -22,6 +25,7 @@ class EarlierReviewWords {
     required this.mediaType,
     required this.episodes,
     required this.status,
+    required this.setTo,
   });
 
   final String heading;
@@ -36,6 +40,9 @@ class EarlierReviewWords {
   final String Function(String type) mediaType;
   final String Function(int count) episodes;
   final String Function(String? stored) status;
+
+  /// The label before the status picker.
+  final String setTo;
 }
 
 const _bulkFrom = 4;
@@ -54,7 +61,7 @@ class EarlierReview extends StatefulWidget {
 
   final List<EarlierTitle> titles;
   final EarlierReviewWords words;
-  final ValueChanged<List<EarlierTitle>> onMark;
+  final void Function(List<EarlierTitle> chosen, EntryStatus status) onMark;
   final VoidCallback onNotNow;
 
   @override
@@ -63,6 +70,15 @@ class EarlierReview extends StatefulWidget {
 
 class _EarlierReviewState extends State<EarlierReview> {
   final _scroll = SmoothScrollController();
+
+  // every status an earlier title can take; rewatching only means something
+  // for a title already completed, so it is not offered here
+  final _pickable = [
+    for (final status in EntryStatus.values)
+      if (status != EntryStatus.rewatching) status,
+  ];
+
+  EntryStatus _status = EntryStatus.completed;
 
   @override
   void dispose() {
@@ -125,6 +141,25 @@ class _EarlierReviewState extends State<EarlierReview> {
               style: AppText.caption(Tokens.inkSoft),
             ),
             const SizedBox(height: Tokens.space2),
+            Row(
+              children: [
+                Text(words.setTo, style: AppText.caption(Tokens.inkSoft)),
+                const SizedBox(width: Tokens.space2),
+                MenuSwitcher(
+                  current: _status.label,
+                  style: AppText.label(Tokens.ink),
+                  entries: [
+                    for (final status in _pickable)
+                      MenuEntry(
+                        label: status.label,
+                        selected: status == _status,
+                        onPressed: () => setState(() => _status = status),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: Tokens.space2),
             Flexible(
               child: SingleChildScrollView(
                 controller: _scroll,
@@ -168,7 +203,7 @@ class _EarlierReviewState extends State<EarlierReview> {
                   label: words.mark(chosen.length),
                   onPressed: chosen.isEmpty
                       ? null
-                      : () => widget.onMark(chosen),
+                      : () => widget.onMark(chosen, _status),
                 ),
               ],
             ),
@@ -254,7 +289,7 @@ class _TitleRow extends StatelessWidget {
                       title.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: AppText.label(Tokens.ink),
+                      style: AppText.paragraph(Tokens.ink),
                     ),
                     Text(
                       detail,

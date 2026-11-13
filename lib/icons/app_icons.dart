@@ -6,6 +6,7 @@ abstract final class AppIcons {
     rows: 42,
     lineWidth: 3.5,
     thinWidth: 2,
+    mascot: true,
     fills: [
       // ear tip, outer edge, bottom, other side, with a flat notch between
       [(0, 0), (13, 13), (27, 13), (40, 0), (40, 42), (0, 42)],
@@ -108,6 +109,10 @@ abstract final class AppIcons {
 
   static const check = IconDef(lines: [((3, 8), (6, 11)), ((6, 11), (13, 4))]);
 
+  static const menu = IconDef(
+    lines: [((2, 4), (14, 4)), ((2, 8), (14, 8)), ((2, 12), (14, 12))],
+  );
+
   static const more = IconDef(
     fills: [
       [(7, 2), (9, 2), (9, 4), (7, 4)],
@@ -172,8 +177,42 @@ abstract final class AppIcons {
     ],
   );
 
+  static const bell = IconDef(
+    lines: [
+      ((8, 1), (8, 3)),
+      ((6, 3), (10, 3)),
+      ((10, 3), (12, 5)),
+      ((12, 5), (12, 9)),
+      ((12, 9), (14, 11)),
+      ((14, 11), (14, 12)),
+      ((14, 12), (2, 12)),
+      ((2, 12), (2, 11)),
+      ((2, 11), (4, 9)),
+      ((4, 9), (4, 5)),
+      ((4, 5), (6, 3)),
+      ((6, 14), (10, 14)),
+    ],
+  );
+
+  static const heart = IconDef(
+    lines: [
+      ((8, 5), (6, 3)),
+      ((6, 3), (4, 3)),
+      ((4, 3), (2, 5)),
+      ((2, 5), (2, 7)),
+      ((2, 7), (8, 13)),
+      ((8, 13), (14, 7)),
+      ((14, 7), (14, 5)),
+      ((14, 5), (12, 3)),
+      ((12, 3), (10, 3)),
+      ((10, 3), (8, 5)),
+    ],
+  );
+
   static const all = <String, IconDef>{
     'nekomimi': nekomimi,
+    'bell': bell,
+    'heart': heart,
     'discover': discover,
     'library': library,
     'watching': watching,
@@ -183,6 +222,7 @@ abstract final class AppIcons {
     'list': list,
     'chevronDown': chevronDown,
     'check': check,
+    'menu': menu,
     'more': more,
     'planned': planned,
     'onHold': onHold,

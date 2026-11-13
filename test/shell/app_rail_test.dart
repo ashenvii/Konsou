@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/design/tokens.dart';
@@ -12,9 +13,21 @@ void main() {
     await pumpWidget(
       tester,
       SizedBox(
-        width: Tokens.railWidth,
+        width: 400,
         height: 400,
-        child: AppRail(location: location, onSelect: picked.add),
+        child: Overlay(
+          initialEntries: [
+            OverlayEntry(
+              builder: (context) => Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  width: Tokens.railWidth,
+                  child: AppRail(location: location, onSelect: picked.add),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
     return picked;
@@ -73,5 +86,29 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Schedule'));
     await tester.tap(find.bySemanticsLabel('Settings'));
     expect(picked, [schedulePath, settingsPath]);
+  });
+
+  testWidgets('hover says the name beside the icon and never eats a click', (
+    tester,
+  ) async {
+    final picked = await pumpRail(tester, libraryPath);
+    final item = find.bySemanticsLabel('Discover');
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(tester.getCenter(item));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+    final tip = find.text('Discover');
+    expect(tip, findsOneWidget);
+    expect(
+      tester.getTopLeft(tip).dx,
+      greaterThanOrEqualTo(tester.getRect(item).right),
+    );
+    await mouse.down(tester.getCenter(item));
+    await mouse.up();
+    await tester.pump();
+    expect(picked, [discoverPath]);
+    expect(find.text('Discover'), findsNothing);
   });
 }

@@ -38,7 +38,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 16));
     expect(controller.offset, inInclusiveRange(1, 199));
     await tester.pumpAndSettle();
-    expect(controller.offset, 200);
+    expect(controller.offset, 200 * wheelBoost);
   });
 
   testWidgets('notches during a glide add up', (tester) async {
@@ -48,7 +48,7 @@ void main() {
     await wheel(tester, 200);
     await tester.pump();
     await tester.pumpAndSettle();
-    expect(controller.offset, 400);
+    expect(controller.offset, 400 * wheelBoost);
   });
 
   testWidgets('a notch mid-glide keeps the speed instead of restarting', (
@@ -65,7 +65,7 @@ void main() {
     // still moving forward, never pulled back or stopped by the new notch
     expect(controller.offset, greaterThan(before));
     await tester.pumpAndSettle();
-    expect(controller.offset, 400);
+    expect(controller.offset, 400 * wheelBoost);
   });
 
   testWidgets('a drag stops the glide', (tester) async {

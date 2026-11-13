@@ -4,9 +4,13 @@ import 'package:flutter/widgets.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../components/countdown.dart';
+import '../components/key_cap.dart';
+import '../components/pressable.dart';
+import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
+import '../icons/icon_def.dart';
 import 'window_buttons.dart';
 import 'window_config.dart';
 import 'window_memory.dart';
@@ -18,6 +22,7 @@ class AppShell extends StatefulWidget {
     this.rail,
     this.overlay,
     this.beforeClose,
+    this.openSupport,
   });
 
   final Widget child;
@@ -27,6 +32,9 @@ class AppShell extends StatefulWidget {
   final Widget Function(double leftInset)? overlay;
 
   final Future<void> Function()? beforeClose;
+
+  /// Opens the support page from the heart. Null leaves the heart inert.
+  final Future<void> Function()? openSupport;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -157,12 +165,13 @@ class _AppShellState extends State<AppShell> with WindowListener {
         child: Column(
           children: [
             DecoratedBox(
-              decoration: BoxDecoration(gradient: _barTint),
+              decoration: BoxDecoration(color: _barTint),
               child: _TopBar(
                 maximized: _maximized,
                 onMinimize: windowManager.minimize,
                 onToggleMaximize: _toggleMaximize,
                 onClose: _close,
+                onSupport: widget.openSupport,
               ),
             ),
             Expanded(
@@ -216,10 +225,8 @@ class _AppShellState extends State<AppShell> with WindowListener {
 Color _tint(double alpha) => Tokens.surface.withValues(alpha: alpha);
 Color _line(double alpha) => Tokens.line.withValues(alpha: alpha);
 
-final _barTint = LinearGradient(
-  colors: [_tint(0.55), _tint(0.22), _tint(0)],
-  stops: const [0, 0.12, 0.38],
-);
+// the bar is lit evenly so the search well reads as dropped into it
+final _barTint = _tint(0.6);
 
 final _railTint = LinearGradient(
   begin: Alignment.topCenter,
@@ -246,79 +253,168 @@ class _TopBar extends StatelessWidget {
     required this.onMinimize,
     required this.onToggleMaximize,
     required this.onClose,
+    this.onSupport,
   });
 
   final bool maximized;
   final VoidCallback onMinimize;
   final VoidCallback onToggleMaximize;
   final VoidCallback onClose;
+  final Future<void> Function()? onSupport;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: Tokens.barHeight,
-      child: Row(
+      child: Stack(
         children: [
-          Expanded(
-            child: DragToMoveArea(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onDoubleTap: onToggleMaximize,
-                child: Row(
-                  children: [
-                    // the mascot sits over the rail icons, the wordmark at the rail edge
-                    const SizedBox(
-                      width: Tokens.railWidth,
-                      child: Center(
-                        child: AppIcon(
-                          AppIcons.nekomimi,
-                          size: Tokens.iconSize,
-                          color: Tokens.mint,
-                          lineColor: Tokens.ground,
+          Row(
+            children: [
+              Expanded(
+                child: DragToMoveArea(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onDoubleTap: onToggleMaximize,
+                    child: Row(
+                      children: [
+                        // the mascot sits over the rail icons, the wordmark at the rail edge
+                        const SizedBox(
+                          width: Tokens.railWidth,
+                          child: Center(
+                            child: AppIcon(
+                              AppIcons.nekomimi,
+                              size: Tokens.iconSize,
+                              color: Tokens.mint,
+                              lineColor: Tokens.ground,
+                            ),
+                          ),
                         ),
-                      ),
+                        const Text(
+                          WindowConfig.title,
+                          style: TextStyle(
+                            fontFamily: Tokens.sans,
+                            fontWeight: FontWeight.w700,
+                            fontSize: Tokens.text4,
+                            color: Tokens.ink,
+                          ),
+                        ),
+                      ],
                     ),
-                    const Text(
-                      WindowConfig.title,
-                      style: TextStyle(
-                        fontFamily: Tokens.sans,
-                        fontWeight: FontWeight.w700,
-                        fontSize: Tokens.text4,
-                        color: Tokens.ink,
-                      ),
-                    ),
-                    const Spacer(),
-                    const Text(
-                      'Search',
-                      style: TextStyle(
-                        fontFamily: Tokens.sans,
-                        fontSize: Tokens.text3,
-                        color: Tokens.inkMuted,
-                      ),
-                    ),
-                    const SizedBox(width: Tokens.space2),
-                    const Text(
-                      'Ctrl K',
-                      style: TextStyle(
-                        fontFamily: Tokens.mono,
-                        fontSize: Tokens.text2,
-                        color: Tokens.inkMuted,
-                      ),
-                    ),
-                    const Spacer(),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              // the bell does nothing yet (its layout is not grilled)
+              _BarIcon(
+                icon: AppIcons.bell,
+                label: 'Notifications',
+                color: Tokens.inkMuted,
+                hoverColor: Tokens.ink,
+              ),
+              _BarIcon(
+                icon: AppIcons.heart,
+                label: 'Support',
+                color: Tokens.red,
+                hoverColor: Tokens.red,
+                onPressed: onSupport == null ? null : () => onSupport!(),
+              ),
+              WindowButton(glyph: WindowGlyph.minimize, onPressed: onMinimize),
+              WindowButton(
+                glyph: maximized ? WindowGlyph.restore : WindowGlyph.maximize,
+                onPressed: onToggleMaximize,
+              ),
+              WindowButton(glyph: WindowGlyph.close, onPressed: onClose),
+            ],
           ),
-          WindowButton(glyph: WindowGlyph.minimize, onPressed: onMinimize),
-          WindowButton(
-            glyph: maximized ? WindowGlyph.restore : WindowGlyph.maximize,
-            onPressed: onToggleMaximize,
-          ),
-          WindowButton(glyph: WindowGlyph.close, onPressed: onClose),
+          // on top of the drag area, on the window's centre
+          const Center(child: _QuickSearchButton()),
         ],
       ),
+    );
+  }
+}
+
+/// A square icon button in the bar, as tall as the bar.
+class _BarIcon extends StatelessWidget {
+  const _BarIcon({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.hoverColor,
+    this.onPressed,
+  });
+
+  final IconDef icon;
+  final String label;
+  final Color color;
+  final Color hoverColor;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      label: label,
+      onPressed: onPressed ?? () {},
+      builder: (context, state) => SizedBox(
+        width: Tokens.barHeight,
+        height: Tokens.barHeight,
+        child: Center(
+          child: AppIcon(
+            icon,
+            size: Tokens.iconSize,
+            color: state.hovered ? hoverColor : color,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The search field in the middle of the bar, drawn as a button: icon, the
+/// word, and the shortcut as key caps. It opens Quick search once that exists.
+class _QuickSearchButton extends StatelessWidget {
+  const _QuickSearchButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      label: 'Search',
+      onPressed: () {},
+      builder: (context, state) {
+        final ink = state.hovered ? Tokens.inkSoft : Tokens.inkMuted;
+        // a well dropped into the bar: page ground, dark where the bar
+        // overhangs it, a faint lip below
+        return Container(
+          constraints: const BoxConstraints(minWidth: Tokens.quickSearchWidth),
+          height: Tokens.quickSearchHeight,
+          padding: const EdgeInsets.symmetric(horizontal: Tokens.space2),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Tokens.ground,
+            border: Border(
+              top: const BorderSide(
+                color: Tokens.wellEdge,
+                width: Tokens.hoverEdge,
+              ),
+              bottom: BorderSide(color: Tokens.ink.withValues(alpha: 0.06)),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppIcon(AppIcons.search, size: Tokens.iconSize, color: ink),
+              const SizedBox(width: Tokens.space2),
+              Text(
+                'Search anime',
+                maxLines: 1,
+                softWrap: false,
+                style: AppText.label(ink),
+              ),
+              const SizedBox(width: Tokens.space4),
+              const KeyCaps('Ctrl+K'),
+            ],
+          ),
+        );
+      },
     );
   }
 }

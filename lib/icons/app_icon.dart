@@ -85,6 +85,19 @@ class _IconPainter extends CustomPainter {
       finish();
     }
 
+    if (def.mascot) {
+      // the mascot keeps the tuned look: each line on its own, square ends
+      for (final (width, lines) in [
+        (def.lineWidth, def.lines),
+        (def.thinWidth, def.thinLines),
+      ]) {
+        final paint = stroke(width)..strokeCap = StrokeCap.square;
+        for (final (a, b) in lines) {
+          canvas.drawLine(at(a), at(b), paint);
+        }
+      }
+      return;
+    }
     drawLines(def.lines, stroke(def.lineWidth));
     drawLines(def.thinLines, stroke(def.thinWidth));
   }

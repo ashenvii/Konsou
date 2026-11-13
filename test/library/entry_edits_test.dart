@@ -585,15 +585,65 @@ void main() {
               json: _detail(),
             ),
           );
-      final undo = await edits.markEarlier([
+      final mark = await edits.markEarlier([
         earlier(1, entryId: 'a'),
         earlier(7),
       ]);
-      await undo.run();
+      await mark.undo.run();
       final record = databases.record;
       expect(await record.select(record.entry).get(), hasLength(1));
       expect((await readEntry('a')).status, 'plan_to_watch');
       expect(await readCompletions('a'), isEmpty);
+    });
+
+    test('a non-Completed status sets only the status and keeps episodes', () async {
+      await addEntry('a', 'plan_to_watch', malId: 1, json: _detail());
+      final mark = await edits.markEarlier(
+        [earlier(1, entryId: 'a')],
+        status: EntryStatus.dropped,
+      );
+      expect(mark.applied, 1);
+      final entry = await readEntry('a');
+      expect((entry.status, entry.episodesWatched), ('dropped', 0));
+      expect(await readCompletions('a'), isEmpty);
+    });
+
+    test('an unlisted title can be added as Not interested', () async {
+      await databases.details
+          .into(databases.details.detail)
+          .insert(
+            DetailCompanion.insert(
+              provider: 'mal',
+              providerId: 9,
+              fetchedAt: 1,
+              json: _detail(),
+            ),
+          );
+      await edits.markEarlier(
+        [earlier(9)],
+        status: EntryStatus.notInterested,
+      );
+      final record = databases.record;
+      final entry = (await record.select(record.entry).get()).single;
+      expect(entry.status, 'not_interested');
+      expect(await readCompletions(entry.entryId), isEmpty);
+    });
+
+    test('moving a completed title to another status takes its completion back', () async {
+      await addEntry('a', 'completed');
+      await edits.markEarlier(
+        [earlier(1, entryId: 'a')],
+        status: EntryStatus.onHold,
+      );
+      expect((await readEntry('a')).status, 'on_hold');
+      expect(await readCompletions('a'), isEmpty);
+    });
+
+    test('a title already in the chosen status is not counted', () async {
+      await addEntry('a', 'completed');
+      final mark = await edits.markEarlier([earlier(1, entryId: 'a')]);
+      expect(mark.applied, 0);
+      expect((await readEntry('a')).status, 'completed');
     });
 
     test('Not now saves one earlier_unmarked alert per title, once', () async {

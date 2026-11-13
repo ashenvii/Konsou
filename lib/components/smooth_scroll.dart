@@ -22,6 +22,9 @@ class SmoothScrollController extends ScrollController {
 // settles in about 0.4s, like chrome
 const _pull = 14.0;
 
+// how far one wheel notch goes, against the platform's own step
+const wheelBoost = 1.4;
+
 class _GlidingPosition extends ScrollPositionWithSingleContext {
   _GlidingPosition({
     required super.physics,
@@ -47,7 +50,10 @@ class _GlidingPosition extends ScrollPositionWithSingleContext {
     );
     if (still ?? false) return super.pointerScroll(delta);
     final from = _gliding ? _target : pixels;
-    final target = (from + delta).clamp(minScrollExtent, maxScrollExtent);
+    final target = (from + delta * wheelBoost).clamp(
+      minScrollExtent,
+      maxScrollExtent,
+    );
     if (target == from) return;
     _target = target;
     if (_gliding) return;

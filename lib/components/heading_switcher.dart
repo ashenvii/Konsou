@@ -3,10 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import 'app_menu.dart';
-import 'hover_mark.dart';
-import 'hover_popover.dart';
-import 'menu_chevron.dart';
-import 'pressable.dart';
+import 'menu_switcher.dart';
 
 class HeadingSwitcher extends StatelessWidget {
   const HeadingSwitcher({
@@ -44,64 +41,12 @@ class HeadingSwitcher extends StatelessWidget {
             ),
           ),
           const SizedBox(width: Tokens.space2),
-          HoverPopover(
-            gap: Tokens.space1,
-            builder: (context, handle) => Pressable(
-              onPressed: handle.open,
-              selected: handle.isOpen,
-              builder: (context, state) {
-                final lit = state.hovered || state.focused || handle.isOpen;
-                return HoverMark(
-                  on: lit,
-                  child: Container(
-                    height: Tokens.controlHeight,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: Tokens.space2,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          current,
-                          maxLines: 1,
-                          softWrap: false,
-                          style: base,
-                        ),
-                        if (count != null) ...[
-                          const SizedBox(width: Tokens.space2),
-                          Text(
-                            count!,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: base.copyWith(
-                              fontWeight: FontWeight.w400,
-                              color: lit ? Tokens.inkSoft : Tokens.inkMuted,
-                            ),
-                          ),
-                        ],
-                        MenuChevron(color: Tokens.amber, open: handle.isOpen),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-            popoverBuilder: (context, handle) => AppMenu(
-              entries: [
-                for (final entry in entries)
-                  MenuEntry(
-                    label: entry.label,
-                    selected: entry.selected,
-                    count: entry.count,
-                    dividerAbove: entry.dividerAbove,
-                    onPressed: () {
-                      entry.onPressed?.call();
-                      handle.close();
-                    },
-                  ),
-              ],
-              footnote: footnote,
-            ),
+          MenuSwitcher(
+            current: current,
+            count: count,
+            entries: entries,
+            footnote: footnote,
+            style: base,
           ),
         ],
       ),

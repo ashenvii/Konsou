@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
@@ -13,6 +15,10 @@ abstract final class PageFrame {
     Tokens.space5,
     Tokens.space4,
   );
+
+  /// The rail's width where there is one. A page centres a control on the
+  /// window, not on the page, so it leaves this much empty on its right.
+  static double get railInset => Platform.isWindows ? Tokens.railWidth : 0;
 
   static const content = EdgeInsets.fromLTRB(
     Tokens.space5,

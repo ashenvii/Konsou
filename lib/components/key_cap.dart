@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 
-import '../design/text_styles.dart';
 import '../design/tokens.dart';
 
 class KeyCaps extends StatelessWidget {
@@ -16,7 +15,19 @@ class KeyCaps extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final (index, part) in parts.indexed) ...[
-          if (index > 0) const SizedBox(width: Tokens.space1),
+          if (index > 0)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: Tokens.space1),
+              child: Text(
+                '+',
+                style: TextStyle(
+                  fontFamily: Tokens.mono,
+                  fontSize: Tokens.text1,
+                  height: 1,
+                  color: Tokens.inkMuted,
+                ),
+              ),
+            ),
           _KeyCap(part),
         ],
       ],
@@ -31,22 +42,31 @@ class _KeyCap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Tokens.ground,
-        border: Border.all(color: Tokens.inkMuted),
-      ),
+    // the slab under the face is the key's side
+    return ColoredBox(
+      color: Tokens.keySlab,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Tokens.space1,
-          vertical: Tokens.space1,
-        ),
-        child: Text(
-          label,
-          maxLines: 1,
-          softWrap: false,
-          style: AppText.caption(Tokens.inkSoft)
-              .copyWith(fontSize: Tokens.text1),
+        padding: const EdgeInsets.only(bottom: Tokens.keyDepth),
+        child: ColoredBox(
+          color: Tokens.keyFace,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Tokens.keyPadX,
+              vertical: Tokens.keyPadY,
+            ),
+            child: Text(
+              label,
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                fontFamily: Tokens.mono,
+                fontWeight: FontWeight.w700,
+                fontSize: Tokens.text1,
+                height: 1,
+                color: Tokens.inkSoft,
+              ),
+            ),
+          ),
         ),
       ),
     );

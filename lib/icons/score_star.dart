@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
-/// The score star: a plain filled five-point star. It is the one icon not on
+/// The score star: a plain filled five-point star with sharp points. It is the one icon not on
 /// the 45 degree grid, because a star that reads as a star needs its own
 /// angles. [size] is its width and height.
 class ScoreStar extends StatelessWidget {
@@ -29,14 +29,11 @@ class _StarPainter extends CustomPainter {
   // sharp textbook star, this is the fuller one rating stars use
   static const _innerShare = 0.5;
   static const _points = 5;
-  static const _rounding = 0.14;
 
   @override
   void paint(Canvas canvas, Size size) {
     final centre = size.center(Offset.zero);
-    // the stroke rounds the corners, so the points stay inside the box
-    final rounding = size.width * _rounding;
-    final outer = size.width / 2 - rounding / 2;
+    final outer = size.width / 2;
     final inner = outer * _innerShare;
     final path = Path();
     for (var i = 0; i < _points * 2; i++) {
@@ -52,14 +49,6 @@ class _StarPainter extends CustomPainter {
     }
     path.close();
     canvas.drawPath(path, Paint()..color = color);
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = rounding
-        ..strokeJoin = StrokeJoin.round,
-    );
   }
 
   @override

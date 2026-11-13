@@ -5,10 +5,10 @@ abstract final class Tokens {
   static const Color ground = Color(0xFF080D10);
   static const Color ink = Color(0xFFF4F5F5);
   static const Color inkSoft = Color(0xFFBCC1C4);
-  static const Color inkMuted = Color(0xFF6E838C);
+  static const Color inkMuted = Color(0xFF748992);
   static const Color amber = Color(0xFFF2B33D);
   static const Color mint = Color(0xFF3DD6A0);
-  static const Color red = Color(0xFFE5484D);
+  static const Color red = Color(0xFFE94D52);
   // fill of secondary buttons, fields and panels (approved 2026-11-08).
   static const Color surface = Color(0xFF0F1F25);
   // floating panels and hairlines: even OKLCH steps at ground's hue (owner, 2026-11-12)
@@ -72,6 +72,22 @@ abstract final class Tokens {
 
   // the Library's Find field, a first guess for the owner to tune.
   static const double findFieldWidth = 240;
+
+  // key cap C, locked by the owner 2026-11-13: a face and a slab under it
+  static const Color keyFace = Color(0xFF303B42);
+  static const Color keySlab = Color(0xFF151E23);
+  static const double keyDepth = 3;
+  static const double keyPadX = 6;
+  static const double keyPadY = 2;
+
+  // the quick search button in the top bar
+  static const Color wellEdge = Color(0xFF030608);
+  static const double quickSearchWidth = 280;
+  static const double quickSearchHeight = 28;
+
+  // line height for text that can wrap onto a second line (owner, 2026-11-13);
+  // single-line labels stay at 1 inside their fixed controls.
+  static const double lineHeightWrapped = 1.4;
 
   // motion: a chevron turning, and things that slide or glide (owner, 2026-11-12)
   static const Duration motionQuick = Duration(milliseconds: 160);

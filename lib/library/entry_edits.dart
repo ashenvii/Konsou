@@ -15,6 +15,15 @@ class UndoEdit {
   final Future<void> Function() run;
 }
 
+/// What an earlier-titles mark did: how many titles it changed, and the way
+/// back.
+class EarlierMark {
+  const EarlierMark(this.undo, this.applied);
+
+  final UndoEdit undo;
+  final int applied;
+}
+
 const autoMarkEarlierKey = 'auto_mark_earlier';
 
 class EntryEdits {
@@ -196,10 +205,17 @@ class EntryEdits {
     onChanged?.call();
   }
 
-  Future<UndoEdit> markEarlier(List<EarlierTitle> titles) async {
+  /// Sets each earlier title to [status]. Completed fills the episode count
+  /// and logs an estimated completion; any other status only sets the status
+  /// and keeps the episodes. Titles a lock forbids are skipped and not counted.
+  Future<EarlierMark> markEarlier(
+    List<EarlierTitle> titles, {
+    EntryStatus status = EntryStatus.completed,
+  }) async {
     final onList = [for (final title in titles) ?title.entryId];
     final restore = await snapshot(onList);
     final created = <String>[];
+    var applied = 0;
     await _record.transaction(() async {
       final time = await readEditTime(_record, _now());
       for (final title in titles) {
@@ -228,25 +244,42 @@ class EntryEdits {
               );
         }
         final facts = await _readFacts(entryId);
-        if (facts.status == EntryStatus.completed) continue;
-        final episodes = _maxOf(
-          title.episodes ?? facts.total,
-          facts.episodesWatched,
-        );
-        await _writeProgress(
-          entryId,
-          time,
-          status: EntryStatus.completed,
-          episodes: episodes,
-        );
-        await _logCompletion(entryId, facts, episodes, estimated: true);
+        if (facts.status == status) continue;
+        if (_lockFor(facts, status) != null) continue;
+        if (status == EntryStatus.completed) {
+          final episodes = _maxOf(
+            title.episodes ?? facts.total,
+            facts.episodesWatched,
+          );
+          await _writeProgress(
+            entryId,
+            time,
+            status: EntryStatus.completed,
+            episodes: episodes,
+          );
+          await _logCompletion(entryId, facts, episodes, estimated: true);
+        } else {
+          if (facts.status == EntryStatus.completed) {
+            await _takeBackLastCompletion(entryId);
+          }
+          await _writeProgress(
+            entryId,
+            time,
+            status: status,
+            episodes: facts.episodesWatched,
+          );
+        }
+        applied++;
       }
     });
     onChanged?.call();
-    return UndoEdit(() async {
-      await restore.run();
-      await remove(created);
-    });
+    return EarlierMark(
+      UndoEdit(() async {
+        await restore.run();
+        await remove(created);
+      }),
+      applied,
+    );
   }
 
   Future<UndoEdit> saveEarlierUnmarked(

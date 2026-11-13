@@ -25,6 +25,7 @@ const _reviewWords = EarlierReviewWords(
   mediaType: mediaTypeLabel,
   episodes: episodeCount,
   status: earlierStatusLabel,
+  setTo: reviewSetTo,
 );
 
 class ToastLayer extends ConsumerWidget {
@@ -81,9 +82,9 @@ class ToastLayer extends ConsumerWidget {
                                 words: _reviewWords,
                                 cover: (title, width) =>
                                     CoverView(malId: title.malId, width: width),
-                                onMark: (chosen) => ref
+                                onMark: (chosen, status) => ref
                                     .read(entryActionsProvider)
-                                    .acceptReview(review, chosen),
+                                    .acceptReview(review, chosen, status: status),
                                 onNotNow: () => ref
                                     .read(entryActionsProvider)
                                     .notNow(review),

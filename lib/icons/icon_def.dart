@@ -12,6 +12,7 @@ class IconDef {
     this.shades = const [],
     this.lines = const [],
     this.thinLines = const [],
+    this.mascot = false,
   }) : rows = rows ?? columns;
 
   final int columns;
@@ -22,6 +23,7 @@ class IconDef {
   final List<List<GridPoint>> shades;
   final List<GridLine> lines;
   final List<GridLine> thinLines;
+  final bool mascot;
 
   List<String> badEdges() {
     final problems = <String>[];

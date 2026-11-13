@@ -15,7 +15,14 @@ String? refusal(EditResult result) => switch (result) {
 
 String reviewOffered(int n) => 'Completed. $n earlier not marked.';
 
-String reviewMarked(int n) => 'Marked $n earlier';
+/// The toast after a review's mark. Completed keeps the old wording.
+String reviewMarkedAs(int n, EntryStatus status) {
+  if (n == 0) return 'Nothing changed';
+  if (status == EntryStatus.completed) return 'Marked $n earlier';
+  return 'Marked $n as ${status.label.toLowerCase()}';
+}
+
+const reviewSetTo = 'Set to';
 
 String autoMarked(int n) => 'Also marked $n earlier';
 

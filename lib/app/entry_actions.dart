@@ -47,15 +47,16 @@ class EntryActions {
 
   Future<void> acceptReview(
     ReviewOffer offer,
-    List<EarlierTitle> chosen,
-  ) async {
+    List<EarlierTitle> chosen, {
+    EntryStatus status = EntryStatus.completed,
+  }) async {
     if (chosen.isEmpty) return;
-    final undo = await edits.markEarlier(chosen);
+    final mark = await edits.markEarlier(chosen, status: status);
     onEdited?.call();
     answerReview(
       ToastMessage(
-        reviewMarked(chosen.length),
-        undo: _backToReview(offer, undo.run),
+        reviewMarkedAs(mark.applied, status),
+        undo: _backToReview(offer, mark.undo.run),
         rateEntryId: offer.entryId,
       ),
     );
@@ -144,7 +145,7 @@ class EntryActions {
         ToastMessage(
           autoMarked(titles.length),
           undo: _undoable(() async {
-            await marked.run();
+            await marked.undo.run();
             await finish.run();
           }),
         ),

@@ -13,6 +13,7 @@ import 'package:konsou/components/toast_timer.dart';
 import 'package:konsou/components/toast_view.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/library/earlier_titles.dart';
+import 'package:konsou/library/entry_status.dart';
 
 import '../support/render_png.dart' show loadAppFonts;
 
@@ -26,8 +27,10 @@ class FakeActions implements EntryActions {
   @override
   Future<void> acceptReview(
     ReviewOffer offer,
-    List<EarlierTitle> chosen,
-  ) async => calls.add('mark ${chosen.map((t) => t.malId).join(',')}');
+    List<EarlierTitle> chosen, {
+    EntryStatus status = EntryStatus.completed,
+  }) async =>
+      calls.add('mark ${chosen.map((t) => t.malId).join(',')} ${status.value}');
 
   @override
   Future<void> notNow(ReviewOffer offer) async => calls.add('not now');
@@ -429,7 +432,7 @@ void main() {
       expect(find.text('Mark 3'), findsOneWidget);
       await tester.tap(find.text('Mark 3'));
       await tester.pump();
-      expect(actions.calls, ['mark 1,2,10']);
+      expect(actions.calls, ['mark 1,2,10 completed']);
     });
 
     testToast('Not now reports it', (tester) async {
