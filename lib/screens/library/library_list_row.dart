@@ -12,7 +12,7 @@ import '../../library/library_row.dart';
 import '../../library/row_labels.dart';
 import 'row_tap_area.dart';
 
-class LibraryListRow extends StatelessWidget {
+class LibraryListRow extends StatefulWidget {
   const LibraryListRow({
     super.key,
     required this.row,
@@ -42,12 +42,27 @@ class LibraryListRow extends StatelessWidget {
   static const _narrow = Tokens.gridCardMinWidth * 3;
 
   @override
+  State<LibraryListRow> createState() => _LibraryListRowState();
+}
+
+class _LibraryListRowState extends State<LibraryListRow> {
+  // the pointer is on the checkbox: it takes the hover mark, the row gives it up
+  bool _overBox = false;
+
+  static const _statusWidth = LibraryListRow._statusWidth;
+  static const _progressWidth = LibraryListRow._progressWidth;
+  static const _scoreWidth = LibraryListRow._scoreWidth;
+  static const _narrow = LibraryListRow._narrow;
+
+  @override
   Widget build(BuildContext context) {
+    final row = widget.row;
+    final showStatus = widget.showStatus;
     final completed = row.status == EntryStatus.completed.value;
     final status = EntryStatus.parse(row.status).label;
     return RowTapArea(
-      onOpen: onOpen,
-      onContextMenu: onContextMenu,
+      onOpen: widget.onOpen,
+      onContextMenu: widget.onContextMenu,
       builder: (context, state) => LayoutBuilder(
         builder: (context, constraints) {
           final narrow = constraints.maxWidth < _narrow;
@@ -57,7 +72,7 @@ class LibraryListRow extends StatelessWidget {
             if (showStatus && narrow) status,
           ].whereType<String>().where((part) => part.isNotEmpty).join(' · ');
           return HoverMark(
-            on: state.hovered || state.focused,
+            on: (state.hovered || state.focused) && !_overBox,
             child: Container(
               height: Tokens.listRowHeight,
               padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
@@ -65,7 +80,9 @@ class LibraryListRow extends StatelessWidget {
                 children: [
                   AppCheckbox(
                     value: completed ? CheckValue.checked : CheckValue.empty,
-                    onChanged: (value) => onCheck(value == CheckValue.checked),
+                    onChanged: (value) =>
+                        widget.onCheck(value == CheckValue.checked),
+                    onHover: (over) => setState(() => _overBox = over),
                   ),
                   const SizedBox(width: Tokens.space3),
                   CoverView(
@@ -94,7 +111,7 @@ class LibraryListRow extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: _scoreWidth, child: _Score(row.score)),
-                  menu,
+                  widget.menu,
                 ],
               ),
             ),

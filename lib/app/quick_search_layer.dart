@@ -416,15 +416,10 @@ class _ResultRowState extends State<_ResultRow> with _KeepsInView<_ResultRow> {
             ),
             child: Row(
               children: [
-                MouseRegion(
-                  onEnter: (_) => setState(() => _overBox = true),
-                  onExit: (_) => setState(() => _overBox = false),
-                  child: AppCheckbox(
-                    value: row.completed
-                        ? CheckValue.checked
-                        : CheckValue.empty,
-                    onChanged: (_) => widget.onTick(),
-                  ),
+                AppCheckbox(
+                  value: row.completed ? CheckValue.checked : CheckValue.empty,
+                  onChanged: (_) => widget.onTick(),
+                  onHover: (over) => setState(() => _overBox = over),
                 ),
                 const SizedBox(width: Tokens.space3),
                 CoverView(malId: row.malId, width: Tokens.quickCoverWidth),
