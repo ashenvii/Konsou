@@ -123,7 +123,18 @@ class _QuickSearchLayerState extends ConsumerState<QuickSearchLayer> {
                             fit: state.typing ? FlexFit.tight : FlexFit.loose,
                             child: SingleChildScrollView(
                               controller: _scroll,
-                              child: _Results(state: state, search: search),
+                              // the scrollbar lies over the right edge, so the
+                              // rows end before it and the status marks stay
+                              // clear of the thumb
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  right:
+                                      Tokens.scrollbarWidth +
+                                      Tokens.resizeEdge +
+                                      Tokens.space1,
+                                ),
+                                child: _Results(state: state, search: search),
+                              ),
                             ),
                           ),
                           _Footer(
@@ -392,47 +403,29 @@ class _ResultRowState extends State<_ResultRow> with _KeepsInView<_ResultRow> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onOpen,
-        child: DecoratedBox(
-          position: DecorationPosition.foreground,
-          decoration: BoxDecoration(
-            border: focused
-                ? const Border(
-                    left: BorderSide(
-                      color: Tokens.inkSoft,
-                      width: Tokens.hoverEdge,
-                    ),
-                  )
-                : null,
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(color: focused ? Tokens.surface : null),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Tokens.space4,
-                vertical: Tokens.space1,
-              ),
-              child: Row(
-                children: [
-                  AppCheckbox(
-                    value: row.completed
-                        ? CheckValue.checked
-                        : CheckValue.empty,
-                    onChanged: (_) => widget.onTick(),
-                  ),
+        // the same mark as every hover in the app
+        child: HoverMark(
+          on: focused,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Tokens.space4,
+              vertical: Tokens.space1,
+            ),
+            child: Row(
+              children: [
+                AppCheckbox(
+                  value: row.completed ? CheckValue.checked : CheckValue.empty,
+                  onChanged: (_) => widget.onTick(),
+                ),
+                const SizedBox(width: Tokens.space3),
+                CoverView(malId: row.malId, width: Tokens.quickCoverWidth),
+                const SizedBox(width: Tokens.space3),
+                Expanded(child: _NameAndLine(row)),
+                if (row.status != null && !row.completed) ...[
                   const SizedBox(width: Tokens.space3),
-                  CoverView(malId: row.malId, width: Tokens.quickCoverWidth),
-                  const SizedBox(width: Tokens.space3),
-                  Expanded(child: _NameAndLine(row)),
-                  if (row.status != null && !row.completed) ...[
-                    const SizedBox(width: Tokens.space3),
-                    StatusMark(
-                      row.status!,
-                      color: Tokens.inkMuted,
-                      green: false,
-                    ),
-                  ],
+                  StatusMark(row.status!, color: Tokens.inkMuted, green: false),
                 ],
-              ),
+              ],
             ),
           ),
         ),
