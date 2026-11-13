@@ -29,9 +29,10 @@ GoRouter buildRouter({
           child: AppShell(
             beforeClose: beforeClose,
             openSupport: openSupport,
-            onSearch: () => ProviderScope.containerOf(
-              context,
-            ).read(quickSearchProvider.notifier).open(),
+            onSearch: () =>
+                ProviderScope.containerOf(context)
+                    .read(quickSearchProvider.notifier)
+                    .open(),
             rail: AppRail(
               location: state.matchedLocation,
               onSelect: (path) => context.go(path),

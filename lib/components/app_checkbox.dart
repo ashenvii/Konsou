@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
+import 'hover_mark.dart';
 import 'pressable.dart';
 
 enum CheckValue { empty, checked, excluded }
@@ -33,9 +34,12 @@ class AppCheckbox extends StatelessWidget {
       child: Pressable(
         onPressed: onChanged == null ? null : () => onChanged!(_next),
         checked: value == CheckValue.checked,
-        builder: (context, state) => SizedBox.square(
-          dimension: Tokens.checkboxSize,
-          child: CustomPaint(painter: _BoxPainter(value)),
+        builder: (context, state) => HoverMark(
+          on: state.hovered,
+          child: SizedBox.square(
+            dimension: Tokens.checkboxSize,
+            child: CustomPaint(painter: _BoxPainter(value)),
+          ),
         ),
       ),
     );

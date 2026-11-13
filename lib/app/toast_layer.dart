@@ -84,7 +84,11 @@ class ToastLayer extends ConsumerWidget {
                                     CoverView(malId: title.malId, width: width),
                                 onMark: (chosen, status) => ref
                                     .read(entryActionsProvider)
-                                    .acceptReview(review, chosen, status: status),
+                                    .acceptReview(
+                                      review,
+                                      chosen,
+                                      status: status,
+                                    ),
                                 onNotNow: () => ref
                                     .read(entryActionsProvider)
                                     .notNow(review),

@@ -387,6 +387,9 @@ class _ResultRow extends StatefulWidget {
 }
 
 class _ResultRowState extends State<_ResultRow> with _KeepsInView<_ResultRow> {
+  // the pointer is on the checkbox: it takes the hover mark, the row gives it up
+  bool _overBox = false;
+
   @override
   void didUpdateWidget(_ResultRow old) {
     super.didUpdateWidget(old);
@@ -405,7 +408,7 @@ class _ResultRowState extends State<_ResultRow> with _KeepsInView<_ResultRow> {
         onTap: widget.onOpen,
         // the same mark as every hover in the app
         child: HoverMark(
-          on: focused,
+          on: focused && !_overBox,
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: Tokens.space4,
@@ -413,9 +416,15 @@ class _ResultRowState extends State<_ResultRow> with _KeepsInView<_ResultRow> {
             ),
             child: Row(
               children: [
-                AppCheckbox(
-                  value: row.completed ? CheckValue.checked : CheckValue.empty,
-                  onChanged: (_) => widget.onTick(),
+                MouseRegion(
+                  onEnter: (_) => setState(() => _overBox = true),
+                  onExit: (_) => setState(() => _overBox = false),
+                  child: AppCheckbox(
+                    value: row.completed
+                        ? CheckValue.checked
+                        : CheckValue.empty,
+                    onChanged: (_) => widget.onTick(),
+                  ),
                 ),
                 const SizedBox(width: Tokens.space3),
                 CoverView(malId: row.malId, width: Tokens.quickCoverWidth),
