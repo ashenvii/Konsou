@@ -107,7 +107,11 @@ class _QuickSearchLayerState extends ConsumerState<QuickSearchLayer> {
                     ),
                     child: FloatingPanel(
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        // while typing the panel keeps one height, so the
+                        // skeleton rows and the results do not resize it
+                        mainAxisSize: state.typing
+                            ? MainAxisSize.max
+                            : MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _Field(
@@ -116,6 +120,7 @@ class _QuickSearchLayerState extends ConsumerState<QuickSearchLayer> {
                             onChanged: search.setQuery,
                           ),
                           Flexible(
+                            fit: state.typing ? FlexFit.tight : FlexFit.loose,
                             child: SingleChildScrollView(
                               controller: _scroll,
                               child: _Results(state: state, search: search),

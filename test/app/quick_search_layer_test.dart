@@ -57,11 +57,14 @@ void main() {
     final client = MockClient(
       (request) async => http.Response(
         jsonEncode({
-          'data': [
-            _page(5, 'Frieren Recap'),
-            _page(6, 'Frieren Prologue'),
-            for (var i = 1; i <= 10; i++) _page(10 + i, 'Frieren Extra $i'),
-          ],
+          'data': (request.url.queryParameters['offset'] ?? '0') == '0'
+              ? [
+                  _page(5, 'Frieren Recap'),
+                  _page(6, 'Frieren Prologue'),
+                  for (var i = 1; i <= 10; i++)
+                    _page(10 + i, 'Frieren Extra $i'),
+                ]
+              : <Map<String, dynamic>>[],
         }),
         200,
         headers: {'content-type': 'application/json; charset=utf-8'},
@@ -196,8 +199,8 @@ void main() {
     await typeIt(tester, 'frieren');
     expect(find.text('10 more'), findsOneWidget);
     expect(find.text('Frieren Extra 9'), findsNothing);
-    // one row on the list, four found online, then Load more
-    for (var i = 0; i < 5; i++) {
+    // one row on the list, ten found online, then Load more
+    for (var i = 0; i < 11; i++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.pump();
     }
@@ -209,7 +212,7 @@ void main() {
     await tester.pump();
     expect(find.text('Frieren Extra 9'), findsOneWidget);
     // the highlight moved to the first new row, not back to the top
-    expect(container.read(quickSearchProvider).focus, 5);
+    expect(container.read(quickSearchProvider).focus, 11);
   });
 
   testWidgets('Load more leaves the list where it was', (tester) async {

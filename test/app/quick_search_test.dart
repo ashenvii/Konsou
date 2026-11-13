@@ -164,7 +164,7 @@ void main() {
   test(
     'Load more shows the next rows and asks online for the next page',
     () async {
-      await start([for (var i = 1; i <= 25; i++) _page(i, 'Frieren $i')]);
+      await start([for (var i = 1; i <= 27; i++) _page(i, 'Frieren $i')]);
       await search().open();
       search().setQuery('frieren');
       await settle();
@@ -180,23 +180,19 @@ void main() {
       expect(state().shownOnline, hasLength(quickFirst + quickPage));
       expect(state().focus, quickFirst);
 
-      // the last page has five, so nothing more is asked for, but one row is
-      // still hidden
+      // the last page has seven, so nothing more is asked for and every row
+      // is showing
       await search().loadMore();
       expect(requests.last.queryParameters['offset'], '20');
-      expect(state().online, hasLength(25));
+      expect(state().online, hasLength(27));
       expect(state().onlineMore, isFalse);
-      expect(state().shownOnline, hasLength(24));
-      expect(state().hasMore, isTrue);
-
-      await search().loadMore();
-      expect(state().shownOnline, hasLength(25));
+      expect(state().shownOnline, hasLength(27));
       expect(state().hasMore, isFalse);
     },
   );
 
   test('Load more asked twice at once fetches one page', () async {
-    await start([for (var i = 1; i <= 25; i++) _page(i, 'Frieren $i')]);
+    await start([for (var i = 1; i <= 27; i++) _page(i, 'Frieren $i')]);
     await search().open();
     search().setQuery('frieren');
     await settle();
@@ -206,7 +202,7 @@ void main() {
   });
 
   test('the arrow keys move through the rows and Load more', () async {
-    await start([for (var i = 1; i <= 25; i++) _page(i, 'Frieren $i')]);
+    await start([for (var i = 1; i <= 27; i++) _page(i, 'Frieren $i')]);
     await search().open();
     search().setQuery('frieren');
     await settle();

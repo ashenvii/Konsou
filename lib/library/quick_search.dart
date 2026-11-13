@@ -4,7 +4,7 @@ import 'row_labels.dart';
 import 'title_language.dart';
 
 /// Rows shown at first in each group, and how many more one Load more adds.
-const quickFirst = 4;
+const quickFirst = quickPage;
 const quickPage = 10;
 
 /// One result in Quick search: an entry on the list, or a title found online.

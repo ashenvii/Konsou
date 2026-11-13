@@ -86,8 +86,8 @@ abstract final class Tokens {
   static const double quickSearchHeight = 28;
 
   // the quick search popover, from the wireframe the owner approved 2026-11-13
-  static const double quickPanelWidth = 560;
-  static const double quickPanelMaxHeight = 520;
+  static const double quickPanelWidth = 720;
+  static const double quickPanelMaxHeight = 720;
   static const double quickFieldHeight = 52;
   static const double quickFooterHeight = 48;
   static const double quickCoverWidth = 30;
