@@ -322,12 +322,33 @@ class _Note extends StatelessWidget {
   }
 }
 
-/// Moving through the rows with the keys keeps the highlighted one in view.
-void _keepInView(State state, {required bool now, required bool was}) {
-  if (!now || was) return;
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (state.mounted) Scrollable.ensureVisible(state.context);
-  });
+/// Moving through the rows with the keys keeps the highlighted one in view,
+/// scrolling only as far as it takes. The pointer never scrolls: the row
+/// under it is in view already, and a list that moves under a still pointer
+/// puts the next row under it, which would scroll again, all the way down.
+mixin _KeepsInView<T extends StatefulWidget> on State<T> {
+  var _pointed = false;
+
+  void point({required bool focused, required VoidCallback onFocus}) {
+    if (focused) return;
+    _pointed = true;
+    onFocus();
+  }
+
+  void keepInView({required bool now, required bool was}) {
+    final pointed = _pointed;
+    _pointed = false;
+    if (!now || was || pointed) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      for (final edge in const [
+        ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+        ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+      ]) {
+        Scrollable.ensureVisible(context, alignmentPolicy: edge);
+      }
+    });
+  }
 }
 
 class _ResultRow extends StatefulWidget {
@@ -349,11 +370,11 @@ class _ResultRow extends StatefulWidget {
   State<_ResultRow> createState() => _ResultRowState();
 }
 
-class _ResultRowState extends State<_ResultRow> {
+class _ResultRowState extends State<_ResultRow> with _KeepsInView<_ResultRow> {
   @override
   void didUpdateWidget(_ResultRow old) {
     super.didUpdateWidget(old);
-    _keepInView(this, now: widget.focused, was: old.focused);
+    keepInView(now: widget.focused, was: old.focused);
   }
 
   @override
@@ -362,7 +383,7 @@ class _ResultRowState extends State<_ResultRow> {
     final focused = widget.focused;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      onHover: (_) => widget.onFocus(),
+      onHover: (_) => point(focused: widget.focused, onFocus: widget.onFocus),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onOpen,
@@ -486,13 +507,13 @@ class _LoadMore extends StatefulWidget {
   State<_LoadMore> createState() => _LoadMoreState();
 }
 
-class _LoadMoreState extends State<_LoadMore> {
+class _LoadMoreState extends State<_LoadMore> with _KeepsInView<_LoadMore> {
   bool _hovered = false;
 
   @override
   void didUpdateWidget(_LoadMore old) {
     super.didUpdateWidget(old);
-    _keepInView(this, now: widget.focused, was: old.focused);
+    keepInView(now: widget.focused, was: old.focused);
   }
 
   @override
@@ -502,7 +523,7 @@ class _LoadMoreState extends State<_LoadMore> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      onHover: (_) => widget.onFocus(),
+      onHover: (_) => point(focused: widget.focused, onFocus: widget.onFocus),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,

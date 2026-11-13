@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' hide isNull, isNotNull;
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -209,5 +210,41 @@ void main() {
     expect(find.text('Frieren Extra 9'), findsOneWidget);
     // the highlight moved to the first new row, not back to the top
     expect(container.read(quickSearchProvider).focus, 5);
+  });
+
+  testWidgets('Load more leaves the list where it was', (tester) async {
+    await pumpLayer(tester);
+    await openIt(tester);
+    await typeIt(tester, 'frieren');
+    final position = tester
+        .state<ScrollableState>(find.byType(Scrollable).last)
+        .position;
+    final before = position.pixels;
+    final lastRow = tester.getTopLeft(find.text('Frieren Extra 2')).dy;
+    await tester.tap(find.text('10 more'));
+    await tester.pump();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 300)),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(position.pixels, before);
+    expect(tester.getTopLeft(find.text('Frieren Extra 2')).dy, lastRow);
+    // the pointer then moves over the new rows, as it does after a click
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    for (var i = 0; i < 6; i++) {
+      await mouse.moveTo(Offset(550, 300.0 + i));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
+    expect(position.pixels, before);
+    // the keys still bring a row below the fold into view, and no further
+    container.read(quickSearchProvider.notifier).focusRow(9);
+    await tester.pump();
+    await tester.pump();
+    expect(position.pixels, greaterThan(0));
+    expect(position.pixels, lessThan(position.maxScrollExtent));
   });
 }
