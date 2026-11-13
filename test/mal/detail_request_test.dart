@@ -103,6 +103,20 @@ void main() {
     expect(await rows('detail'), hasLength(1));
   });
 
+  test('a short fetch of a title held in full asks for all of it', () async {
+    final asked = <String?>[];
+    final request = detailRequest((sent) async {
+      asked.add(sent.url.queryParameters['fields']);
+      return http.Response.bytes(utf8.encode(fullJson), 200);
+    });
+    await request.fetch(52991, lane: Lane.screen, full: true);
+    await request.fetch(52991, lane: Lane.trickle, full: false);
+
+    expect(asked, [fullDetailFields, fullDetailFields]);
+    final details = databases.details;
+    expect((await details.select(details.detail).getSingle()).isFull, isTrue);
+  });
+
   test('a server error or no network saves nothing', () async {
     final serverError = await detailRequest((_) async => http.Response('', 500))
         .fetch(52991, lane: Lane.trickle, full: false);
@@ -111,7 +125,7 @@ void main() {
     ).fetch(52991, lane: Lane.trickle, full: false);
 
     expect(serverError, FetchOutcome.failed);
-    expect(noNetwork, FetchOutcome.failed);
+    expect(noNetwork, FetchOutcome.offline);
     expect(await rows('detail'), isEmpty);
     expect(await rows('gone_page'), isEmpty);
   });

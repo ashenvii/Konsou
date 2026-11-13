@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../components/app_button.dart';
 import '../gallery/gallery_screen.dart';
+import '../library/library_row.dart';
+import '../screens/detail/detail_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../shell/app_rail.dart';
 import '../shell/app_shell.dart';
@@ -15,6 +17,18 @@ import 'title_page.dart';
 import 'toast_layer.dart';
 
 const galleryPath = '/gallery';
+
+String titlePath(int malId, {String? entryId}) => Uri(
+  path: '/title/$malId',
+  queryParameters: entryId == null ? null : {'entry': entryId},
+).toString();
+
+String entryPath(String entryId) => '/entry/$entryId';
+
+String detailPathFor(LibraryRow row) => switch (row.malId) {
+  final malId? => titlePath(malId, entryId: row.entryId),
+  null => entryPath(row.entryId),
+};
 
 GoRouter buildRouter({
   Future<void> Function()? beforeClose,
@@ -54,8 +68,7 @@ GoRouter buildRouter({
                 child: switch (destination.path) {
                   libraryPath => LibraryScreen(
                     onDiscover: () => context.go(discoverPath),
-                    // the Detail page is not built yet
-                    onOpen: (_) {},
+                    onOpen: (row) => context.push(detailPathFor(row)),
                   ),
                   settingsPath => TitlePage(
                     destination.label,
@@ -65,6 +78,21 @@ GoRouter buildRouter({
                 },
               ),
             ),
+          GoRoute(
+            path: '/title/:malId',
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: DetailScreen.title(
+                int.parse(state.pathParameters['malId']!),
+                entryId: state.uri.queryParameters['entry'],
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/entry/:entryId',
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: DetailScreen.entry(state.pathParameters['entryId']!),
+            ),
+          ),
           if (kDebugMode)
             GoRoute(
               path: galleryPath,

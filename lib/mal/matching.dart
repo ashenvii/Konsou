@@ -111,13 +111,16 @@ class Matching {
 
   void stop() => _stopped = true;
 
-  Future<MatchOutcome> matchEntry(String entryId) async {
+  Future<MatchOutcome> matchEntry(
+    String entryId, {
+    Lane lane = Lane.trickle,
+  }) async {
     final entry = await _readEntry(entryId);
     final declined = await _readDeclined(entryId);
     final nameWords = pickNameWords(entry.name);
     var offered = <_Offer>[];
     for (final query in buildMatchQueries(entry.name)) {
-      final results = await searchRequest.search(query, lane: Lane.trickle);
+      final results = await searchRequest.search(query, lane: lane);
       if (results == null) return MatchOutcome.failed;
       offered = [
         for (final (index, page) in results.indexed)
@@ -140,7 +143,7 @@ class Matching {
         if (offer.isExact) offer.page,
     ];
     if (exact.length == 1 && await _canLink(entryId, entry, exact.single)) {
-      await linkEntry(entryId, exact.single['id'] as int, lane: Lane.trickle);
+      await linkEntry(entryId, exact.single['id'] as int, lane: lane);
       return MatchOutcome.linked;
     }
     offered.sort((a, b) {
@@ -160,6 +163,7 @@ class Matching {
     String entryId,
     int malId, {
     required Lane lane,
+    bool full = false,
   }) async {
     await _record.transaction(() async {
       await _record
@@ -174,7 +178,7 @@ class Matching {
       await _markLinkChanged(entryId);
     });
     await _clearSearch(entryId);
-    await detailRequest.fetch(malId, lane: lane, full: false);
+    await detailRequest.fetch(malId, lane: lane, full: full);
   }
 
   /// The user's "None of these": every page shown is declined.
@@ -189,7 +193,8 @@ class Matching {
   }
 
   /// The user's "Wrong title": the entry is not linked again and that page is
-  /// declined, so the next search looks past it.
+  /// declined, so the next search looks past it. An entry with no name of its
+  /// own keeps the page's title, so it can still be read and searched for.
   Future<void> unlinkEntry(String entryId) async {
     final entry = await _readEntry(entryId);
     final malId = entry.malId;
@@ -199,10 +204,28 @@ class Matching {
             (ref) => ref.entryId.equals(entryId) & ref.provider.equals('mal'),
           ))
           .go();
+      await _record.customUpdate(
+        "UPDATE entry SET name = ? WHERE entry_id = ? AND ifnull(name, '') = ''",
+        variables: [
+          Variable.withString(entry.name),
+          Variable.withString(entryId),
+        ],
+        updates: {_record.entry},
+      );
       await _markLinkChanged(entryId);
       await _decline(entryId, malId);
     });
     await _clearSearch(entryId);
+    await (_details.delete(
+      _details.franchiseLink,
+    )..where((row) => row.entryId.equals(entryId))).go();
+  }
+
+  /// "Wrong title" from the Detail page: unlinks, then looks for the right
+  /// page at once.
+  Future<MatchOutcome> replaceWrongTitle(String entryId) async {
+    await unlinkEntry(entryId);
+    return matchEntry(entryId, lane: Lane.screen);
   }
 
   /// Searches the provider for what the user typed. When that finds nothing,

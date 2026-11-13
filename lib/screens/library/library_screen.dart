@@ -55,7 +55,7 @@ class LibraryScreen extends ConsumerWidget {
   });
 
   final VoidCallback onDiscover;
-  final ValueChanged<String> onOpen;
+  final ValueChanged<LibraryRow> onOpen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -363,7 +363,7 @@ class _Rows extends StatelessWidget {
   final LibraryLayout layout;
   final LibrarySort sort;
   final VoidCallback onDiscover;
-  final ValueChanged<String> onOpen;
+  final ValueChanged<LibraryRow> onOpen;
 
   bool _statusShown(LibraryRow row) =>
       showStatus || keptIds.contains(row.entryId);
@@ -419,13 +419,13 @@ class _Rows extends StatelessWidget {
           ? LibraryGridCard(
               row: row,
               showStatus: _statusShown(row),
-              onOpen: () => onOpen(row.entryId),
+              onOpen: () => onOpen(row),
               onContextMenu: handle.openAt,
             )
           : LibraryListRow(
               row: row,
               showStatus: _statusShown(row),
-              onOpen: () => onOpen(row.entryId),
+              onOpen: () => onOpen(row),
               onCheck: (done) => _edit(
                 context,
                 row,
@@ -471,7 +471,7 @@ class _RowMenu extends StatelessWidget {
   });
 
   final LibraryRow row;
-  final ValueChanged<String> onOpen;
+  final ValueChanged<LibraryRow> onOpen;
   final Widget Function(BuildContext context, PopoverHandle handle) builder;
 
   @override
@@ -495,7 +495,7 @@ class _RowMenu extends StatelessWidget {
         onAddEpisode: () =>
             _edit(context, row, (e) => e.addEpisode(row.entryId)),
         onRewatch: () => _edit(context, row, (e) => e.rewatch(row.entryId)),
-        onOpen: () => onOpen(row.entryId),
+        onOpen: () => onOpen(row),
         onRemove: () => _edit(
           context,
           row,

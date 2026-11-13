@@ -4,6 +4,7 @@ import '../data/databases.dart';
 import '../data/edit_clock.dart';
 import '../data/generate_id.dart';
 import '../data/record_database.dart';
+import 'aired_episodes.dart';
 import 'earlier_titles.dart';
 import 'entry_status.dart';
 
@@ -54,7 +55,13 @@ class EntryEdits {
       final episodes = finishing
           ? _maxOf(facts.total, facts.episodesWatched)
           : facts.episodesWatched;
-      await _writeProgress(entryId, time, status: target, episodes: episodes);
+      await _writeProgress(
+        entryId,
+        time,
+        status: target,
+        episodes: episodes,
+        startedAt: target == EntryStatus.watching ? _firstStart(facts) : null,
+      );
       if (finishing) {
         await _logCompletion(entryId, facts, episodes);
       } else if (facts.status == EntryStatus.completed) {
@@ -67,31 +74,42 @@ class EntryEdits {
 
   Future<EditResult> addEpisode(String entryId) async {
     final facts = await _readFacts(entryId);
+    return setEpisodes(entryId, facts.episodesWatched + 1);
+  }
+
+  /// Sets the episode count of a title being watched. Reaching the total
+  /// completes it; a count past what has aired is refused.
+  Future<EditResult> setEpisodes(String entryId, int count) async {
+    final facts = await _readFacts(entryId);
     if (!watchingStatuses.contains(facts.status.value)) {
       return EditResult.notWatching;
     }
     final total = facts.total;
-    if (total != null && facts.episodesWatched >= total) return EditResult.done;
-    final episodes = facts.episodesWatched + 1;
+    final episodes = count < 0
+        ? 0
+        : total != null && count > total
+        ? total
+        : count;
+    if (episodes == facts.episodesWatched) return EditResult.done;
+    final aired = facts.countAired(_now());
+    if (aired != null && episodes > aired && episodes > facts.episodesWatched) {
+      return EditResult.notAiredYet;
+    }
     final finishes = total != null && episodes >= total;
     final locked = finishes ? _lockFor(facts, EntryStatus.completed) : null;
     await _record.transaction(() async {
       final time = await readEditTime(_record, _now());
+      await _writeProgress(
+        entryId,
+        time,
+        status: finishes && locked == null
+            ? EntryStatus.completed
+            : facts.status,
+        episodes: episodes,
+        startedAt: _firstStart(facts),
+      );
       if (finishes && locked == null) {
-        await _writeProgress(
-          entryId,
-          time,
-          status: EntryStatus.completed,
-          episodes: episodes,
-        );
         await _logCompletion(entryId, facts, episodes);
-      } else {
-        await _writeProgress(
-          entryId,
-          time,
-          status: facts.status,
-          episodes: episodes,
-        );
       }
     });
     onChanged?.call();
@@ -196,14 +214,53 @@ class EntryEdits {
   Future<void> setScore(String entryId, int? score) async {
     await _record.transaction(() async {
       final time = await readEditTime(_record, _now());
-      await (_record.update(
-        _record.entry,
-      )..where((row) => row.entryId.equals(entryId))).write(
+      await _writeEntry(
+        entryId,
         EntryCompanion(score: Value(score), scoreChangedAt: Value(time)),
       );
     });
     onChanged?.call();
   }
+
+  Future<void> setNotes(String entryId, String text) async {
+    final notes = text.trim().isEmpty ? null : text;
+    final entry = await _readEntry(entryId);
+    if (entry.notes == notes) return;
+    await _record.transaction(() async {
+      final time = await readEditTime(_record, _now());
+      await _writeEntry(
+        entryId,
+        EntryCompanion(notes: Value(notes), notesChangedAt: Value(time)),
+      );
+    });
+    onChanged?.call();
+  }
+
+  Future<void> setStartedDate(String entryId, DateTime? date) async {
+    final startedAt = date?.millisecondsSinceEpoch;
+    final entry = await _readEntry(entryId);
+    if (entry.startedAt == startedAt) return;
+    await _record.transaction(() async {
+      final time = await readEditTime(_record, _now());
+      await _writeEntry(
+        entryId,
+        EntryCompanion(
+          startedAt: Value(startedAt),
+          progressChangedAt: Value(time),
+        ),
+      );
+    });
+    onChanged?.call();
+  }
+
+  Future<Entry> _readEntry(String entryId) => (_record.select(
+    _record.entry,
+  )..where((row) => row.entryId.equals(entryId))).getSingle();
+
+  Future<void> _writeEntry(String entryId, EntryCompanion changes) =>
+      (_record.update(
+        _record.entry,
+      )..where((row) => row.entryId.equals(entryId))).write(changes);
 
   /// Sets each earlier title to [status]. Completed fills the episode count
   /// and logs an estimated completion; any other status only sets the status
@@ -363,16 +420,22 @@ class EntryEdits {
     int time, {
     required EntryStatus status,
     required int episodes,
-  }) =>
-      (_record.update(
-        _record.entry,
-      )..where((row) => row.entryId.equals(entryId))).write(
-        EntryCompanion(
-          status: Value(status.value),
-          episodesWatched: Value(episodes),
-          progressChangedAt: Value(time),
-        ),
-      );
+    int? startedAt,
+  }) => _writeEntry(
+    entryId,
+    EntryCompanion(
+      status: Value(status.value),
+      episodesWatched: Value(episodes),
+      progressChangedAt: Value(time),
+      startedAt: startedAt == null ? const Value.absent() : Value(startedAt),
+    ),
+  );
+
+  // an entry resumed with episodes already watched did not start today
+  int? _firstStart(_Facts facts) =>
+      facts.startedAt == null && facts.episodesWatched == 0
+      ? _now().millisecondsSinceEpoch
+      : null;
 
   Future<void> _logCompletion(
     String entryId,
@@ -421,8 +484,10 @@ class EntryEdits {
     final rows = await _record
         .customSelect(
           '''
-          SELECT entry.status, entry.episodes_watched,
-            detail.airing_status, detail.episodes,
+          SELECT entry.status, entry.episodes_watched, entry.started_at,
+            detail.airing_status, detail.episodes, detail.media_type,
+            detail.start_date,
+            json_extract(detail.json, '\$.broadcast.start_time') AS broadcast,
             json_extract(detail.json, '\$.average_episode_duration') AS seconds
           FROM entry
           LEFT JOIN entry_reference reference
@@ -442,6 +507,10 @@ class EntryEdits {
       airing: row.read<String?>('airing_status'),
       total: row.read<int?>('episodes'),
       secondsPerEpisode: row.read<int?>('seconds'),
+      startedAt: row.read<int?>('started_at'),
+      mediaType: row.read<String?>('media_type'),
+      startDate: row.read<String?>('start_date'),
+      broadcastTime: row.read<String?>('broadcast'),
     );
   }
 
@@ -456,6 +525,10 @@ class _Facts {
     this.airing,
     this.total,
     this.secondsPerEpisode,
+    this.startedAt,
+    this.mediaType,
+    this.startDate,
+    this.broadcastTime,
   });
 
   final EntryStatus status;
@@ -463,4 +536,17 @@ class _Facts {
   final String? airing;
   final int? total;
   final int? secondsPerEpisode;
+  final int? startedAt;
+  final String? mediaType;
+  final String? startDate;
+  final String? broadcastTime;
+
+  int? countAired(DateTime now) => countAiredEpisodes(
+    airingStatus: airing,
+    mediaType: mediaType,
+    startDate: startDate,
+    broadcastTime: broadcastTime,
+    total: total,
+    now: now,
+  );
 }

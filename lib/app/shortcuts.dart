@@ -1,6 +1,8 @@
+import 'package:flutter/gestures.dart' show kBackMouseButton;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../library/library_view.dart';
 import '../screens/library/library_keys.dart';
@@ -19,6 +21,8 @@ class AppShortcut {
 const appShortcuts = [
   AppShortcut('Undo', 'Ctrl+Z', 'While a toast with Undo shows'),
   AppShortcut('Quick search', 'Ctrl+K', 'Anywhere'),
+  AppShortcut('Back', 'Alt+Left', 'Anywhere'),
+  AppShortcut('Back', 'Mouse back button', 'Anywhere'),
   AppShortcut('Find a title', 'Ctrl+F', 'Library'),
   AppShortcut('Show All', 'Alt+1', 'Library'),
   AppShortcut('Show Watching', 'Alt+2', 'Library'),
@@ -63,8 +67,14 @@ class AppShortcuts extends ConsumerWidget {
         ref.watch(toastHostProvider.select((state) => state.reviewOpen)) ||
         ref.watch(quickSearchProvider.select((state) => state.open));
     final libraryActive = libraryOpen && !covered;
+    void goBack() {
+      final router = GoRouter.maybeOf(context);
+      if (router != null && router.canPop()) router.pop();
+    }
+
     return CallbackShortcuts(
       bindings: {
+        const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): goBack,
         const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () =>
             ref.read(toastHostProvider.notifier).undoNewest(),
         const SingleActivator(LogicalKeyboardKey.keyK, control: true): () =>
@@ -86,7 +96,12 @@ class AppShortcuts extends ConsumerWidget {
         onKeyEvent: libraryActive
             ? (node, event) => handleLibraryKey(ref, event)
             : null,
-        child: child,
+        child: Listener(
+          onPointerDown: (event) {
+            if (event.buttons & kBackMouseButton != 0) goBack();
+          },
+          child: child,
+        ),
       ),
     );
   }

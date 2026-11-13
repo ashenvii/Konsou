@@ -348,6 +348,95 @@ void main() {
       expect(declined.map((row) => row.providerId).toSet(), {53525, 53526});
     });
 
+    test(
+      'Wrong title keeps a name, leaves the franchise and searches at once',
+      () async {
+        final record = databases.record;
+        await record
+            .into(record.entry)
+            .insert(
+              EntryCompanion.insert(
+                entryId: 'added',
+                status: 'watching',
+                episodesWatched: const Value(4),
+                score: const Value(8),
+                addedAt: 1,
+                progressChangedAt: 1,
+              ),
+            );
+        await record
+            .into(record.entryReference)
+            .insert(
+              EntryReferenceCompanion.insert(
+                entryId: 'added',
+                provider: 'mal',
+                providerId: 5,
+              ),
+            );
+        final details = databases.details;
+        await details
+            .into(details.detail)
+            .insert(
+              DetailCompanion.insert(
+                provider: 'mal',
+                providerId: 5,
+                fetchedAt: 1,
+                json: '{"id": 5, "title": "Kimi no Na wa."}',
+              ),
+            );
+        await details
+            .into(details.franchiseLink)
+            .insert(
+              FranchiseLinkCompanion.insert(
+                entryId: 'added',
+                franchiseProvider: 'mal',
+                franchiseProviderId: 5,
+              ),
+            );
+        searches['Kimi no Na wa.'] = [
+          buildNode(5, 'Kimi no Na wa.'),
+          buildNode(6, 'Kimi no Na wa. Another'),
+        ];
+
+        final outcome = await buildMatching().replaceWrongTitle('added');
+
+        expect(outcome, MatchOutcome.suggested);
+        expect(await readMalId('added'), isNull);
+        expect(await readSuggestions('added'), [6]);
+        expect(await details.select(details.franchiseLink).get(), isEmpty);
+        final entry = await (record.select(
+          record.entry,
+        )..where((row) => row.entryId.equals('added'))).getSingle();
+        expect(entry.name, 'Kimi no Na wa.');
+        expect(
+          (entry.status, entry.episodesWatched, entry.score),
+          ('watching', 4, 8),
+        );
+        expect(entry.linkChangedAt, _now.millisecondsSinceEpoch);
+      },
+    );
+
+    test('Wrong title leaves a name the entry already has', () async {
+      await addEntry('hi', 'My own name', malId: 5);
+      final details = databases.details;
+      await details
+          .into(details.detail)
+          .insert(
+            DetailCompanion.insert(
+              provider: 'mal',
+              providerId: 5,
+              fetchedAt: 1,
+              json: '{"id": 5, "title": "Page title"}',
+            ),
+          );
+      await buildMatching().unlinkEntry('hi');
+      final record = databases.record;
+      final entry = await (record.select(
+        record.entry,
+      )..where((row) => row.entryId.equals('hi'))).getSingle();
+      expect(entry.name, 'My own name');
+    });
+
     test('a gone page is searched by its last title and replaced', () async {
       await addEntry('gone', 'Saved Name', malId: 5);
       final details = databases.details;

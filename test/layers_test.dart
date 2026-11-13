@@ -17,6 +17,7 @@ const _mayImport = <String, Set<String>>{
   'search': {'search', 'data'},
   'net': {'net'},
   'mal': {'mal', 'data', 'search', 'net'},
+  'detail': {'detail', 'library', 'mal', 'data'},
   'sync': {'sync', 'data', 'import', 'net'},
   'screens': {
     'screens',
@@ -25,6 +26,7 @@ const _mayImport = <String, Set<String>>{
     'components',
     'icons',
     'library',
+    'detail',
     'data',
     'import',
     'mal',
@@ -35,7 +37,16 @@ const _mayImport = <String, Set<String>>{
 };
 
 /// Folders on the data side, which may not import any Flutter package.
-const _dataSide = {'data', 'import', 'mal', 'search', 'sync', 'net', 'library'};
+const _dataSide = {
+  'data',
+  'import',
+  'mal',
+  'search',
+  'sync',
+  'net',
+  'library',
+  'detail',
+};
 
 /// Whatever is not in a folder above (main.dart, gallery) is wiring and may
 /// import anything.

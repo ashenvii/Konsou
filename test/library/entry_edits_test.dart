@@ -596,17 +596,19 @@ void main() {
       expect(await readCompletions('a'), isEmpty);
     });
 
-    test('a non-Completed status sets only the status and keeps episodes', () async {
-      await addEntry('a', 'plan_to_watch', malId: 1, json: _detail());
-      final mark = await edits.markEarlier(
-        [earlier(1, entryId: 'a')],
-        status: EntryStatus.dropped,
-      );
-      expect(mark.applied, 1);
-      final entry = await readEntry('a');
-      expect((entry.status, entry.episodesWatched), ('dropped', 0));
-      expect(await readCompletions('a'), isEmpty);
-    });
+    test(
+      'a non-Completed status sets only the status and keeps episodes',
+      () async {
+        await addEntry('a', 'plan_to_watch', malId: 1, json: _detail());
+        final mark = await edits.markEarlier([
+          earlier(1, entryId: 'a'),
+        ], status: EntryStatus.dropped);
+        expect(mark.applied, 1);
+        final entry = await readEntry('a');
+        expect((entry.status, entry.episodesWatched), ('dropped', 0));
+        expect(await readCompletions('a'), isEmpty);
+      },
+    );
 
     test('an unlisted title can be added as Not interested', () async {
       await databases.details
@@ -619,25 +621,24 @@ void main() {
               json: _detail(),
             ),
           );
-      await edits.markEarlier(
-        [earlier(9)],
-        status: EntryStatus.notInterested,
-      );
+      await edits.markEarlier([earlier(9)], status: EntryStatus.notInterested);
       final record = databases.record;
       final entry = (await record.select(record.entry).get()).single;
       expect(entry.status, 'not_interested');
       expect(await readCompletions(entry.entryId), isEmpty);
     });
 
-    test('moving a completed title to another status takes its completion back', () async {
-      await addEntry('a', 'completed');
-      await edits.markEarlier(
-        [earlier(1, entryId: 'a')],
-        status: EntryStatus.onHold,
-      );
-      expect((await readEntry('a')).status, 'on_hold');
-      expect(await readCompletions('a'), isEmpty);
-    });
+    test(
+      'moving a completed title to another status takes its completion back',
+      () async {
+        await addEntry('a', 'completed');
+        await edits.markEarlier([
+          earlier(1, entryId: 'a'),
+        ], status: EntryStatus.onHold);
+        expect((await readEntry('a')).status, 'on_hold');
+        expect(await readCompletions('a'), isEmpty);
+      },
+    );
 
     test('a title already in the chosen status is not counted', () async {
       await addEntry('a', 'completed');
@@ -670,6 +671,139 @@ void main() {
             SettingCompanion.insert(key: 'auto_mark_earlier', value: 'true'),
           );
       expect(await edits.readAutoMarkEarlier(), isTrue);
+    });
+  });
+
+  group('episode count', () {
+    // first broadcast 2026-10-05 15:00 UTC, so 5 episodes are out by _now
+    const airing =
+        '{"title": "T", "status": "currently_airing", "num_episodes": 12, '
+        '"media_type": "tv", "start_date": "2026-10-06", '
+        '"broadcast": {"day_of_the_week": "tuesday", "start_time": "00:00"}}';
+
+    test('sets the count directly, up or down', () async {
+      await addEntry('a', 'watching', watched: 3, malId: 1, json: _detail());
+      expect(await edits.setEpisodes('a', 9), EditResult.done);
+      expect((await readEntry('a')).episodesWatched, 9);
+      expect(await edits.setEpisodes('a', 2), EditResult.done);
+      expect((await readEntry('a')).episodesWatched, 2);
+      expect(changes, 2);
+    });
+
+    test('reaching the total completes the title', () async {
+      await addEntry('a', 'watching', watched: 3, malId: 1, json: _detail());
+      await edits.setEpisodes('a', 40);
+      final entry = await readEntry('a');
+      expect((entry.status, entry.episodesWatched), ('completed', 12));
+      expect(await readCompletions('a'), hasLength(1));
+    });
+
+    test('the same count changes nothing and tells nobody', () async {
+      await addEntry('a', 'watching', watched: 3, malId: 1, json: _detail());
+      expect(await edits.setEpisodes('a', 3), EditResult.done);
+      expect(await edits.setEpisodes('a', -4), EditResult.done);
+      expect((await readEntry('a')).episodesWatched, 0);
+      expect(changes, 1);
+    });
+
+    test('only a title being watched takes a count', () async {
+      await addEntry('a', 'completed', watched: 12, malId: 1, json: _detail());
+      expect(await edits.setEpisodes('a', 5), EditResult.notWatching);
+      expect((await readEntry('a')).episodesWatched, 12);
+      expect(changes, 0);
+    });
+
+    test('an episode that has not aired is refused', () async {
+      await addEntry('a', 'watching', watched: 4, malId: 1, json: airing);
+      expect(await edits.setEpisodes('a', 6), EditResult.notAiredYet);
+      expect((await readEntry('a')).episodesWatched, 4);
+      expect(await edits.addEpisode('a'), EditResult.done);
+      expect(await edits.addEpisode('a'), EditResult.notAiredYet);
+      expect((await readEntry('a')).episodesWatched, 5);
+      expect(changes, 1);
+    });
+
+    test('a count already past what has aired can still come down', () async {
+      await addEntry('a', 'watching', watched: 9, malId: 1, json: airing);
+      expect(await edits.setEpisodes('a', 7), EditResult.done);
+      expect((await readEntry('a')).episodesWatched, 7);
+    });
+  });
+
+  group('started date', () {
+    test('the first episode sets it', () async {
+      await addEntry('a', 'watching', malId: 1, json: _detail());
+      await edits.addEpisode('a');
+      expect((await readEntry('a')).startedAt, _now.millisecondsSinceEpoch);
+    });
+
+    test('becoming Watching sets it', () async {
+      await addEntry('a', 'plan_to_watch', malId: 1, json: _detail());
+      await edits.setStatus('a', EntryStatus.watching);
+      expect((await readEntry('a')).startedAt, _now.millisecondsSinceEpoch);
+    });
+
+    test('a date already there is kept', () async {
+      await addEntry('a', 'plan_to_watch', malId: 1, json: _detail());
+      await edits.setStartedDate('a', DateTime.utc(2024, 3, 1));
+      await edits.setStatus('a', EntryStatus.watching);
+      await edits.addEpisode('a');
+      expect(
+        (await readEntry('a')).startedAt,
+        DateTime.utc(2024, 3, 1).millisecondsSinceEpoch,
+      );
+    });
+
+    test(
+      'an entry with episodes already watched did not start today',
+      () async {
+        await addEntry('a', 'on_hold', watched: 5, malId: 1, json: _detail());
+        await edits.setStatus('a', EntryStatus.watching);
+        await edits.addEpisode('a');
+        expect((await readEntry('a')).startedAt, isNull);
+      },
+    );
+
+    test('completing a planned title does not guess a start', () async {
+      await addEntry('a', 'plan_to_watch', malId: 1, json: _detail());
+      await edits.setStatus('a', EntryStatus.completed);
+      expect((await readEntry('a')).startedAt, isNull);
+    });
+
+    test('is set and cleared by hand, timed with the progress', () async {
+      await addEntry('a', 'watching');
+      await edits.setStartedDate('a', DateTime.utc(2025, 1, 2));
+      var entry = await readEntry('a');
+      expect(entry.startedAt, DateTime.utc(2025, 1, 2).millisecondsSinceEpoch);
+      expect(entry.progressChangedAt, _now.millisecondsSinceEpoch);
+      await edits.setStartedDate('a', DateTime.utc(2025, 1, 2));
+      await edits.setStartedDate('a', null);
+      entry = await readEntry('a');
+      expect(entry.startedAt, isNull);
+      expect(changes, 2);
+    });
+  });
+
+  group('notes', () {
+    test('saves the text, timed on its own', () async {
+      await addEntry('a', 'watching');
+      await edits.setNotes('a', 'Rewatch before season 2.');
+      final entry = await readEntry('a');
+      expect(entry.notes, 'Rewatch before season 2.');
+      expect(entry.notesChangedAt, _now.millisecondsSinceEpoch);
+      expect(entry.progressChangedAt, 5);
+    });
+
+    test('empty text clears them, and the same text saves nothing', () async {
+      await addEntry('a', 'watching');
+      await edits.setNotes('a', '  ');
+      expect(changes, 0);
+      await edits.setNotes('a', 'Good');
+      await edits.setNotes('a', 'Good');
+      expect(changes, 1);
+      await edits.setNotes('a', ' \n');
+      expect((await readEntry('a')).notes, isNull);
+      expect(changes, 2);
     });
   });
 }

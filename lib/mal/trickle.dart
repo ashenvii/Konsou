@@ -44,9 +44,11 @@ class Trickle {
     final finished = await drainQueue<int>(
       isStopped: () => _stopped,
       next: _nextTitle,
-      work: (malId) async =>
-          await detailRequest.fetch(malId, lane: Lane.trickle, full: false) ==
-          FetchOutcome.failed,
+      work: (malId) async => (await detailRequest.fetch(
+        malId,
+        lane: Lane.trickle,
+        full: false,
+      )).didFail,
       onItem: onProgress,
     );
     if (finished) await matching.run();

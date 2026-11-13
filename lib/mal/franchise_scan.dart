@@ -58,7 +58,7 @@ class FranchiseScan {
           lane: Lane.trickle,
           full: false,
         );
-        if (outcome == FetchOutcome.failed) failed.add(malId);
+        if (outcome.didFail) failed.add(malId);
       }
     }
   }
@@ -78,7 +78,7 @@ class FranchiseScan {
         lane: Lane.trickle,
         full: false,
       );
-      if (outcome == FetchOutcome.failed) continue;
+      if (outcome.didFail) continue;
       final before = _relationIds(state.titles[newest]);
       final after = _relationIds(
         (await readSavedTitles(databases.record, malId: newest))[newest],

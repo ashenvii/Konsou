@@ -52,20 +52,15 @@ Future<List<LibraryRow>> loadLibraryRows(
   TitleLanguage language,
 ) async => foldFranchises(await loadLibraryEntries(databases, language));
 
-String pickTitleName(QueryRow row, TitleLanguage language) {
-  String? text(String column) {
-    final value = row.read<String?>(column);
-    return value == null || value.isEmpty ? null : value;
-  }
-
-  final romaji = text('title');
-  final preferred = switch (language) {
-    TitleLanguage.romaji => romaji,
-    TitleLanguage.english => text('title_english') ?? romaji,
-    TitleLanguage.japanese => text('title_japanese') ?? romaji,
-  };
-  return preferred ?? text('name') ?? '';
-}
+String pickTitleName(QueryRow row, TitleLanguage language) =>
+    orderTitles(
+      language,
+      romaji: row.read<String?>('title'),
+      english: row.read<String?>('title_english'),
+      japanese: row.read<String?>('title_japanese'),
+    ).firstOrNull ??
+    row.read<String?>('name') ??
+    '';
 
 Future<TitleLanguage> readTitleLanguage(RecordDatabase record) async {
   final row =

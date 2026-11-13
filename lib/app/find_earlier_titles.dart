@@ -4,8 +4,7 @@ import '../data/databases.dart';
 import '../library/earlier_titles.dart';
 import '../library/load_library.dart';
 import '../library/title_language.dart';
-import '../mal/franchise_grouping.dart';
-import '../mal/saved_titles.dart';
+import '../mal/franchise_members.dart';
 
 const _skipped = {'completed', 'rewatching', 'not_interested'};
 
@@ -24,15 +23,9 @@ Future<List<EarlierTitle>> findEarlierTitles(
   if (own == null) return [];
   final malId = own.read<int>('provider_id');
 
-  final saved = await readSavedTitles(record);
-  final places = groupFranchises(saved.values.map((title) => title.title));
-  final franchise = places[malId]?.franchiseId;
+  final franchise = await readFranchiseMembers(record, malId);
   if (franchise == null) return [];
-
-  final members = sortByStart([
-    for (final title in saved.values)
-      if (places[title.title.id]?.franchiseId == franchise) title.title,
-  ]);
+  final FranchiseMembers(:saved, :places, :members) = franchise;
   final position = members.indexWhere((title) => title.id == malId);
   if (position <= 0) return [];
 

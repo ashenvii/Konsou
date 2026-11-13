@@ -17,7 +17,14 @@ const fullDetailFields =
     'background,related_manga,recommendations,studios,statistics,videos,'
     'opening_themes,ending_themes';
 
-enum FetchOutcome { fetched, gone, failed }
+enum FetchOutcome {
+  fetched,
+  gone,
+  offline,
+  failed;
+
+  bool get didFail => this == offline || this == failed;
+}
 
 const goneRecheck = Duration(days: 30);
 
@@ -54,6 +61,8 @@ class DetailRequest {
     required bool full,
     bool Function()? wanted,
   }) async {
+    // a full row is never swapped for a short one
+    final keepFull = full || await _holdsFull(malId);
     final http.Response response;
     try {
       response = await gate.send(
@@ -62,12 +71,14 @@ class DetailRequest {
           client,
           clientId: clientId,
           malId: malId,
-          fields: full ? fullDetailFields : shortDetailFields,
+          fields: keepFull ? fullDetailFields : shortDetailFields,
         ),
         wanted: wanted,
       );
-    } on Exception {
+    } on RequestCancelled {
       return FetchOutcome.failed;
+    } on Exception {
+      return FetchOutcome.offline;
     }
     final checkedAt = _now().millisecondsSinceEpoch;
     if (response.statusCode == 404) {
@@ -94,7 +105,7 @@ class DetailRequest {
               fetchedAt: checkedAt,
               // the body is utf-8; http assumes latin-1 when no charset is sent
               json: utf8.decode(response.bodyBytes),
-              isFull: Value(full),
+              isFull: Value(keepFull),
             ),
           );
       await (details.delete(details.gonePage)..where(
@@ -104,6 +115,16 @@ class DetailRequest {
           .go();
     });
     return FetchOutcome.fetched;
+  }
+
+  Future<bool> _holdsFull(int malId) async {
+    final saved =
+        await (details.select(details.detail)..where(
+              (row) =>
+                  row.provider.equals('mal') & row.providerId.equals(malId),
+            ))
+            .getSingleOrNull();
+    return saved?.isFull ?? false;
   }
 }
 
