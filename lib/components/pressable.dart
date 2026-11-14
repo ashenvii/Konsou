@@ -5,10 +5,15 @@ import '../design/tokens.dart';
 import 'touch_target.dart';
 
 class PressState {
-  const PressState({required this.hovered, required this.focused});
+  const PressState({
+    required this.hovered,
+    required this.focused,
+    this.pressed = false,
+  });
 
   final bool hovered;
   final bool focused;
+  final bool pressed;
 }
 
 class Pressable extends StatefulWidget {
@@ -43,6 +48,11 @@ class Pressable extends StatefulWidget {
 class _PressableState extends State<Pressable> {
   bool _hovered = false;
   bool _focused = false;
+  bool _pressed = false;
+
+  void _setPressed(bool pressed) {
+    if (_pressed != pressed) setState(() => _pressed = pressed);
+  }
 
   static const _activate = <ShortcutActivator, Intent>{
     SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
@@ -56,7 +66,11 @@ class _PressableState extends State<Pressable> {
     final child = widget.builder(
       context,
       // A disabled control does not light up under the pointer.
-      PressState(hovered: _hovered && enabled, focused: _focused),
+      PressState(
+        hovered: _hovered && enabled,
+        focused: _focused,
+        pressed: _pressed && enabled,
+      ),
     );
     return Semantics(
       button: true,
@@ -84,6 +98,10 @@ class _PressableState extends State<Pressable> {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: widget.onPressed,
+            // none when disabled, or it would read as something to tap
+            onTapDown: enabled ? (_) => _setPressed(true) : null,
+            onTapUp: enabled ? (_) => _setPressed(false) : null,
+            onTapCancel: enabled ? () => _setPressed(false) : null,
             child: TouchTarget(
               child: DecoratedBox(
                 position: DecorationPosition.foreground,

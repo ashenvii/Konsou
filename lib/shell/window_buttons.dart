@@ -6,13 +6,24 @@ import '../design/tokens.dart';
 enum WindowGlyph { minimize, maximize, restore, close }
 
 /// One of the three window buttons. Icons use only horizontal, vertical and
-/// 45 degree lines. Hover brightens the icon, and the close icon turns red.
+/// 45 degree lines. Hover fills the button the way Windows does: a faint fill
+/// on minimize and maximize, red on close. A press dims the fill.
 /// Built on [Pressable], so the keyboard reaches it and it has a spoken name.
 class WindowButton extends StatelessWidget {
-  const WindowButton({super.key, required this.glyph, required this.onPressed});
+  const WindowButton({
+    super.key,
+    required this.glyph,
+    required this.onPressed,
+    this.hovered = false,
+    this.pressed = false,
+  });
 
   final WindowGlyph glyph;
   final VoidCallback onPressed;
+
+  // the maximize button's pointer belongs to Windows, which reports it here
+  final bool hovered;
+  final bool pressed;
 
   String get _label => switch (glyph) {
     WindowGlyph.minimize => 'Minimize',
@@ -30,16 +41,25 @@ class WindowButton extends StatelessWidget {
         onPressed: onPressed,
         cursor: SystemMouseCursors.basic,
         builder: (context, state) {
-          final color = !state.hovered
-              ? Tokens.inkMuted
-              : (isClose ? Tokens.red : Tokens.ink);
-          return SizedBox(
-            width: Tokens.windowButtonWidth,
-            height: Tokens.barHeight,
-            child: Center(
-              child: CustomPaint(
-                size: const Size.square(Tokens.windowIconSize),
-                painter: _GlyphPainter(glyph, color),
+          final held = state.pressed || pressed;
+          final lit = held || state.hovered || hovered;
+          final fill = isClose ? Tokens.red : Tokens.ink;
+          final strength = isClose
+              ? (held ? _closePressed : 1.0)
+              : (held ? _plainPressed : _plainHover);
+          return ColoredBox(
+            color: lit ? fill.withValues(alpha: strength) : _noFill,
+            child: SizedBox(
+              width: Tokens.windowButtonWidth,
+              height: Tokens.barHeight,
+              child: Center(
+                child: CustomPaint(
+                  size: const Size.square(Tokens.windowIconSize),
+                  painter: _GlyphPainter(
+                    glyph,
+                    lit ? Tokens.ink : Tokens.inkMuted,
+                  ),
+                ),
               ),
             ),
           );
@@ -48,6 +68,12 @@ class WindowButton extends StatelessWidget {
     );
   }
 }
+
+// windows 11's own caption buttons: 6% and 4% of the ink, close at 90% pressed
+const _plainHover = 0.06;
+const _plainPressed = 0.04;
+const _closePressed = 0.9;
+final _noFill = Tokens.ink.withValues(alpha: 0);
 
 class _GlyphPainter extends CustomPainter {
   _GlyphPainter(this.glyph, this.color);

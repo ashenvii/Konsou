@@ -11,6 +11,7 @@ import '../screens/library/library_screen.dart';
 import '../shell/app_rail.dart';
 import '../shell/app_shell.dart';
 import 'quick_search_layer.dart';
+import 'quiet_page.dart';
 import 'quick_search_providers.dart';
 import 'shortcuts.dart';
 import 'title_page.dart';
@@ -64,7 +65,7 @@ GoRouter buildRouter({
           for (final destination in [...railDestinations, settingsDestination])
             GoRoute(
               path: destination.path,
-              pageBuilder: (context, state) => NoTransitionPage(
+              pageBuilder: (context, state) => QuietPage(
                 child: switch (destination.path) {
                   libraryPath => LibraryScreen(
                     onDiscover: () => context.go(discoverPath),
@@ -80,7 +81,7 @@ GoRouter buildRouter({
             ),
           GoRoute(
             path: '/title/:malId',
-            pageBuilder: (context, state) => NoTransitionPage(
+            pageBuilder: (context, state) => QuietPage(
               child: DetailScreen.title(
                 int.parse(state.pathParameters['malId']!),
                 entryId: state.uri.queryParameters['entry'],
@@ -89,7 +90,7 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/entry/:entryId',
-            pageBuilder: (context, state) => NoTransitionPage(
+            pageBuilder: (context, state) => QuietPage(
               child: DetailScreen.entry(state.pathParameters['entryId']!),
             ),
           ),
@@ -97,7 +98,7 @@ GoRouter buildRouter({
             GoRoute(
               path: galleryPath,
               pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: GalleryScreen()),
+                  const QuietPage(child: GalleryScreen()),
             ),
         ],
       ),

@@ -12,6 +12,7 @@ import '../design/tokens.dart';
 import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
 import '../icons/icon_def.dart';
+import 'maximize_button_link.dart';
 import 'window_buttons.dart';
 import 'window_config.dart';
 import 'window_memory.dart';
@@ -49,6 +50,8 @@ class _AppShellState extends State<AppShell> with WindowListener {
   // trust window events for maximized: asking during restore wipes the save
   bool _maximized = false;
   bool _restoring = true;
+  bool _closing = false;
+  var _maximizeButton = MaximizeButtonState.none;
   // saving the window's place waits for it to stop moving
   late final Countdown _saveWait = Countdown(onDone: _save);
   late final Countdown _restoreWait = Countdown(
@@ -60,6 +63,9 @@ class _AppShellState extends State<AppShell> with WindowListener {
     super.initState();
     if (!Platform.isWindows) return;
     windowManager.addListener(this);
+    listenToMaximizeButton((state) {
+      if (mounted) setState(() => _maximizeButton = state);
+    });
     WindowMemory.load().then((saved) {
       if (!mounted) return;
       setState(() => _maximized = saved?.maximized ?? false);
@@ -74,11 +80,26 @@ class _AppShellState extends State<AppShell> with WindowListener {
   void dispose() {
     _saveWait.dispose();
     _restoreWait.dispose();
-    if (Platform.isWindows) windowManager.removeListener(this);
+    if (Platform.isWindows) {
+      windowManager.removeListener(this);
+      listenToMaximizeButton(null);
+    }
     super.dispose();
   }
 
+  // alt f4, the taskbar and the window menu close here too
+  @override
+  void onWindowClose() => _close();
+
   Future<void> _close() async {
+    if (_closing) return;
+    _closing = true;
+    // the window goes at once; the last save and sync finish out of sight
+    try {
+      await windowManager.hide();
+    } catch (_) {
+      // a window that will not hide still has to close
+    }
     // save a change made in the last moments before quitting.
     if (_saveWait.running) {
       _saveWait.cancel();
@@ -93,7 +114,7 @@ class _AppShellState extends State<AppShell> with WindowListener {
     } catch (_) {
       // a failed shutdown step must never stop the app closing
     }
-    await windowManager.close();
+    await windowManager.destroy();
   }
 
   @override
@@ -165,6 +186,9 @@ class _AppShellState extends State<AppShell> with WindowListener {
     }
     return DragToResizeArea(
       resizeEdgeSize: Tokens.resizeEdge,
+      // a maximized window has no edges to drag, and its top right corner
+      // has to reach the close button
+      enableResizeEdges: _maximized ? const [] : null,
       child: ColoredBox(
         color: Tokens.ground,
         child: Column(
@@ -173,6 +197,7 @@ class _AppShellState extends State<AppShell> with WindowListener {
               decoration: BoxDecoration(gradient: _barTint),
               child: _TopBar(
                 maximized: _maximized,
+                maximizeButton: _maximizeButton,
                 onMinimize: windowManager.minimize,
                 onToggleMaximize: _toggleMaximize,
                 onClose: _close,
@@ -261,6 +286,7 @@ final _railLine = LinearGradient(
 class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.maximized,
+    required this.maximizeButton,
     required this.onMinimize,
     required this.onToggleMaximize,
     required this.onClose,
@@ -269,6 +295,7 @@ class _TopBar extends StatelessWidget {
   });
 
   final bool maximized;
+  final MaximizeButtonState maximizeButton;
   final VoidCallback onMinimize;
   final VoidCallback onToggleMaximize;
   final VoidCallback onClose;
@@ -288,6 +315,8 @@ class _TopBar extends StatelessWidget {
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onDoubleTap: onToggleMaximize,
+                    // the window's own menu, as on any title bar
+                    onSecondaryTapUp: (_) => windowManager.popUpWindowMenu(),
                     child: Row(
                       children: [
                         // the mascot sits over the rail icons, the wordmark at the rail edge
@@ -334,6 +363,8 @@ class _TopBar extends StatelessWidget {
               WindowButton(
                 glyph: maximized ? WindowGlyph.restore : WindowGlyph.maximize,
                 onPressed: onToggleMaximize,
+                hovered: maximizeButton != MaximizeButtonState.none,
+                pressed: maximizeButton == MaximizeButtonState.pressed,
               ),
               WindowButton(glyph: WindowGlyph.close, onPressed: onClose),
             ],

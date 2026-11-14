@@ -16,6 +16,7 @@ import 'app/services.dart';
 import 'components/app_scroll_behavior.dart';
 import 'data/databases.dart';
 import 'design/tokens.dart';
+import 'shell/maximize_button_link.dart';
 import 'shell/native_window.dart';
 import 'shell/window_config.dart';
 import 'shell/window_memory.dart';
@@ -61,6 +62,9 @@ Future<void> _setUpWindow() async {
     title: WindowConfig.title,
   );
   await windowManager.waitUntilReadyToShow(options);
+  // every way of closing goes through the shell, which saves and syncs first
+  await windowManager.setPreventClose(true);
+  await linkMaximizeButton();
   if (saved == null) return;
   // The window is still hidden. Give it its saved placement now and let the
   // runner show it on the first drawn frame, so nothing flashes and Windows
