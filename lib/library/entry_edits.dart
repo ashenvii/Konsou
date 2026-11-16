@@ -27,6 +27,23 @@ class EarlierMark {
 
 const autoMarkEarlierKey = 'auto_mark_earlier';
 
+/// Why a title with MAL's airing status [airing] cannot be set to [target],
+/// or null when it can.
+EditResult? airingLock(String? airing, EntryStatus target) {
+  if (airing == 'not_yet_aired' &&
+      const {
+        EntryStatus.watching,
+        EntryStatus.rewatching,
+        EntryStatus.completed,
+      }.contains(target)) {
+    return EditResult.notAiredYet;
+  }
+  if (airing == 'currently_airing' && target == EntryStatus.completed) {
+    return EditResult.stillAiring;
+  }
+  return null;
+}
+
 class EntryEdits {
   EntryEdits({
     required this.databases,
@@ -47,7 +64,7 @@ class EntryEdits {
         facts.status == EntryStatus.completed) {
       return rewatch(entryId);
     }
-    final locked = _lockFor(facts, target);
+    final locked = airingLock(facts.airing, target);
     if (locked != null) return locked;
     await _record.transaction(() async {
       final time = await readEditTime(_record, _now());
@@ -96,7 +113,9 @@ class EntryEdits {
       return EditResult.notAiredYet;
     }
     final finishes = total != null && episodes >= total;
-    final locked = finishes ? _lockFor(facts, EntryStatus.completed) : null;
+    final locked = finishes
+        ? airingLock(facts.airing, EntryStatus.completed)
+        : null;
     await _record.transaction(() async {
       final time = await readEditTime(_record, _now());
       await _writeProgress(
@@ -225,7 +244,7 @@ class EntryEdits {
   Future<void> setNotes(String entryId, String text) async {
     final notes = text.trim().isEmpty ? null : text;
     final entry = await _readEntry(entryId);
-    if (entry.notes == notes) return;
+    if (entry == null || entry.notes == notes) return;
     await _record.transaction(() async {
       final time = await readEditTime(_record, _now());
       await _writeEntry(
@@ -239,7 +258,7 @@ class EntryEdits {
   Future<void> setStartedDate(String entryId, DateTime? date) async {
     final startedAt = date?.millisecondsSinceEpoch;
     final entry = await _readEntry(entryId);
-    if (entry.startedAt == startedAt) return;
+    if (entry == null || entry.startedAt == startedAt) return;
     await _record.transaction(() async {
       final time = await readEditTime(_record, _now());
       await _writeEntry(
@@ -253,9 +272,10 @@ class EntryEdits {
     onChanged?.call();
   }
 
-  Future<Entry> _readEntry(String entryId) => (_record.select(
+  // null once removed: the Detail page stays open after a remove
+  Future<Entry?> _readEntry(String entryId) => (_record.select(
     _record.entry,
-  )..where((row) => row.entryId.equals(entryId))).getSingle();
+  )..where((row) => row.entryId.equals(entryId))).getSingleOrNull();
 
   Future<void> _writeEntry(String entryId, EntryCompanion changes) =>
       (_record.update(
@@ -307,7 +327,7 @@ class EntryEdits {
         }
         final facts = await _readFacts(entryId);
         if (facts.status == status) continue;
-        if (_lockFor(facts, status) != null) continue;
+        if (airingLock(facts.airing, status) != null) continue;
         if (status == EntryStatus.completed) {
           final episodes = _maxOf(
             title.episodes ?? facts.total,
@@ -392,28 +412,8 @@ class EntryEdits {
     });
   }
 
-  Future<bool> readAutoMarkEarlier() async {
-    final row =
-        await (_record.select(_record.setting)
-              ..where((setting) => setting.key.equals(autoMarkEarlierKey)))
-            .getSingleOrNull();
-    return row?.value == 'true';
-  }
-
-  EditResult? _lockFor(_Facts facts, EntryStatus target) {
-    if (facts.airing == 'not_yet_aired' &&
-        {
-          EntryStatus.watching,
-          EntryStatus.rewatching,
-          EntryStatus.completed,
-        }.contains(target)) {
-      return EditResult.notAiredYet;
-    }
-    if (facts.airing == 'currently_airing' && target == EntryStatus.completed) {
-      return EditResult.stillAiring;
-    }
-    return null;
-  }
+  Future<bool> readAutoMarkEarlier() async =>
+      await _record.readSetting(autoMarkEarlierKey) == 'true';
 
   Future<void> _writeProgress(
     String entryId,

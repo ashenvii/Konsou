@@ -9,10 +9,14 @@ import '../design/tokens.dart';
 /// same sides; a scroll view takes them as its own padding, so its scrollbar
 /// can sit against the window's edge.
 abstract final class PageFrame {
+  /// The gap between a page and the rail, the window's other edges, and the
+  /// back button's top.
+  static const edge = Tokens.space4;
+
   static const top = EdgeInsets.fromLTRB(
-    Tokens.space5,
+    edge,
     Tokens.space2,
-    Tokens.space5,
+    edge,
     Tokens.space4,
   );
 
@@ -21,9 +25,9 @@ abstract final class PageFrame {
   static double get railInset => Platform.isWindows ? Tokens.railWidth : 0;
 
   static const content = EdgeInsets.fromLTRB(
-    Tokens.space5,
+    edge,
     0,
-    Tokens.space5,
+    edge,
     Tokens.space5,
   );
 }

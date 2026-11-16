@@ -1,5 +1,8 @@
 import 'library_row.dart';
 
+/// The word for a MAL media type: "TV", "Movie", "TV Special".
+String typeName(String type) => _typeNames[type] ?? capitalise(type);
+
 const _typeNames = {
   'tv': 'TV',
   'movie': 'Movie',
@@ -19,13 +22,13 @@ String typeYearLine(LibraryRow row) => typeYear(row.mediaType, row.startDate);
 /// The same line from a media type and a start date as MAL gives them.
 String typeYear(String? type, String? date) {
   final parts = [
-    if (type != null && type.isNotEmpty) _typeNames[type] ?? _capitalise(type),
+    if (type != null && type.isNotEmpty) typeName(type),
     if (date != null && date.length >= 4) date.substring(0, 4),
   ];
   return parts.join(' · ');
 }
 
-String _capitalise(String text) => text[0].toUpperCase() + text.substring(1);
+String capitalise(String text) => text[0].toUpperCase() + text.substring(1);
 
 /// Episodes watched out of the total. With no known total, only the watched
 /// count; with nothing to say, empty.

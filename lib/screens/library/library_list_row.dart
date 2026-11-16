@@ -107,7 +107,7 @@ class _LibraryListRowState extends State<LibraryListRow> {
                     child: OneLineText(
                       progressText(row),
                       align: TextAlign.right,
-                      style: AppText.tally(Tokens.inkSoft, size: Tokens.text2),
+                      style: AppText.tally(Tokens.inkSoft, size: Tokens.text1),
                     ),
                   ),
                   SizedBox(width: _scoreWidth, child: _Score(row.score)),
@@ -173,7 +173,7 @@ class _Score extends StatelessWidget {
       children: [
         ScoreStar(size: Tokens.iconSize, color: Tokens.amber),
         const SizedBox(width: Tokens.space1),
-        Text('$score', style: AppText.tally(Tokens.ink, size: Tokens.text2)),
+        Text('$score', style: AppText.tally(Tokens.ink, size: Tokens.text1)),
       ],
     );
   }

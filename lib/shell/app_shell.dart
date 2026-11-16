@@ -186,9 +186,13 @@ class _AppShellState extends State<AppShell> with WindowListener {
     }
     return DragToResizeArea(
       resizeEdgeSize: Tokens.resizeEdge,
-      // a maximized window has no edges to drag, and its top right corner
-      // has to reach the close button
-      enableResizeEdges: _maximized ? const [] : null,
+      // Windows gives the other three sides an invisible border outside the
+      // drawn window, so only the top, which has none, is a strip in here and
+      // the scrollbars can sit flush. A maximized window has no edges to drag,
+      // and its top right corner has to reach the close button.
+      enableResizeEdges: _maximized
+          ? const []
+          : const [ResizeEdge.top, ResizeEdge.topLeft, ResizeEdge.topRight],
       child: ColoredBox(
         color: Tokens.ground,
         child: Column(
@@ -336,7 +340,7 @@ class _TopBar extends StatelessWidget {
                           style: TextStyle(
                             fontFamily: Tokens.sans,
                             fontWeight: FontWeight.w700,
-                            fontSize: Tokens.text4,
+                            fontSize: Tokens.text3,
                             color: Tokens.ink,
                           ),
                         ),
@@ -345,7 +349,7 @@ class _TopBar extends StatelessWidget {
                   ),
                 ),
               ),
-              // the bell does nothing yet (its layout is not grilled)
+              // the bell does nothing until it is built
               _BarIcon(
                 icon: AppIcons.bell,
                 label: 'Notifications',

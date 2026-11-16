@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:drift/drift.dart' show TableUpdateQuery;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../components/countdown.dart';
 import '../data/databases.dart';
 import '../detail/provider_page.dart';
 import '../detail/streamer_mode.dart';
@@ -11,8 +12,12 @@ import '../detail/title_entry.dart';
 import '../detail/watch_order.dart';
 import '../library/load_library.dart';
 import '../mal/detail_request.dart';
+import '../mal/matching.dart';
 import '../mal/request_gate.dart';
+import '../mal/search_request.dart';
+import 'library_providers.dart';
 import 'providers.dart';
+import 'quick_search_providers.dart';
 
 part 'detail_providers.g.dart';
 
@@ -56,13 +61,9 @@ void _reloadOnEdit(Ref ref, Databases databases, void Function() reload) {
 
 @riverpod
 class DetailPage extends _$DetailPage {
-  var _left = false;
-
   @override
   Future<DetailPageData> build(int malId, {String? entryId}) async {
     final services = ref.watch(servicesProvider);
-    _left = false;
-    ref.onDispose(() => _left = true);
     _reloadOnEdit(ref, services.databases, _reload);
     final saved = await _read();
     final wantsFetch =
@@ -77,23 +78,26 @@ class DetailPage extends _$DetailPage {
   Future<void> retry() async {
     final shown = state.value;
     if (shown == null || shown.fetch == DetailFetch.running) return;
+    if (ref.read(servicesProvider).detailRequest == null) return;
     state = AsyncData(shown.withFetch(DetailFetch.running));
     await _fetch();
   }
 
   Future<void> _fetch() async {
-    if (_left) return;
+    if (!ref.mounted) return;
     final services = ref.read(servicesProvider);
-    final outcome = await services.detailRequest!.fetch(
+    final request = services.detailRequest;
+    if (request == null) return;
+    final outcome = await request.fetch(
       malId,
       lane: Lane.screen,
       full: true,
-      wanted: () => !_left,
+      wanted: () => ref.mounted,
     );
-    if (_left) return;
+    if (!ref.mounted) return;
     if (outcome == FetchOutcome.fetched) services.notifyScreenDataChanged();
     final saved = await _read();
-    if (_left) return;
+    if (!ref.mounted) return;
     state = AsyncData(
       saved.withFetch(switch (outcome) {
         FetchOutcome.fetched => DetailFetch.idle,
@@ -106,7 +110,7 @@ class DetailPage extends _$DetailPage {
 
   Future<void> _reload() async {
     final saved = await _read();
-    if (_left) return;
+    if (!ref.mounted) return;
     state = AsyncData(saved.withFetch(state.value?.fetch ?? DetailFetch.idle));
   }
 
@@ -167,4 +171,136 @@ Future<NotLinkedPage> notLinkedPage(Ref ref, String entryId) async {
       await readTitleLanguage(databases.record),
     ),
   );
+}
+
+/// What the page picker and "Wrong title" do to an entry's link.
+class PageLinking {
+  PageLinking(this._matching, this._onChanged, this._onLooking);
+
+  final Matching _matching;
+  final void Function() _onChanged;
+  final void Function(String entryId, {required bool looking}) _onLooking;
+
+  Future<void> pick(String entryId, int malId) async {
+    await _matching.linkEntry(entryId, malId, lane: Lane.screen, full: true);
+    _onChanged();
+  }
+
+  Future<void> declineAll(String entryId) =>
+      _matching.declineSuggestions(entryId);
+
+  /// Unlinks the entry and declines its page, then looks for the right one.
+  /// [onUnlinked] runs as soon as the entry is off the page, before the
+  /// search, which takes a moment.
+  Future<void> replaceWrongTitle(
+    String entryId, {
+    void Function()? onUnlinked,
+  }) async {
+    await _matching.unlinkEntry(entryId);
+    _onChanged();
+    _onLooking(entryId, looking: true);
+    onUnlinked?.call();
+    try {
+      await _matching.matchEntry(entryId, lane: Lane.screen);
+    } finally {
+      _onLooking(entryId, looking: false);
+    }
+    _onChanged();
+  }
+}
+
+/// The entries Konsou is looking up a page for right now, so their picker
+/// can say so in place of "No suggestions".
+@Riverpod(keepAlive: true)
+class LookingForPage extends _$LookingForPage {
+  @override
+  Set<String> build() => {};
+
+  void set(String entryId, {required bool looking}) =>
+      state = looking ? {...state, entryId} : ({...state}..remove(entryId));
+}
+
+/// Null when no connection to MAL is set up, so nothing can be linked.
+@Riverpod(keepAlive: true)
+PageLinking? pageLinking(Ref ref) {
+  final services = ref.watch(servicesProvider);
+  final matching = services.matching;
+  if (matching == null) return null;
+  return PageLinking(matching, () {
+    services.sync?.noteChange();
+    services.notifyScreenDataChanged();
+    ref.invalidate(libraryRowsProvider);
+  }, ref.read(lookingForPageProvider.notifier).set);
+}
+
+class PickerSearchState {
+  const PickerSearchState({
+    this.query = '',
+    this.results = const [],
+    this.searching = false,
+    this.failed = false,
+    this.corrected,
+  });
+
+  final String query;
+  final List<ProviderPage> results;
+  final bool searching;
+  final bool failed;
+
+  /// The words searched for in place of the typed ones, when those found
+  /// nothing.
+  final String? corrected;
+
+  bool get foundNothing =>
+      !searching &&
+      !failed &&
+      results.isEmpty &&
+      query.runes.length >= minQueryLength;
+}
+
+/// The page picker's search box: the typed MAL search with the typo help.
+@riverpod
+class PickerSearch extends _$PickerSearch {
+  late final Countdown _wait = Countdown(onDone: _fetch);
+
+  @override
+  PickerSearchState build(String entryId) {
+    ref.onDispose(_wait.dispose);
+    return const PickerSearchState();
+  }
+
+  void setQuery(String text) {
+    final query = text.trim();
+    final online =
+        query.runes.length >= minQueryLength &&
+        ref.read(servicesProvider).matching != null;
+    state = PickerSearchState(query: query, searching: online);
+    online ? _wait.start(quickSearchDebounce) : _wait.cancel();
+  }
+
+  Future<void> _fetch() async {
+    final query = state.query;
+    final services = ref.read(servicesProvider);
+    final databases = services.databases;
+    final search = await ref.read(entrySearchProvider.future);
+    final found = await services.matching!.searchPages(
+      query,
+      correct: search.correctedQuery,
+    );
+    // a newer search, or the page left, makes this answer stale
+    if (!ref.mounted || state.query != query) return;
+    if (found == null) {
+      state = PickerSearchState(query: query, failed: true);
+      return;
+    }
+    final language = await readTitleLanguage(databases.record);
+    if (!ref.mounted || state.query != query) return;
+    state = PickerSearchState(
+      query: query,
+      results: [
+        for (final page in found.results) parseProviderPage(page, language),
+      ],
+      corrected: found.isCorrected ? found.shownQuery : null,
+    );
+  }
 }

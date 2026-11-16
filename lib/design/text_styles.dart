@@ -6,7 +6,7 @@ abstract final class AppText {
   static TextStyle label(Color color, {bool bold = false}) => TextStyle(
     fontFamily: Tokens.sans,
     fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
-    fontSize: Tokens.text3,
+    fontSize: Tokens.text2,
     height: 1,
     color: color,
   );
@@ -14,7 +14,7 @@ abstract final class AppText {
   /// Like [label] but for text that may wrap onto more lines.
   static TextStyle paragraph(Color color) => TextStyle(
     fontFamily: Tokens.sans,
-    fontSize: Tokens.text3,
+    fontSize: Tokens.text2,
     height: Tokens.lineHeightWrapped,
     color: color,
   );
@@ -22,21 +22,21 @@ abstract final class AppText {
   static const heading = TextStyle(
     fontFamily: Tokens.sans,
     fontWeight: FontWeight.w700,
-    fontSize: Tokens.text4,
+    fontSize: Tokens.text3,
     height: 1,
     color: Tokens.ink,
   );
 
   static TextStyle caption(Color color) => TextStyle(
     fontFamily: Tokens.sans,
-    fontSize: Tokens.text2,
+    fontSize: Tokens.text1,
     height: 1,
     color: color,
   );
 
   static TextStyle figure(Color color) => TextStyle(
     fontFamily: Tokens.mono,
-    fontSize: Tokens.text2,
+    fontSize: Tokens.text1,
     height: 1,
     color: color,
   );
@@ -49,7 +49,7 @@ abstract final class AppText {
     color: color,
   );
 
-  static TextStyle tally(Color color, {double size = Tokens.text3}) =>
+  static TextStyle tally(Color color, {double size = Tokens.text2}) =>
       TextStyle(
         fontFamily: Tokens.sans,
         fontSize: size,

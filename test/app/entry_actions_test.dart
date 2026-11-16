@@ -8,6 +8,7 @@ import 'package:konsou/app/toast_host.dart';
 import 'package:konsou/data/databases.dart';
 import 'package:konsou/data/details_database.dart';
 import 'package:konsou/data/record_database.dart';
+import 'package:konsou/library/earlier_titles.dart';
 import 'package:konsou/library/entry_edits.dart';
 import 'package:konsou/library/entry_status.dart';
 
@@ -358,5 +359,81 @@ void main() {
     expect(shown.single.undo, isNull);
     final record = databases.record;
     expect(await record.select(record.entry).get(), isEmpty);
+  });
+
+  group('from the Detail page', () {
+    EarlierTitle title(int malId) =>
+        EarlierTitle(malId: malId, name: 'Title $malId', isExtra: false);
+
+    Future<Entry> onlyEntry() =>
+        databases.record.select(databases.record.entry).getSingle();
+
+    test(
+      'a title is added with the status picked, and Undo removes it',
+      () async {
+        await addTitle(1, '2020-01-01');
+
+        await actions.add(title(1), EntryStatus.watching);
+
+        expect((await onlyEntry()).status, 'watching');
+        expect(shown.single.text, 'Added as Watching');
+        await shown.single.undo!();
+        expect(
+          await databases.record.select(databases.record.entry).get(),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
+      'a status its airing forbids is refused, and nothing is added',
+      () async {
+        await addTitle(1, '2030-01-01', airing: 'not_yet_aired');
+
+        await actions.add(
+          title(1),
+          EntryStatus.watching,
+          airing: 'not_yet_aired',
+        );
+
+        expect(shown.single.text, 'Not aired yet.');
+        expect(
+          await databases.record.select(databases.record.entry).get(),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
+      'a lock the caller did not know of leaves it Planned, said so',
+      () async {
+        await addTitle(1, '2024-01-01', airing: 'currently_airing');
+
+        await actions.add(title(1), EntryStatus.completed);
+
+        expect((await onlyEntry()).status, 'plan_to_watch');
+        expect(shown.single.text, 'Added as Planned');
+      },
+    );
+
+    test('added as Completed, it offers the earlier titles', () async {
+      await addTitle(1, '2019-01-01', relations: [(2, 'sequel')]);
+      await addTitle(2, '2020-01-01', relations: [(1, 'prequel')]);
+
+      await actions.add(title(2), EntryStatus.completed);
+
+      expect(shown.single.review!.titles.single.malId, 1);
+    });
+
+    test('the count is set straight to a step, and back down', () async {
+      await addTitle(1, '2020-01-01', entryId: 'a', status: 'watching');
+
+      await actions.setEpisodes('a', 7);
+      expect((await onlyEntry()).episodesWatched, 7);
+      expect(shown.last.text, 'Episode 7');
+
+      await actions.setEpisodes('a', 6);
+      expect((await onlyEntry()).episodesWatched, 6);
+    });
   });
 }

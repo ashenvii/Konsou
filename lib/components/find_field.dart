@@ -5,6 +5,7 @@ import '../design/tokens.dart';
 import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
 import 'close_on_escape.dart';
+import 'field_text.dart';
 
 class FindField extends StatefulWidget {
   const FindField({
@@ -13,12 +14,21 @@ class FindField extends StatefulWidget {
     required this.placeholder,
     required this.onChanged,
     required this.onClose,
+    this.width = Tokens.findFieldWidth,
+    this.closeWhenEmpty = true,
+    this.autofocus = true,
   });
 
   final String initial;
   final String placeholder;
   final ValueChanged<String> onChanged;
   final VoidCallback onClose;
+
+  final double width;
+
+  /// Leaving it empty closes it. Off for a box that stays on the page.
+  final bool closeWhenEmpty;
+  final bool autofocus;
 
   @override
   State<FindField> createState() => _FindFieldState();
@@ -32,11 +42,12 @@ class _FindFieldState extends State<FindField> {
   void initState() {
     super.initState();
     _focus.addListener(_leftEmpty);
-    _controller.addListener(() => setState(() {}));
   }
 
   void _leftEmpty() {
-    if (!_focus.hasFocus && _controller.text.isEmpty) widget.onClose();
+    if (widget.closeWhenEmpty && !_focus.hasFocus && _controller.text.isEmpty) {
+      widget.onClose();
+    }
   }
 
   @override
@@ -49,11 +60,10 @@ class _FindFieldState extends State<FindField> {
 
   @override
   Widget build(BuildContext context) {
-    final style = AppText.label(Tokens.ink);
     return CloseOnEscape(
       onClose: widget.onClose,
       child: Container(
-        width: Tokens.findFieldWidth,
+        width: widget.width,
         height: Tokens.controlHeight,
         padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
         color: Tokens.surface,
@@ -66,29 +76,13 @@ class _FindFieldState extends State<FindField> {
             ),
             const SizedBox(width: Tokens.space2),
             Expanded(
-              child: Stack(
-                alignment: Alignment.centerLeft,
-                children: [
-                  if (_controller.text.isEmpty)
-                    Text(
-                      widget.placeholder,
-                      maxLines: 1,
-                      softWrap: false,
-                      // soft ink: muted ink on the surface fill is under 4.5:1
-                      style: AppText.label(Tokens.inkSoft),
-                    ),
-                  EditableText(
-                    controller: _controller,
-                    focusNode: _focus,
-                    autofocus: true,
-                    style: style,
-                    cursorColor: Tokens.amber,
-                    backgroundCursorColor: Tokens.inkMuted,
-                    selectionColor: Tokens.inkMuted,
-                    maxLines: 1,
-                    onChanged: widget.onChanged,
-                  ),
-                ],
+              child: FieldText(
+                controller: _controller,
+                focusNode: _focus,
+                placeholder: widget.placeholder,
+                style: AppText.label(Tokens.ink),
+                autofocus: widget.autofocus,
+                onChanged: widget.onChanged,
               ),
             ),
           ],

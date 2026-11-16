@@ -50,7 +50,7 @@ final class DetailPageProvider
   }
 }
 
-String _$detailPageHash() => r'4825351775e8fbf34e4fb5ae26c1fc7f83f16076';
+String _$detailPageHash() => r'6ae230deca7b7ada004f08c7b017979e35259349';
 
 final class DetailPageFamily extends $Family
     with
@@ -249,4 +249,219 @@ final class NotLinkedPageFamily extends $Family
 
   @override
   String toString() => r'notLinkedPageProvider';
+}
+
+/// The entries Konsou is looking up a page for right now, so their picker
+/// can say so in place of "No suggestions".
+
+@ProviderFor(LookingForPage)
+final lookingForPageProvider = LookingForPageProvider._();
+
+/// The entries Konsou is looking up a page for right now, so their picker
+/// can say so in place of "No suggestions".
+final class LookingForPageProvider
+    extends $NotifierProvider<LookingForPage, Set<String>> {
+  /// The entries Konsou is looking up a page for right now, so their picker
+  /// can say so in place of "No suggestions".
+  LookingForPageProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'lookingForPageProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$lookingForPageHash();
+
+  @$internal
+  @override
+  LookingForPage create() => LookingForPage();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Set<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Set<String>>(value),
+    );
+  }
+}
+
+String _$lookingForPageHash() => r'207a732460fab3953d693349c45a11155bdd9d5a';
+
+/// The entries Konsou is looking up a page for right now, so their picker
+/// can say so in place of "No suggestions".
+
+abstract class _$LookingForPage extends $Notifier<Set<String>> {
+  Set<String> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<String>, Set<String>>,
+              Set<String>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// Null when no connection to MAL is set up, so nothing can be linked.
+
+@ProviderFor(pageLinking)
+final pageLinkingProvider = PageLinkingProvider._();
+
+/// Null when no connection to MAL is set up, so nothing can be linked.
+
+final class PageLinkingProvider
+    extends $FunctionalProvider<PageLinking?, PageLinking?, PageLinking?>
+    with $Provider<PageLinking?> {
+  /// Null when no connection to MAL is set up, so nothing can be linked.
+  PageLinkingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pageLinkingProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pageLinkingHash();
+
+  @$internal
+  @override
+  $ProviderElement<PageLinking?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PageLinking? create(Ref ref) {
+    return pageLinking(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PageLinking? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PageLinking?>(value),
+    );
+  }
+}
+
+String _$pageLinkingHash() => r'f2c0af4fea75dc63ddc6656f43d31ded0ec2dd8f';
+
+/// The page picker's search box: the typed MAL search with the typo help.
+
+@ProviderFor(PickerSearch)
+final pickerSearchProvider = PickerSearchFamily._();
+
+/// The page picker's search box: the typed MAL search with the typo help.
+final class PickerSearchProvider
+    extends $NotifierProvider<PickerSearch, PickerSearchState> {
+  /// The page picker's search box: the typed MAL search with the typo help.
+  PickerSearchProvider._({
+    required PickerSearchFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'pickerSearchProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$pickerSearchHash();
+
+  @override
+  String toString() {
+    return r'pickerSearchProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  PickerSearch create() => PickerSearch();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PickerSearchState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PickerSearchState>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PickerSearchProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$pickerSearchHash() => r'78f1c6276a42994911e64bdc7d22dd73d8012455';
+
+/// The page picker's search box: the typed MAL search with the typo help.
+
+final class PickerSearchFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          PickerSearch,
+          PickerSearchState,
+          PickerSearchState,
+          PickerSearchState,
+          String
+        > {
+  PickerSearchFamily._()
+    : super(
+        retry: null,
+        name: r'pickerSearchProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The page picker's search box: the typed MAL search with the typo help.
+
+  PickerSearchProvider call(String entryId) =>
+      PickerSearchProvider._(argument: entryId, from: this);
+
+  @override
+  String toString() => r'pickerSearchProvider';
+}
+
+/// The page picker's search box: the typed MAL search with the typo help.
+
+abstract class _$PickerSearch extends $Notifier<PickerSearchState> {
+  late final _$args = ref.$arg as String;
+  String get entryId => _$args;
+
+  PickerSearchState build(String entryId);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<PickerSearchState, PickerSearchState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<PickerSearchState, PickerSearchState>,
+              PickerSearchState,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, () => build(_$args));
+  }
 }

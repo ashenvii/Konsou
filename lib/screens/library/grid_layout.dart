@@ -38,9 +38,9 @@ class GridLayout {
     final cardHeight =
         CoverImage.heightFor(cardWidth) +
         Tokens.space2 +
-        Tokens.text3 +
+        Tokens.text2 +
         Tokens.space1 +
-        Tokens.text2;
+        Tokens.text1;
     return GridLayout(
       columns: columns,
       cardWidth: cardWidth,

@@ -46,16 +46,14 @@ class KeptCovers extends _$KeptCovers {
 Future<File?> coverFile(Ref ref, int malId, CoverSize size) async {
   final store = ref.watch(coverStoreProvider);
   if (store == null) return null;
-  // the fetch is dropped from the queue if the card is gone by its turn
-  var gone = false;
-  ref.onDispose(() => gone = true);
   final kept = await store.readCover(malId, size);
   if (kept != null) return kept;
   final outcome = await store.fetchCover(
     malId,
     size,
     lane: Lane.screen,
-    wanted: () => !gone,
+    // the fetch is dropped from the queue if the card is gone by its turn
+    wanted: () => ref.mounted,
   );
   if (outcome == CoverOutcome.fetched || outcome == CoverOutcome.current) {
     return store.readCover(malId, size);
@@ -64,17 +62,22 @@ Future<File?> coverFile(Ref ref, int malId, CoverSize size) async {
 }
 
 @riverpod
+Future<File?> heroFile(Ref ref, int malId) async {
+  final store = ref.watch(coverStoreProvider);
+  if (store == null) return null;
+  return store.heroFile(malId, wanted: () => ref.mounted);
+}
+
+@riverpod
 Future<void> detailOnScreen(Ref ref, int malId) async {
   final services = ref.watch(servicesProvider);
   final request = services.detailRequest;
   if (request == null) return;
-  var gone = false;
-  ref.onDispose(() => gone = true);
   final outcome = await request.fetch(
     malId,
     lane: Lane.screen,
     full: false,
-    wanted: () => !gone,
+    wanted: () => ref.mounted,
   );
   if (outcome == FetchOutcome.fetched) services.notifyScreenDataChanged();
 }

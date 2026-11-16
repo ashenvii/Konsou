@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -7,6 +8,7 @@ import '../data/databases.dart';
 import '../data/details_database.dart';
 import '../mal/request_gate.dart';
 import 'cover_size.dart';
+import 'hero_pick.dart';
 
 const defaultPoolLimit = 150 * 1024 * 1024;
 
@@ -105,6 +107,51 @@ class CoverStore {
     return CoverOutcome.fetched;
   }
 
+  /// The picture for the hero band of a title's page, fetched once and kept
+  /// beside the covers. Null while MAL has no picture besides the cover, or
+  /// when it cannot be fetched.
+  Future<File?> heroFile(int malId, {bool Function()? wanted}) async {
+    final row = await _readDetail(malId);
+    if (row == null) return null;
+    final json = jsonDecode(row.json);
+    if (json is! Map) return null;
+    final url = pickHeroUrl(
+      malId: malId,
+      pictures: json['pictures'],
+      mainLarge: row.coverLargeUrl,
+    );
+    if (url == null) return null;
+    final fileName =
+        'hero-$malId-${url.hashCode.toRadixString(36)}'
+        '${_extension(url)}';
+    final file = _fileOf(fileName);
+    if (file.existsSync()) return file;
+    final http.Response response;
+    try {
+      response = await gate.send(
+        Lane.screen,
+        () => client.get(Uri.parse(url)),
+        wanted: wanted,
+      );
+    } on Exception {
+      return null;
+    }
+    final isImage = (response.headers['content-type'] ?? '').startsWith(
+      'image/',
+    );
+    if (response.statusCode != 200 || !isImage || response.bodyBytes.isEmpty) {
+      return null;
+    }
+    folder.createSync(recursive: true);
+    // an older pick for this title is dropped
+    for (final old in folder.listSync()) {
+      final name = old.uri.pathSegments.last;
+      if (name.startsWith('hero-$malId-')) old.deleteSync();
+    }
+    file.writeAsBytesSync(response.bodyBytes);
+    return file;
+  }
+
   Future<Map<(int, CoverSize), File>> readKept() async {
     final rows = await (_details.select(
       _details.cover,
@@ -168,14 +215,15 @@ class CoverStore {
   Future<void> _deleteRow(int malId, CoverSize size) =>
       (_details.delete(_details.cover)..where(_coverFilter(malId, size))).go();
 
+  Future<Detail?> _readDetail(int malId) =>
+      (_details.select(_details.detail)..where(
+            (detail) =>
+                detail.provider.equals('mal') & detail.providerId.equals(malId),
+          ))
+          .getSingleOrNull();
+
   Future<String?> _readUrl(int malId, CoverSize size) async {
-    final row =
-        await (_details.select(_details.detail)..where(
-              (detail) =>
-                  detail.provider.equals('mal') &
-                  detail.providerId.equals(malId),
-            ))
-            .getSingleOrNull();
+    final row = await _readDetail(malId);
     if (row == null) return null;
     final url = size == CoverSize.medium
         ? row.coverMediumUrl

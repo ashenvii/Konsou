@@ -6,7 +6,7 @@ import '../data/databases.dart';
 import '../data/details_database.dart';
 import '../data/edit_clock.dart';
 import '../data/record_database.dart';
-import '../search/title_tree.dart';
+import '../net/drain_queue.dart';
 import '../search/title_words.dart';
 import 'detail_request.dart';
 import 'request_gate.dart';
@@ -101,12 +101,11 @@ class Matching {
   /// Matches every not-linked entry that is due, until done or [stop].
   Future<void> run() async {
     _stopped = false;
-    final failed = <String>{};
-    while (!_stopped) {
-      final entryId = await _nextEntry(failed);
-      if (entryId == null) return;
-      if (await matchEntry(entryId) == MatchOutcome.failed) failed.add(entryId);
-    }
+    await drainQueue<String>(
+      isStopped: () => _stopped,
+      next: _nextEntry,
+      work: (entryId) async => await matchEntry(entryId) == MatchOutcome.failed,
+    );
   }
 
   void stop() => _stopped = true;
@@ -221,25 +220,28 @@ class Matching {
     )..where((row) => row.entryId.equals(entryId))).go();
   }
 
-  /// "Wrong title" from the Detail page: unlinks, then looks for the right
-  /// page at once.
-  Future<MatchOutcome> replaceWrongTitle(String entryId) async {
-    await unlinkEntry(entryId);
-    return matchEntry(entryId, lane: Lane.screen);
-  }
-
-  /// Searches the provider for what the user typed. When that finds nothing,
-  /// each word is corrected from [tree] and the search runs once more.
-  Future<PageSearch?> searchPages(String typed, TitleTree<Object> tree) async {
-    final results = await searchRequest.search(typed, lane: Lane.screen);
+  /// Searches the provider for what the user typed. When that finds nothing
+  /// and [correct] reads the words another way, the search runs once more.
+  Future<PageSearch?> searchPages(
+    String typed, {
+    required String? Function(String typed) correct,
+    int limit = 10,
+  }) async {
+    final results = await searchRequest.search(
+      typed,
+      lane: Lane.screen,
+      limit: limit,
+    );
     if (results == null) return null;
-    final corrected = tree.correctQuery(typed);
-    if (results.isNotEmpty ||
-        corrected.isEmpty ||
-        corrected == foldWords(typed).join(' ')) {
+    final corrected = results.isEmpty ? correct(typed) : null;
+    if (corrected == null) {
       return PageSearch(results, typedQuery: typed, shownQuery: typed);
     }
-    final retried = await searchRequest.search(corrected, lane: Lane.screen);
+    final retried = await searchRequest.search(
+      corrected,
+      lane: Lane.screen,
+      limit: limit,
+    );
     if (retried == null) return null;
     return PageSearch(retried, typedQuery: typed, shownQuery: corrected);
   }

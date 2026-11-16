@@ -209,6 +209,51 @@ abstract final class AppIcons {
     ],
   );
 
+  static const arrowLeft = IconDef(
+    lines: [((3, 8), (13, 8)), ((7, 4), (3, 8)), ((3, 8), (7, 12))],
+  );
+
+  static const chevronLeft = IconDef(
+    lines: [((10, 3), (5, 8)), ((5, 8), (10, 13))],
+  );
+
+  static const chevronRight = IconDef(
+    lines: [((6, 3), (11, 8)), ((11, 8), (6, 13))],
+  );
+
+  // the facts on the Detail page
+  static const rank = IconDef(
+    lines: [
+      ((2, 14), (2, 9)),
+      ((2, 9), (6, 9)),
+      ((6, 9), (6, 5)),
+      ((6, 5), (10, 5)),
+      ((10, 5), (10, 8)),
+      ((10, 8), (14, 8)),
+      ((14, 8), (14, 14)),
+      ((14, 14), (2, 14)),
+    ],
+  );
+
+  static const done = IconDef(
+    lines: [
+      ((2, 2), (14, 2)),
+      ((14, 2), (14, 14)),
+      ((14, 14), (2, 14)),
+      ((2, 14), (2, 2)),
+      ((5, 8), (7, 10)),
+      ((7, 10), (11, 6)),
+    ],
+  );
+
+  static const play = IconDef(
+    lines: [((5, 3), (10, 8)), ((10, 8), (5, 13)), ((5, 13), (5, 3))],
+  );
+
+  static const plus = IconDef(lines: [((3, 8), (13, 8)), ((8, 3), (8, 13))]);
+
+  static const minus = IconDef(lines: [((3, 8), (13, 8))]);
+
   static const all = <String, IconDef>{
     'nekomimi': nekomimi,
     'bell': bell,
@@ -230,5 +275,13 @@ abstract final class AppIcons {
     'notInterested': notInterested,
     'rewatching': rewatching,
     'search': search,
+    'arrowLeft': arrowLeft,
+    'rank': rank,
+    'done': done,
+    'play': play,
+    'chevronLeft': chevronLeft,
+    'chevronRight': chevronRight,
+    'plus': plus,
+    'minus': minus,
   };
 }

@@ -8,9 +8,5 @@ bool isHiddenInStreamerMode({
   required String? nsfw,
 }) => streamerMode && (nsfw == 'gray' || nsfw == 'black');
 
-Future<bool> readStreamerMode(RecordDatabase record) async {
-  final row = await (record.select(
-    record.setting,
-  )..where((setting) => setting.key.equals(streamerModeKey))).getSingleOrNull();
-  return row?.value == 'true';
-}
+Future<bool> readStreamerMode(RecordDatabase record) async =>
+    await record.readSetting(streamerModeKey) == 'true';

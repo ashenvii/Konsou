@@ -16,4 +16,11 @@ class RecordDatabase extends _$RecordDatabase {
       if (from < 2) await migrator.alterTable(TableMigration(alert));
     },
   );
+
+  Future<String?> readSetting(String key) async {
+    final row = await (select(
+      setting,
+    )..where((setting) => setting.key.equals(key))).getSingleOrNull();
+    return row?.value;
+  }
 }

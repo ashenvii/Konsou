@@ -99,7 +99,7 @@ class KonsouApp extends StatelessWidget {
         child: DefaultTextStyle(
           style: const TextStyle(
             fontFamily: Tokens.sans,
-            fontSize: Tokens.text3,
+            fontSize: Tokens.text2,
             color: Tokens.ink,
           ),
           child: child!,

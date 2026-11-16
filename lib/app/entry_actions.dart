@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show VoidCallback;
 
 import '../data/databases.dart';
 import '../data/record_database.dart' show Entry;
+import '../detail/title_entry.dart';
 import '../library/earlier_titles.dart';
 import '../library/entry_edits.dart';
 import '../library/entry_status.dart';
@@ -33,28 +34,44 @@ class EntryActions {
   Future<EditResult> addEpisode(String entryId) =>
       _run(entryId, () => edits.addEpisode(entryId));
 
+  Future<EditResult> setEpisodes(String entryId, int count) =>
+      _run(entryId, () => edits.setEpisodes(entryId, count));
+
   Future<EditResult> uncheck(String entryId) =>
       _run(entryId, () => edits.uncheck(entryId));
 
   Future<EditResult> rewatch(String entryId) =>
       _run(entryId, () => edits.rewatch(entryId));
 
-  /// Adds a title that is not on the list as Completed, from a search result.
-  /// A title still airing or not yet aired is refused, as the status menu does.
-  Future<void> addCompleted(EarlierTitle title, {String? airing}) async {
-    final locked = switch (airing) {
-      'not_yet_aired' => EditResult.notAiredYet,
-      'currently_airing' => EditResult.stillAiring,
-      _ => null,
-    };
-    if (locked != null) {
-      _explainRefusal(locked);
+  /// Adds a title that is not on the list with the status the user picked.
+  /// Completed starts the earlier-titles check, as any finish does.
+  Future<void> add(
+    EarlierTitle title,
+    EntryStatus status, {
+    String? airing,
+  }) async {
+    if (_refusedOnAdd(status, airing)) return;
+    final mark = await edits.markEarlier(
+      [title],
+      status: status,
+      withName: true,
+    );
+    onEdited?.call();
+    final added = await readEntryOnPage(databases, title.malId);
+    if (added == null) return;
+    if (added.status == EntryStatus.completed &&
+        await _offerEarlier(added.entryId, mark.undo)) {
       return;
     }
-    final mark = await edits.markEarlier([title], withName: true);
-    onEdited?.call();
-    if (mark.applied == 0) return;
-    show(ToastMessage(addedCompleted, undo: _undoable(mark.undo.run)));
+    // a lock the caller could not see leaves it Planned, and the toast says so
+    show(ToastMessage(addedAs(added.status), undo: _undoable(mark.undo.run)));
+  }
+
+  // the locks the status menu has, for a title with no entry to ask yet
+  bool _refusedOnAdd(EntryStatus status, String? airing) {
+    final locked = airingLock(airing, status);
+    if (locked != null) _explainRefusal(locked);
+    return locked != null;
   }
 
   Future<void> remove(List<String> entryIds) async {

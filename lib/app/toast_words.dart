@@ -24,7 +24,7 @@ String reviewMarkedAs(int n, EntryStatus status) {
 
 const reviewSetTo = 'Set to';
 
-const addedCompleted = 'Added as Completed';
+String addedAs(EntryStatus status) => 'Added as ${status.label}';
 
 String autoMarked(int n) => 'Also marked $n earlier';
 
@@ -50,19 +50,6 @@ const selectNoneLabel = 'None';
 const notOnListLabel = 'Not on your list';
 String selectedCount(int n, int total) => '$n of $total selected';
 String episodeCount(int n) => n == 1 ? '1 episode' : '$n episodes';
-
-String mediaTypeLabel(String type) => switch (type) {
-  'tv' => 'TV',
-  'movie' => 'Movie',
-  'ova' => 'OVA',
-  'ona' => 'ONA',
-  'special' => 'Special',
-  'tv_special' => 'TV special',
-  'music' => 'Music',
-  'cm' => 'Commercial',
-  'pv' => 'Promo',
-  _ => type.toUpperCase(),
-};
 
 String earlierStatusLabel(String? stored) {
   if (stored == null) return notOnListLabel;

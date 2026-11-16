@@ -14,6 +14,7 @@ import '../components/skeleton.dart';
 import '../components/smooth_scroll.dart';
 import '../components/status_mark.dart';
 import '../components/sweep_button.dart';
+import '../components/field_text.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import '../icons/app_icon.dart';
@@ -25,10 +26,13 @@ import 'quick_search_providers.dart';
 /// Quick search: the page dimmed, and the popover dropped under the search
 /// well. It opens from the well or Ctrl K.
 class QuickSearchLayer extends ConsumerStatefulWidget {
-  const QuickSearchLayer({super.key, this.onBrowse});
+  const QuickSearchLayer({super.key, this.onBrowse, this.onOpen});
 
   /// Browse all: leave the search for Discover.
   final VoidCallback? onBrowse;
+
+  /// A row was opened: go to its Detail page.
+  final ValueChanged<QuickRow>? onOpen;
 
   @override
   ConsumerState<QuickSearchLayer> createState() => _QuickSearchLayerState();
@@ -74,8 +78,9 @@ class _QuickSearchLayerState extends ConsumerState<QuickSearchLayer> {
       _focus.requestFocus();
     });
     final state = ref.watch(quickSearchProvider);
-    if (!state.open) return const SizedBox.shrink();
     final search = ref.read(quickSearchProvider.notifier);
+    search.onOpenRow = widget.onOpen;
+    if (!state.open) return const SizedBox.shrink();
     return CloseOnEscape(
       onClose: search.close,
       child: Focus(
@@ -129,9 +134,7 @@ class _QuickSearchLayerState extends ConsumerState<QuickSearchLayer> {
                               child: Padding(
                                 padding: const EdgeInsets.only(
                                   right:
-                                      Tokens.scrollbarWidth +
-                                      Tokens.resizeEdge +
-                                      Tokens.space1,
+                                      Tokens.scrollbarWidth + Tokens.space1,
                                 ),
                                 child: _Results(state: state, search: search),
                               ),
@@ -171,7 +174,6 @@ class _Field extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = AppText.label(Tokens.ink).copyWith(fontSize: Tokens.text4);
     return ColoredBox(
       color: Tokens.ground,
       child: SizedBox(
@@ -187,29 +189,16 @@ class _Field extends StatelessWidget {
               ),
               const SizedBox(width: Tokens.space3),
               Expanded(
-                child: Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    ListenableBuilder(
-                      listenable: controller,
-                      builder: (context, _) => controller.text.isEmpty
-                          ? Text(
-                              'Type a title',
-                              style: style.copyWith(color: Tokens.inkMuted),
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                    EditableText(
-                      controller: controller,
-                      focusNode: focus,
-                      autofocus: true,
-                      style: style,
-                      cursorColor: Tokens.ink,
-                      backgroundCursorColor: Tokens.inkMuted,
-                      selectionColor: Tokens.inkMuted,
-                      onChanged: onChanged,
-                    ),
-                  ],
+                child: FieldText(
+                  controller: controller,
+                  focusNode: focus,
+                  placeholder: 'Type a title',
+                  style: AppText.label(Tokens.ink)
+                      .copyWith(fontSize: Tokens.text3),
+                  placeholderColor: Tokens.inkMuted,
+                  cursorColor: Tokens.ink,
+                  autofocus: true,
+                  onChanged: onChanged,
                 ),
               ),
               const SizedBox(width: Tokens.space3),

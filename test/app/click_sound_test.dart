@@ -38,9 +38,7 @@ void main() {
       final router = buildRouter();
       addTearDown(router.dispose);
       router.go(path);
-      await tester.pumpWidget(
-        ProviderScope(child: KonsouApp(router: router)),
-      );
+      await tester.pumpWidget(ProviderScope(child: KonsouApp(router: router)));
       await tester.pump(WindowConfig.restoreSettle);
       for (final spot in const [
         Offset(600, 400),

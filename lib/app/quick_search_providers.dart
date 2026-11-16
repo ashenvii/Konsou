@@ -140,9 +140,14 @@ class QuickSearch extends _$QuickSearch {
     if (state.focus < rows.length) openRow(rows[state.focus]);
   }
 
-  /// The Detail page is not built yet (ticket 007d3), so opening a title only
-  /// closes the search until it exists.
-  void openRow(QuickRow row) => close();
+  /// Where an opened row goes. The layer sets it, since a provider has no
+  /// router.
+  void Function(QuickRow row)? onOpenRow;
+
+  void openRow(QuickRow row) {
+    close();
+    onOpenRow?.call(row);
+  }
 
   /// The checkbox: complete a title on the list or take that back, or add a
   /// title that is not on the list as Completed.
@@ -155,13 +160,14 @@ class QuickSearch extends _$QuickSearch {
           ? await actions.uncheck(entryId)
           : await actions.setStatus(entryId, EntryStatus.completed);
     } else if (malId != null) {
-      await actions.addCompleted(
+      await actions.add(
         EarlierTitle(
           malId: malId,
           name: row.name,
           isExtra: false,
           episodes: row.episodes,
         ),
+        EntryStatus.completed,
         airing: row.airing,
       );
     }
@@ -169,31 +175,29 @@ class QuickSearch extends _$QuickSearch {
   }
 
   Future<void> _fetch(String query, int run) async {
-    final request = ref.read(servicesProvider).matching?.searchRequest;
+    final matching = ref.read(servicesProvider).matching;
     final search = _search;
-    if (request == null || search == null) {
+    if (matching == null || search == null) {
       if (run == _run) state = state.copyWith(searching: false);
       return;
     }
-    final asked = _offset == 0 ? query : _searched;
-    var pages = await request.search(
-      asked,
-      lane: Lane.screen,
-      limit: quickPage,
-      offset: _offset,
-    );
-    var used = asked;
-    if (pages != null && pages.isEmpty && _offset == 0) {
-      // nothing found: try the words as the titles Konsou knows spell them
-      final corrected = search.correctedQuery(query);
-      if (corrected != null) {
-        pages = await request.search(
-          corrected,
-          lane: Lane.screen,
-          limit: quickPage,
-        );
-        used = corrected;
-      }
+    final List<Map<String, dynamic>>? pages;
+    var used = _searched;
+    if (_offset == 0) {
+      final found = await matching.searchPages(
+        query,
+        correct: search.correctedQuery,
+        limit: quickPage,
+      );
+      pages = found?.results;
+      used = found?.shownQuery ?? query;
+    } else {
+      pages = await matching.searchRequest.search(
+        _searched,
+        lane: Lane.screen,
+        limit: quickPage,
+        offset: _offset,
+      );
     }
     if (run != _run) return;
     if (pages == null) {

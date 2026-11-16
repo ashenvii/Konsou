@@ -87,12 +87,12 @@ class SkeletonLines extends StatelessWidget {
     children: [
       FractionallySizedBox(
         widthFactor: title,
-        child: const Skeleton(height: Tokens.text3),
+        child: const Skeleton(height: Tokens.text2),
       ),
       SizedBox(height: gap),
       FractionallySizedBox(
         widthFactor: line,
-        child: const Skeleton(height: Tokens.text2),
+        child: const Skeleton(height: Tokens.text1),
       ),
     ],
   );

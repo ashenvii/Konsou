@@ -2,6 +2,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../components/app_menu.dart';
+import '../../components/hold_row.dart';
+import '../../components/status_menu_entries.dart';
 import '../../library/entry_status.dart';
 import '../../library/library_row.dart';
 import 'status_keys.dart';
@@ -51,18 +53,6 @@ class _EntryMenuState extends State<EntryMenu> {
   Widget build(BuildContext context) {
     final current = EntryStatus.parse(widget.row.status);
     final seasons = widget.row.entryIds.length;
-    MenuEntry statusEntry(
-      EntryStatus status, {
-      String? key,
-      bool dividerAbove = false,
-    }) => MenuEntry(
-      label: status.label,
-      shortcut: key,
-      selected: status == current,
-      dividerAbove: dividerAbove,
-      onPressed: () => _status(status),
-    );
-    // the same groups as the Library's status menu
     var firstAction = true;
     MenuEntry action(String label, VoidCallback onPressed, {String? key}) {
       final entry = MenuEntry(
@@ -93,15 +83,11 @@ class _EntryMenuState extends State<EntryMenu> {
         autofocus: true,
         child: AppMenu(
           entries: [
-            for (final (index, status) in EntryMenu.keyed.indexed)
-              // a hairline before On hold
-              statusEntry(
-                status,
-                key: '${index + 1}',
-                dividerAbove: status == EntryStatus.onHold,
-              ),
-            statusEntry(EntryStatus.dropped),
-            statusEntry(EntryStatus.notInterested),
+            ...statusMenuEntries(
+              current: current,
+              onPick: _status,
+              keyed: EntryMenu.keyed,
+            ),
             if (_watching)
               action('+ Episode', () => _run(widget.onAddEpisode), key: '+'),
             if (current == EntryStatus.completed)
@@ -110,11 +96,11 @@ class _EntryMenuState extends State<EntryMenu> {
             MenuEntry(
               label: seasons > 1
                   ? 'Hold to remove all $seasons'
-                  : 'Hold to remove',
+                  : holdToRemoveLabel,
               destructive: true,
               hold: true,
               dividerAbove: true,
-              holdHint: 'Hold for a second. It cannot be undone.',
+              holdHint: holdToRemoveHint,
               onPressed: () => _run(widget.onRemove),
             ),
           ],

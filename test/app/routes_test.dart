@@ -7,6 +7,7 @@ import 'package:konsou/app/library_providers.dart';
 import 'package:konsou/app/providers.dart';
 import 'package:konsou/detail/title_details.dart';
 import 'package:konsou/detail/title_entry.dart';
+import 'package:konsou/detail/watch_order.dart';
 import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/library/library_row.dart';
 import 'package:konsou/app/routes.dart';
@@ -57,6 +58,10 @@ void main() {
               ),
             ),
           ),
+          watchOrderProvider(7)
+              .overrideWith((ref) async => const WatchOrder([])),
+          pageLinkingProvider.overrideWithValue(null),
+          coverStoreProvider.overrideWithValue(null),
           notLinkedPageProvider('a').overrideWith(
             (ref) async => const NotLinkedPage(
               entry: TitleEntry(

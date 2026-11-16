@@ -398,7 +398,9 @@ void main() {
           buildNode(6, 'Kimi no Na wa. Another'),
         ];
 
-        final outcome = await buildMatching().replaceWrongTitle('added');
+        final matching = buildMatching();
+        await matching.unlinkEntry('added');
+        final outcome = await matching.matchEntry('added', lane: Lane.screen);
 
         expect(outcome, MatchOutcome.suggested);
         expect(await readMalId('added'), isNull);
@@ -520,7 +522,7 @@ void main() {
 
       final result = await buildMatching().searchPages(
         'Sousou no Frieran',
-        tree,
+        correct: tree.correctQuery,
       );
 
       expect(asked, ['Sousou no Frieran', 'sousou no frieren']);

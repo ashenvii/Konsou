@@ -9,6 +9,7 @@ import '../components/text_action.dart';
 import '../components/toast_timer.dart';
 import '../components/toast_view.dart';
 import '../design/tokens.dart';
+import '../library/row_labels.dart';
 import 'library_providers.dart';
 import 'toast_host.dart';
 import 'toast_words.dart';
@@ -22,16 +23,19 @@ const _reviewWords = EarlierReviewWords(
   all: selectAllLabel,
   none: selectNoneLabel,
   selected: selectedCount,
-  mediaType: mediaTypeLabel,
+  mediaType: typeName,
   episodes: episodeCount,
   status: earlierStatusLabel,
   setTo: reviewSetTo,
 );
 
 class ToastLayer extends ConsumerWidget {
-  const ToastLayer({super.key, this.leftInset = 0});
+  const ToastLayer({super.key, this.leftInset = 0, this.bottomInset = 0});
 
   final double leftInset;
+
+  /// What the page keeps fixed along its bottom, such as the entry bar.
+  final double bottomInset;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -55,7 +59,7 @@ class ToastLayer extends ConsumerWidget {
             left: leftInset + Tokens.space4,
             right: Tokens.space4,
             top: Tokens.space4,
-            bottom: Tokens.space4,
+            bottom: bottomInset + Tokens.space4,
             child: Align(
               alignment: Alignment.bottomCenter,
               child: MouseRegion(

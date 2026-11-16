@@ -115,18 +115,9 @@ Future<WatchOrder> loadWatchOrder(
   }
   if (members.length + loading.length < 2) return const WatchOrder([]);
 
-  final names = {
-    for (final row in await record.customSelect('''
-          SELECT provider_id, title, title_english, title_japanese, episodes,
-            NULL AS name
-          FROM details.detail
-          WHERE provider = 'mal' AND provider_id IN ($memberIds)
-          ''').get())
-      row.read<int>('provider_id'): (
-        name: pickTitleName(row, language),
-        episodes: row.read<int?>('episodes'),
-      ),
-  };
+  final names = await readTitleNames(record, [
+    for (final title in members) title.id,
+  ], language);
   // the entry changed last wins where two share a page
   final entries = {
     for (final row in await record.customSelect('''

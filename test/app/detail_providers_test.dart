@@ -279,6 +279,68 @@ void main() {
       expect([for (final found in picker.suggestions) found.name], ['Page 7']);
     });
 
+    test(
+      '"Wrong title" unlinks at once, then looks for the right page',
+      () async {
+        await save(fullJson, full: true);
+        await addEntry(databases, 'a', malId: _frieren, name: 'Frieren');
+        final linking = container.read(pageLinkingProvider)!;
+        final looking = container.listen(lookingForPageProvider, (_, _) {});
+        addTearDown(looking.close);
+        answer = () => http.Response('{"data": []}', 200);
+        int? linkedWhenTold;
+        Set<String>? lookingWhenTold;
+
+        await linking.replaceWrongTitle(
+          'a',
+          onUnlinked: () {
+            linkedWhenTold = 1;
+            lookingWhenTold = looking.read();
+          },
+        );
+
+        expect(linkedWhenTold, 1);
+        expect(lookingWhenTold, {'a'});
+        expect(looking.read(), isEmpty);
+        final picker = await waitFor(
+          notLinkedPageProvider('a'),
+          (value) => value.entry?.malId == null,
+        );
+        expect(picker.entry!.name, 'Frieren');
+      },
+    );
+
+    test('the search box finds pages, and says when it cannot', () async {
+      await addEntry(databases, 'a', name: 'Frieren');
+      final search = pickerSearchProvider('a');
+      final watching = container.listen(search, (_, _) {});
+      addTearDown(watching.close);
+      Future<PickerSearchState> settle() async {
+        for (var tries = 0; tries < 300; tries++) {
+          if (!watching.read().searching) return watching.read();
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
+        fail('the search never finished');
+      }
+
+      answer = () => http.Response(
+        '{"data": [{"node": {"id": 7, "title": "Sousou no Frieren"}}]}',
+        200,
+      );
+      container.read(search.notifier).setQuery('frieren');
+      expect(watching.read().searching, isTrue);
+      expect([for (final page in (await settle()).results) page.malId], [7]);
+
+      answer = () => throw const SocketException('no network');
+      container.read(search.notifier).setQuery('frieren season');
+      expect((await settle()).failed, isTrue);
+
+      // too short for MAL: nothing is asked
+      container.read(search.notifier).setQuery('fr');
+      expect(watching.read().searching, isFalse);
+      expect(watching.read().foundNothing, isFalse);
+    });
+
     test('a pick links it, and "None of these" empties the list', () async {
       await addEntry(databases, 'a', name: 'Rick and Morty: The Anime');
       await suggest(7, 0);

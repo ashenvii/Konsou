@@ -62,10 +62,23 @@ String pickTitleName(QueryRow row, TitleLanguage language) =>
     row.read<String?>('name') ??
     '';
 
-Future<TitleLanguage> readTitleLanguage(RecordDatabase record) async {
-  final row =
-      await (record.select(record.setting)
-            ..where((setting) => setting.key.equals('title_language')))
-          .getSingleOrNull();
-  return TitleLanguage.parse(row?.value);
-}
+Future<TitleLanguage> readTitleLanguage(RecordDatabase record) async =>
+    TitleLanguage.parse(await record.readSetting('title_language'));
+
+/// The shown name and episode count of the saved titles among [malIds].
+Future<Map<int, ({String name, int? episodes})>> readTitleNames(
+  RecordDatabase record,
+  Iterable<int> malIds,
+  TitleLanguage language,
+) async => {
+  for (final row in await record.customSelect('''
+    SELECT provider_id, title, title_english, title_japanese, episodes,
+      NULL AS name
+    FROM details.detail
+    WHERE provider = 'mal' AND provider_id IN (${malIds.join(', ')})
+    ''').get())
+    row.read<int>('provider_id'): (
+      name: pickTitleName(row, language),
+      episodes: row.read<int?>('episodes'),
+    ),
+};

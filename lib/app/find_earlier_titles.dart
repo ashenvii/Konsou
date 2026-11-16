@@ -41,20 +41,13 @@ Future<List<EarlierTitle>> findEarlierTitles(
       ),
   };
 
-  final names = {
-    for (final row in await record.customSelect('''
-      SELECT provider_id, title, title_english, title_japanese, episodes,
-        NULL AS name
-      FROM details.detail WHERE provider = 'mal'
-    ''').get())
-      row.read<int>('provider_id'): (
-        name: pickTitleName(row, language),
-        episodes: row.read<int?>('episodes'),
-      ),
-  };
+  final before = members.sublist(0, position);
+  final names = await readTitleNames(record, [
+    for (final title in before) title.id,
+  ], language);
 
   final earlier = <EarlierTitle>[];
-  for (final title in members.sublist(0, position)) {
+  for (final title in before) {
     final entry = onList[title.id];
     if (entry != null && _skipped.contains(entry.status)) continue;
     if (saved[title.id]?.airingStatus == 'not_yet_aired') continue;

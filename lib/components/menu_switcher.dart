@@ -18,6 +18,7 @@ class MenuSwitcher extends StatelessWidget {
     required this.style,
     this.count,
     this.footnote,
+    this.gap = Tokens.space1,
   });
 
   final String current;
@@ -26,10 +27,13 @@ class MenuSwitcher extends StatelessWidget {
   final String? footnote;
   final TextStyle style;
 
+  /// The space between the word and its menu.
+  final double gap;
+
   @override
   Widget build(BuildContext context) {
     return HoverPopover(
-      gap: Tokens.space1,
+      gap: gap,
       builder: (context, handle) => Pressable(
         onPressed: handle.open,
         selected: handle.isOpen,

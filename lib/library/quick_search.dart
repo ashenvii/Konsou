@@ -56,14 +56,14 @@ QuickRow quickRowFromEntry(LibraryEntry entry) {
 /// A title MAL found, as a row for a title not on the list.
 QuickRow quickRowFromPage(Map<String, dynamic> page, TitleLanguage language) {
   final alternatives = page['alternative_titles'] as Map?;
-  final english = alternatives?['en'] as String?;
-  final japanese = alternatives?['ja'] as String?;
-  final name = switch (language) {
-    TitleLanguage.english when english != null && english.isNotEmpty => english,
-    TitleLanguage.japanese when japanese != null && japanese.isNotEmpty =>
-      japanese,
-    _ => page['title'] as String? ?? '',
-  };
+  final name =
+      orderTitles(
+        language,
+        romaji: page['title'] as String?,
+        english: alternatives?['en'] as String?,
+        japanese: alternatives?['ja'] as String?,
+      ).firstOrNull ??
+      '';
   final episodes = page['num_episodes'] as int?;
   return QuickRow(
     name: name,

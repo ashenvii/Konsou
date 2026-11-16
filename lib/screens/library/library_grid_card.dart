@@ -102,7 +102,7 @@ class _Chip extends StatelessWidget {
             if (showStatus && count.isNotEmpty)
               const SizedBox(width: Tokens.space1),
             if (count.isNotEmpty)
-              Text(count, style: AppText.tally(Tokens.ink, size: Tokens.text2)),
+              Text(count, style: AppText.tally(Tokens.ink, size: Tokens.text1)),
           ],
         ),
       ),

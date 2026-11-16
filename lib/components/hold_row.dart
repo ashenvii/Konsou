@@ -5,6 +5,9 @@ import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import 'countdown.dart';
 
+const holdToRemoveLabel = 'Hold to remove';
+const holdToRemoveHint = 'Hold for a second. It cannot be undone.';
+
 class HoldRow extends StatefulWidget {
   const HoldRow({
     super.key,

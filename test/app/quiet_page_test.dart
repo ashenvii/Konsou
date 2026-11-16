@@ -22,10 +22,7 @@ void main() {
     );
     addTearDown(router.dispose);
     await tester.pumpWidget(
-      WidgetsApp.router(
-        color: const Color(0xFF000000),
-        routerConfig: router,
-      ),
+      WidgetsApp.router(color: const Color(0xFF000000), routerConfig: router),
     );
     expect(find.text('list'), findsOneWidget);
 

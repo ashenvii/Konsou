@@ -27,10 +27,11 @@ abstract final class Tokens {
   static const double space5 = 24;
 
   // type sizes
-  static const double text1 = 11;
-  static const double text2 = 12;
-  static const double text3 = 14;
-  static const double text4 = 18;
+  static const double text1 = 12;
+  static const double text2 = 16;
+  static const double text3 = 20;
+  static const double text4 = 24;
+  static const double text5 = 32;
 
   // fonts
   static const String sans = 'PlexSans';
@@ -43,7 +44,7 @@ abstract final class Tokens {
   // one size for every icon (owner, 2026-11-12)
   static const double iconSize = 20;
   static const double windowButtonWidth = 40;
-  static const double windowIconSize = 10;
+  static const double windowIconSize = 12;
 
   // component sizes from the comp (2026-11-08); focusRing is not in it
   static const double controlHeight = 36;
@@ -56,9 +57,9 @@ abstract final class Tokens {
   static const double shadowDrop = 8;
   // smallest area a finger can hit, on touch screens (Android guideline).
   static const double touchTarget = 48;
-  static const double scrollbarWidth = 10;
+  static const double scrollbarWidth = 8;
 
-  static const double resizeEdge = 6;
+  static const double resizeEdge = 8;
 
   // the Library, first guesses from the loading screenshot, to be tuned.
   static const double gridCardMinWidth = 168;
@@ -90,7 +91,15 @@ abstract final class Tokens {
   static const double quickPanelMaxHeight = 720;
   static const double quickFieldHeight = 52;
   static const double quickFooterHeight = 48;
-  static const double quickCoverWidth = 30;
+  static const double quickCoverWidth = 32;
+
+  // the Detail page, first guesses to tune (decisions, 2026-11-11)
+  static const double heroHeight = 240;
+  static const double detailCoverWidth = 160;
+  static const double detailCoverBorder = 4;
+  static const double entryBarHeight = 56;
+  // the widest a column of running text gets, about 90 characters
+  static const double detailTextWidth = 720;
 
   // line height for text that can wrap onto a second line (owner, 2026-11-13);
   // single-line labels stay at 1 inside their fixed controls.

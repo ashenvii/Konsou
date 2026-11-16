@@ -31,9 +31,6 @@ class AppScrollBehavior extends ScrollBehavior {
           radius: Radius.zero,
           // a long list would make the thumb too small to grab
           minThumbLength: Tokens.touchTarget,
-          // the window's resize strip lies along the edge; the thumb stays
-          // clear of it so it can be grabbed
-          crossAxisMargin: Tokens.resizeEdge,
           thumbColor: Tokens.mint,
           child: child,
         );

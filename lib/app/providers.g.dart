@@ -226,7 +226,7 @@ final class CoverFileProvider
   }
 }
 
-String _$coverFileHash() => r'060c598c943205529d098e5b1963d6b016aebcb7';
+String _$coverFileHash() => r'db03bbb89836efd41651d03af1b05a5caa1200f5';
 
 final class CoverFileFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<File?>, (int, CoverSize)> {
@@ -244,6 +244,75 @@ final class CoverFileFamily extends $Family
 
   @override
   String toString() => r'coverFileProvider';
+}
+
+@ProviderFor(heroFile)
+final heroFileProvider = HeroFileFamily._();
+
+final class HeroFileProvider
+    extends $FunctionalProvider<AsyncValue<File?>, File?, FutureOr<File?>>
+    with $FutureModifier<File?>, $FutureProvider<File?> {
+  HeroFileProvider._({
+    required HeroFileFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'heroFileProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$heroFileHash();
+
+  @override
+  String toString() {
+    return r'heroFileProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<File?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<File?> create(Ref ref) {
+    final argument = this.argument as int;
+    return heroFile(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is HeroFileProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$heroFileHash() => r'3fd7fe2c8247585cd6e827870dbcd92189a69c24';
+
+final class HeroFileFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<File?>, int> {
+  HeroFileFamily._()
+    : super(
+        retry: null,
+        name: r'heroFileProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  HeroFileProvider call(int malId) =>
+      HeroFileProvider._(argument: malId, from: this);
+
+  @override
+  String toString() => r'heroFileProvider';
 }
 
 @ProviderFor(detailOnScreen)
@@ -295,7 +364,7 @@ final class DetailOnScreenProvider
   }
 }
 
-String _$detailOnScreenHash() => r'ce4c28b396a96dbd2de8fd4b489d0dc71c3cfc48';
+String _$detailOnScreenHash() => r'5b0c266c1a3d3a71380a5e13d08679f0c7775959';
 
 final class DetailOnScreenFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<void>, int> {
