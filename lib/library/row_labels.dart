@@ -30,6 +30,29 @@ String typeYear(String? type, String? date) {
 
 String capitalise(String text) => text[0].toUpperCase() + text.substring(1);
 
+String episodeCount(int n) => n == 1 ? '1 episode' : '$n episodes';
+
+/// A month's name, 1 for January. Short gives the first three letters.
+String monthName(int month, {bool short = false}) {
+  final name = _monthNames[month - 1];
+  return short ? name.substring(0, 3) : name;
+}
+
+const _monthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
 /// Episodes watched out of the total. With no known total, only the watched
 /// count; with nothing to say, empty.
 String progressText(LibraryRow row) =>

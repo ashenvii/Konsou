@@ -19,12 +19,12 @@ import 'overview_tab.dart';
 import 'score_strip.dart';
 import 'watch_order_tab.dart';
 
-enum DetailTab {
+enum _DetailTab {
   overview('Overview'),
   watchOrder('Watch order'),
   myEntry('My entry');
 
-  const DetailTab(this.label);
+  const _DetailTab(this.label);
 
   final String label;
 }
@@ -55,7 +55,7 @@ class LinkedDetail extends ConsumerStatefulWidget {
 }
 
 class _LinkedDetailState extends ConsumerState<LinkedDetail> {
-  var _tab = DetailTab.overview;
+  var _tab = _DetailTab.overview;
 
   @override
   Widget build(BuildContext context) {
@@ -90,12 +90,12 @@ class _LinkedDetailState extends ConsumerState<LinkedDetail> {
     final fetching = data.fetch == DetailFetch.running;
     final order = ref.watch(watchOrderProvider(widget.malId)).value;
     final tabs = [
-      DetailTab.overview,
-      if (order != null && order.rows.isNotEmpty) DetailTab.watchOrder,
-      if (entry != null) DetailTab.myEntry,
+      _DetailTab.overview,
+      if (order != null && order.rows.isNotEmpty) _DetailTab.watchOrder,
+      if (entry != null) _DetailTab.myEntry,
     ];
     // a tab that went away, such as My entry after Remove, falls back
-    final tab = tabs.contains(_tab) ? _tab : DetailTab.overview;
+    final tab = tabs.contains(_tab) ? _tab : _DetailTab.overview;
     final name = switch (details?.name) {
       final name? when name.isNotEmpty => name,
       _ => entry?.name ?? '',
@@ -139,7 +139,7 @@ class _LinkedDetailState extends ConsumerState<LinkedDetail> {
         Padding(
           padding: PageFrame.content.copyWith(top: Tokens.space5),
           child: switch (tab) {
-            DetailTab.overview =>
+            _DetailTab.overview =>
               details == null
                   ? _missing(data.fetch)
                   : OverviewTab(
@@ -147,11 +147,11 @@ class _LinkedDetailState extends ConsumerState<LinkedDetail> {
                       hidden: data.isHidden,
                       fetching: fetching,
                     ),
-            DetailTab.watchOrder => WatchOrderTab(
+            _DetailTab.watchOrder => WatchOrderTab(
               order: order!,
               onOpen: _openRow,
             ),
-            DetailTab.myEntry => MyEntryTab(
+            _DetailTab.myEntry => MyEntryTab(
               key: ValueKey(entry!.entryId),
               entry: entry,
               onUnlinked: () => widget.onShowPicker(entry.entryId),

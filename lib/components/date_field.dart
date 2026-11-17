@@ -11,27 +11,13 @@ import 'pressable.dart';
 import 'text_action.dart';
 import 'icon_square_button.dart';
 import '../icons/app_icons.dart';
-
-const _months = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+import '../library/row_labels.dart';
 
 const _weekdays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
 /// "14 Nov 2026".
 String formatDate(DateTime date) =>
-    '${date.day} ${_months[date.month - 1].substring(0, 3)} ${date.year}';
+    '${date.day} ${monthName(date.month, short: true)} ${date.year}';
 
 /// A button showing a date that opens a month grid, with a Clear row. Flutter's
 /// own date picker is a Material dialog, so it is not used.
@@ -40,15 +26,11 @@ class DateField extends StatelessWidget {
     super.key,
     required this.value,
     required this.onChanged,
-    this.placeholder = 'Not set',
-    this.width = Tokens.findFieldWidth,
     this.latest,
   });
 
   final DateTime? value;
   final ValueChanged<DateTime?> onChanged;
-  final String placeholder;
-  final double width;
 
   /// The last day that can be picked. Null allows any day.
   final DateTime? latest;
@@ -63,7 +45,7 @@ class DateField extends StatelessWidget {
         builder: (context, state) => HoverMark(
           on: state.hovered || state.focused || handle.isOpen,
           child: Container(
-            width: width,
+            width: Tokens.findFieldWidth,
             height: Tokens.controlHeight,
             padding: const EdgeInsets.only(left: Tokens.space3),
             color: Tokens.surface,
@@ -71,7 +53,7 @@ class DateField extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    value == null ? placeholder : formatDate(value!),
+                    value == null ? 'Not set' : formatDate(value!),
                     maxLines: 1,
                     softWrap: false,
                     overflow: TextOverflow.ellipsis,
@@ -93,7 +75,7 @@ class DateField extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              MonthGrid(
+              _MonthGrid(
                 selected: value,
                 latest: latest,
                 onPicked: (date) {
@@ -125,9 +107,8 @@ class DateField extends StatelessWidget {
 }
 
 /// One month of days, Monday first, with arrows to move between months.
-class MonthGrid extends StatefulWidget {
-  const MonthGrid({
-    super.key,
+class _MonthGrid extends StatefulWidget {
+  const _MonthGrid({
     required this.selected,
     required this.onPicked,
     this.latest,
@@ -138,10 +119,10 @@ class MonthGrid extends StatefulWidget {
   final ValueChanged<DateTime> onPicked;
 
   @override
-  State<MonthGrid> createState() => _MonthGridState();
+  State<_MonthGrid> createState() => _MonthGridState();
 }
 
-class _MonthGridState extends State<MonthGrid> {
+class _MonthGridState extends State<_MonthGrid> {
   late DateTime _month = _firstOf(
     widget.selected ?? widget.latest ?? DateTime.now(),
   );
@@ -179,7 +160,7 @@ class _MonthGridState extends State<MonthGrid> {
                 ),
                 Expanded(
                   child: Text(
-                    '${_months[_month.month - 1]} ${_month.year}',
+                    '${monthName(_month.month)} ${_month.year}',
                     textAlign: TextAlign.center,
                     style: AppText.label(Tokens.ink, bold: true),
                   ),

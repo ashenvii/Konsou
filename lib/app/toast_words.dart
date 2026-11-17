@@ -49,8 +49,6 @@ const selectAllLabel = 'All';
 const selectNoneLabel = 'None';
 const notOnListLabel = 'Not on your list';
 String selectedCount(int n, int total) => '$n of $total selected';
-String episodeCount(int n) => n == 1 ? '1 episode' : '$n episodes';
-
 String earlierStatusLabel(String? stored) {
   if (stored == null) return notOnListLabel;
   try {

@@ -10,18 +10,20 @@ import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../detail/provider_page.dart';
 import '../../library/row_labels.dart';
+import '../../mal/matching.dart' show maxSuggestions;
 import 'picker_skeleton.dart';
 
 /// A suggested MAL page: cover, title, type and year, episodes, and Pick.
-class PagePickerRow extends StatelessWidget {
-  const PagePickerRow({super.key, required this.page, required this.onPick});
+class _PagePickerRow extends StatelessWidget {
+  const _PagePickerRow({required this.page, required this.onPick});
 
   final ProviderPage page;
   final VoidCallback? onPick;
 
   @override
   Widget build(BuildContext context) {
-    final episodes = page.episodes == null ? '' : '${page.episodes} episodes';
+    final count = page.episodes;
+    final episodes = count == null ? '' : episodeCount(count);
     final line = [
       typeYear(page.mediaType, page.startDate),
       episodes,
@@ -92,9 +94,7 @@ class PagePicker extends StatelessWidget {
   /// A line under the box: nothing found, no connection, a corrected search.
   final String? note;
 
-  static const maxSuggestions = 5;
-
-  Widget _row(ProviderPage page) => PagePickerRow(
+  Widget _row(ProviderPage page) => _PagePickerRow(
     page: page,
     onPick: onPick == null ? null : () => onPick!(page),
   );

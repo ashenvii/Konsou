@@ -1,21 +1,6 @@
 import '../library/row_labels.dart';
 import 'title_details.dart';
 
-const _monthNames = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
 /// A date as MAL gives it ("2023", "2023-09", "2023-09-29") in words.
 String? dateWords(String? date) {
   if (date == null || date.length < 4) return null;
@@ -24,7 +9,7 @@ String? dateWords(String? date) {
   final month = parts.length > 1 ? int.tryParse(parts[1]) : null;
   final day = parts.length > 2 ? int.tryParse(parts[2]) : null;
   if (month == null || month < 1 || month > 12) return year;
-  final name = _monthNames[month - 1];
+  final name = monthName(month, short: true);
   return day == null ? '$name $year' : '$day $name $year';
 }
 
