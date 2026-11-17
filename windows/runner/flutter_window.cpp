@@ -1,5 +1,6 @@
 #include "flutter_window.h"
 
+#include <commctrl.h>
 #include <flutter/standard_method_codec.h>
 #include <windowsx.h>
 
@@ -10,20 +11,19 @@
 
 namespace {
 
-FlutterWindow* g_window = nullptr;
-WNDPROC g_view_proc = nullptr;
+constexpr UINT_PTR kViewSubclassId = 1;
 
 // The Flutter view covers the whole window, so Windows never asks the window
 // itself about the maximize button. Over the button the view says it is not
 // there, and the question goes on to the window.
 LRESULT CALLBACK ViewProc(HWND view, UINT message, WPARAM wparam,
-                          LPARAM lparam) {
-  if (message == WM_NCHITTEST && g_window &&
-      g_window->IsOverMaximizeButton(GET_X_LPARAM(lparam),
-                                     GET_Y_LPARAM(lparam))) {
+                          LPARAM lparam, UINT_PTR, DWORD_PTR window) {
+  if (message == WM_NCHITTEST &&
+      reinterpret_cast<FlutterWindow*>(window)->IsOverMaximizeButton(
+          GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam))) {
     return HTTRANSPARENT;
   }
-  return CallWindowProc(g_view_proc, view, message, wparam, lparam);
+  return DefSubclassProc(view, message, wparam, lparam);
 }
 
 double ReadNumber(const flutter::EncodableMap& map, const char* key) {
@@ -84,9 +84,8 @@ bool FlutterWindow::OnCreate() {
 
   HWND view = flutter_controller_->view()->GetNativeWindow();
   SetChildContent(view);
-  g_window = this;
-  g_view_proc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(
-      view, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(ViewProc)));
+  SetWindowSubclass(view, ViewProc, kViewSubclassId,
+                    reinterpret_cast<DWORD_PTR>(this));
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
@@ -101,9 +100,10 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
-  g_window = nullptr;
   window_channel_ = nullptr;
   if (flutter_controller_) {
+    RemoveWindowSubclass(flutter_controller_->view()->GetNativeWindow(),
+                         ViewProc, kViewSubclassId);
     flutter_controller_ = nullptr;
   }
 

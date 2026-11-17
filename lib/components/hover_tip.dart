@@ -5,7 +5,7 @@ import '../design/tokens.dart';
 import 'countdown.dart';
 import 'floating_panel.dart';
 import 'popover_placement.dart';
-import 'presence.dart';
+import 'fading_portal.dart';
 
 /// Says in words what an icon does, beside it, after a short hover. It never
 /// takes a click: the pointer goes straight through to what is underneath.
@@ -41,15 +41,8 @@ class _HoverTipState extends State<HoverTip> with HoverDelaysState<HoverTip> {
     _controller.show();
   }
 
-  // the fade out finishes first; Presence then calls _hide
   @override
   void hoverClose() => setState(() => _wanted = false);
-
-  void _hide() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_wanted && _controller.isShowing) _controller.hide();
-    });
-  }
 
   void _stop() {
     hoverDelays.left(isOpen: false);
@@ -58,30 +51,25 @@ class _HoverTipState extends State<HoverTip> with HoverDelaysState<HoverTip> {
 
   @override
   Widget build(BuildContext context) {
-    return OverlayPortal(
+    return FadingPortal(
       controller: _controller,
-      overlayChildBuilder: (context) => Positioned.fill(
-        child: IgnorePointer(
-          child: ExcludeSemantics(
-            child: Presence(
-              visible: _wanted,
-              openTime: Tokens.motionTip,
-              onGone: _hide,
-              child: CustomSingleChildLayout(
-                delegate: AnchoredLayout(_anchor, Tokens.space1, placeBeside),
-                child: FloatingPanel(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: Tokens.space3,
-                      vertical: Tokens.space2,
-                    ),
-                    child: Text(
-                      widget.label,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: AppText.label(Tokens.ink),
-                    ),
-                  ),
+      visible: _wanted,
+      openTime: Tokens.motionTip,
+      overlay: (context) => IgnorePointer(
+        child: ExcludeSemantics(
+          child: CustomSingleChildLayout(
+            delegate: AnchoredLayout(_anchor, Tokens.space1, placeBeside),
+            child: FloatingPanel(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Tokens.space3,
+                  vertical: Tokens.space2,
+                ),
+                child: Text(
+                  widget.label,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: AppText.label(Tokens.ink),
                 ),
               ),
             ),

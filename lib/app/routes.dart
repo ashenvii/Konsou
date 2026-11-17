@@ -27,10 +27,14 @@ String titlePath(int malId, {String? entryId}) => Uri(
 
 String entryPath(String entryId) => '/entry/$entryId';
 
-String detailPathFor(LibraryRow row) => switch (row.malId) {
-  final malId? => titlePath(malId, entryId: row.entryId),
-  null => entryPath(row.entryId),
+/// A title's page when it has a MAL page, else the entry's own page.
+String detailPath({int? malId, String? entryId}) => switch (malId) {
+  final malId? => titlePath(malId, entryId: entryId),
+  null => entryPath(entryId!),
 };
+
+String detailPathFor(LibraryRow row) =>
+    detailPath(malId: row.malId, entryId: row.entryId);
 
 // the page on top, which a pushed page is and the shell's own state is not
 String _topLocation(BuildContext context) =>
@@ -93,10 +97,9 @@ GoRouter buildRouter({
               children: [
                 QuickSearchLayer(
                   onBrowse: () => context.go(discoverPath),
-                  onOpen: (row) => context.push(switch (row.malId) {
-                    final malId? => titlePath(malId, entryId: row.entryId),
-                    null => entryPath(row.entryId!),
-                  }),
+                  onOpen: (row) => context.push(
+                    detailPath(malId: row.malId, entryId: row.entryId),
+                  ),
                 ),
                 // on the Detail page the toast sits above the entry bar
                 ToastLayer(

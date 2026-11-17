@@ -78,6 +78,10 @@ class WindowClassRegistrar {
 
 WindowClassRegistrar* WindowClassRegistrar::instance_ = nullptr;
 
+// Tokens.ground in lib/design/tokens.dart. The class is registered before
+// Flutter runs, so the value cannot come from Dart.
+constexpr COLORREF kGroundColor = RGB(0x06, 0x0A, 0x0D);
+
 const wchar_t* WindowClassRegistrar::GetWindowClass() {
   if (!class_registered_) {
     WNDCLASS window_class{};
@@ -91,7 +95,7 @@ const wchar_t* WindowClassRegistrar::GetWindowClass() {
         LoadIcon(window_class.hInstance, MAKEINTRESOURCE(IDI_APP_ICON));
     // the ground color, so an edge dragged faster than Flutter paints shows
     // the app's own dark and not a white or black strip
-    window_class.hbrBackground = CreateSolidBrush(RGB(0x06, 0x0A, 0x0D));
+    window_class.hbrBackground = CreateSolidBrush(kGroundColor);
     window_class.lpszMenuName = nullptr;
     window_class.lpfnWndProc = Win32Window::WndProc;
     RegisterClass(&window_class);

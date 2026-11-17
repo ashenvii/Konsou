@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import 'close_on_escape.dart';
 import 'popover_placement.dart';
-import 'presence.dart';
+import 'fading_portal.dart';
 
 abstract interface class PopoverHandle {
   bool get isOpen;
@@ -71,33 +71,21 @@ class _AppPopoverState extends State<AppPopover> implements PopoverHandle {
 
   @override
   void close() {
-    if (!_open) return;
-    // the fade out finishes first; Presence then calls _hide
-    setState(() => _open = false);
-  }
-
-  void _hide() {
-    // the popover may have been opened again before this frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_open) _controller.hide();
-    });
+    if (_open) setState(() => _open = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    return OverlayPortal(
+    return FadingPortal(
       controller: _controller,
-      overlayChildBuilder: (context) => Presence(
-        visible: _open,
-        slide: true,
-        onGone: _hide,
-        child: _PopoverLayer(
-          anchor: _anchor,
-          gap: widget.gap,
-          onAnchorHover: widget.onAnchorHover,
-          onClose: close,
-          child: widget.popoverBuilder(context, this),
-        ),
+      visible: _open,
+      slide: true,
+      overlay: (context) => _PopoverLayer(
+        anchor: _anchor,
+        gap: widget.gap,
+        onAnchorHover: widget.onAnchorHover,
+        onClose: close,
+        child: widget.popoverBuilder(context, this),
       ),
       child: widget.builder(context, this),
     );
