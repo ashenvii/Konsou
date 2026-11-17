@@ -17,6 +17,9 @@ class ToastTimer extends StatelessWidget {
       child: CountdownBuilder(
         countdown: countdown,
         builder: (context, share, running) {
+          // a toast fading out has none left; a zero width factor breaks the
+          // toast's intrinsic width
+          if (share <= 0) return const SizedBox.shrink();
           final color = !running
               ? Tokens.inkMuted
               : (share <= urgentBelow ? Tokens.amber : Tokens.inkSoft);

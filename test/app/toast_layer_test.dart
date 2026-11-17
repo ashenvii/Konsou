@@ -61,6 +61,7 @@ void testToast(String name, Future<void> Function(WidgetTester tester) body) {
         .findAncestorWidgetOfExactType<UncontrolledProviderScope>();
     scope?.container.read(toastHostProvider.notifier).dismiss();
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     semantics.dispose();
   });
 }
@@ -101,6 +102,8 @@ void main() {
 
   testToast('nothing shows until a toast is shown', (tester) async {
     await pumpLayer(tester);
+    await tester.pump(const Duration(milliseconds: 100)); // the fade out
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(ToastView), findsNothing);
   });
 
@@ -125,6 +128,8 @@ void main() {
     await tester.pump();
     await tester.tap(find.bySemanticsLabel('Close'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100)); // the fade out
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(ToastView), findsNothing);
   });
 
@@ -136,6 +141,8 @@ void main() {
     await tester.tap(find.text('Undo'));
     await tester.pump();
     expect(undone, isTrue);
+    await tester.pump(const Duration(milliseconds: 100)); // the fade out
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(ToastView), findsNothing);
   });
 
@@ -153,12 +160,16 @@ void main() {
     await tester.pump(const Duration(milliseconds: 3900));
     expect(find.byType(ToastView), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 100)); // the fade out
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(ToastView), findsNothing);
     host().show(ToastMessage('Completed', undo: () async {}));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 5900));
     expect(find.byType(ToastView), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 100)); // the fade out
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(ToastView), findsNothing);
   });
 
@@ -181,6 +192,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 900));
     expect(find.byType(ToastView), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 100)); // the fade out
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(ToastView), findsNothing);
   });
 
@@ -212,6 +225,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 5900));
     expect(find.byType(ToastView), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 100)); // the fade out
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(ToastView), findsNothing);
   });
 

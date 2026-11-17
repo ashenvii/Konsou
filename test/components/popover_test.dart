@@ -253,7 +253,7 @@ void main() {
       await pumpPopover(tester);
       expect(find.byType(AppMenu), findsNothing);
       await tester.tap(find.text('Sort'));
-      await tester.pump();
+      await tester.pumpAndSettle(); // the slide in
       expect(find.byType(AppMenu), findsOneWidget);
       final anchor = tester.getRect(find.byType(AppButton));
       final menu = tester.getTopLeft(find.byType(AppMenu));
@@ -265,7 +265,7 @@ void main() {
     ) async {
       await pumpPopover(tester, overlayAt: const Offset(48, 36));
       await tester.tap(find.text('Sort'));
-      await tester.pump();
+      await tester.pumpAndSettle(); // the slide in
       final anchor = tester.getRect(find.byType(AppButton));
       final menu = tester.getTopLeft(find.byType(AppMenu));
       expect(menu, Offset(anchor.left, anchor.bottom));

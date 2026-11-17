@@ -11,6 +11,7 @@ import '../components/page_title.dart';
 import '../components/panel.dart';
 import '../components/status_mark.dart';
 import 'detail_section.dart';
+import 'motion_section.dart';
 import 'library_rows_section.dart';
 import '../library/entry_status.dart';
 import '../design/tokens.dart';
@@ -152,6 +153,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ),
             const _Section('Menus'),
             const _Menus(),
+            const _Section('Motion'),
+            const MotionSection(),
             const _Section('Library rows and cards'),
             const LibraryRowsSection(),
             const _Section('Detail page'),

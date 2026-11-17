@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/close_on_escape.dart';
 import 'cover_view.dart';
 import '../components/earlier_review.dart';
+import '../components/presence.dart';
 import '../components/star_rating.dart';
 import '../components/text_action.dart';
 import '../components/toast_timer.dart';
@@ -54,61 +55,72 @@ class ToastLayer extends ConsumerWidget {
               child: ColoredBox(color: Tokens.ground.withValues(alpha: 0.72)),
             ),
           ),
-        if (shown != null)
-          Positioned(
-            left: leftInset + Tokens.space4,
-            right: Tokens.space4,
-            top: Tokens.space4,
-            bottom: bottomInset + Tokens.space4,
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: MouseRegion(
-                onEnter: (_) => host.setPointerOver(true),
-                onExit: (_) => host.setPointerOver(false),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: Tokens.toastMaxWidth,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: reviewOpen
-                        ? CrossAxisAlignment.stretch
-                        : CrossAxisAlignment.center,
-                    children: [
-                      if (reviewOpen) ...[
-                        Flexible(
-                          child: CloseOnEscape(
-                            onClose: () => host.setReviewOpen(false),
-                            child: FocusScope(
-                              autofocus: true,
-                              child: EarlierReview(
-                                titles: review.titles,
-                                words: _reviewWords,
-                                cover: (title, width) =>
-                                    CoverView(malId: title.malId, width: width),
-                                onMark: (chosen, status) => ref
-                                    .read(entryActionsProvider)
-                                    .acceptReview(
-                                      review,
-                                      chosen,
-                                      status: status,
+        Positioned.fill(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              leftInset + Tokens.space4,
+              Tokens.space4,
+              Tokens.space4,
+              bottomInset + Tokens.space4,
+            ),
+            // a toast fades out too, so it stays built while it leaves
+            child: Presence(
+              visible: shown != null,
+              child: shown == null
+                  ? null
+                  : Align(
+                      alignment: Alignment.bottomCenter,
+                      child: MouseRegion(
+                        onEnter: (_) => host.setPointerOver(true),
+                        onExit: (_) => host.setPointerOver(false),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: Tokens.toastMaxWidth,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: reviewOpen
+                                ? CrossAxisAlignment.stretch
+                                : CrossAxisAlignment.center,
+                            children: [
+                              if (reviewOpen) ...[
+                                Flexible(
+                                  child: CloseOnEscape(
+                                    onClose: () => host.setReviewOpen(false),
+                                    child: FocusScope(
+                                      autofocus: true,
+                                      child: EarlierReview(
+                                        titles: review.titles,
+                                        words: _reviewWords,
+                                        cover: (title, width) => CoverView(
+                                          malId: title.malId,
+                                          width: width,
+                                        ),
+                                        onMark: (chosen, status) => ref
+                                            .read(entryActionsProvider)
+                                            .acceptReview(
+                                              review,
+                                              chosen,
+                                              status: status,
+                                            ),
+                                        onNotNow: () => ref
+                                            .read(entryActionsProvider)
+                                            .notNow(review),
+                                      ),
                                     ),
-                                onNotNow: () => ref
-                                    .read(entryActionsProvider)
-                                    .notNow(review),
-                              ),
-                            ),
+                                  ),
+                                ),
+                                const SizedBox(height: Tokens.space2),
+                              ],
+                              _toast(ref, state, shown, host),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: Tokens.space2),
-                      ],
-                      _toast(ref, state, shown, host),
-                    ],
-                  ),
-                ),
-              ),
+                      ),
+                    ),
             ),
           ),
+        ),
       ],
     );
   }

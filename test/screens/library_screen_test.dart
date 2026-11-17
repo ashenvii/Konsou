@@ -247,6 +247,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     expect(menu, findsOneWidget);
     await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 100)); // the fade out
+    await tester.pump();
     expect(menu, findsNothing);
   });
 

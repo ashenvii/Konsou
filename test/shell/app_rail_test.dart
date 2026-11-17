@@ -97,7 +97,7 @@ void main() {
     await mouse.addPointer(location: Offset.zero);
     addTearDown(mouse.removePointer);
     await mouse.moveTo(tester.getCenter(item));
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 400)); // the tip delay
     await tester.pump();
     final tip = find.text('Discover');
     expect(tip, findsOneWidget);

@@ -89,13 +89,17 @@ class Countdown extends ChangeNotifier {
 }
 
 class HoverDelays {
-  HoverDelays({required VoidCallback onOpen, required VoidCallback onClose})
-    : _opening = Countdown(onDone: onOpen),
-      _closing = Countdown(onDone: onClose);
+  HoverDelays({
+    required VoidCallback onOpen,
+    required VoidCallback onClose,
+    this.openDelay = defaultOpenDelay,
+  }) : _opening = Countdown(onDone: onOpen),
+       _closing = Countdown(onDone: onClose);
 
-  static const openDelay = Duration(milliseconds: 60);
+  static const defaultOpenDelay = Duration(milliseconds: 60);
   static const closeDelay = Duration(milliseconds: 300);
 
+  final Duration openDelay;
   final Countdown _opening;
   final Countdown _closing;
 
@@ -116,7 +120,13 @@ class HoverDelays {
 }
 
 mixin HoverDelaysState<T extends StatefulWidget> on State<T> {
-  late final hoverDelays = HoverDelays(onOpen: _open, onClose: _close);
+  late final hoverDelays = HoverDelays(
+    onOpen: _open,
+    onClose: _close,
+    openDelay: hoverOpenDelay,
+  );
+
+  Duration get hoverOpenDelay => HoverDelays.defaultOpenDelay;
 
   void hoverOpen();
 
