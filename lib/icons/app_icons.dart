@@ -221,6 +221,18 @@ abstract final class AppIcons {
     lines: [((6, 3), (11, 8)), ((11, 8), (6, 13))],
   );
 
+  static const pencil = IconDef(
+    lines: [
+      ((2, 14), (2, 11)),
+      ((2, 11), (10, 3)),
+      ((10, 3), (13, 6)),
+      ((13, 6), (5, 14)),
+      ((5, 14), (2, 14)),
+      ((2, 11), (5, 14)),
+      ((8, 5), (11, 8)),
+    ],
+  );
+
   // the facts on the Detail page
   static const rank = IconDef(
     lines: [
@@ -276,6 +288,7 @@ abstract final class AppIcons {
     'rewatching': rewatching,
     'search': search,
     'arrowLeft': arrowLeft,
+    'pencil': pencil,
     'rank': rank,
     'done': done,
     'play': play,

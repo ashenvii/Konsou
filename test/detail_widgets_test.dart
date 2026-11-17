@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/date_field.dart';
@@ -7,6 +8,7 @@ import 'package:konsou/gallery/detail_section.dart';
 import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/screens/detail/back_bar.dart';
 import 'package:konsou/screens/detail/entry_bar.dart';
+import 'package:konsou/screens/detail/episode_count.dart';
 import 'package:konsou/screens/detail/watch_order_row.dart';
 
 import 'support/pump_widget.dart';
@@ -69,7 +71,8 @@ void main() {
         watched: 4,
       ),
     );
-    expect(find.text('4 / ?'), findsOneWidget);
+    expect(find.text('4'), findsOneWidget);
+    expect(find.text(' / ?'), findsOneWidget);
     expect(find.byType(EntryProgress), findsNothing);
   });
 
@@ -129,5 +132,95 @@ void main() {
     expect(find.text('Frieren'), findsNothing);
     await pumpWidget(tester, bar(true));
     expect(find.text('Frieren'), findsOneWidget);
+  });
+
+  group('the episode count', () {
+    Future<List<int>> pumpCount(
+      WidgetTester tester, {
+      int? total = 500,
+      int watched = 4,
+    }) async {
+      final set = <int>[];
+      await pumpWidget(
+        tester,
+        // the app's WidgetsApp supplies the surface that reports a click
+        // outside a field
+        TapRegionSurface(
+          child: Center(
+            child: Column(
+              children: [
+                EpisodeCount(watched: watched, total: total, onSet: set.add),
+                const SizedBox(height: 40, child: Text('elsewhere')),
+              ],
+            ),
+          ),
+        ),
+      );
+      return set;
+    }
+
+    Future<void> startEdit(WidgetTester tester) async {
+      await tester.tap(find.bySemanticsLabel('Edit the episode count'));
+      await tester.pump();
+    }
+
+    testWidgets('the pencil opens a field, Enter sets the number', (
+      tester,
+    ) async {
+      final set = await pumpCount(tester);
+      expect(find.byType(EditableText), findsNothing);
+      await startEdit(tester);
+      await tester.enterText(find.byType(EditableText), '256');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(set, [256]);
+      expect(find.byType(EditableText), findsNothing);
+      expect(find.text(' / 500'), findsOneWidget);
+    });
+
+    testWidgets('a click anywhere else sets it too', (tester) async {
+      final set = await pumpCount(tester);
+      await startEdit(tester);
+      await tester.enterText(find.byType(EditableText), '77');
+      await tester.tapAt(tester.getCenter(find.text('elsewhere')));
+      await tester.pump();
+      expect(set, [77]);
+    });
+
+    testWidgets('Escape leaves it as it was', (tester) async {
+      final set = await pumpCount(tester);
+      await startEdit(tester);
+      await tester.enterText(find.byType(EditableText), '99');
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(set, isEmpty);
+      expect(find.byType(EditableText), findsNothing);
+    });
+
+    testWidgets('a number past the total is kept at the total', (tester) async {
+      final set = await pumpCount(tester);
+      await startEdit(tester);
+      await tester.enterText(find.byType(EditableText), '900');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(set, [500]);
+    });
+
+    testWidgets('letters are not typed, and an empty field changes nothing', (
+      tester,
+    ) async {
+      final set = await pumpCount(tester, total: null);
+      await startEdit(tester);
+      await tester.enterText(find.byType(EditableText), '1a2');
+      expect(
+        tester.widget<EditableText>(find.byType(EditableText)).controller.text,
+        '12',
+      );
+      await tester.enterText(find.byType(EditableText), '');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(set, isEmpty);
+      expect(find.text(' / ?'), findsOneWidget);
+    });
   });
 }

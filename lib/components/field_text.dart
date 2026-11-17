@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
@@ -17,6 +18,10 @@ class FieldText extends StatelessWidget {
     this.autofocus = false,
     this.multiline = false,
     this.onChanged,
+    this.onSubmitted,
+    this.onTapOutside,
+    this.inputFormatters,
+    this.textAlign = TextAlign.start,
   });
 
   final TextEditingController controller;
@@ -28,6 +33,10 @@ class FieldText extends StatelessWidget {
   final bool autofocus;
   final bool multiline;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final TapRegionCallback? onTapOutside;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextAlign textAlign;
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +67,10 @@ class FieldText extends StatelessWidget {
           maxLines: multiline ? null : 1,
           keyboardType: multiline ? TextInputType.multiline : null,
           onChanged: onChanged,
+          onSubmitted: onSubmitted,
+          onTapOutside: onTapOutside,
+          inputFormatters: inputFormatters,
+          textAlign: textAlign,
         ),
       ],
     );

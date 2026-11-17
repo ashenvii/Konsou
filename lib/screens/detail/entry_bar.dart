@@ -11,6 +11,7 @@ import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../icons/app_icons.dart';
 import '../../library/entry_status.dart';
+import 'episode_count.dart';
 
 /// The bar fixed at the bottom of the Detail page. On the list it holds the
 /// status menu button, minus and plus around the progress, and the count. Off
@@ -116,16 +117,7 @@ class EntryBar extends StatelessWidget {
           onPressed: onPlus,
         ),
         const SizedBox(width: Tokens.space4),
-        ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: Tokens.space5 * 3),
-          child: Text(
-            known ? '$watched / $total' : '$watched / ?',
-            maxLines: 1,
-            softWrap: false,
-            textAlign: TextAlign.right,
-            style: AppText.tally(Tokens.ink),
-          ),
-        ),
+        EpisodeCount(watched: watched, total: total, onSet: onStep),
       ],
     );
   }

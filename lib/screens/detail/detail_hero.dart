@@ -53,8 +53,7 @@ class DetailHero extends StatelessWidget {
 
   /// Where the title's first line starts, measured from the top of the hero.
   /// The header sits on the band's lower edge, so a longer title starts higher.
-  static double get titleTop =>
-      Tokens.heroHeight - _headerGap - _headerHeight;
+  static double get titleTop => Tokens.heroHeight - _headerGap - _headerHeight;
 
   /// Where that line ends, measured from the top of the hero.
   static double get titleBottom =>

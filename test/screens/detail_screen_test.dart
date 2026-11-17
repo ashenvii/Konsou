@@ -68,7 +68,7 @@ void main() {
     );
 
     expect(find.text('Overview'), findsOneWidget);
-    expect(find.text('4 / 28'), findsOneWidget);
+    expect(find.text(' / 28'), findsOneWidget);
 
     await tester.tap(find.text('Watch order'));
     await tester.pumpAndSettle();
@@ -139,7 +139,7 @@ void main() {
     expect(find.text('Scott Pilgrim Takes Off'), findsOneWidget);
     expect(find.byType(PagePicker), findsOneWidget);
     expect(find.text('Overview'), findsNothing);
-    expect(find.text('0 / ?'), findsOneWidget);
+    expect(find.text(' / ?'), findsOneWidget);
   });
 
   testWidgets('past the title the back bar names it, and a click goes up', (
