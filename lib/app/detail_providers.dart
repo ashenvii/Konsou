@@ -116,13 +116,17 @@ class DetailPage extends _$DetailPage {
 
   Future<DetailPageData> _read() async {
     final databases = ref.read(servicesProvider).databases;
-    final language = await readTitleLanguage(databases.record);
-    final details = await readTitleDetails(databases, malId, language);
+    final (details, entry, streamerMode) = await (
+      readTitleLanguage(databases.record)
+          .then((language) => readTitleDetails(databases, malId, language)),
+      readEntryOnPage(databases, malId, preferred: entryId),
+      readStreamerMode(databases.record),
+    ).wait;
     return DetailPageData(
       details: details,
-      entry: await readEntryOnPage(databases, malId, preferred: entryId),
+      entry: entry,
       isHidden: isHiddenInStreamerMode(
-        streamerMode: await readStreamerMode(databases.record),
+        streamerMode: streamerMode,
         nsfw: details?.nsfw,
       ),
     );
@@ -163,14 +167,12 @@ Future<NotLinkedPage> notLinkedPage(Ref ref, String entryId) async {
       .tableUpdates(TableUpdateQuery.onTable(details.matchSuggestion))
       .listen((_) => ref.invalidateSelf());
   ref.onDispose(listener.cancel);
-  return NotLinkedPage(
-    entry: await readEntry(databases, entryId),
-    suggestions: await readSuggestions(
-      databases,
-      entryId,
-      await readTitleLanguage(databases.record),
-    ),
-  );
+  final (entry, suggestions) = await (
+    readEntry(databases, entryId),
+    readTitleLanguage(databases.record)
+        .then((language) => readSuggestions(databases, entryId, language)),
+  ).wait;
+  return NotLinkedPage(entry: entry, suggestions: suggestions);
 }
 
 /// What the page picker and "Wrong title" do to an entry's link.
@@ -282,7 +284,11 @@ class PickerSearch extends _$PickerSearch {
     final query = state.query;
     final services = ref.read(servicesProvider);
     final databases = services.databases;
-    final search = await ref.read(entrySearchProvider.future);
+    // the language is local, so it is read while the search is out
+    final (search, language) = await (
+      ref.read(entrySearchProvider.future),
+      readTitleLanguage(databases.record),
+    ).wait;
     final found = await services.matching!.searchPages(
       query,
       correct: search.correctedQuery,
@@ -293,8 +299,6 @@ class PickerSearch extends _$PickerSearch {
       state = PickerSearchState(query: query, failed: true);
       return;
     }
-    final language = await readTitleLanguage(databases.record);
-    if (!ref.mounted || state.query != query) return;
     state = PickerSearchState(
       query: query,
       results: [

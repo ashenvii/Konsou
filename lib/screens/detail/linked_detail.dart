@@ -121,9 +121,7 @@ class _LinkedDetailState extends ConsumerState<LinkedDetail> {
                   otherName: details?.otherName,
                   synonyms: details?.otherNames ?? const [],
                 ),
-          facts: details != null && ScoreStrip.hasAnything(details)
-              ? ScoreStrip(details: details)
-              : null,
+          facts: details == null ? null : ScoreStrip(details: details),
         ),
         if (tabs.length > 1)
           DetailTabBar(

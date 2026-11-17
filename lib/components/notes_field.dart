@@ -4,6 +4,7 @@ import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import 'countdown.dart';
 import 'field_text.dart';
+import 'focus_ring.dart';
 
 /// A box for free text that saves itself: a moment after typing stops, when
 /// it loses focus, and when it leaves the screen. There is no Save button.
@@ -70,13 +71,8 @@ class NotesFieldState extends State<NotesField> {
       onTap: _focus.requestFocus,
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
-        child: DecoratedBox(
-          position: DecorationPosition.foreground,
-          decoration: BoxDecoration(
-            border: _focus.hasFocus
-                ? Border.all(color: Tokens.ink, width: Tokens.focusRing)
-                : null,
-          ),
+        child: FocusRing(
+          on: _focus.hasFocus,
           child: Container(
             constraints: const BoxConstraints(
               minHeight: Tokens.controlHeight * 3,

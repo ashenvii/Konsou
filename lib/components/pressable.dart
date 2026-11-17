@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
+import 'focus_ring.dart';
 import 'touch_target.dart';
 
 class PressState {
@@ -103,16 +104,9 @@ class _PressableState extends State<Pressable> {
             onTapUp: enabled ? (_) => _setPressed(false) : null,
             onTapCancel: enabled ? () => _setPressed(false) : null,
             child: TouchTarget(
-              child: DecoratedBox(
-                position: DecorationPosition.foreground,
-                decoration: BoxDecoration(
-                  border: _focused
-                      ? Border.all(
-                          color: widget.focusColor,
-                          width: Tokens.focusRing,
-                        )
-                      : null,
-                ),
+              child: FocusRing(
+                on: _focused,
+                color: widget.focusColor,
                 child: child,
               ),
             ),

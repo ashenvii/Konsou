@@ -24,10 +24,5 @@ abstract final class PageFrame {
   /// window, not on the page, so it leaves this much empty on its right.
   static double get railInset => Platform.isWindows ? Tokens.railWidth : 0;
 
-  static const content = EdgeInsets.fromLTRB(
-    edge,
-    0,
-    edge,
-    Tokens.space5,
-  );
+  static const content = EdgeInsets.fromLTRB(edge, 0, edge, Tokens.space5);
 }

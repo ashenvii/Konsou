@@ -23,22 +23,40 @@ class FrostedPicture extends StatefulWidget {
 
   // The blur is baked on a small copy, since it throws the detail away anyway;
   // the blur is the same share of the picture however wide it is drawn.
-  static const decodeWidth = 320;
-  static const sigma = 5.0;
+  static const _decodeWidth = 320;
+  static const _sigma = 5.0;
 
-  static final _baked = <String, ui.Image>{};
+  // the bake itself is kept, so a second ask while it runs waits on the first
+  static final _baked = <String, Future<ui.Image?>>{};
   static const _keep = 6;
 
   @override
   State<FrostedPicture> createState() => _FrostedPictureState();
 
-  static Future<ui.Image?> bake(File file) async {
-    final cached = _baked[file.path];
+  static Future<ui.Image?> _bake(File file) {
+    final path = file.path;
+    final cached = _baked[path];
     if (cached != null) return cached;
+    late final Future<ui.Image?> baking;
+    baking = _bakeNow(file).then((image) {
+      // a failed bake is tried again next time
+      if (image == null && identical(_baked[path], baking)) {
+        _baked.remove(path);
+      }
+      return image;
+    });
+    _baked[path] = baking;
+    // an evicted picture is not disposed: a page may still be showing it, and
+    // it is freed once nothing holds it
+    if (_baked.length > _keep) _baked.remove(_baked.keys.first);
+    return baking;
+  }
+
+  static Future<ui.Image?> _bakeNow(File file) async {
     try {
       final codec = await ui.instantiateImageCodec(
         await file.readAsBytes(),
-        targetWidth: decodeWidth,
+        targetWidth: _decodeWidth,
       );
       final source = (await codec.getNextFrame()).image;
       codec.dispose();
@@ -48,8 +66,8 @@ class FrostedPicture extends StatefulWidget {
         null,
         Paint()
           ..imageFilter = ui.ImageFilter.blur(
-            sigmaX: sigma,
-            sigmaY: sigma,
+            sigmaX: _sigma,
+            sigmaY: _sigma,
             tileMode: TileMode.mirror,
           ),
       );
@@ -59,10 +77,6 @@ class FrostedPicture extends StatefulWidget {
       final baked = await picture.toImage(source.width, source.height);
       picture.dispose();
       source.dispose();
-      _baked[file.path] = baked;
-      if (_baked.length > _keep) {
-        _baked.remove(_baked.keys.first)?.dispose();
-      }
       return baked;
     } catch (_) {
       return null;
@@ -87,7 +101,7 @@ class _FrostedPictureState extends State<FrostedPicture> {
 
   Future<void> _load() async {
     final path = widget.file.path;
-    final image = await FrostedPicture.bake(widget.file);
+    final image = await FrostedPicture._bake(widget.file);
     if (!mounted || widget.file.path != path || image == null) return;
     setState(() => _image = image);
   }

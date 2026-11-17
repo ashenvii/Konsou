@@ -15,13 +15,14 @@ import '../../library/count_format.dart';
 /// The MAL score, its star beside the number over a "MAL score" footer, then
 /// a row of facts, each with its icon, parted by thin lines: rank, popularity,
 /// completed share and episodes. Hovering the completed share shows the list
-/// counts. On a narrow page the facts wrap into a grid.
+/// counts. On a narrow page the facts wrap into a grid. With none of these it
+/// draws nothing.
 class ScoreStrip extends StatelessWidget {
   const ScoreStrip({super.key, required this.details});
 
   final TitleDetails details;
 
-  static bool hasAnything(TitleDetails details) =>
+  static bool _hasAnything(TitleDetails details) =>
       details.score != null ||
       details.rank != null ||
       details.popularity != null ||
@@ -45,6 +46,7 @@ class ScoreStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!_hasAnything(details)) return const SizedBox.shrink();
     final score = details.score;
     final share = details.completedShare;
     final episodes = details.episodes;

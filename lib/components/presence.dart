@@ -68,8 +68,11 @@ class _PresenceState extends State<Presence>
   }
 
   void _status(AnimationStatus status) {
-    if (status == AnimationStatus.dismissed && !widget.visible) {
-      widget.onGone?.call();
+    if (status != AnimationStatus.dismissed || widget.visible) return;
+    widget.onGone?.call();
+    // the kept child was only for the fade; let it go
+    if (mounted && widget.child == null && _kept != null) {
+      setState(() => _kept = null);
     }
   }
 
