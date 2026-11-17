@@ -6,6 +6,7 @@ import '../../app/library_providers.dart';
 import '../../components/status_menu_entries.dart';
 import '../../detail/title_details.dart';
 import '../../detail/title_entry.dart';
+import '../../library/aired_episodes.dart';
 import '../../library/earlier_titles.dart';
 import 'entry_bar.dart';
 
@@ -57,6 +58,17 @@ class LiveEntryBar extends ConsumerWidget {
           : null,
       onPlus: () => actions().addEpisode(id),
       onStep: (count) => actions().setEpisodes(id, count),
+      // the same count the plus button is held to, taken when a number is set
+      episodeLimit: details == null
+          ? null
+          : () => countAiredEpisodes(
+              airingStatus: details.airingStatus,
+              mediaType: details.mediaType,
+              startDate: details.startDate,
+              broadcastTime: details.broadcastTime,
+              total: details.episodes,
+              now: DateTime.now(),
+            ),
     );
   }
 }

@@ -222,5 +222,60 @@ void main() {
       expect(set, isEmpty);
       expect(find.text(' / ?'), findsOneWidget);
     });
+
+    testWidgets('an airing show stops at the episodes that have aired', (
+      tester,
+    ) async {
+      var aired = 870;
+      final set = <int>[];
+      await pumpWidget(
+        tester,
+        TapRegionSurface(
+          child: EpisodeCount(
+            watched: 4,
+            total: null,
+            onSet: set.add,
+            limit: () => aired,
+          ),
+        ),
+      );
+      Future<void> typeIn(String text) async {
+        await tester.tap(find.bySemanticsLabel('Edit the episode count'));
+        await tester.pump();
+        await tester.enterText(find.byType(EditableText), text);
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pump();
+      }
+
+      await typeIn('900');
+      expect(set, [870]);
+      // a new episode airs
+      aired = 871;
+      await typeIn('900');
+      expect(set, [870, 871]);
+    });
+
+    testWidgets('a count already past the limit is not pulled down', (
+      tester,
+    ) async {
+      final set = <int>[];
+      await pumpWidget(
+        tester,
+        TapRegionSurface(
+          child: EpisodeCount(
+            watched: 9,
+            total: null,
+            onSet: set.add,
+            limit: () => 8,
+          ),
+        ),
+      );
+      await tester.tap(find.bySemanticsLabel('Edit the episode count'));
+      await tester.pump();
+      await tester.enterText(find.byType(EditableText), '12');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(set, isEmpty);
+    });
   });
 }

@@ -10,13 +10,16 @@ import '../../icons/app_icons.dart';
 
 /// "256 / 500" with a pencil after it. The pencil turns the watched number
 /// into a field to type in. Enter, or a click anywhere else, sets it; Escape
-/// leaves it as it was. The number is kept between 0 and [total].
+/// leaves it as it was. The number is kept between 0 and [limit], which is the
+/// episodes that have aired, asked when the number is set so it follows a
+/// show that airs a new one; with no [limit] it is [total].
 class EpisodeCount extends StatefulWidget {
   const EpisodeCount({
     super.key,
     required this.watched,
     required this.total,
     required this.onSet,
+    this.limit,
   });
 
   final int watched;
@@ -24,6 +27,9 @@ class EpisodeCount extends StatefulWidget {
   /// Null when MAL does not know the total.
   final int? total;
   final ValueChanged<int>? onSet;
+
+  /// The most that can be set now, or null when there is no such limit.
+  final ValueGetter<int?>? limit;
 
   static const fieldWidth = Tokens.space4 * 4;
 
@@ -61,7 +67,15 @@ class _EpisodeCountState extends State<EpisodeCount> {
     var count = int.tryParse(_controller.text);
     if (count == null) return;
     final total = widget.total;
-    if (total != null && total > 0 && count > total) count = total;
+    var most = widget.limit?.call();
+    if (total != null && total > 0 && (most == null || most > total)) {
+      most = total;
+    }
+    // past the limit it stops at the limit, but never moves down from where
+    // the user already is
+    if (most != null && count > most) {
+      count = most > widget.watched ? most : widget.watched;
+    }
     if (count != widget.watched) widget.onSet?.call(count);
   }
 

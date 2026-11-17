@@ -26,6 +26,7 @@ class EntryBar extends StatelessWidget {
     this.onMinus,
     this.onPlus,
     this.onStep,
+    this.episodeLimit,
   });
 
   /// The status menu: the Library's, with its locks.
@@ -40,6 +41,9 @@ class EntryBar extends StatelessWidget {
   final VoidCallback? onMinus;
   final VoidCallback? onPlus;
   final ValueChanged<int>? onStep;
+
+  /// The episodes that have aired, asked when a number is typed.
+  final ValueGetter<int?>? episodeLimit;
 
   // a menu opens above the bar, clear of its top edge, never over it
   static const _menuGap =
@@ -117,7 +121,12 @@ class EntryBar extends StatelessWidget {
           onPressed: onPlus,
         ),
         const SizedBox(width: Tokens.space4),
-        EpisodeCount(watched: watched, total: total, onSet: onStep),
+        EpisodeCount(
+          watched: watched,
+          total: total,
+          onSet: onStep,
+          limit: episodeLimit,
+        ),
       ],
     );
   }
