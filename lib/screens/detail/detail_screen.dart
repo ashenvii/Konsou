@@ -6,6 +6,7 @@ import '../../components/page_frame.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import 'detail_frame.dart';
+import 'detail_top.dart';
 import 'linked_detail.dart';
 import 'not_linked_detail.dart';
 
@@ -56,18 +57,17 @@ class DetailScreen extends ConsumerWidget {
       return DetailFrame(
         title: '',
         onBack: onBack,
-        children: [
-          if (!page.isLoading)
-            Padding(
-              padding: PageFrame.content.copyWith(top: Tokens.space5),
-              child: Text(
-                page.hasError
-                    ? 'This entry could not be read.'
-                    : 'This entry is no longer on your list.',
-                style: AppText.label(Tokens.inkSoft),
+        top: page.isLoading
+            ? const SizedBox.shrink()
+            : Padding(
+                padding: PageFrame.content.copyWith(top: DetailTop.titleTop),
+                child: Text(
+                  page.hasError
+                      ? 'This entry could not be read.'
+                      : 'This entry is no longer on your list.',
+                  style: AppText.label(Tokens.inkSoft),
+                ),
               ),
-            ),
-        ],
       );
     }
     final linkedTo = entry.malId;

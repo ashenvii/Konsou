@@ -6,7 +6,7 @@ import '../../design/tokens.dart';
 import '../../detail/info_labels.dart';
 import '../../detail/title_details.dart';
 
-/// The Overview tab's facts about the title, one label and value per row.
+/// The Overview's facts about the title, one label and value per row.
 class OverviewInfo extends StatelessWidget {
   const OverviewInfo(this.details, {super.key});
 

@@ -4,13 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/date_field.dart';
 import 'package:konsou/components/entry_progress.dart';
 import 'package:konsou/design/tokens.dart';
+import 'package:konsou/detail/title_details.dart';
 import 'package:konsou/detail/watch_order.dart';
 import 'package:konsou/detail/info_labels.dart';
 import 'package:konsou/gallery/detail_section.dart';
 import 'package:konsou/library/entry_status.dart';
-import 'package:konsou/screens/detail/back_bar.dart';
 import 'package:konsou/screens/detail/entry_controls.dart';
 import 'package:konsou/screens/detail/episode_count.dart';
+import 'package:konsou/screens/detail/detail_parts.dart';
+import 'package:konsou/screens/detail/jump_bar.dart';
 import 'package:konsou/screens/detail/watch_order_strip.dart';
 
 import 'support/pump_widget.dart';
@@ -39,7 +41,6 @@ void main() {
     final next = nextUp(sampleWatchOrder);
     // the extra between them is left out
     expect(next?.malId, 3);
-    expect(nextUpReason(next!), 'Sequel · Not aired yet · 16 Jan 2026');
   });
 
   test('next up is nothing when the rest are finished or extras', () {
@@ -50,14 +51,15 @@ void main() {
     expect(nextUp(order), isNull);
   });
 
-  test('a card reads the state first, and the meta line its facts', () {
+  test('a card has the year by its tag, the state with episodes below', () {
     final rows = sampleWatchOrder.rows;
     expect(watchOrderState(rows[0]).$1, 'Watching 4 / 28');
     expect(watchOrderState(rows[0]).$2, Tokens.mint);
-    expect(watchOrderState(rows[1]).$1, 'Completed');
+    expect(watchOrderState(rows[1]).$1, 'Completed · 12 ep');
     expect(watchOrderState(rows[2]).$1, 'Not aired yet');
-    expect(watchOrderMeta(rows[0]), 'TV · 2023 · 28 ep');
-    expect(watchOrderMeta(rows[2]), 'TV · 16 Jan 2026');
+    expect(watchOrderWhen(rows[0]), '2023');
+    // still to air: the whole date
+    expect(watchOrderWhen(rows[2]), '16 Jan 2026');
   });
 
   test('info rows leave out what MAL did not give', () {
@@ -148,19 +150,93 @@ void main() {
     expect(value, isNull);
   });
 
-  testWidgets('the back bar shows the title only once scrolled', (
+  group('the synopsis beside the information', () {
+    TitleDetails withSynopsis(String synopsis) => TitleDetails(
+      malId: sampleDetails.malId,
+      name: sampleDetails.name,
+      isFull: true,
+      fetchedAt: 0,
+      mediaType: sampleDetails.mediaType,
+      airingStatus: sampleDetails.airingStatus,
+      episodes: sampleDetails.episodes,
+      startDate: sampleDetails.startDate,
+      endDate: sampleDetails.endDate,
+      season: sampleDetails.season,
+      seasonYear: sampleDetails.seasonYear,
+      broadcastDay: sampleDetails.broadcastDay,
+      broadcastTime: sampleDetails.broadcastTime,
+      secondsPerEpisode: sampleDetails.secondsPerEpisode,
+      source: sampleDetails.source,
+      rating: sampleDetails.rating,
+      studios: sampleDetails.studios,
+      genres: sampleDetails.genres,
+      synopsis: synopsis,
+    );
+
+    Future<void> pumpOverview(WidgetTester tester, String synopsis) async {
+      await pumpWidget(
+        tester,
+        SizedBox(
+          width: 1200,
+          child: OverviewPart(
+            details: withSynopsis(synopsis),
+            hidden: false,
+            fetching: false,
+          ),
+        ),
+      );
+      // the information block is measured after the first frame
+      await tester.pump();
+    }
+
+    String words(int count) => List.filled(count, 'word').join(' ');
+
+    testWidgets('shows whole while it ends beside the block', (tester) async {
+      // about five lines in the test font: past the old four, inside the block
+      await pumpOverview(tester, words(45));
+      expect(find.text('More'), findsNothing);
+    });
+
+    testWidgets('is cut with More once it runs past the block', (tester) async {
+      await pumpOverview(tester, words(1500));
+      expect(find.text('More'), findsOneWidget);
+      final text = find.text(words(1500));
+      final info = find.text('Information');
+      final block = find
+          .ancestor(of: info, matching: find.byType(Column))
+          .first;
+      // the cut text and its More end level with the block, give or take a line
+      expect(
+        tester.getRect(find.text('More')).bottom,
+        lessThanOrEqualTo(tester.getRect(block).bottom + Tokens.text2 * 2),
+      );
+      expect(tester.getRect(text).height, greaterThan(Tokens.text2 * 8));
+    });
+  });
+
+  testWidgets('names that do not fit in the jump bar go under More', (
     tester,
   ) async {
-    Widget bar(bool scrolled) => BackBar(
-      title: 'Frieren',
-      scrolled: scrolled,
-      onBack: () {},
-      onTitle: () {},
+    Widget bar(double width) => SizedBox(
+      width: width,
+      child: JumpBar(
+        title: 'Frieren',
+        labels: const ['Overview', 'Watch order', 'Stats', 'Recommendations'],
+        active: 0,
+        stuck: false,
+        onJump: (_) {},
+        onBack: () {},
+        onTop: () {},
+      ),
     );
-    await pumpWidget(tester, bar(false));
-    expect(find.text('Frieren'), findsNothing);
-    await pumpWidget(tester, bar(true));
-    expect(find.text('Frieren'), findsOneWidget);
+    await pumpWidget(tester, bar(1200));
+    expect(find.text('Recommendations'), findsOneWidget);
+    expect(find.text('More'), findsNothing);
+
+    await pumpWidget(tester, bar(400));
+    expect(find.text('Recommendations'), findsNothing);
+    expect(find.text('More'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   group('the episode count', () {

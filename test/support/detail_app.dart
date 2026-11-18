@@ -21,7 +21,7 @@ const sampleSynopsis =
     'However, the time that Frieren spends with her comrades is equivalent to '
     'merely a fraction of her life, which has lasted over a thousand years.';
 
-/// The gallery's sample title with the prose the Overview tab shows.
+/// The gallery's sample title with the prose the Overview shows.
 TitleDetails frierenDetails({String? nsfw}) => TitleDetails(
   malId: frierenId,
   name: sampleDetails.name,

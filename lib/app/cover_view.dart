@@ -11,10 +11,15 @@ class CoverView extends ConsumerWidget {
     required this.malId,
     required this.width,
     this.loading = false,
+    this.pictureUrl,
   });
 
   final int? malId;
   final double width;
+
+  /// The cover's address for a title with no details saved, such as a
+  /// recommendation.
+  final String? pictureUrl;
 
   final bool loading;
 
@@ -39,15 +44,19 @@ class CoverView extends ConsumerWidget {
     if (loading) {
       // without details the cover lookup came back empty, so look again later
       ref.listen(detailOnScreenProvider(id), (_, state) {
-        if (state is AsyncData) ref.invalidate(coverFileProvider(id, size));
+        if (state is AsyncData) {
+          ref.invalidate(coverFileProvider(id, size, pictureUrl: pictureUrl));
+        }
       });
     }
-    final cover = ref.watch(coverFileProvider(id, size));
+    final cover = ref.watch(
+      coverFileProvider(id, size, pictureUrl: pictureUrl),
+    );
     final file = cover.value;
     // a cover saved after this one was drawn blank: read it again
     ref.listen(coverSavedProvider, (_, saved) {
       if (file == null && saved.asData?.value == id) {
-        ref.invalidate(coverFileProvider(id, size));
+        ref.invalidate(coverFileProvider(id, size, pictureUrl: pictureUrl));
       }
     });
     return CoverImage(

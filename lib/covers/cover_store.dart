@@ -50,13 +50,16 @@ class CoverStore {
     return file;
   }
 
+  /// Fetches the cover of [malId]. A title with no details saved, such as a
+  /// recommendation, can name its picture in [pictureUrl].
   Future<CoverOutcome> fetchCover(
     int malId,
     CoverSize size, {
     required Lane lane,
     bool Function()? wanted,
+    String? pictureUrl,
   }) async {
-    final url = await _readUrl(malId, size);
+    final url = await _readUrl(malId, size) ?? pictureUrl;
     if (url == null) return CoverOutcome.none;
     final old = await _readRow(malId, size);
     if (old != null && old.url == url && _fileOf(old.fileName).existsSync()) {
@@ -103,6 +106,58 @@ class CoverStore {
         );
     onSaved?.call(malId);
     return CoverOutcome.fetched;
+  }
+
+  /// One of MAL's extra pictures of [malId], fetched once and kept beside the
+  /// covers. Only the pictures of the last [keptPictureTitles] titles are
+  /// kept, so they never pile up. Null when it cannot be fetched.
+  Future<File?> pictureFile(
+    int malId,
+    String url, {
+    bool Function()? wanted,
+  }) async {
+    final titleFolder = Directory(
+      '${_pictures.path}${Platform.pathSeparator}$malId',
+    );
+    final file = File(
+      '${titleFolder.path}${Platform.pathSeparator}'
+      '${url.hashCode.toRadixString(36)}${_extension(url)}',
+    );
+    if (file.existsSync()) return file;
+    final http.Response response;
+    try {
+      response = await gate.send(
+        Lane.screen,
+        () => client.get(Uri.parse(url)),
+        wanted: wanted,
+      );
+    } on Exception {
+      return null;
+    }
+    final isImage = (response.headers['content-type'] ?? '').startsWith(
+      'image/',
+    );
+    if (response.statusCode != 200 || !isImage || response.bodyBytes.isEmpty) {
+      return null;
+    }
+    titleFolder.createSync(recursive: true);
+    file.writeAsBytesSync(response.bodyBytes);
+    _keepRecentPictures();
+    return file;
+  }
+
+  static const keptPictureTitles = 6;
+
+  Directory get _pictures =>
+      Directory('${folder.path}${Platform.pathSeparator}pictures');
+
+  // the folders of titles seen longest ago go first
+  void _keepRecentPictures() {
+    final titles = _pictures.listSync().whereType<Directory>().toList()
+      ..sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+    for (final old in titles.skip(keptPictureTitles)) {
+      old.deleteSync(recursive: true);
+    }
   }
 
   Future<Map<(int, CoverSize), File>> readKept() async {

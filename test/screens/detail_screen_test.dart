@@ -11,18 +11,21 @@ import 'package:konsou/components/pressable.dart';
 import 'package:konsou/components/toast_view.dart';
 import 'package:konsou/detail/watch_order.dart';
 import 'package:konsou/gallery/detail_section.dart';
-import 'package:konsou/screens/detail/back_bar.dart';
+import 'package:konsou/screens/detail/jump_bar.dart';
 import 'package:konsou/screens/detail/detail_frame.dart';
 import 'package:konsou/screens/detail/detail_top.dart';
 import 'package:konsou/screens/detail/entry_controls.dart';
-import 'package:konsou/screens/detail/next_up_row.dart';
 import 'package:konsou/screens/detail/page_picker.dart';
+import 'package:konsou/screens/detail/score_strip.dart';
 import 'package:konsou/screens/detail/watch_order_strip.dart';
 import 'package:konsou/shell/app_shell.dart';
 import 'package:konsou/shell/window_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../support/detail_app.dart';
+
+JumpBar bar(WidgetTester tester) =>
+    tester.widget<JumpBar>(find.byType(JumpBar));
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -71,10 +74,23 @@ void main() {
   ) async {
     await open(tester, title);
 
-    expect(find.text('Sousou no Frieren'), findsOneWidget);
-    expect(find.text('Add to list'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(DetailTop),
+        matching: find.text('Sousou no Frieren'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(DetailTop),
+        matching: find.text('Add to list'),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Your score'), findsNothing);
     expect(find.text('Notes'), findsNothing);
+    expect(bar(tester).labels, isNot(contains('Your entry')));
     expect(find.text('Data from MyAnimeList'), findsOneWidget);
   });
 
@@ -83,10 +99,12 @@ void main() {
   ) async {
     await open(tester, title, page: onList, order: sampleWatchOrder);
 
-    expect(find.text('Overview'), findsNothing);
+    expect(
+      bar(tester).labels,
+      containsAllInOrder(['Overview', 'Watch order', 'Your entry']),
+    );
     expect(find.text(' / 28'), findsOneWidget);
     expect(find.text('Your score'), findsOneWidget);
-    expect(find.byType(NextUpRow), findsOneWidget);
     expect(find.text(watchOrderSummary(sampleWatchOrder)), findsOneWidget);
     expect(find.byType(WatchOrderCard), findsWidgets);
 
@@ -156,32 +174,74 @@ void main() {
     expect(find.text(' / ?'), findsOneWidget);
   });
 
-  testWidgets('past the title the back bar names it and carries the status', (
+  testWidgets('the jump bar sticks at the top and takes the back button', (
     tester,
   ) async {
-    await open(tester, title, page: onList, size: const Size(1200, 500));
-    BackBar bar() => tester.widget<BackBar>(find.byType(BackBar));
-    expect(bar().scrolled, isFalse);
+    await open(
+      tester,
+      title,
+      page: onList,
+      order: sampleWatchOrder,
+      size: const Size(1200, 500),
+    );
+    expect(bar(tester).stuck, isFalse);
+    expect(find.byType(DetailBackButton), findsNWidgets(2));
 
-    await tester.drag(find.byType(DetailTop), const Offset(0, -400));
+    await tester.drag(find.byType(DetailTop), const Offset(0, -600));
     await tester.pumpAndSettle();
-    expect(bar().scrolled, isTrue);
+    expect(bar(tester).stuck, isTrue);
+    expect(tester.getTopLeft(find.byType(JumpBar)).dy, lessThan(100));
+    // the floating one is gone; only the bar's own is left
+    expect(find.byType(DetailBackButton), findsOneWidget);
+    // and it has turned white, as has the title box
+    expect(
+      tester.widget<DetailBackButton>(find.byType(DetailBackButton)).white,
+      1,
+    );
     expect(
       find.descendant(
-        of: find.byType(BackBar),
+        of: find.byType(JumpBar),
         matching: find.text('Watching'),
       ),
       findsOneWidget,
     );
 
+    // the title in the bar goes back to the top
     await tester.tap(
       find.descendant(
-        of: find.byType(BackBar),
+        of: find.byType(JumpBar),
         matching: find.text('Sousou no Frieren'),
       ),
     );
     await tester.pumpAndSettle();
-    expect(bar().scrolled, isFalse);
+    expect(bar(tester).stuck, isFalse);
+  });
+
+  testWidgets('the facts sit two by two beside the scores', (tester) async {
+    await open(tester, title, page: onList);
+    Rect at(String label) => tester.getRect(
+      find.descendant(of: find.byType(ScoreStrip), matching: find.text(label)),
+    );
+
+    expect(at('Rank').top, closeTo(at('Popularity').top, 1));
+    expect(at('Completed').top, closeTo(at('Episodes').top, 1));
+    expect(at('Completed').top, greaterThan(at('Rank').bottom));
+    expect(at('Rank').left, closeTo(at('Completed').left, 1));
+    // beside the scores, not under them
+    expect(at('Rank').left, greaterThan(at('Your score').right));
+  });
+
+  testWidgets('a name in the jump bar jumps to its part', (tester) async {
+    await open(tester, title, page: onList, order: sampleWatchOrder);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(JumpBar),
+        matching: find.text('Your entry'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Notes'), findsOneWidget);
+    expect(bar(tester).active, bar(tester).labels.indexOf('Your entry'));
   });
 
   testWidgets('the toast sits at the foot of the page', (tester) async {

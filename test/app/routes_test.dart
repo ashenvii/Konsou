@@ -119,7 +119,8 @@ void main() {
     router.push(titlePath(7));
     await tester.pumpAndSettle();
 
-    expect(find.text('Sousou no Frieren'), findsOneWidget);
+    // in the top and in the jump bar
+    expect(find.text('Sousou no Frieren'), findsWidgets);
     expect(find.byType(AppRail), findsOneWidget);
   });
 
@@ -160,7 +161,7 @@ void main() {
       kind: PointerDeviceKind.mouse,
       buttons: kBackMouseButton,
     );
-    await mouse.down(tester.getCenter(find.text('Sousou no Frieren')));
+    await mouse.down(tester.getCenter(find.text('Sousou no Frieren').first));
     await mouse.up();
     await tester.pumpAndSettle();
 

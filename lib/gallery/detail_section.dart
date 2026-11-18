@@ -14,11 +14,10 @@ import '../detail/watch_order.dart';
 import '../library/entry_status.dart';
 import '../components/cover_image.dart';
 import '../components/peek_row.dart';
-import '../screens/detail/back_bar.dart';
 import '../screens/detail/detail_header.dart';
 import '../screens/detail/detail_top.dart';
 import '../screens/detail/entry_controls.dart';
-import '../screens/detail/next_up_row.dart';
+import '../screens/detail/jump_bar.dart';
 import '../screens/detail/overview_info.dart';
 import '../screens/detail/page_picker.dart';
 import '../screens/detail/score_strip.dart';
@@ -129,7 +128,7 @@ const _suggestions = [
 List<MenuEntry> _statusEntries() =>
     statusMenuEntries(current: EntryStatus.watching, onPick: (_) {});
 
-/// The Detail page's parts as the page will draw them: the back bar in both
+/// The Detail page's parts as the page will draw them: the jump bar in both
 /// states, the top, the rating and date controls, the entry controls in each
 /// state, the watch order strip, the page picker and the overview info.
 class DetailSection extends StatefulWidget {
@@ -184,26 +183,35 @@ class _DetailSectionState extends State<DetailSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _label('Back bar, plain and scrolled'),
-          BackBar(
-            title: sampleDetails.name,
-            scrolled: false,
-            onBack: () {},
-            onTitle: () {},
-          ),
-          const SizedBox(height: Tokens.space3),
-          BackBar(
-            title: sampleDetails.name,
-            scrolled: true,
-            onBack: () {},
-            onTitle: () {},
-            status: EntryControls(
-              statusEntries: _statusEntries(),
-              status: EntryStatus.watching,
-              statusOnly: true,
+          _label('Jump bar, under the top and stuck at the top'),
+          for (final stuck in [false, true]) ...[
+            JumpBar(
+              title: sampleDetails.name,
+              labels: const [
+                'Overview',
+                'Watch order',
+                'Stats',
+                'Music',
+                'Trailers',
+                'Pictures',
+                'Recommendations',
+                'Your entry',
+              ],
+              active: stuck ? 2 : 0,
+              stuck: stuck,
+              onJump: (_) {},
+              onBack: () {},
+              onTop: () {},
+              malId: sampleDetails.malId,
+              status: EntryControls(
+                statusEntries: _statusEntries(),
+                status: EntryStatus.watching,
+                statusOnly: true,
+              ),
             ),
-          ),
-          _label('Top: cover, title, controls, scores and facts, next up'),
+            const SizedBox(height: Tokens.space3),
+          ],
+          _label('Top: cover, title, controls, scores and facts'),
           DetailTop(
             malId: sampleDetails.malId,
             header: DetailHeader(
@@ -219,7 +227,6 @@ class _DetailSectionState extends State<DetailSection> {
                 label: 'Your score',
               ),
             ),
-            next: NextUpRow(row: sampleWatchOrder.rows[2], onOpen: () {}),
           ),
           _label('Star rating and date field'),
           Row(

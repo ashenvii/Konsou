@@ -1,28 +1,50 @@
 import 'package:flutter/widgets.dart';
 
 import '../../components/motion.dart';
+import '../../components/page_frame.dart';
 import '../../components/smooth_scroll.dart';
 import '../../design/tokens.dart';
-import 'back_bar.dart';
-import 'detail_header.dart';
-import 'detail_top.dart';
+import 'jump_bar.dart';
 
-/// The Detail page's fixed part over its scrolling content: the back bar,
-/// which changes once the title has scrolled under it and then carries
-/// [status], the user's status button.
+/// One part of the Detail page: its name in the jump bar, and what it shows.
+class DetailPart {
+  const DetailPart(this.label, this.child);
+
+  final String label;
+  final Widget child;
+}
+
+/// The Detail page as one scroll: the [top], then the jump bar, which sticks
+/// to the top once it gets there and takes over the back button, then the
+/// [parts]. Until the bar is at the top, the back button floats over the top
+/// on its own. With no parts there is no bar, only the floating back button.
 class DetailFrame extends StatefulWidget {
   const DetailFrame({
     super.key,
     required this.title,
     required this.onBack,
-    required this.children,
+    required this.top,
+    this.parts = const [],
+    this.malId,
+    this.hideCover = false,
     this.status,
+    this.footer,
   });
 
   final String title;
   final VoidCallback onBack;
-  final List<Widget> children;
+  final Widget top;
+  final List<DetailPart> parts;
+
+  /// The title whose cover shows small in the bar once it is at the top.
+  final int? malId;
+  final bool hideCover;
+
+  /// The user's status button, in the bar once it is at the top.
   final Widget? status;
+
+  /// A last line after the parts, such as where the data came from.
+  final Widget? footer;
 
   @override
   State<DetailFrame> createState() => _DetailFrameState();
@@ -30,31 +52,19 @@ class DetailFrame extends StatefulWidget {
 
 class _DetailFrameState extends State<DetailFrame> {
   final _controller = SmoothScrollController();
-  var _fade = 0.0;
+  final _topKey = GlobalKey();
+  final _viewportKey = GlobalKey();
+  var _keys = <GlobalKey>[];
+  var _stuck = false;
+  var _active = 0;
 
-  // The bar starts to change as the title's first line reaches it, and has
-  // changed once both lines are under it.
-  static const _fadeStart = DetailTop.titleTop - BackBar.height;
-  static const _fadeSpan = DetailHeader.titleLine;
+  // a part counts as the one in view once its top is this far under the bar
+  static const _reach = JumpBar.height + Tokens.space5;
 
   @override
   void initState() {
     super.initState();
     _controller.addListener(_onScroll);
-  }
-
-  void _onScroll() {
-    final fade = ((_controller.offset - _fadeStart) / _fadeSpan).clamp(
-      0.0,
-      1.0,
-    );
-    if (fade != _fade) setState(() => _fade = fade);
-  }
-
-  void _toTop() {
-    final duration = chooseMotionDuration(context, Tokens.motionSlide);
-    if (duration == Duration.zero) return _controller.jumpTo(0);
-    _controller.animateTo(0, duration: duration, curve: Curves.easeInOut);
   }
 
   @override
@@ -63,32 +73,139 @@ class _DetailFrameState extends State<DetailFrame> {
     super.dispose();
   }
 
+  // one key per part, kept while the parts keep their names
+  List<GlobalKey> _keysFor(List<DetailPart> parts) {
+    if (_keys.length != parts.length) {
+      _keys = [for (final _ in parts) GlobalKey()];
+    }
+    return _keys;
+  }
+
+  double? _topOf(GlobalKey key) {
+    final box = key.currentContext?.findRenderObject() as RenderBox?;
+    final viewport = _viewportKey.currentContext?.findRenderObject();
+    if (box == null || !box.attached || viewport == null) return null;
+    return box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+  }
+
+  void _onScroll() {
+    final topHeight = _topKey.currentContext?.size?.height ?? 0;
+    final stuck = _controller.hasClients && _controller.offset >= topHeight;
+    var active = 0;
+    final position = _controller.position;
+    if (position.pixels >= position.maxScrollExtent - 1) {
+      // at the very end the last part is the one in view, short or not
+      active = _keys.length - 1;
+    } else {
+      for (final (i, key) in _keys.indexed) {
+        final top = _topOf(key);
+        if (top != null && top <= _reach) active = i;
+      }
+    }
+    if (stuck != _stuck || active != _active) {
+      setState(() {
+        _stuck = stuck;
+        _active = active;
+      });
+    }
+  }
+
+  void _scrollTo(double offset) {
+    final position = _controller.position;
+    final to = offset.clamp(0.0, position.maxScrollExtent);
+    final duration = chooseMotionDuration(context, Tokens.motionSlide);
+    if (duration == Duration.zero) return _controller.jumpTo(to);
+    _controller.animateTo(to, duration: duration, curve: Curves.easeInOut);
+  }
+
+  void _jump(int index) {
+    final top = _topOf(_keys[index]);
+    if (top == null) return;
+    setState(() => _active = index);
+    _scrollTo(_controller.offset + top - JumpBar.height);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final parts = widget.parts;
+    final keys = _keysFor(parts);
     return Stack(
       children: [
         Positioned.fill(
-          child: ListView(
+          child: CustomScrollView(
+            key: _viewportKey,
             controller: _controller,
-            padding: const EdgeInsets.only(bottom: Tokens.space5),
-            children: widget.children,
+            slivers: [
+              SliverToBoxAdapter(
+                child: KeyedSubtree(key: _topKey, child: widget.top),
+              ),
+              if (parts.isNotEmpty) ...[
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _BarDelegate(
+                    JumpBar(
+                      title: widget.title,
+                      labels: [for (final part in parts) part.label],
+                      active: _active.clamp(0, parts.length - 1),
+                      stuck: _stuck,
+                      onJump: _jump,
+                      onBack: widget.onBack,
+                      onTop: () => _scrollTo(0),
+                      malId: widget.malId,
+                      hideCover: widget.hideCover,
+                      status: widget.status,
+                    ),
+                  ),
+                ),
+                // built whole, not as it scrolls in, so every part has a place
+                // the bar can jump to; a page has only a handful of them
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: PageFrame.content.copyWith(top: Tokens.space5),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final (i, part) in parts.indexed)
+                          KeyedSubtree(key: keys[i], child: part.child),
+                        ?widget.footer,
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
-        // after the content, so its fade falls on the page
-        Positioned(
-          left: 0,
-          right: 0,
-          top: 0,
-          child: BackBar(
-            title: widget.title,
-            scrolled: _fade > 0,
-            fade: _fade,
-            onBack: widget.onBack,
-            onTitle: _toTop,
-            status: widget.status,
+        // the back button on its own until the bar at the top takes it
+        if (!_stuck)
+          Positioned(
+            left: PageFrame.edge,
+            top: PageFrame.edge,
+            child: DetailBackButton(onBack: widget.onBack),
           ),
-        ),
       ],
     );
   }
+}
+
+class _BarDelegate extends SliverPersistentHeaderDelegate {
+  _BarDelegate(this.bar);
+
+  final JumpBar bar;
+
+  @override
+  double get minExtent => JumpBar.height;
+
+  @override
+  double get maxExtent => JumpBar.height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) => bar;
+
+  @override
+  bool shouldRebuild(_BarDelegate old) => true;
 }

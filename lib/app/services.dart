@@ -24,7 +24,7 @@ class Services {
     required this.coversFolder,
     required http.Client client,
     required TokenStore tokenStore,
-    required Future<void> Function(Uri url) openBrowser,
+    required this.openBrowser,
     RequestGate? gate,
   }) {
     if (keys.hasGoogle) {
@@ -82,6 +82,9 @@ class Services {
   final Databases databases;
   final Keys keys;
   final Directory coversFolder;
+
+  /// Opens a page in the user's browser: sign-in, and a title's trailers.
+  final Future<void> Function(Uri url) openBrowser;
   GoogleSignIn? signIn;
   DriveSync? sync;
   DetailRequest? detailRequest;

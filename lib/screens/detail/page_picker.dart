@@ -66,7 +66,7 @@ class _PagePickerRow extends StatelessWidget {
   }
 }
 
-/// What an entry with no MAL page shows in place of the tabs: up to five
+/// What an entry with no MAL page shows in place of MAL's details: up to five
 /// suggestions, "None of these", and a search box.
 class PagePicker extends StatelessWidget {
   const PagePicker({

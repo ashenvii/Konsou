@@ -43,7 +43,12 @@ class KeptCovers extends _$KeptCovers {
 }
 
 @riverpod
-Future<File?> coverFile(Ref ref, int malId, CoverSize size) async {
+Future<File?> coverFile(
+  Ref ref,
+  int malId,
+  CoverSize size, {
+  String? pictureUrl,
+}) async {
   final store = ref.watch(coverStoreProvider);
   if (store == null) return null;
   final kept = await store.readCover(malId, size);
@@ -54,11 +59,20 @@ Future<File?> coverFile(Ref ref, int malId, CoverSize size) async {
     lane: Lane.screen,
     // the fetch is dropped from the queue if the card is gone by its turn
     wanted: () => ref.mounted,
+    pictureUrl: pictureUrl,
   );
   if (outcome == CoverOutcome.fetched || outcome == CoverOutcome.current) {
     return store.readCover(malId, size);
   }
   return null;
+}
+
+/// One of MAL's extra pictures of a title, kept for the last few titles.
+@riverpod
+Future<File?> titlePicture(Ref ref, int malId, String url) async {
+  final store = ref.watch(coverStoreProvider);
+  if (store == null) return null;
+  return store.pictureFile(malId, url, wanted: () => ref.mounted);
 }
 
 @riverpod

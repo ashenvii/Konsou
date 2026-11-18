@@ -185,7 +185,7 @@ final class CoverFileProvider
     with $FutureModifier<File?>, $FutureProvider<File?> {
   CoverFileProvider._({
     required CoverFileFamily super.from,
-    required (int, CoverSize) super.argument,
+    required (int, CoverSize, {String? pictureUrl}) super.argument,
   }) : super(
          retry: null,
          name: r'coverFileProvider',
@@ -211,8 +211,13 @@ final class CoverFileProvider
 
   @override
   FutureOr<File?> create(Ref ref) {
-    final argument = this.argument as (int, CoverSize);
-    return coverFile(ref, argument.$1, argument.$2);
+    final argument = this.argument as (int, CoverSize, {String? pictureUrl});
+    return coverFile(
+      ref,
+      argument.$1,
+      argument.$2,
+      pictureUrl: argument.pictureUrl,
+    );
   }
 
   @override
@@ -226,10 +231,14 @@ final class CoverFileProvider
   }
 }
 
-String _$coverFileHash() => r'db03bbb89836efd41651d03af1b05a5caa1200f5';
+String _$coverFileHash() => r'794905523399304314c1e96bdcc683679a061548';
 
 final class CoverFileFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<File?>, (int, CoverSize)> {
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<File?>,
+          (int, CoverSize, {String? pictureUrl})
+        > {
   CoverFileFamily._()
     : super(
         retry: null,
@@ -239,11 +248,92 @@ final class CoverFileFamily extends $Family
         isAutoDispose: true,
       );
 
-  CoverFileProvider call(int malId, CoverSize size) =>
-      CoverFileProvider._(argument: (malId, size), from: this);
+  CoverFileProvider call(int malId, CoverSize size, {String? pictureUrl}) =>
+      CoverFileProvider._(
+        argument: (malId, size, pictureUrl: pictureUrl),
+        from: this,
+      );
 
   @override
   String toString() => r'coverFileProvider';
+}
+
+/// One of MAL's extra pictures of a title, kept for the last few titles.
+
+@ProviderFor(titlePicture)
+final titlePictureProvider = TitlePictureFamily._();
+
+/// One of MAL's extra pictures of a title, kept for the last few titles.
+
+final class TitlePictureProvider
+    extends $FunctionalProvider<AsyncValue<File?>, File?, FutureOr<File?>>
+    with $FutureModifier<File?>, $FutureProvider<File?> {
+  /// One of MAL's extra pictures of a title, kept for the last few titles.
+  TitlePictureProvider._({
+    required TitlePictureFamily super.from,
+    required (int, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'titlePictureProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$titlePictureHash();
+
+  @override
+  String toString() {
+    return r'titlePictureProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<File?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<File?> create(Ref ref) {
+    final argument = this.argument as (int, String);
+    return titlePicture(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TitlePictureProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$titlePictureHash() => r'94512df4055911c3fd2519f8fba4e2ea64c312b9';
+
+/// One of MAL's extra pictures of a title, kept for the last few titles.
+
+final class TitlePictureFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<File?>, (int, String)> {
+  TitlePictureFamily._()
+    : super(
+        retry: null,
+        name: r'titlePictureProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// One of MAL's extra pictures of a title, kept for the last few titles.
+
+  TitlePictureProvider call(int malId, String url) =>
+      TitlePictureProvider._(argument: (malId, url), from: this);
+
+  @override
+  String toString() => r'titlePictureProvider';
 }
 
 @ProviderFor(detailOnScreen)

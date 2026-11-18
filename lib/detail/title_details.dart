@@ -23,6 +23,34 @@ class ListCounts {
   final int planned;
 }
 
+/// A trailer or promotional video on MAL, opened in the browser.
+class TitleVideo {
+  const TitleVideo({required this.title, required this.url});
+
+  final String title;
+  final Uri url;
+}
+
+/// Another title MAL links to this one: a recommendation with how many
+/// people made it, or a manga with how it relates.
+class LinkedTitle {
+  const LinkedTitle({
+    required this.malId,
+    required this.name,
+    this.pictureUrl,
+    this.note,
+  });
+
+  final int malId;
+  final String name;
+
+  /// Its cover on MAL's image server, for a title with no details saved.
+  final String? pictureUrl;
+
+  /// "412 recommend it", "Adaptation".
+  final String? note;
+}
+
 class TitleDetails {
   const TitleDetails({
     required this.malId,
@@ -53,6 +81,13 @@ class TitleDetails {
     this.popularity,
     this.listUsers,
     this.listCounts,
+    this.scoredBy,
+    this.openings = const [],
+    this.endings = const [],
+    this.videos = const [],
+    this.pictures = const [],
+    this.recommendations = const [],
+    this.manga = const [],
   });
 
   final int malId;
@@ -89,6 +124,20 @@ class TitleDetails {
   final int? popularity;
   final int? listUsers;
   final ListCounts? listCounts;
+
+  /// How many people gave the score.
+  final int? scoredBy;
+
+  /// Opening and ending themes as MAL writes them: '"My War" by Shinsei
+  /// Kamattechan (eps 1-16)'.
+  final List<String> openings;
+  final List<String> endings;
+  final List<TitleVideo> videos;
+
+  /// MAL's extra pictures of the title, large, besides the cover.
+  final List<String> pictures;
+  final List<LinkedTitle> recommendations;
+  final List<LinkedTitle> manga;
 
   double? get completedShare {
     final users = listUsers;
@@ -171,6 +220,64 @@ TitleDetails parseTitleDetails(Detail row, TitleLanguage language) {
             dropped: _int(counts['dropped']) ?? 0,
             planned: _int(counts['plan_to_watch']) ?? 0,
           ),
+    scoredBy: _int(json['num_scoring_users']),
+    openings: _readThemes(json['opening_themes']),
+    endings: _readThemes(json['ending_themes']),
+    videos: [
+      for (final item in _list(json['videos']))
+        if (_map(item) case {
+          'title': final String title,
+          'url': final String url,
+        })
+          if (Uri.tryParse(url) case final uri? when uri.hasScheme)
+            TitleVideo(title: title, url: uri),
+    ],
+    pictures: [
+      for (final item in _list(json['pictures']))
+        if (_map(item)['large'] ?? _map(item)['medium'] case final String url)
+          url,
+    ],
+    recommendations: [
+      for (final item in _list(json['recommendations']))
+        if (_linked(item) case final linked?)
+          LinkedTitle(
+            malId: linked.malId,
+            name: linked.name,
+            pictureUrl: linked.pictureUrl,
+            note: switch (_int(_map(item)['num_recommendations'])) {
+              final count? when count > 0 => '$count recommend it',
+              _ => null,
+            },
+          ),
+    ],
+    manga: [
+      for (final item in _list(json['related_manga']))
+        if (_linked(item) case final linked?)
+          LinkedTitle(
+            malId: linked.malId,
+            name: linked.name,
+            pictureUrl: linked.pictureUrl,
+            note: _map(item)['relation_type_formatted'] as String?,
+          ),
+    ],
+  );
+}
+
+List<String> _readThemes(Object? value) => [
+  for (final item in _list(value)) ?_text(_map(item)['text']),
+];
+
+// the node of a recommendation or related title
+LinkedTitle? _linked(Object? item) {
+  final node = _map(_map(item)['node']);
+  final id = _int(node['id']);
+  final name = _text(node['title']);
+  if (id == null || name == null) return null;
+  final picture = _map(node['main_picture']);
+  return LinkedTitle(
+    malId: id,
+    name: name,
+    pictureUrl: (picture['large'] ?? picture['medium']) as String?,
   );
 }
 

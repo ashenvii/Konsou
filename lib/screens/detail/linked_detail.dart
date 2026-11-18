@@ -12,16 +12,16 @@ import 'detail_frame.dart';
 import 'detail_header.dart';
 import 'detail_top.dart';
 import 'live_entry_controls.dart';
-import 'next_up_row.dart';
-import 'overview_section.dart';
+import 'detail_parts.dart';
 import 'score_strip.dart';
 import 'watch_order_strip.dart';
 import 'your_entry_section.dart';
 import 'your_score.dart';
 
 /// The Detail page of a MAL title, on the list or not, as one scroll: the
-/// top with the user's record first, a line for anything to note, what MAL
-/// says about it, the watch order, then the rest of the user's entry.
+/// top with the user's record first and a line for anything to note, then
+/// every part MAL gives, the watch order and the rest of the user's entry,
+/// each reachable from the jump bar.
 class LinkedDetail extends ConsumerWidget {
   const LinkedDetail({
     super.key,
@@ -51,16 +51,19 @@ class LinkedDetail extends ConsumerWidget {
       return DetailFrame(
         title: '',
         onBack: onBack,
-        children: [
-          DetailTop(
-            malId: malId,
-            loading: !page.hasError,
-            header: page.hasError
-                ? const SizedBox.shrink()
-                : const SkeletonLines(title: 0.5, line: 0.3),
-          ),
-          if (page.hasError) const _Notice('This title could not be read.'),
-        ],
+        top: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DetailTop(
+              malId: malId,
+              loading: !page.hasError,
+              header: page.hasError
+                  ? const SizedBox.shrink()
+                  : const SkeletonLines(title: 0.5, line: 0.3),
+            ),
+            if (page.hasError) const _Notice('This title could not be read.'),
+          ],
+        ),
       );
     }
 
@@ -68,7 +71,6 @@ class LinkedDetail extends ConsumerWidget {
     final entry = data.entry;
     final fetching = data.fetch == DetailFetch.running;
     final order = ref.watch(watchOrderProvider(malId)).value;
-    final next = order == null ? null : nextUp(order);
     final name = switch (details?.name) {
       final name? when name.isNotEmpty => name,
       _ => entry?.name ?? '',
@@ -81,69 +83,101 @@ class LinkedDetail extends ConsumerWidget {
     return DetailFrame(
       title: name,
       onBack: onBack,
+      malId: malId,
+      hideCover: data.isHidden,
       status: hasControls
           ? LiveEntryControls(entry: entry, details: details, statusOnly: true)
           : null,
-      children: [
-        DetailTop(
-          malId: malId,
-          hidden: data.isHidden,
-          loading: details == null && fetching,
-          header: name.isEmpty
-              ? (fetching
-                    ? const SkeletonLines(title: 0.5, line: 0.3)
-                    : const SizedBox.shrink())
-              : DetailHeader(name: name, otherName: details?.otherName),
-          controls: hasControls
-              ? LiveEntryControls(entry: entry, details: details)
-              : null,
-          facts: details == null
-              ? null
-              : ScoreStrip(
-                  details: details,
-                  mine: entry == null ? null : YourScore(entry: entry),
-                ),
-          next: next == null
-              ? null
-              : NextUpRow(row: next, onOpen: () => openRow(next)),
-        ),
-        // the one place under the top for a line to note; the earlier
-        // seasons banner goes here too
-        if (details != null && note != null)
-          _Notice(
-            note,
-            onRetry: data.fetch == DetailFetch.gone ? null : () => _retry(ref),
+      top: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DetailTop(
+            malId: malId,
+            hidden: data.isHidden,
+            loading: details == null && fetching,
+            header: name.isEmpty
+                ? (fetching
+                      ? const SkeletonLines(title: 0.5, line: 0.3)
+                      : const SizedBox.shrink())
+                : DetailHeader(name: name, otherName: details?.otherName),
+            controls: hasControls
+                ? LiveEntryControls(entry: entry, details: details)
+                : null,
+            facts: details == null
+                ? null
+                : ScoreStrip(
+                    details: details,
+                    mine: entry == null ? null : YourScore(entry: entry),
+                  ),
           ),
-        Padding(
-          padding: PageFrame.content.copyWith(top: Tokens.space5),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (details == null)
-                _missing(data.fetch, ref)
-              else
-                OverviewSection(
-                  details: details,
-                  hidden: data.isHidden,
-                  fetching: fetching,
-                ),
-              if (order != null && order.rows.isNotEmpty)
-                WatchOrderSection(order: order, onOpen: openRow),
-              if (entry != null)
-                YourEntrySection(
-                  key: ValueKey(entry.entryId),
-                  entry: entry,
-                  onUnlinked: () => onShowPicker(entry.entryId),
-                ),
-              if (details != null)
-                Text(
-                  'Data from MyAnimeList',
-                  style: AppText.caption(Tokens.inkMuted),
-                ),
-            ],
+          // the one place under the top for a line to note; the earlier
+          // seasons banner goes here too
+          if (details != null && note != null)
+            _Notice(
+              note,
+              onRetry: data.fetch == DetailFetch.gone
+                  ? null
+                  : () => _retry(ref),
+            ),
+          if (details == null)
+            Padding(
+              padding: PageFrame.content,
+              child: _missing(data.fetch, ref),
+            ),
+        ],
+      ),
+      parts: [
+        if (details != null)
+          DetailPart(
+            'Overview',
+            OverviewPart(
+              details: details,
+              hidden: data.isHidden,
+              fetching: fetching,
+            ),
           ),
-        ),
+        if (order != null && order.rows.isNotEmpty)
+          DetailPart(
+            'Watch order',
+            WatchOrderSection(order: order, onOpen: openRow),
+          ),
+        if (details != null && StatsPart.hasAny(details))
+          DetailPart('Stats', StatsPart(details: details)),
+        if (details != null && MusicPart.hasAny(details))
+          DetailPart('Music', MusicPart(details: details)),
+        if (details != null && details.videos.isNotEmpty)
+          DetailPart('Trailers', TrailersPart(videos: details.videos)),
+        if (details != null && details.pictures.isNotEmpty && !data.isHidden)
+          DetailPart(
+            'Pictures',
+            PicturesPart(malId: malId, pictures: details.pictures),
+          ),
+        if (details != null && details.recommendations.isNotEmpty)
+          DetailPart(
+            'Recommendations',
+            RecommendationsPart(
+              titles: details.recommendations,
+              onOpen: (id) => onOpenTitle(id),
+            ),
+          ),
+        if (details != null && details.manga.isNotEmpty)
+          DetailPart('Manga', MangaPart(titles: details.manga)),
+        if (entry != null)
+          DetailPart(
+            'Your entry',
+            YourEntrySection(
+              key: ValueKey(entry.entryId),
+              entry: entry,
+              onUnlinked: () => onShowPicker(entry.entryId),
+            ),
+          ),
       ],
+      footer: details == null
+          ? null
+          : Text(
+              'Data from MyAnimeList',
+              style: AppText.caption(Tokens.inkMuted),
+            ),
     );
   }
 

@@ -9,11 +9,10 @@ import '../../components/fading_portal.dart';
 import '../../components/page_frame.dart';
 import '../../components/pressable.dart';
 import '../../design/tokens.dart';
-import 'back_bar.dart';
 
 /// The top of the Detail page on the plain ground: the cover at the left,
 /// sharp, and beside it the [header], the user's [controls], the [facts] and
-/// what to watch [next], top to bottom. Clicking the cover opens it full size.
+/// top to bottom. Clicking the cover opens it full size.
 /// The back button floats in the space above.
 class DetailTop extends StatelessWidget {
   const DetailTop({
@@ -22,7 +21,6 @@ class DetailTop extends StatelessWidget {
     required this.header,
     this.controls,
     this.facts,
-    this.next,
     this.hidden = false,
     this.loading = false,
   });
@@ -31,7 +29,6 @@ class DetailTop extends StatelessWidget {
   final Widget header;
   final Widget? controls;
   final Widget? facts;
-  final Widget? next;
 
   /// Streamer mode on an adult title: the cover stays blank.
   final bool hidden;
@@ -40,8 +37,8 @@ class DetailTop extends StatelessWidget {
   final bool loading;
 
   /// Where the title's first line starts, from the top of the page: below the
-  /// back button's row.
-  static const titleTop = BackBar.height;
+  /// back button floating over it.
+  static const titleTop = Tokens.controlHeight + 2 * PageFrame.edge;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +66,7 @@ class DetailTop extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 header,
-                for (final part in [?controls, ?facts, ?next]) ...[
+                for (final part in [?controls, ?facts]) ...[
                   const SizedBox(height: Tokens.space4),
                   part,
                 ],

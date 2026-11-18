@@ -12,10 +12,6 @@ class DetailHeader extends StatelessWidget {
   final String name;
   final String? otherName;
 
-  /// One line of the title, so the back bar knows when the title has
-  /// scrolled under it.
-  static const titleLine = Tokens.text3 * Tokens.lineHeightWrapped;
-
   @override
   Widget build(BuildContext context) {
     return Column(

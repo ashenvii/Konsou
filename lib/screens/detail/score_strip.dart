@@ -13,11 +13,12 @@ import '../../icons/icon_def.dart';
 import '../../icons/score_star.dart';
 import '../../library/count_format.dart';
 
-/// The MAL score, its star beside the number over a "MAL score" footer, then
-/// [mine], the user's own score, at the same size, then a row of facts, each
-/// with its icon, parted by thin lines: rank, popularity, completed share and
-/// episodes. Hovering the completed share shows the list counts. When they do
-/// not fit on one line they wrap into a grid. With none of these it draws nothing.
+/// The MAL score, its star beside the number over a "MAL score" footer, and
+/// [mine], the user's own score, at the same size; then, past a thin line, a
+/// two by two grid of facts, each with its icon: rank, popularity, completed
+/// share and episodes. Hovering the completed share shows the list counts.
+/// When the grid does not fit beside the scores it goes under them. With none
+/// of these it draws nothing.
 class ScoreStrip extends StatelessWidget {
   const ScoreStrip({super.key, required this.details, this.mine});
 
@@ -72,7 +73,6 @@ class ScoreStrip extends StatelessWidget {
       );
     }
     final facts = [
-      ?mine,
       if (details.rank != null)
         _Fact(icon: AppIcons.rank, label: 'Rank', value: '#${details.rank}'),
       if (details.popularity != null)
@@ -90,8 +90,48 @@ class ScoreStrip extends StatelessWidget {
           live: true,
         ),
     ];
-    // one line parted by thin lines while it fits, a grid when it does not
-    return FactRow(children: [_Score(score), ...facts]);
+    final scores = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _Score(score),
+        if (mine != null) ...[const SizedBox(width: Tokens.space5), mine!],
+      ],
+    );
+    // beside the scores past a thin line while it fits, under them when not
+    return FactRow(children: [scores, if (facts.isNotEmpty) _FactGrid(facts)]);
+  }
+}
+
+/// Facts two to a row, in columns as wide as their widest fact.
+class _FactGrid extends StatelessWidget {
+  const _FactGrid(this.facts);
+
+  final List<Widget> facts;
+
+  @override
+  Widget build(BuildContext context) {
+    return Table(
+      defaultColumnWidth: const IntrinsicColumnWidth(),
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      children: [
+        for (var i = 0; i < facts.length; i += 2)
+          TableRow(
+            children: [
+              for (final fact in [
+                facts[i],
+                if (i + 1 < facts.length) facts[i + 1] else const SizedBox(),
+              ])
+                Padding(
+                  padding: EdgeInsets.only(
+                    right: Tokens.space5,
+                    bottom: i + 2 < facts.length ? Tokens.space3 : 0,
+                  ),
+                  child: Align(alignment: Alignment.centerLeft, child: fact),
+                ),
+            ],
+          ),
+      ],
+    );
   }
 }
 

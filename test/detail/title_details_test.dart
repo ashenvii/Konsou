@@ -40,6 +40,30 @@ void main() {
     TitleLanguage language = TitleLanguage.romaji,
   ]) async => (await readTitleDetails(databases, 52991, language))!;
 
+  test(
+    'the extras: scored by, themes, trailers, pictures, recommendations',
+    () async {
+      await save('frieren_full', full: true);
+      final details = await read();
+
+      expect(details.scoredBy, 951550);
+      expect(details.openings, hasLength(2));
+      expect(details.endings, hasLength(2));
+      expect(details.videos, hasLength(5));
+      expect(details.videos.first.title, 'PV 5');
+      expect(details.videos.first.url.host, 'youtu.be');
+      expect(details.pictures, hasLength(15));
+      expect(details.pictures.first, endsWith('127908l.jpg'));
+      expect(details.recommendations, hasLength(10));
+      final first = details.recommendations.first;
+      expect(first.malId, 33352);
+      expect(first.name, 'Violet Evergarden');
+      expect(first.pictureUrl, startsWith('https://cdn.myanimelist.net/'));
+      expect(first.note, endsWith('recommend it'));
+      expect(details.manga, isEmpty);
+    },
+  );
+
   test('a title with no saved details reads as nothing', () async {
     expect(
       await readTitleDetails(databases, 52991, TitleLanguage.romaji),

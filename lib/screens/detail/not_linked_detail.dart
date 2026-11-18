@@ -36,45 +36,47 @@ class NotLinkedDetail extends ConsumerWidget {
     return DetailFrame(
       title: name,
       onBack: onBack,
-      status: LiveEntryControls(entry: entry, statusOnly: true),
-      children: [
-        DetailTop(
-          malId: null,
-          header: DetailHeader(
-            name: name.isEmpty ? 'Untitled entry' : name,
-            otherName: 'Not linked to a MyAnimeList page yet',
+      top: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DetailTop(
+            malId: null,
+            header: DetailHeader(
+              name: name.isEmpty ? 'Untitled entry' : name,
+              otherName: 'Not linked to a MyAnimeList page yet',
+            ),
+            controls: LiveEntryControls(entry: entry),
           ),
-          controls: LiveEntryControls(entry: entry),
-        ),
-        Padding(
-          padding: PageFrame.content.copyWith(top: Tokens.space5),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: Tokens.detailTextWidth,
+          Padding(
+            padding: PageFrame.content.copyWith(top: Tokens.space5),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: Tokens.detailTextWidth,
+                ),
+                child: looking && suggestions.isEmpty
+                    ? const _Looking()
+                    : PagePicker(
+                        suggestions: suggestions,
+                        results: search.results,
+                        searching: search.searching,
+                        note: _note(search, canSearch: linking != null),
+                        onPick: linking == null
+                            ? null
+                            : (page) => linking.pick(id, page.malId),
+                        onNone: linking == null
+                            ? null
+                            : () => linking.declineAll(id),
+                        onSearch: ref
+                            .read(pickerSearchProvider(id).notifier)
+                            .setQuery,
+                      ),
               ),
-              child: looking && suggestions.isEmpty
-                  ? const _Looking()
-                  : PagePicker(
-                      suggestions: suggestions,
-                      results: search.results,
-                      searching: search.searching,
-                      note: _note(search, canSearch: linking != null),
-                      onPick: linking == null
-                          ? null
-                          : (page) => linking.pick(id, page.malId),
-                      onNone: linking == null
-                          ? null
-                          : () => linking.declineAll(id),
-                      onSearch: ref
-                          .read(pickerSearchProvider(id).notifier)
-                          .setQuery,
-                    ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
