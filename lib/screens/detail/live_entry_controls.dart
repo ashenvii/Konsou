@@ -8,25 +8,31 @@ import '../../detail/title_details.dart';
 import '../../detail/title_entry.dart';
 import '../../library/aired_episodes.dart';
 import '../../library/earlier_titles.dart';
-import 'entry_bar.dart';
+import 'entry_controls.dart';
 
-/// The entry bar wired to the list: it edits [entry], or adds the title of
-/// [details] when there is no entry.
-class LiveEntryBar extends ConsumerWidget {
-  const LiveEntryBar({super.key, this.entry, this.details})
-    : assert(entry != null || details != null);
+/// The entry controls wired to the list: they edit [entry], or add the title
+/// of [details] when there is no entry.
+class LiveEntryControls extends ConsumerWidget {
+  const LiveEntryControls({
+    super.key,
+    this.entry,
+    this.details,
+    this.statusOnly = false,
+  }) : assert(entry != null || details != null);
 
   final TitleEntry? entry;
   final TitleDetails? details;
+  final bool statusOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // read when used: the bar draws before any edit is asked for
+    // read when used: the controls draw before any edit is asked for
     EntryActions actions() => ref.read(entryActionsProvider);
     final entry = this.entry;
     final details = this.details;
     if (entry == null) {
-      return EntryBar(
+      return EntryControls(
+        statusOnly: statusOnly,
         statusEntries: statusMenuEntries(
           onPick: (status) => actions().add(
             EarlierTitle(
@@ -45,7 +51,8 @@ class LiveEntryBar extends ConsumerWidget {
     }
     final id = entry.entryId;
     final watched = entry.episodesWatched;
-    return EntryBar(
+    return EntryControls(
+      statusOnly: statusOnly,
       status: entry.status,
       watched: watched,
       total: details?.episodes,

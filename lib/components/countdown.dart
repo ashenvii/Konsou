@@ -97,7 +97,8 @@ class HoverDelays {
        _closing = Countdown(onDone: onClose);
 
   static const defaultOpenDelay = Duration(milliseconds: 60);
-  static const closeDelay = Duration(milliseconds: 300);
+  // long enough to cross from the anchor onto the popover, no longer
+  static const closeDelay = Duration(milliseconds: 100);
 
   final Duration openDelay;
   final Countdown _opening;

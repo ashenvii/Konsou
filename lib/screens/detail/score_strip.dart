@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../../components/fact_row.dart';
 import '../../components/floating_panel.dart';
 import '../../components/hover_popover.dart';
 import '../../components/pressable.dart';
@@ -13,14 +14,15 @@ import '../../icons/score_star.dart';
 import '../../library/count_format.dart';
 
 /// The MAL score, its star beside the number over a "MAL score" footer, then
-/// a row of facts, each with its icon, parted by thin lines: rank, popularity,
-/// completed share and episodes. Hovering the completed share shows the list
-/// counts. On a narrow page the facts wrap into a grid. With none of these it
-/// draws nothing.
+/// [mine], the user's own score, at the same size, then a row of facts, each
+/// with its icon, parted by thin lines: rank, popularity, completed share and
+/// episodes. Hovering the completed share shows the list counts. When they do
+/// not fit on one line they wrap into a grid. With none of these it draws nothing.
 class ScoreStrip extends StatelessWidget {
-  const ScoreStrip({super.key, required this.details});
+  const ScoreStrip({super.key, required this.details, this.mine});
 
   final TitleDetails details;
+  final Widget? mine;
 
   static bool _hasAnything(TitleDetails details) =>
       details.score != null ||
@@ -41,12 +43,9 @@ class ScoreStrip extends StatelessWidget {
     ];
   }
 
-  // Under this width the facts wrap into a grid, with no lines between them.
-  static const _rowWidth = Tokens.space4 * 42;
-
   @override
   Widget build(BuildContext context) {
-    if (!_hasAnything(details)) return const SizedBox.shrink();
+    if (!_hasAnything(details) && mine == null) return const SizedBox.shrink();
     final score = details.score;
     final share = details.completedShare;
     final episodes = details.episodes;
@@ -73,6 +72,7 @@ class ScoreStrip extends StatelessWidget {
       );
     }
     final facts = [
+      ?mine,
       if (details.rank != null)
         _Fact(icon: AppIcons.rank, label: 'Rank', value: '#${details.rank}'),
       if (details.popularity != null)
@@ -90,33 +90,8 @@ class ScoreStrip extends StatelessWidget {
           live: true,
         ),
     ];
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < _rowWidth) {
-          return Wrap(
-            spacing: Tokens.space5 + Tokens.space2,
-            runSpacing: Tokens.space4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [_Score(score), ...facts],
-          );
-        }
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _Score(score),
-            for (final fact in facts)
-              Container(
-                margin: const EdgeInsets.only(left: Tokens.space4),
-                padding: const EdgeInsets.only(left: Tokens.space4),
-                decoration: const BoxDecoration(
-                  border: Border(left: BorderSide(color: Tokens.line)),
-                ),
-                child: fact,
-              ),
-          ],
-        );
-      },
-    );
+    // one line parted by thin lines while it fits, a grid when it does not
+    return FactRow(children: [_Score(score), ...facts]);
   }
 }
 
@@ -126,7 +101,33 @@ class _Score extends StatelessWidget {
   final double? score;
 
   @override
+  Widget build(BuildContext context) => ScoreFigure(
+    value: score?.toStringAsFixed(2),
+    empty: 'Not scored yet',
+    label: 'MAL score',
+  );
+}
+
+/// A score as the Detail page shows one: a star and the number large, over
+/// its [label]. With no [value] the star is grey and [empty] stands in.
+/// [lit] brightens it under the pointer, for a score that can be clicked.
+class ScoreFigure extends StatelessWidget {
+  const ScoreFigure({
+    super.key,
+    required this.value,
+    required this.empty,
+    required this.label,
+    this.lit = false,
+  });
+
+  final String? value;
+  final String empty;
+  final String label;
+  final bool lit;
+
+  @override
   Widget build(BuildContext context) {
+    final value = this.value;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,13 +137,13 @@ class _Score extends StatelessWidget {
           children: [
             ScoreStar(
               size: Tokens.text5,
-              color: score == null ? Tokens.inkMuted : Tokens.amber,
+              color: value == null ? Tokens.inkMuted : Tokens.amber,
             ),
             const SizedBox(width: Tokens.space2),
             Text(
-              score == null ? 'Not scored yet' : score!.toStringAsFixed(2),
-              style: score == null
-                  ? AppText.caption(Tokens.inkSoft)
+              value ?? empty,
+              style: value == null
+                  ? AppText.caption(lit ? Tokens.ink : Tokens.inkSoft)
                   : AppText.tally(
                       Tokens.ink,
                       size: Tokens.text5,
@@ -151,7 +152,7 @@ class _Score extends StatelessWidget {
           ],
         ),
         const SizedBox(height: Tokens.space1),
-        Text('MAL score', style: AppText.caption(Tokens.inkSoft)),
+        Text(label, style: AppText.caption(lit ? Tokens.ink : Tokens.inkSoft)),
       ],
     );
   }

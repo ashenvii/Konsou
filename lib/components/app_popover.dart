@@ -38,13 +38,13 @@ class AppPopover extends StatefulWidget {
   State<AppPopover> createState() => _AppPopoverState();
 }
 
-class _AppPopoverState extends State<AppPopover> implements PopoverHandle {
-  final _controller = OverlayPortalController();
+class _AppPopoverState extends State<AppPopover>
+    with FadingPortalOwner<AppPopover>
+    implements PopoverHandle {
   Rect _anchor = Rect.zero;
-  var _open = false;
 
   @override
-  bool get isOpen => _open;
+  bool get isOpen => portalOpen;
 
   // the page's overlay starts below the bar and right of the rail
   RenderBox get _overlayBox =>
@@ -61,24 +61,16 @@ class _AppPopoverState extends State<AppPopover> implements PopoverHandle {
   void openAt(Offset globalPosition) =>
       _show(_overlayBox.globalToLocal(globalPosition) & Size.zero);
 
-  void _show(Rect anchor) {
-    setState(() {
-      _anchor = anchor;
-      _open = true;
-    });
-    _controller.show();
-  }
+  void _show(Rect anchor) => openPortal(() => _anchor = anchor);
 
   @override
-  void close() {
-    if (_open) setState(() => _open = false);
-  }
+  void close() => closePortal();
 
   @override
   Widget build(BuildContext context) {
     return FadingPortal(
-      controller: _controller,
-      visible: _open,
+      controller: portal,
+      visible: portalOpen,
       slide: true,
       overlay: (context) => _PopoverLayer(
         anchor: _anchor,

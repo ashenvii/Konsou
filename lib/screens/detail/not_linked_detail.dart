@@ -8,13 +8,13 @@ import '../../design/tokens.dart';
 import '../../detail/title_entry.dart';
 import 'detail_frame.dart';
 import 'detail_header.dart';
-import 'detail_hero.dart';
-import 'live_entry_bar.dart';
+import 'detail_top.dart';
+import 'live_entry_controls.dart';
 import 'page_picker.dart';
 import 'picker_skeleton.dart';
 
 /// The Detail page of an entry with no MAL page yet: its saved name, a blank
-/// cover, and the page picker where the tabs would be. Once a page is picked
+/// cover, its controls, and the page picker where MAL's details would be. Once a page is picked
 /// the screen swaps this for the normal page.
 class NotLinkedDetail extends ConsumerWidget {
   const NotLinkedDetail({super.key, required this.entry, required this.onBack});
@@ -36,14 +36,15 @@ class NotLinkedDetail extends ConsumerWidget {
     return DetailFrame(
       title: name,
       onBack: onBack,
-      bar: LiveEntryBar(entry: entry),
+      status: LiveEntryControls(entry: entry, statusOnly: true),
       children: [
-        DetailHero(
+        DetailTop(
           malId: null,
           header: DetailHeader(
             name: name.isEmpty ? 'Untitled entry' : name,
             otherName: 'Not linked to a MyAnimeList page yet',
           ),
+          controls: LiveEntryControls(entry: entry),
         ),
         Padding(
           padding: PageFrame.content.copyWith(top: Tokens.space5),

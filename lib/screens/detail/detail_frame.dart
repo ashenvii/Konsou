@@ -4,24 +4,25 @@ import '../../components/motion.dart';
 import '../../components/smooth_scroll.dart';
 import '../../design/tokens.dart';
 import 'back_bar.dart';
-import 'detail_hero.dart';
+import 'detail_header.dart';
+import 'detail_top.dart';
 
-/// The Detail page's fixed parts around its scrolling content: the back bar on
-/// top, which changes once the title has scrolled under it, and [bar] along
-/// the bottom.
+/// The Detail page's fixed part over its scrolling content: the back bar,
+/// which changes once the title has scrolled under it and then carries
+/// [status], the user's status button.
 class DetailFrame extends StatefulWidget {
   const DetailFrame({
     super.key,
     required this.title,
     required this.onBack,
     required this.children,
-    this.bar,
+    this.status,
   });
 
   final String title;
   final VoidCallback onBack;
   final List<Widget> children;
-  final Widget? bar;
+  final Widget? status;
 
   @override
   State<DetailFrame> createState() => _DetailFrameState();
@@ -33,8 +34,8 @@ class _DetailFrameState extends State<DetailFrame> {
 
   // The bar starts to change as the title's first line reaches it, and has
   // changed once both lines are under it.
-  static double get _fadeStart => DetailHero.titleTop - BackBar.height;
-  static double get _fadeSpan => DetailHero.titleBottom - DetailHero.titleTop;
+  static const _fadeStart = DetailTop.titleTop - BackBar.height;
+  static const _fadeSpan = DetailHeader.titleLine;
 
   @override
   void initState() {
@@ -64,35 +65,29 @@ class _DetailFrameState extends State<DetailFrame> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        Expanded(
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: ListView(
-                  controller: _controller,
-                  padding: const EdgeInsets.only(bottom: Tokens.space5),
-                  children: widget.children,
-                ),
-              ),
-              // after the content, so its fade falls on the page
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 0,
-                child: BackBar(
-                  title: widget.title,
-                  scrolled: _fade > 0,
-                  fade: _fade,
-                  onBack: widget.onBack,
-                  onTitle: _toTop,
-                ),
-              ),
-            ],
+        Positioned.fill(
+          child: ListView(
+            controller: _controller,
+            padding: const EdgeInsets.only(bottom: Tokens.space5),
+            children: widget.children,
           ),
         ),
-        ?widget.bar,
+        // after the content, so its fade falls on the page
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          child: BackBar(
+            title: widget.title,
+            scrolled: _fade > 0,
+            fade: _fade,
+            onBack: widget.onBack,
+            onTitle: _toTop,
+            status: widget.status,
+          ),
+        ),
       ],
     );
   }

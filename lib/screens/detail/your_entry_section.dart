@@ -4,23 +4,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/detail_providers.dart';
 import '../../app/entry_actions.dart';
 import '../../app/library_providers.dart';
-import '../../app/toast_words.dart';
 import '../../components/app_button.dart';
 import '../../components/app_menu.dart';
 import '../../components/date_field.dart';
 import '../../components/hold_row.dart';
 import '../../components/notes_field.dart';
-import '../../components/star_rating.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../detail/title_entry.dart';
 import '../../library/entry_status.dart';
 import 'detail_block.dart';
 
-/// The My entry tab: the user's own rating, notes, dates and finished watches
-/// for a title on the list, and the ways to restart, relink or remove it.
-class MyEntryTab extends ConsumerStatefulWidget {
-  const MyEntryTab({super.key, required this.entry, required this.onUnlinked});
+/// The user's own record of a title on the list, at the foot of the Detail
+/// page: notes, the start date and finished watches, and the ways to restart,
+/// relink or remove it. The status, progress and score are at the top.
+class YourEntrySection extends ConsumerStatefulWidget {
+  const YourEntrySection({
+    super.key,
+    required this.entry,
+    required this.onUnlinked,
+  });
 
   final TitleEntry entry;
 
@@ -28,10 +31,10 @@ class MyEntryTab extends ConsumerStatefulWidget {
   final VoidCallback onUnlinked;
 
   @override
-  ConsumerState<MyEntryTab> createState() => _MyEntryTabState();
+  ConsumerState<YourEntrySection> createState() => _YourEntrySectionState();
 }
 
-class _MyEntryTabState extends ConsumerState<MyEntryTab> {
+class _YourEntrySectionState extends ConsumerState<YourEntrySection> {
   final _notes = GlobalKey<NotesFieldState>();
 
   // read once: the notes are saved after the page has gone, when ref is not
@@ -58,15 +61,6 @@ class _MyEntryTabState extends ConsumerState<MyEntryTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DetailBlock(
-              title: 'Your rating',
-              child: StarRating(
-                value: entry.score,
-                labelFor: rateStarLabel,
-                clearLabel: clearRatingLabel,
-                onChanged: (score) => actions().rate(_id, score),
-              ),
-            ),
             DetailBlock(
               title: 'Notes',
               child: NotesField(
@@ -126,6 +120,7 @@ class _MyEntryTabState extends ConsumerState<MyEntryTab> {
                 ),
               ),
             ),
+            const SizedBox(height: Tokens.space5),
           ],
         ),
       ),

@@ -76,7 +76,7 @@ void main() {
       String path, {
       DetailPageData? page,
       WatchOrder order = const WatchOrder([]),
-      String? tab,
+      double scroll = 0,
     }) async {
       final router = buildRouter();
       addTearDown(router.dispose);
@@ -90,8 +90,8 @@ void main() {
       await tester.pump(WindowConfig.restoreSettle);
       router.push(path);
       await tester.pumpAndSettle();
-      if (tab != null) {
-        await tester.tap(find.text(tab));
+      if (scroll > 0) {
+        await tester.drag(find.byType(ListView).first, Offset(0, -scroll));
         await tester.pumpAndSettle();
       }
       await capturePng(tester, key, '$folder/detail_$name.png');
@@ -103,20 +103,13 @@ void main() {
       entry: frierenEntry,
     );
     final title = titlePath(frierenId);
-    await shot('overview', title, page: onList, order: sampleWatchOrder);
+    await shot('on_list', title, page: onList, order: sampleWatchOrder);
     await shot(
-      'watch_order',
+      'scrolled',
       title,
       page: onList,
       order: sampleWatchOrder,
-      tab: 'Watch order',
-    );
-    await shot(
-      'my_entry',
-      title,
-      page: onList,
-      order: sampleWatchOrder,
-      tab: 'My entry',
+      scroll: 600,
     );
     await shot('not_on_list', title);
     await shot(

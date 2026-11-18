@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../components/app_button.dart';
-import '../design/tokens.dart';
 import '../gallery/gallery_screen.dart';
 import '../library/library_row.dart';
 import '../screens/detail/detail_screen.dart';
@@ -35,17 +34,6 @@ String detailPath({int? malId, String? entryId}) => switch (malId) {
 
 String detailPathFor(LibraryRow row) =>
     detailPath(malId: row.malId, entryId: row.entryId);
-
-// the page on top, which a pushed page is and the shell's own state is not
-String _topLocation(BuildContext context) =>
-    GoRouter.of(context)
-        .routerDelegate
-        .currentConfiguration
-        .last
-        .matchedLocation;
-
-bool _isDetailPath(String location) =>
-    location.startsWith('/title/') || location.startsWith('/entry/');
 
 DetailScreen _detailScreen(BuildContext context, GoRouterState state) {
   void back() => context.canPop() ? context.pop() : context.go(libraryPath);
@@ -101,13 +89,7 @@ GoRouter buildRouter({
                     detailPath(malId: row.malId, entryId: row.entryId),
                   ),
                 ),
-                // on the Detail page the toast sits above the entry bar
-                ToastLayer(
-                  leftInset: inset,
-                  bottomInset: _isDetailPath(_topLocation(context))
-                      ? Tokens.entryBarHeight
-                      : 0,
-                ),
+                ToastLayer(leftInset: inset),
               ],
             ),
             child: child,

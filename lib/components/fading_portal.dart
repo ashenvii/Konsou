@@ -54,3 +54,22 @@ class _FadingPortalState extends State<FadingPortal> {
     );
   }
 }
+
+/// The open and closed state of a [FadingPortal] owned by a widget: [open]
+/// shows it, running [also] in the same rebuild, and [close] lets it fade.
+mixin FadingPortalOwner<T extends StatefulWidget> on State<T> {
+  final portal = OverlayPortalController();
+  var portalOpen = false;
+
+  void openPortal([VoidCallback? also]) {
+    setState(() {
+      also?.call();
+      portalOpen = true;
+    });
+    portal.show();
+  }
+
+  void closePortal() {
+    if (portalOpen) setState(() => portalOpen = false);
+  }
+}

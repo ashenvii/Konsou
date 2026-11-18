@@ -62,13 +62,6 @@ Future<File?> coverFile(Ref ref, int malId, CoverSize size) async {
 }
 
 @riverpod
-Future<File?> heroFile(Ref ref, int malId) async {
-  final store = ref.watch(coverStoreProvider);
-  if (store == null) return null;
-  return store.heroFile(malId, wanted: () => ref.mounted);
-}
-
-@riverpod
 Future<void> detailOnScreen(Ref ref, int malId) async {
   final services = ref.watch(servicesProvider);
   final request = services.detailRequest;

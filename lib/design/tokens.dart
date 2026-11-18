@@ -93,13 +93,14 @@ abstract final class Tokens {
   static const double quickFooterHeight = 48;
   static const double quickCoverWidth = 32;
 
-  // the Detail page, first guesses to tune (decisions, 2026-11-11)
-  static const double heroHeight = 240;
-  static const double detailCoverWidth = 160;
-  static const double detailCoverBorder = 4;
-  static const double entryBarHeight = 56;
+  // the Detail page, layout A of the redo (owner, 2026-11-18)
+  static const double detailCoverWidth = 200;
   // the widest a column of running text gets, about 90 characters
   static const double detailTextWidth = 720;
+  // a row of covers that peeks: no cover narrower than this, and the next
+  // cover shows this share of its width on the right
+  static const double peekItemMinWidth = 112;
+  static const double peekShare = 0.4;
 
   // line height for text that can wrap onto a second line (owner, 2026-11-13);
   // single-line labels stay at 1 inside their fixed controls.

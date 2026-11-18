@@ -133,8 +133,7 @@ class _QuickSearchLayerState extends ConsumerState<QuickSearchLayer> {
                               // clear of the thumb
                               child: Padding(
                                 padding: const EdgeInsets.only(
-                                  right:
-                                      Tokens.scrollbarWidth + Tokens.space1,
+                                  right: Tokens.scrollbarWidth + Tokens.space1,
                                 ),
                                 child: _Results(state: state, search: search),
                               ),

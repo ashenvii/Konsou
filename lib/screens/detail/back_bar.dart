@@ -12,8 +12,9 @@ import '../../icons/app_icons.dart';
 /// The back button at the top of the Detail page, floating over the content.
 /// Plain, it is only the button. Once the page scrolls past the title, a fade
 /// from the top comes in behind it, the button turns into a white box with a
-/// dark arrow, and the title appears beside it. [fade] runs from 0 to 1 over
-/// that change; [scrolled] is whether it has begun.
+/// dark arrow, and the title appears beside it, with [status] at the right.
+/// [fade] runs from 0 to 1 over that change; [scrolled] is whether it has
+/// begun.
 class BackBar extends StatelessWidget {
   const BackBar({
     super.key,
@@ -21,6 +22,7 @@ class BackBar extends StatelessWidget {
     required this.scrolled,
     required this.onBack,
     required this.onTitle,
+    this.status,
     double? fade,
   }) : fade = fade ?? (scrolled ? 1 : 0);
 
@@ -28,6 +30,9 @@ class BackBar extends StatelessWidget {
   final bool scrolled;
   final double fade;
   final VoidCallback onBack;
+
+  /// The user's status button, shown once the header has scrolled away.
+  final Widget? status;
 
   /// The scrolled title was clicked: back to the top.
   final VoidCallback onTitle;
@@ -117,6 +122,11 @@ class BackBar extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (scrolled && status != null) ...[
+                  const Spacer(),
+                  const SizedBox(width: Tokens.space4),
+                  Opacity(opacity: fade, child: status),
+                ],
               ],
             ),
           ),

@@ -3,13 +3,15 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/date_field.dart';
 import 'package:konsou/components/entry_progress.dart';
+import 'package:konsou/design/tokens.dart';
+import 'package:konsou/detail/watch_order.dart';
 import 'package:konsou/detail/info_labels.dart';
 import 'package:konsou/gallery/detail_section.dart';
 import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/screens/detail/back_bar.dart';
-import 'package:konsou/screens/detail/entry_bar.dart';
+import 'package:konsou/screens/detail/entry_controls.dart';
 import 'package:konsou/screens/detail/episode_count.dart';
-import 'package:konsou/screens/detail/watch_order_row.dart';
+import 'package:konsou/screens/detail/watch_order_strip.dart';
 
 import 'support/pump_widget.dart';
 
@@ -31,6 +33,31 @@ void main() {
       watchOrderSummary(sampleWatchOrder),
       '2 of 4 on your list · 16 of 40 episodes watched',
     );
+  });
+
+  test('next up is the first unfinished story title after this one', () {
+    final next = nextUp(sampleWatchOrder);
+    // the extra between them is left out
+    expect(next?.malId, 3);
+    expect(nextUpReason(next!), 'Sequel · Not aired yet · 16 Jan 2026');
+  });
+
+  test('next up is nothing when the rest are finished or extras', () {
+    final order = WatchOrder([
+      sampleWatchOrder.rows[0],
+      sampleWatchOrder.rows[1],
+    ]);
+    expect(nextUp(order), isNull);
+  });
+
+  test('a card reads the state first, and the meta line its facts', () {
+    final rows = sampleWatchOrder.rows;
+    expect(watchOrderState(rows[0]).$1, 'Watching 4 / 28');
+    expect(watchOrderState(rows[0]).$2, Tokens.mint);
+    expect(watchOrderState(rows[1]).$1, 'Completed');
+    expect(watchOrderState(rows[2]).$1, 'Not aired yet');
+    expect(watchOrderMeta(rows[0]), 'TV · 2023 · 28 ep');
+    expect(watchOrderMeta(rows[2]), 'TV · 16 Jan 2026');
   });
 
   test('info rows leave out what MAL did not give', () {
@@ -62,10 +89,10 @@ void main() {
     expect(set, 3);
   });
 
-  testWidgets('the entry bar shows 4 / ? with no total', (tester) async {
+  testWidgets('the entry controls show 4 / ? with no total', (tester) async {
     await pumpWidget(
       tester,
-      EntryBar(
+      EntryControls(
         statusEntries: const [],
         status: EntryStatus.watching,
         watched: 4,
@@ -76,8 +103,10 @@ void main() {
     expect(find.byType(EntryProgress), findsNothing);
   });
 
-  testWidgets('the entry bar off the list offers Add to list', (tester) async {
-    await pumpWidget(tester, const EntryBar(statusEntries: []));
+  testWidgets('the entry controls off the list offer Add to list', (
+    tester,
+  ) async {
+    await pumpWidget(tester, const EntryControls(statusEntries: []));
     expect(find.text('Add to list'), findsOneWidget);
   });
 

@@ -2,7 +2,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/detail_providers.dart';
-import '../../app/providers.dart';
 import '../../components/page_frame.dart';
 import '../../components/skeleton.dart';
 import '../../components/text_action.dart';
@@ -11,26 +10,19 @@ import '../../design/tokens.dart';
 import '../../detail/watch_order.dart';
 import 'detail_frame.dart';
 import 'detail_header.dart';
-import 'detail_hero.dart';
-import 'detail_tab_bar.dart';
-import 'live_entry_bar.dart';
-import 'my_entry_tab.dart';
-import 'overview_tab.dart';
+import 'detail_top.dart';
+import 'live_entry_controls.dart';
+import 'next_up_row.dart';
+import 'overview_section.dart';
 import 'score_strip.dart';
-import 'watch_order_tab.dart';
+import 'watch_order_strip.dart';
+import 'your_entry_section.dart';
+import 'your_score.dart';
 
-enum _DetailTab {
-  overview('Overview'),
-  watchOrder('Watch order'),
-  myEntry('My entry');
-
-  const _DetailTab(this.label);
-
-  final String label;
-}
-
-/// The Detail page of a MAL title, on the list or not.
-class LinkedDetail extends ConsumerStatefulWidget {
+/// The Detail page of a MAL title, on the list or not, as one scroll: the
+/// top with the user's record first, a line for anything to note, what MAL
+/// says about it, the watch order, then the rest of the user's entry.
+class LinkedDetail extends ConsumerWidget {
   const LinkedDetail({
     super.key,
     required this.malId,
@@ -51,30 +43,17 @@ class LinkedDetail extends ConsumerStatefulWidget {
   final ValueChanged<String> onShowPicker;
 
   @override
-  ConsumerState<LinkedDetail> createState() => _LinkedDetailState();
-}
-
-class _LinkedDetailState extends ConsumerState<LinkedDetail> {
-  var _tab = _DetailTab.overview;
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = detailPageProvider(widget.malId, entryId: widget.entryId);
-    // MAL's extra pictures come with the full details: look for the hero again
-    ref.listen(provider, (before, now) {
-      final wasFull = before?.value?.details?.isFull ?? false;
-      final isFull = now.value?.details?.isFull ?? false;
-      if (!wasFull && isFull) ref.invalidate(heroFileProvider(widget.malId));
-    });
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = detailPageProvider(malId, entryId: entryId);
     final page = ref.watch(provider);
     final data = page.value;
     if (data == null) {
       return DetailFrame(
         title: '',
-        onBack: widget.onBack,
+        onBack: onBack,
         children: [
-          DetailHero(
-            malId: widget.malId,
+          DetailTop(
+            malId: malId,
             loading: !page.hasError,
             header: page.hasError
                 ? const SizedBox.shrink()
@@ -88,84 +67,88 @@ class _LinkedDetailState extends ConsumerState<LinkedDetail> {
     final details = data.details;
     final entry = data.entry;
     final fetching = data.fetch == DetailFetch.running;
-    final order = ref.watch(watchOrderProvider(widget.malId)).value;
-    final tabs = [
-      _DetailTab.overview,
-      if (order != null && order.rows.isNotEmpty) _DetailTab.watchOrder,
-      if (entry != null) _DetailTab.myEntry,
-    ];
-    // a tab that went away, such as My entry after Remove, falls back
-    final tab = tabs.contains(_tab) ? _tab : _DetailTab.overview;
+    final order = ref.watch(watchOrderProvider(malId)).value;
+    final next = order == null ? null : nextUp(order);
     final name = switch (details?.name) {
       final name? when name.isNotEmpty => name,
       _ => entry?.name ?? '',
     };
+    final hasControls = entry != null || details != null;
+    void openRow(WatchOrderRow row) =>
+        onOpenTitle(row.malId, entryId: row.entryId);
+    final note = _savedNote(data.fetch);
 
     return DetailFrame(
       title: name,
-      onBack: widget.onBack,
-      bar: entry == null && details == null
-          ? null
-          : LiveEntryBar(entry: entry, details: details),
+      onBack: onBack,
+      status: hasControls
+          ? LiveEntryControls(entry: entry, details: details, statusOnly: true)
+          : null,
       children: [
-        DetailHero(
-          malId: widget.malId,
+        DetailTop(
+          malId: malId,
           hidden: data.isHidden,
           loading: details == null && fetching,
           header: name.isEmpty
               ? (fetching
                     ? const SkeletonLines(title: 0.5, line: 0.3)
                     : const SizedBox.shrink())
-              : DetailHeader(
-                  name: name,
-                  otherName: details?.otherName,
-                  synonyms: details?.otherNames ?? const [],
+              : DetailHeader(name: name, otherName: details?.otherName),
+          controls: hasControls
+              ? LiveEntryControls(entry: entry, details: details)
+              : null,
+          facts: details == null
+              ? null
+              : ScoreStrip(
+                  details: details,
+                  mine: entry == null ? null : YourScore(entry: entry),
                 ),
-          facts: details == null ? null : ScoreStrip(details: details),
+          next: next == null
+              ? null
+              : NextUpRow(row: next, onOpen: () => openRow(next)),
         ),
-        if (tabs.length > 1)
-          DetailTabBar(
-            labels: [for (final choice in tabs) choice.label],
-            selected: tabs.indexOf(tab),
-            onSelect: (i) => setState(() => _tab = tabs[i]),
-          ),
-        if (details != null && _savedNote(data.fetch) != null)
+        // the one place under the top for a line to note; the earlier
+        // seasons banner goes here too
+        if (details != null && note != null)
           _Notice(
-            _savedNote(data.fetch)!,
-            onRetry: data.fetch == DetailFetch.gone ? null : _retry,
+            note,
+            onRetry: data.fetch == DetailFetch.gone ? null : () => _retry(ref),
           ),
         Padding(
           padding: PageFrame.content.copyWith(top: Tokens.space5),
-          child: switch (tab) {
-            _DetailTab.overview =>
-              details == null
-                  ? _missing(data.fetch)
-                  : OverviewTab(
-                      details: details,
-                      hidden: data.isHidden,
-                      fetching: fetching,
-                    ),
-            _DetailTab.watchOrder => WatchOrderTab(
-              order: order!,
-              onOpen: _openRow,
-            ),
-            _DetailTab.myEntry => MyEntryTab(
-              key: ValueKey(entry!.entryId),
-              entry: entry,
-              onUnlinked: () => widget.onShowPicker(entry.entryId),
-            ),
-          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (details == null)
+                _missing(data.fetch, ref)
+              else
+                OverviewSection(
+                  details: details,
+                  hidden: data.isHidden,
+                  fetching: fetching,
+                ),
+              if (order != null && order.rows.isNotEmpty)
+                WatchOrderSection(order: order, onOpen: openRow),
+              if (entry != null)
+                YourEntrySection(
+                  key: ValueKey(entry.entryId),
+                  entry: entry,
+                  onUnlinked: () => onShowPicker(entry.entryId),
+                ),
+              if (details != null)
+                Text(
+                  'Data from MyAnimeList',
+                  style: AppText.caption(Tokens.inkMuted),
+                ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  void _retry() => ref
-      .read(detailPageProvider(widget.malId, entryId: widget.entryId).notifier)
-      .retry();
-
-  void _openRow(WatchOrderRow row) =>
-      widget.onOpenTitle(row.malId, entryId: row.entryId);
+  void _retry(WidgetRef ref) =>
+      ref.read(detailPageProvider(malId, entryId: entryId).notifier).retry();
 
   // the line over saved details that could not be refreshed
   static String? _savedNote(DetailFetch fetch) => switch (fetch) {
@@ -177,7 +160,7 @@ class _LinkedDetailState extends ConsumerState<LinkedDetail> {
   };
 
   // nothing saved for the title
-  Widget _missing(DetailFetch fetch) => switch (fetch) {
+  Widget _missing(DetailFetch fetch, WidgetRef ref) => switch (fetch) {
     DetailFetch.running => const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -192,7 +175,7 @@ class _LinkedDetailState extends ConsumerState<LinkedDetail> {
     ),
     DetailFetch.idle || DetailFetch.offline || DetailFetch.failed => _Notice(
       "Can't reach MyAnimeList.",
-      onRetry: _retry,
+      onRetry: () => _retry(ref),
       inset: false,
     ),
   };
@@ -212,7 +195,7 @@ class _Notice extends StatelessWidget {
     return Padding(
       padding: inset
           ? PageFrame.content.copyWith(top: Tokens.space4, bottom: 0)
-          : EdgeInsets.zero,
+          : const EdgeInsets.only(bottom: Tokens.space5),
       child: Row(
         children: [
           Flexible(child: Text(text, style: AppText.label(Tokens.inkSoft))),

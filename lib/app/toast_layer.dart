@@ -31,12 +31,9 @@ const _reviewWords = EarlierReviewWords(
 );
 
 class ToastLayer extends ConsumerWidget {
-  const ToastLayer({super.key, this.leftInset = 0, this.bottomInset = 0});
+  const ToastLayer({super.key, this.leftInset = 0});
 
   final double leftInset;
-
-  /// What the page keeps fixed along its bottom, such as the entry bar.
-  final double bottomInset;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,7 +58,7 @@ class ToastLayer extends ConsumerWidget {
               leftInset + Tokens.space4,
               Tokens.space4,
               Tokens.space4,
-              bottomInset + Tokens.space4,
+              Tokens.space4,
             ),
             // a toast fades out too, so it stays built while it leaves
             child: Presence(
