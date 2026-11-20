@@ -14,9 +14,13 @@ class NotesField extends StatefulWidget {
     required this.initial,
     required this.placeholder,
     required this.onSave,
+    this.fill = Tokens.surface,
   });
 
   final String initial;
+
+  /// The box's color; the ground when it sits on a filled plate.
+  final Color fill;
   final String placeholder;
   final ValueChanged<String> onSave;
 
@@ -78,7 +82,7 @@ class NotesFieldState extends State<NotesField> {
               minHeight: Tokens.controlHeight * 3,
             ),
             padding: const EdgeInsets.all(Tokens.space3),
-            color: Tokens.surface,
+            color: widget.fill,
             child: FieldText(
               controller: _controller,
               focusNode: _focus,

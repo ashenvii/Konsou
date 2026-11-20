@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:konsou/components/icon_square_button.dart';
+import 'package:konsou/components/solid_icon_button.dart';
 import 'package:konsou/components/peek_row.dart';
 import 'package:konsou/design/tokens.dart';
 
@@ -87,17 +87,17 @@ void main() {
   });
 
   group('the row', () {
-    Widget row(int count) => PeekRow(
+    Widget row(int count, {int startAt = 0}) => PeekRow(
       count: count,
+      startAt: startAt,
       minItemWidth: 112,
       arrowTop: (width) => 0,
       itemBuilder: (context, i, width) =>
           SizedBox(height: 40, child: Text('item $i')),
     );
 
-    Finder arrow(String label) => find.byWidgetPredicate(
-      (w) => w is IconSquareButton && w.label == label,
-    );
+    Finder arrow(String label) =>
+        find.byWidgetPredicate((w) => w is SolidIconButton && w.label == label);
 
     testWidgets('only the right arrow shows at the start', (tester) async {
       await pumpWidget(tester, SizedBox(width: 880, child: row(20)));
@@ -129,6 +129,16 @@ void main() {
       await pumpWidget(tester, SizedBox(width: 880, child: row(3)));
       expect(arrow('Later titles'), findsNothing);
       expect(arrow('Earlier titles'), findsNothing);
+    });
+    testWidgets('it can start with a later item on screen', (tester) async {
+      await pumpWidget(
+        tester,
+        SizedBox(width: 880, child: row(20, startAt: 15)),
+      );
+      final left = tester.getTopLeft(find.byType(PeekRow)).dx;
+      final x = tester.getTopLeft(find.text('item 15')).dx;
+      expect(x, inInclusiveRange(left, left + 880));
+      expect(arrow('Earlier titles'), findsOneWidget);
     });
   });
 }

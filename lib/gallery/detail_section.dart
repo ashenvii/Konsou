@@ -12,15 +12,15 @@ import '../detail/provider_page.dart';
 import '../detail/title_details.dart';
 import '../detail/watch_order.dart';
 import '../library/entry_status.dart';
-import '../components/cover_image.dart';
 import '../components/peek_row.dart';
 import '../screens/detail/detail_header.dart';
+import '../screens/detail/detail_scores.dart';
 import '../screens/detail/detail_top.dart';
 import '../screens/detail/entry_controls.dart';
 import '../screens/detail/jump_bar.dart';
-import '../screens/detail/overview_info.dart';
+import '../detail/theme_song.dart';
+import '../screens/detail/detail_parts.dart';
 import '../screens/detail/page_picker.dart';
-import '../screens/detail/score_strip.dart';
 import '../screens/detail/watch_order_strip.dart';
 
 const sampleDetails = TitleDetails(
@@ -60,6 +60,36 @@ const sampleDetails = TitleDetails(
     dropped: 9000,
     planned: 270000,
   ),
+  scoredBy: 950000,
+  // made-up songs and links, so the repo carries no MAL text
+  openings: [
+    ThemeSong(
+      number: '1',
+      name: 'Morning Road',
+      nativeName: '朝の道',
+      artist: 'Paper Lanterns',
+      episodes: 'eps 1-16',
+    ),
+    ThemeSong(
+      number: '2',
+      name: 'Long Winter',
+      artist: 'Mira',
+      episodes: 'eps 17-28',
+    ),
+  ],
+  endings: [
+    ThemeSong(
+      number: '1',
+      name: 'Small Hours',
+      artist: 'Mira',
+      episodes: 'eps 1-28',
+    ),
+  ],
+  pictures: [
+    'https://example.com/one.jpg',
+    'https://example.com/two.jpg',
+    'https://example.com/three.jpg',
+  ],
 );
 
 final sampleWatchOrder = WatchOrder([
@@ -211,22 +241,24 @@ class _DetailSectionState extends State<DetailSection> {
             ),
             const SizedBox(height: Tokens.space3),
           ],
-          _label('Top: cover, title, controls, scores and facts'),
+          _label('Top: key art, title, meta, scores and controls'),
           DetailTop(
             malId: sampleDetails.malId,
             header: DetailHeader(
               name: sampleDetails.name,
               otherName: sampleDetails.otherName,
             ),
-            controls: _controls(_watched, 28),
-            facts: ScoreStrip(
+            meta: const DetailMeta(sampleDetails),
+            scores: DetailScores(
               details: sampleDetails,
               mine: ScoreFigure(
                 value: _score?.toString(),
-                empty: 'Not rated',
+                empty: 'Rate',
                 label: 'Your score',
+                settable: true,
               ),
             ),
+            controls: _controls(_watched, 28),
           ),
           _label('Star rating and date field'),
           Row(
@@ -258,13 +290,14 @@ class _DetailSectionState extends State<DetailSection> {
           const SizedBox(height: Tokens.space3),
           PeekRow(
             count: sampleWatchOrder.rows.length,
+            gap: watchOrderGap,
             minItemWidth: watchOrderCardMinWidth(context),
-            arrowTop: (width) =>
-                (CoverImage.heightFor(width) - Tokens.controlHeight) / 2,
+            arrowTop: (width) => watchOrderArrowTop(context, width),
             itemBuilder: (context, i, width) => WatchOrderCard(
               row: sampleWatchOrder.rows[i],
               width: width,
-              isNext: i == 2,
+              number: i + 1,
+              hasNext: i < sampleWatchOrder.rows.length - 1,
             ),
           ),
           _label('Page picker'),
@@ -274,8 +307,16 @@ class _DetailSectionState extends State<DetailSection> {
             onNone: () {},
             onSearch: (_) {},
           ),
-          _label('Overview info'),
-          const OverviewInfo(sampleDetails),
+          _label('Overview, with the facts box'),
+          const OverviewPart(
+            details: sampleDetails,
+            hidden: false,
+            fetching: false,
+          ),
+          _label('Stats'),
+          const StatsPart(details: sampleDetails),
+          _label('Music'),
+          const MusicPart(details: sampleDetails),
         ],
       ),
     );

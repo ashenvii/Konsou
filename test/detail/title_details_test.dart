@@ -59,7 +59,7 @@ void main() {
       expect(first.malId, 33352);
       expect(first.name, 'Violet Evergarden');
       expect(first.pictureUrl, startsWith('https://cdn.myanimelist.net/'));
-      expect(first.note, endsWith('recommend it'));
+      expect(first.note, endsWith('users'));
       expect(details.manga, isEmpty);
     },
   );

@@ -9,7 +9,7 @@ import '../../components/pressable.dart';
 import '../../components/star_rating.dart';
 import '../../design/tokens.dart';
 import '../../detail/title_entry.dart';
-import 'score_strip.dart';
+import 'detail_scores.dart';
 
 /// The user's own score beside MAL's, the same size. A click opens the ten
 /// stars to set or clear it.
@@ -28,8 +28,9 @@ class YourScore extends ConsumerWidget {
         onPressed: handle.open,
         builder: (context, state) => ScoreFigure(
           value: score?.toString(),
-          empty: 'Not rated',
+          empty: 'Rate',
           label: 'Your score',
+          settable: true,
           lit: state.hovered || state.focused || handle.isOpen,
         ),
       ),

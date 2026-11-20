@@ -27,9 +27,13 @@ class DateField extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.latest,
+    this.fill = Tokens.surface,
   });
 
   final DateTime? value;
+
+  /// The field's color; the ground when it sits on a filled plate.
+  final Color fill;
   final ValueChanged<DateTime?> onChanged;
 
   /// The last day that can be picked. Null allows any day.
@@ -48,7 +52,7 @@ class DateField extends StatelessWidget {
             width: Tokens.findFieldWidth,
             height: Tokens.controlHeight,
             padding: const EdgeInsets.only(left: Tokens.space3),
-            color: Tokens.surface,
+            color: fill,
             child: Row(
               children: [
                 Expanded(

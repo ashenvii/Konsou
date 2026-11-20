@@ -94,13 +94,23 @@ abstract final class Tokens {
   static const double quickCoverWidth = 32;
 
   // the Detail page, layout A of the redo (owner, 2026-11-18)
-  static const double detailCoverWidth = 200;
+  // the cover as key art at the top of the Detail page; MAL's covers are
+  // about 425 wide and turn soft when drawn much wider
+  static const double keyArtMaxWidth = 640;
   // the widest a column of running text gets, about 90 characters
   static const double detailTextWidth = 720;
   // a row of covers that peeks: no cover narrower than this, and the next
   // cover shows this share of its width on the right
   static const double peekItemMinWidth = 112;
   static const double peekShare = 0.4;
+  // a trailer's picture in a peeking row is never narrower than this
+  static const double videoMinWidth = 240;
+  // the watch order rail (owner, 2026-11-19): a state square on a line
+  static const double stateSquare = 16;
+  static const double railLaneHeight = 24;
+  static const double railDash = 4;
+  // the amber frame on the open title's cover
+  static const double openFrame = 4;
 
   // line height for text that can wrap onto a second line (owner, 2026-11-13);
   // single-line labels stay at 1 inside their fixed controls.

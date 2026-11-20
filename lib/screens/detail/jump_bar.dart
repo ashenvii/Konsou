@@ -3,20 +3,20 @@ import 'package:flutter/widgets.dart';
 import '../../app/cover_view.dart';
 import '../../components/app_menu.dart';
 import '../../components/app_popover.dart';
-import '../../components/app_tab.dart';
+import '../../components/menu_chevron.dart';
 import '../../components/cover_image.dart';
 import '../../components/hover_mark.dart';
 import '../../components/motion.dart';
 import '../../components/one_line_text.dart';
 import '../../components/page_frame.dart';
 import '../../components/pressable.dart';
+import '../../components/solid_icon_button.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
-import '../../icons/app_icon.dart';
 import '../../icons/app_icons.dart';
 
 /// The back button, square. It floats over the top of the Detail page on the
-/// page's ground, and turns white with a dark arrow as it moves into the
+/// ground, and turns white with a dark arrow as it moves into the
 /// [JumpBar] at the top; [white] runs from 0 to 1 over that change.
 class DetailBackButton extends StatelessWidget {
   const DetailBackButton({super.key, required this.onBack, this.white = 0});
@@ -25,38 +25,19 @@ class DetailBackButton extends StatelessWidget {
   final double white;
 
   @override
-  Widget build(BuildContext context) {
-    return Pressable(
-      label: 'Back',
-      onPressed: onBack,
-      focusColor: white > 0.5 ? Tokens.ground : Tokens.ink,
-      builder: (context, state) => HoverMark(
-        on: state.hovered && white < 0.5,
-        child: Container(
-          width: Tokens.controlHeight,
-          height: Tokens.controlHeight,
-          alignment: Alignment.center,
-          color: Color.lerp(Tokens.ground, Tokens.ink, white),
-          child: AppIcon(
-            AppIcons.arrowLeft,
-            size: Tokens.iconSize,
-            color: Color.lerp(
-              state.hovered ? Tokens.ink : Tokens.inkSoft,
-              Tokens.ground,
-              white,
-            )!,
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SolidIconButton(
+    icon: AppIcons.arrowLeft,
+    label: 'Back',
+    onPressed: onBack,
+    solid: white,
+  );
 }
 
 /// The Detail page's section names in a row under its top, each jumping to
-/// its part of the page, the one in view filled amber. It sticks to the top
-/// as the page scrolls, and once [stuck] the back button, a small cover and
-/// the title slide in at its left and [status] at its right, so it becomes
-/// the page's bar. Names that do not fit go under More.
+/// its part of the page, the one in view underlined in amber. It sticks to
+/// the top as the page scrolls, and once [stuck] the back button, a small
+/// cover and the title slide in at its left and [status] at its right, so it
+/// becomes the page's bar. Names that do not fit go under More.
 class JumpBar extends StatelessWidget {
   const JumpBar({
     super.key,
@@ -99,6 +80,8 @@ class JumpBar extends StatelessWidget {
       height: height,
       padding: const EdgeInsets.symmetric(horizontal: PageFrame.edge),
       decoration: BoxDecoration(
+        // under the art on the page's ground; at the top, a line between it
+        // and the page scrolling under it
         color: Tokens.ground,
         border: Border(
           bottom: BorderSide(color: stuck ? Tokens.line : Tokens.surface),
@@ -248,10 +231,7 @@ class _Sections extends StatelessWidget {
     final scaler = MediaQuery.textScalerOf(context);
     double widthOf(String label) {
       final painter = TextPainter(
-        text: TextSpan(
-          text: label,
-          style: AppText.label(Tokens.ink, bold: true),
-        ),
+        text: TextSpan(text: label, style: AppText.label(Tokens.ink)),
         maxLines: 1,
         textDirection: TextDirection.ltr,
         textScaler: scaler,
@@ -285,7 +265,7 @@ class _Sections extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 for (var i = 0; i < shown; i++)
-                  AppTab(
+                  _JumpTab(
                     label: labels[i],
                     selected: i == active,
                     onPressed: () => onJump(i),
@@ -293,7 +273,7 @@ class _Sections extends StatelessWidget {
                 if (rest.isNotEmpty)
                   AppPopover(
                     gap: Tokens.space1,
-                    builder: (context, handle) => AppTab(
+                    builder: (context, handle) => _JumpTab(
                       label: rest.contains(active) ? labels[active] : _more,
                       selected: rest.contains(active),
                       opensMenu: true,
@@ -315,6 +295,57 @@ class _Sections extends StatelessWidget {
                   ),
               ],
             ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// One name in the jump bar: muted, brighter under the pointer, and the one
+/// in view in full ink over an amber line.
+class _JumpTab extends StatelessWidget {
+  const _JumpTab({
+    required this.label,
+    required this.selected,
+    required this.onPressed,
+    this.opensMenu = false,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onPressed;
+  final bool opensMenu;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      label: label,
+      selected: selected,
+      onPressed: onPressed,
+      builder: (context, state) {
+        final ink = selected || state.hovered || state.focused
+            ? Tokens.ink
+            : Tokens.inkMuted;
+        return Container(
+          height: Tokens.controlHeight,
+          padding: const EdgeInsets.symmetric(horizontal: Tokens.space4),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: selected
+                    ? Tokens.amber
+                    : Tokens.ground.withValues(alpha: 0),
+                width: Tokens.hoverEdge,
+              ),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label, style: AppText.label(ink)),
+              if (opensMenu) MenuChevron(color: ink),
+            ],
           ),
         );
       },

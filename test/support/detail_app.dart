@@ -53,6 +53,10 @@ TitleDetails frierenDetails({String? nsfw}) => TitleDetails(
   popularity: sampleDetails.popularity,
   listUsers: sampleDetails.listUsers,
   listCounts: sampleDetails.listCounts,
+  scoredBy: sampleDetails.scoredBy,
+  openings: sampleDetails.openings,
+  endings: sampleDetails.endings,
+  pictures: sampleDetails.pictures,
 );
 
 final frierenEntry = TitleEntry(

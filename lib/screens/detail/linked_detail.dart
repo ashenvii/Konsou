@@ -12,8 +12,9 @@ import 'detail_frame.dart';
 import 'detail_header.dart';
 import 'detail_top.dart';
 import 'live_entry_controls.dart';
+import 'detail_media.dart';
 import 'detail_parts.dart';
-import 'score_strip.dart';
+import 'detail_scores.dart';
 import 'watch_order_strip.dart';
 import 'your_entry_section.dart';
 import 'your_score.dart';
@@ -100,15 +101,18 @@ class LinkedDetail extends ConsumerWidget {
                       ? const SkeletonLines(title: 0.5, line: 0.3)
                       : const SizedBox.shrink())
                 : DetailHeader(name: name, otherName: details?.otherName),
-            controls: hasControls
-                ? LiveEntryControls(entry: entry, details: details)
+            meta: details != null && DetailMeta.hasAny(details)
+                ? DetailMeta(details)
                 : null,
-            facts: details == null
+            scores: details == null
                 ? null
-                : ScoreStrip(
+                : DetailScores(
                     details: details,
                     mine: entry == null ? null : YourScore(entry: entry),
                   ),
+            controls: hasControls
+                ? LiveEntryControls(entry: entry, details: details)
+                : null,
           ),
           // the one place under the top for a line to note; the earlier
           // seasons banner goes here too
@@ -146,7 +150,10 @@ class LinkedDetail extends ConsumerWidget {
         if (details != null && MusicPart.hasAny(details))
           DetailPart('Music', MusicPart(details: details)),
         if (details != null && details.videos.isNotEmpty)
-          DetailPart('Trailers', TrailersPart(videos: details.videos)),
+          DetailPart(
+            'Trailers',
+            TrailersPart(malId: malId, videos: details.videos),
+          ),
         if (details != null && details.pictures.isNotEmpty && !data.isHidden)
           DetailPart(
             'Pictures',

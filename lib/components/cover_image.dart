@@ -9,11 +9,15 @@ class CoverImage extends StatelessWidget {
   const CoverImage({
     super.key,
     required this.width,
+    this.height,
     this.file,
     this.loading = false,
   });
 
   final double width;
+
+  /// A picture of another shape, such as a trailer's; a cover when null.
+  final double? height;
   final File? file;
   final bool loading;
 
@@ -21,7 +25,7 @@ class CoverImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final height = heightFor(width);
+    final height = this.height ?? heightFor(width);
     final file = this.file;
     final blank = loading
         ? Skeleton(width: width, height: height)

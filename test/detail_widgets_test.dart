@@ -37,34 +37,45 @@ void main() {
     );
   });
 
-  test('next up is the first unfinished story title after this one', () {
-    final next = nextUp(sampleWatchOrder);
-    // the extra between them is left out
-    expect(next?.malId, 3);
-  });
-
-  test('next up is nothing when the rest are finished or extras', () {
-    final order = WatchOrder([
-      sampleWatchOrder.rows[0],
-      sampleWatchOrder.rows[1],
-    ]);
-    expect(nextUp(order), isNull);
-  });
-
-  test('a card has the year by its tag, the state with episodes below', () {
+  test('a card says the status with its episodes, live ones in mint', () {
     final rows = sampleWatchOrder.rows;
-    expect(watchOrderState(rows[0]).$1, 'Watching 4 / 28');
-    expect(watchOrderState(rows[0]).$2, Tokens.mint);
-    expect(watchOrderState(rows[1]).$1, 'Completed · 12 ep');
-    expect(watchOrderState(rows[2]).$1, 'Not aired yet');
+    expect(watchOrderState(rows[0]), ('Watching 4 / 28', true));
+    // a finished title says only its episodes
+    expect(watchOrderState(rows[1]), ('12 ep', false));
+    expect(watchOrderState(rows[2]), ('Not aired yet', false));
+    expect(watchOrderState(rows[3]), ('', false));
+    const planned = WatchOrderRow(
+      malId: 9,
+      name: 'x',
+      isExtra: false,
+      status: EntryStatus.planned,
+      episodes: 12,
+    );
+    expect(watchOrderState(planned), ('Planned · 12 ep', false));
+  });
+
+  test('the square is named for a screen reader', () {
+    final rows = sampleWatchOrder.rows;
+    expect(watchOrderStateLabel(rows[0]), 'Watching');
+    expect(watchOrderStateLabel(rows[1]), 'Completed');
+    expect(watchOrderStateLabel(rows[2]), 'Not aired yet');
+    expect(watchOrderStateLabel(rows[3]), 'Loading details');
+  });
+
+  test('a card has its date and type beside its number', () {
+    final rows = sampleWatchOrder.rows;
     expect(watchOrderWhen(rows[0]), '2023');
+    expect(watchOrderMeta(rows[0]), '2023 · TV');
     // still to air: the whole date
     expect(watchOrderWhen(rows[2]), '16 Jan 2026');
   });
 
   test('info rows leave out what MAL did not give', () {
     final rows = infoRows(sampleDetails);
-    expect(rows.first, ('Type', 'TV'));
+    // what the top already shows is not said again
+    expect(rows.map((r) => r.$1), isNot(contains('Type')));
+    expect(rows.map((r) => r.$1), isNot(contains('Genres')));
+    expect(rows.first.$1, 'Aired');
     expect(rows.map((r) => r.$1), contains('Broadcast'));
     expect(
       rows.firstWhere((r) => r.$1 == 'Broadcast').$2,
@@ -201,9 +212,8 @@ void main() {
       await pumpOverview(tester, words(1500));
       expect(find.text('More'), findsOneWidget);
       final text = find.text(words(1500));
-      final info = find.text('Information');
       final block = find
-          .ancestor(of: info, matching: find.byType(Column))
+          .ancestor(of: find.text('Airing'), matching: find.byType(ColoredBox))
           .first;
       // the cut text and its More end level with the block, give or take a line
       expect(

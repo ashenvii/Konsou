@@ -6,6 +6,7 @@ import '../data/databases.dart';
 import '../data/details_database.dart';
 import '../library/title_language.dart';
 import '../mal/detail_request.dart';
+import 'theme_song.dart';
 
 class ListCounts {
   const ListCounts({
@@ -23,12 +24,14 @@ class ListCounts {
   final int planned;
 }
 
-/// A trailer or promotional video on MAL, opened in the browser.
+/// A trailer or promotional video on MAL, opened in the browser, with the
+/// picture YouTube shows for it.
 class TitleVideo {
-  const TitleVideo({required this.title, required this.url});
+  const TitleVideo({required this.title, required this.url, this.thumbnail});
 
   final String title;
   final Uri url;
+  final String? thumbnail;
 }
 
 /// Another title MAL links to this one: a recommendation with how many
@@ -47,7 +50,7 @@ class LinkedTitle {
   /// Its cover on MAL's image server, for a title with no details saved.
   final String? pictureUrl;
 
-  /// "412 recommend it", "Adaptation".
+  /// "412 users", "Adaptation".
   final String? note;
 }
 
@@ -128,10 +131,9 @@ class TitleDetails {
   /// How many people gave the score.
   final int? scoredBy;
 
-  /// Opening and ending themes as MAL writes them: '"My War" by Shinsei
-  /// Kamattechan (eps 1-16)'.
-  final List<String> openings;
-  final List<String> endings;
+  /// Opening and ending themes, read out of the lines MAL writes for them.
+  final List<ThemeSong> openings;
+  final List<ThemeSong> endings;
   final List<TitleVideo> videos;
 
   /// MAL's extra pictures of the title, large, besides the cover.
@@ -230,7 +232,11 @@ TitleDetails parseTitleDetails(Detail row, TitleLanguage language) {
           'url': final String url,
         })
           if (Uri.tryParse(url) case final uri? when uri.hasScheme)
-            TitleVideo(title: title, url: uri),
+            TitleVideo(
+              title: title,
+              url: uri,
+              thumbnail: _text(_map(item)['thumbnail']),
+            ),
     ],
     pictures: [
       for (final item in _list(json['pictures']))
@@ -245,7 +251,8 @@ TitleDetails parseTitleDetails(Detail row, TitleLanguage language) {
             name: linked.name,
             pictureUrl: linked.pictureUrl,
             note: switch (_int(_map(item)['num_recommendations'])) {
-              final count? when count > 0 => '$count recommend it',
+              final count? when count > 0 =>
+                count == 1 ? '1 user' : '$count users',
               _ => null,
             },
           ),
@@ -263,8 +270,10 @@ TitleDetails parseTitleDetails(Detail row, TitleLanguage language) {
   );
 }
 
-List<String> _readThemes(Object? value) => [
-  for (final item in _list(value)) ?_text(_map(item)['text']),
+List<ThemeSong> _readThemes(Object? value) => [
+  for (final (i, item) in _list(value).indexed)
+    if (_text(_map(item)['text']) case final text?)
+      ThemeSong.parse(text, place: i + 1),
 ];
 
 // the node of a recommendation or related title

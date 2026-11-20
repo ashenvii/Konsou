@@ -74,26 +74,34 @@ String? sourceWords(String? source) {
 }
 
 /// The info block's rows, in order, leaving out whatever MAL did not give.
+/// The type, season, studios and genres are tags at the top of the page and
+/// the episodes a fact there, so they are not said again here.
 List<(String, String)> infoRows(TitleDetails details) {
-  final type = details.mediaType;
-  final episodes = details.episodes;
   final rows = <(String, String?)>[
-    ('Type', type == null || type.isEmpty ? null : typeName(type)),
-    ('Episodes', episodes == null ? null : '$episodes'),
     ('Aired', airedWords(details)),
-    ('Season', seasonWords(details)),
     ('Broadcast', broadcastWords(details)),
     ('Duration', durationWords(details)),
     ('Source', sourceWords(details.source)),
     ('Rating', ratingWords(details.rating)),
-    (
-      details.studios.length == 1 ? 'Studio' : 'Studios',
-      details.studios.isEmpty ? null : details.studios.join(', '),
-    ),
-    ('Genres', details.genres.isEmpty ? null : details.genres.join(', ')),
   ];
   return [
     for (final (label, value) in rows)
       if (value != null) (label, value),
+  ];
+}
+
+/// The info block's rows in named groups: when it airs, and where it comes
+/// from. A group with nothing in it is left out.
+List<(String, List<(String, String)>)> infoGroups(TitleDetails details) {
+  const groups = [
+    ('Airing', {'Aired', 'Broadcast', 'Duration'}),
+    ('Origin', {'Source', 'Rating'}),
+  ];
+  final rows = infoRows(details);
+  return [
+    for (final (name, labels) in groups)
+      if (rows.where((row) => labels.contains(row.$1)).toList()
+          case final inGroup when inGroup.isNotEmpty)
+        (name, inGroup),
   ];
 }

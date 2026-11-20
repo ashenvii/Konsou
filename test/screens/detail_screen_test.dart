@@ -6,17 +6,20 @@ import 'package:go_router/go_router.dart';
 import 'package:konsou/app/detail_providers.dart';
 import 'package:konsou/app/routes.dart';
 import 'package:konsou/app/toast_host.dart';
-import 'package:konsou/components/peek_row.dart';
 import 'package:konsou/components/pressable.dart';
 import 'package:konsou/components/toast_view.dart';
+import 'package:konsou/design/tokens.dart';
 import 'package:konsou/detail/watch_order.dart';
 import 'package:konsou/gallery/detail_section.dart';
 import 'package:konsou/screens/detail/jump_bar.dart';
 import 'package:konsou/screens/detail/detail_frame.dart';
 import 'package:konsou/screens/detail/detail_top.dart';
 import 'package:konsou/screens/detail/entry_controls.dart';
+import 'package:konsou/screens/detail/detail_media.dart';
+import 'package:konsou/screens/detail/detail_parts.dart';
 import 'package:konsou/screens/detail/page_picker.dart';
-import 'package:konsou/screens/detail/score_strip.dart';
+import 'package:konsou/screens/detail/detail_header.dart';
+import 'package:konsou/screens/detail/detail_scores.dart';
 import 'package:konsou/screens/detail/watch_order_strip.dart';
 import 'package:konsou/shell/app_shell.dart';
 import 'package:konsou/shell/window_config.dart';
@@ -160,7 +163,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Hidden in Streamer mode'), findsOneWidget);
+    expect(find.text('Synopsis hidden in Streamer mode'), findsOneWidget);
     expect(find.textContaining('Demon King'), findsNothing);
   });
 
@@ -217,22 +220,94 @@ void main() {
     expect(bar(tester).stuck, isFalse);
   });
 
-  testWidgets('the facts sit two by two beside the scores', (tester) async {
-    await open(tester, title, page: onList);
-    Rect at(String label) => tester.getRect(
-      find.descendant(of: find.byType(ScoreStrip), matching: find.text(label)),
-    );
+  testWidgets('the title leads; the rest steps down and stays soft', (
+    tester,
+  ) async {
+    await open(tester, title, page: onList, size: const Size(1800, 900));
+    final top = find.byType(DetailTop);
+    Text text(Finder finder) =>
+        tester.widget<Text>(find.descendant(of: top, matching: finder).first);
 
-    expect(at('Rank').top, closeTo(at('Popularity').top, 1));
-    expect(at('Completed').top, closeTo(at('Episodes').top, 1));
-    expect(at('Completed').top, greaterThan(at('Rank').bottom));
-    expect(at('Rank').left, closeTo(at('Completed').left, 1));
-    // beside the scores, not under them
-    expect(at('Rank').left, greaterThan(at('Your score').right));
+    final name = text(find.text('Sousou no Frieren'));
+    expect(name.style?.fontSize, Tokens.text5);
+    expect(name.style?.color, Tokens.ink);
+    // the genres are small and muted
+    final genres = text(find.textContaining('Adventure'));
+    expect(genres.style?.color, Tokens.inkMuted);
+    // the order down the top: names, meta, scores, then the controls
+    Rect at(Finder finder) =>
+        tester.getRect(find.descendant(of: top, matching: finder).first);
+    expect(
+      at(find.byType(DetailMeta)).top,
+      greaterThan(at(find.text('Sousou no Frieren')).bottom),
+    );
+    expect(
+      at(find.byType(DetailScores)).top,
+      greaterThan(at(find.byType(DetailMeta)).bottom),
+    );
+    expect(
+      at(find.byType(EntryControls)).top,
+      greaterThan(at(find.byType(DetailScores)).bottom),
+    );
+  });
+
+  testWidgets('the facts are one quiet line, the episode count amber', (
+    tester,
+  ) async {
+    await open(tester, title, page: onList, size: const Size(1800, 900));
+    final scores = find.byType(DetailScores);
+    Rect at(String text) => tester.getRect(
+      find.descendant(of: scores, matching: find.textContaining(text)).first,
+    );
+    expect(at('rank').top, closeTo(at('episodes').top, 1));
+    final episodes = tester.widget<Text>(
+      find.descendant(of: scores, matching: find.textContaining('episodes')),
+    );
+    final number = (episodes.textSpan! as TextSpan).children!.first as TextSpan;
+    expect(number.style?.color, Tokens.amber);
+    final rank = tester.widget<Text>(
+      find.descendant(of: scores, matching: find.textContaining('rank')),
+    );
+    final rankNumber = (rank.textSpan! as TextSpan).children!.first as TextSpan;
+    expect(rankNumber.style?.color, Tokens.inkSoft);
+  });
+
+  testWidgets('the cover is key art at the right, fading into the page', (
+    tester,
+  ) async {
+    await open(tester, title, page: onList, size: const Size(1800, 900));
+    final top = tester.getRect(find.byType(DetailTop));
+    final art = tester.getRect(
+      find.byWidgetPredicate(
+        (w) => w is Pressable && w.label == 'Open the cover full size',
+      ),
+    );
+    expect(art.right, closeTo(top.right, 1));
+    expect(art.width, lessThanOrEqualTo(Tokens.keyArtMaxWidth));
+    // it stops short of the top's foot, so that edge is plain ground
+    expect(art.bottom, lessThan(top.bottom));
+  });
+
+  testWidgets('nothing at the top is said twice below', (tester) async {
+    await open(tester, title, page: onList, order: sampleWatchOrder);
+    final info = find.byType(OverviewPart);
+    for (final said in ['Genres', 'Studio', 'Season', 'Type', 'Episodes']) {
+      expect(
+        find.descendant(of: info, matching: find.text(said)),
+        findsNothing,
+      );
+    }
   });
 
   testWidgets('a name in the jump bar jumps to its part', (tester) async {
-    await open(tester, title, page: onList, order: sampleWatchOrder);
+    // wide enough that every name fits in the bar, in the wider test font
+    await open(
+      tester,
+      title,
+      page: onList,
+      order: sampleWatchOrder,
+      size: const Size(1800, 900),
+    );
     await tester.tap(
       find.descendant(
         of: find.byType(JumpBar),
@@ -277,6 +352,47 @@ void main() {
     expect(find.byType(CoverViewer), findsNothing);
   });
 
+  testWidgets('a picture opens full size and the arrows move through them', (
+    tester,
+  ) async {
+    await open(tester, title, page: onList);
+    final first = find.byWidgetPredicate(
+      (w) => w is Pressable && w.label == 'Open picture 1 full size',
+    );
+    await tester.scrollUntilVisible(first, 300, scrollable: page);
+    await tester.ensureVisible(first);
+    await tester.pumpAndSettle();
+    await tester.tap(first);
+    await tester.pumpAndSettle();
+    expect(find.byType(PictureViewer), findsOneWidget);
+    expect(find.text('1 / 3'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(find.text('2 / 3'), findsOneWidget);
+    await tester.tap(
+      find.byWidgetPredicate(
+        (w) => w is Pressable && w.label == 'Earlier picture',
+      ),
+    );
+    await tester.pump();
+    expect(find.text('1 / 3'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.byType(PictureViewer), findsNothing);
+  });
+
+  testWidgets('songs read as a track list, each its own row', (tester) async {
+    await open(tester, title, page: onList);
+    expect(find.text('Openings'), findsOneWidget);
+    expect(find.text('Endings'), findsOneWidget);
+    expect(find.text('OP 2'), findsOneWidget);
+    expect(find.text('ED 1'), findsOneWidget);
+    expect(find.text('Paper Lanterns'), findsOneWidget);
+    expect(find.text('3 songs'), findsOneWidget);
+  });
+
   group('every window size', () {
     // the smallest window Konsou allows and a 4K screen, with the text at
     // normal size and at 150%; nothing may spill over
@@ -294,8 +410,9 @@ void main() {
             textScale: textScale,
           );
           expect(tester.takeException(), isNull);
+          // down to the foot, past every part
           await tester.scrollUntilVisible(
-            find.byType(PeekRow),
+            find.text('Data from MyAnimeList'),
             300,
             scrollable: page,
           );

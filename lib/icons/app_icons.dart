@@ -266,6 +266,54 @@ abstract final class AppIcons {
 
   static const minus = IconDef(lines: [((3, 8), (13, 8))]);
 
+  // two people, one behind the other
+  static const people = IconDef(
+    lines: [
+      ((4, 3), (8, 3)),
+      ((8, 3), (8, 7)),
+      ((8, 7), (4, 7)),
+      ((4, 7), (4, 3)),
+      ((2, 14), (2, 11)),
+      ((2, 11), (4, 9)),
+      ((4, 9), (8, 9)),
+      ((8, 9), (10, 11)),
+      ((10, 11), (10, 14)),
+      ((10, 3), (13, 3)),
+      ((13, 3), (13, 7)),
+      ((13, 7), (10, 7)),
+      ((11, 9), (12, 9)),
+      ((12, 9), (14, 11)),
+      ((14, 11), (14, 14)),
+    ],
+  );
+
+  // opens outside the app, in the browser
+  static const external = IconDef(
+    lines: [
+      ((7, 3), (3, 3)),
+      ((3, 3), (3, 13)),
+      ((3, 13), (13, 13)),
+      ((13, 13), (13, 9)),
+      ((8, 8), (14, 2)),
+      ((10, 2), (14, 2)),
+      ((14, 2), (14, 6)),
+    ],
+  );
+
+  // open full size
+  static const expand = IconDef(
+    lines: [
+      ((2, 6), (2, 2)),
+      ((2, 2), (6, 2)),
+      ((10, 2), (14, 2)),
+      ((14, 2), (14, 6)),
+      ((14, 10), (14, 14)),
+      ((14, 14), (10, 14)),
+      ((6, 14), (2, 14)),
+      ((2, 14), (2, 10)),
+    ],
+  );
+
   static const all = <String, IconDef>{
     'nekomimi': nekomimi,
     'bell': bell,
@@ -296,5 +344,8 @@ abstract final class AppIcons {
     'chevronRight': chevronRight,
     'plus': plus,
     'minus': minus,
+    'people': people,
+    'external': external,
+    'expand': expand,
   };
 }

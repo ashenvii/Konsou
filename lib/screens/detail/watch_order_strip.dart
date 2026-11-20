@@ -24,6 +24,7 @@ import '../../library/entry_status.dart';
 import '../../library/row_labels.dart';
 import '../library/row_tap_area.dart';
 import 'detail_block.dart';
+import 'watch_order_rail.dart';
 
 /// "3 of 5 on your list · 59 of 87 episodes watched".
 String watchOrderSummary(WatchOrder order) {
@@ -32,63 +33,73 @@ String watchOrderSummary(WatchOrder order) {
       '${total > 0 ? ' · ${order.episodesWatched} of $total episodes watched' : ''}';
 }
 
-/// The title to watch after the open one: the first story title after it in
-/// the order that is not finished. Extras are left out, since they are
-/// optional; a row with no name yet cannot be shown.
-WatchOrderRow? nextUp(WatchOrder order) {
-  final rows = order.rows;
-  final open = rows.indexWhere((row) => row.isOpenTitle);
-  if (open < 0) return null;
-  for (final row in rows.skip(open + 1)) {
-    if (row.isExtra || row.name.isEmpty) continue;
-    if (row.status == EntryStatus.completed) continue;
-    return row;
-  }
-  return null;
+/// The state in words, for a screen reader: the square has no text.
+String watchOrderStateLabel(WatchOrderRow row) {
+  if (row.isLoadingDetails) return 'Loading details';
+  final status = row.status;
+  if (status != null) return status.label;
+  return row.isNotAired ? 'Not aired yet' : 'Not on your list';
 }
 
-/// The user's state on a title, under its name on the card, with the
-/// episodes: "Watching 9 / 16" while it is under way, otherwise the status
-/// or why there is none, then the episode count, "Completed · 25 ep".
-(String, Color) watchOrderState(WatchOrderRow row) {
-  final episodes = row.episodes == null ? null : '${row.episodes} ep';
+/// The line under a title's name: the status in words with its episodes, live
+/// ones in mint. A finished title says only its episodes.
+(String, bool) watchOrderState(WatchOrderRow row) {
+  if (row.isLoadingDetails) return ('', false);
+  final status = row.status;
+  final total = row.episodes;
+  final episodes = total == null ? null : '$total ep';
   String withEpisodes(String text) =>
       episodes == null ? text : '$text · $episodes';
-  if (row.isLoadingDetails) {
-    return (row.name.isEmpty ? '' : 'Loading details', Tokens.inkMuted);
-  }
-  if (row.isNotAired) return (withEpisodes('Not aired yet'), Tokens.inkMuted);
-  final status = row.status;
   if (status == null) {
-    return (withEpisodes('Not on your list'), Tokens.inkMuted);
+    return (
+      row.isNotAired ? 'Not aired yet' : withEpisodes('Not on your list'),
+      false,
+    );
+  }
+  if (status == EntryStatus.completed) {
+    return (episodes ?? status.label, false);
   }
   final live =
       status == EntryStatus.watching || status == EntryStatus.rewatching;
-  final progress = episodeProgress(row.episodesWatched, row.episodes);
-  if (status != EntryStatus.completed && progress.isNotEmpty) {
-    return ('${status.label} $progress', live ? Tokens.mint : Tokens.inkSoft);
+  final progress = episodeProgress(row.episodesWatched, total);
+  // a title not started shows its total, not "0 / 12"
+  if (progress.isNotEmpty && (live || row.episodesWatched > 0)) {
+    return ('${status.label} $progress', live);
   }
-  return (withEpisodes(status.label), live ? Tokens.mint : Tokens.inkSoft);
+  return (withEpisodes(status.label), false);
 }
 
-/// When the title came out, beside its type tag: the year, or the whole date
-/// for a title still to air.
+/// When the title came out: the year, or the whole date for a title still to
+/// air.
 String watchOrderWhen(WatchOrderRow row) {
   final date = row.startDate;
   if (row.isNotAired) return dateWords(date) ?? 'TBA';
   return date != null && date.length >= 4 ? date.substring(0, 4) : '';
 }
 
-/// The type tag's height at the current text size, so every cover in the
+/// "2018 · TV": when it came out and what it is.
+String watchOrderMeta(WatchOrderRow row) {
+  final type = row.mediaType;
+  return [
+    watchOrderWhen(row),
+    if (type != null && type.isNotEmpty) typeName(type),
+  ].where((part) => part.isNotEmpty).join(' · ');
+}
+
+/// The number row's height at the current text size, so every cover in the
 /// strip starts at the same line and the arrows can centre on them.
-double typeTagHeight(BuildContext context) =>
-    MediaQuery.textScalerOf(context).scale(Tokens.text1) + 2 * Tokens.space1;
+double watchOrderMetaHeight(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(Tokens.text2);
 
 TextStyle _stateStyle(Color color) =>
     AppText.caption(color).copyWith(fontWeight: FontWeight.w700);
 
+/// The gap between cards, which the line between the squares crosses.
+const watchOrderGap = Tokens.space3;
+
 /// The narrowest a card can be: as wide as the longest line it may hold, a
-/// four digit episode count included, at the current text size.
+/// four digit episode count or a number, date and type, at the current text
+/// size.
 double watchOrderCardMinWidth(BuildContext context) {
   final scaler = MediaQuery.textScalerOf(context);
   double widthOf(String text, TextStyle style) {
@@ -104,26 +115,30 @@ double watchOrderCardMinWidth(BuildContext context) {
   }
 
   final state = _stateStyle(Tokens.ink);
-  final tag = _stateStyle(Tokens.ink);
-  final when = AppText.caption(Tokens.ink);
   final widest = [
     for (final status in EntryStatus.values) ...[
       widthOf('${status.label} 1100 / 1100', state),
       widthOf('${status.label} · 1100 ep', state),
     ],
     widthOf('Not on your list · 1100 ep', state),
-    widthOf('Not aired yet · 1100 ep', state),
-    widthOf('TV Special', tag) +
-        2 * Tokens.space2 +
+    widthOf('100', AppText.label(Tokens.ink, bold: true)) +
         Tokens.space2 +
-        widthOf('30 Sep 2026', when),
+        widthOf('30 Sep 2026 · TV Special', AppText.caption(Tokens.ink)),
   ].reduce(math.max);
   return math.max(Tokens.peekItemMinWidth, widest.ceilToDouble());
 }
 
+/// Where the arrows sit, from the item width, so they centre on the covers.
+double watchOrderArrowTop(BuildContext context, double width) =>
+    watchOrderMetaHeight(context) +
+    Tokens.railLaneHeight +
+    Tokens.space2 +
+    (CoverImage.heightFor(width) - Tokens.controlHeight) / 2;
+
 /// The watch order: its summary, then every title of the franchise as a
-/// cover in a peeking row. A click opens that title's page; a right click
-/// opens the status menu, which adds a title that is not on the list.
+/// cover in a peeking row, on a line that runs through their state squares. A
+/// click opens that title's page; a right click opens the status menu, which
+/// adds a title that is not on the list.
 class WatchOrderSection extends StatelessWidget {
   const WatchOrderSection({
     super.key,
@@ -137,27 +152,32 @@ class WatchOrderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = order.rows;
-    final next = nextUp(order);
-    return DetailBlock(
+    final open = rows.indexWhere((row) => row.isOpenTitle);
+    return DetailSection(
       title: 'Watch order',
+      count: rows.length == 1 ? '1 title' : '${rows.length} titles',
+      aside: SectionNote(watchOrderSummary(order)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(watchOrderSummary(order), style: AppText.label(Tokens.inkSoft)),
-          const SizedBox(height: Tokens.space3),
           PeekRow(
             count: rows.length,
+            gap: watchOrderGap,
+            startAt: math.max(0, open),
             minItemWidth: watchOrderCardMinWidth(context),
-            arrowTop: (width) =>
-                typeTagHeight(context) +
-                Tokens.space2 +
-                (CoverImage.heightFor(width) - Tokens.controlHeight) / 2,
+            arrowTop: (width) => watchOrderArrowTop(context, width),
             itemBuilder: (context, i, width) => _OrderItem(
               key: ValueKey(rows[i].malId),
               row: rows[i],
-              width: width,
-              isNext: identical(rows[i], next),
               onOpen: () => onOpen(rows[i]),
+              cardFor: (lit) => WatchOrderCard(
+                row: rows[i],
+                width: width,
+                number: i + 1,
+                hasNext: i < rows.length - 1,
+                travelled: i < open,
+                lit: lit,
+              ),
             ),
           ),
         ],
@@ -172,15 +192,15 @@ class _OrderItem extends ConsumerWidget {
   const _OrderItem({
     super.key,
     required this.row,
-    required this.width,
-    required this.isNext,
     required this.onOpen,
+    required this.cardFor,
   });
 
   final WatchOrderRow row;
-  final double width;
-  final bool isNext;
   final VoidCallback onOpen;
+
+  /// The card, lit or not.
+  final WatchOrderCard Function(bool lit) cardFor;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -191,12 +211,8 @@ class _OrderItem extends ConsumerWidget {
         // the open title is this page
         onOpen: row.isOpenTitle ? () {} : onOpen,
         onContextMenu: handle.openAt,
-        builder: (context, state) => WatchOrderCard(
-          row: row,
-          width: width,
-          isNext: isNext,
-          lit: state.hovered || state.focused || handle.isOpen,
-        ),
+        builder: (context, state) =>
+            cardFor(state.hovered || state.focused || handle.isOpen),
       ),
       popoverBuilder: (context, handle) {
         void close(VoidCallback action) {
@@ -256,67 +272,81 @@ void setOrAdd(WidgetRef ref, WatchOrderRow row, EntryStatus status) {
   );
 }
 
-/// One title of the watch order: its cover, then the user's state on it, a
-/// progress line, the title and its type, year and episodes. A finished title
-/// has no colour and is dimmed until [lit]. The open title is outlined in
-/// ink, the next one in amber.
+/// One title of the watch order: its release number, date and type, its stop
+/// on the line, then its cover, name and its state in words. A finished
+/// title's cover is dimmed until [lit]. The open title's cover has an amber
+/// frame, the only amber on the strip.
 class WatchOrderCard extends StatelessWidget {
   const WatchOrderCard({
     super.key,
     required this.row,
     required this.width,
-    this.isNext = false,
+    required this.number,
+    this.hasNext = false,
+    this.travelled = false,
     this.lit = false,
   });
 
   final WatchOrderRow row;
   final double width;
-  final bool isNext;
+
+  /// Its place in release order, from 1.
+  final int number;
+
+  /// Whether the line runs on to another card, and whether that part of it
+  /// is behind you.
+  final bool hasNext;
+  final bool travelled;
   final bool lit;
 
   @override
   Widget build(BuildContext context) {
-    final (state, stateColor) = watchOrderState(row);
-    final outline = row.isOpenTitle
-        ? Tokens.ink
-        : (isNext ? Tokens.amber : null);
+    final (state, live) = watchOrderState(row);
     final status = row.status;
-    final seen = status == null || row.isLoadingDetails
-        ? null
-        : switch (row.episodes) {
-            final total? when total > 0 => math.min(
-              1.0,
-              row.episodesSeen / total,
-            ),
-            _ => status == EntryStatus.completed ? 1.0 : null,
-          };
+    final total = row.episodes ?? 0;
     return HoverMark(
       on: lit,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: typeTagHeight(context),
+            height: watchOrderMetaHeight(context),
             child: Row(
               children: [
-                TypeTag(row.mediaType, isExtra: row.isExtra),
+                Text(
+                  '$number',
+                  style: AppText.label(
+                    row.isOpenTitle ? Tokens.ink : Tokens.inkSoft,
+                    bold: true,
+                  ),
+                ),
                 const SizedBox(width: Tokens.space2),
                 Expanded(
                   child: OneLineText(
-                    watchOrderWhen(row),
-                    style: AppText.caption(Tokens.inkSoft),
+                    watchOrderMeta(row),
+                    style: AppText.caption(Tokens.inkMuted),
                   ),
                 ),
               ],
             ),
           ),
+          WatchOrderRail(
+            status: row.isLoadingDetails ? null : status,
+            label: watchOrderStateLabel(row),
+            share: total > 0 ? math.min(1.0, row.episodesSeen / total) : 0,
+            travelled: travelled,
+            reachToNext: hasNext ? width + watchOrderGap : null,
+          ),
           const SizedBox(height: Tokens.space2),
           Container(
-            foregroundDecoration: outline == null
-                ? null
-                : BoxDecoration(
-                    border: Border.all(color: outline, width: Tokens.focusRing),
-                  ),
+            foregroundDecoration: row.isOpenTitle
+                ? BoxDecoration(
+                    border: Border.all(
+                      color: Tokens.amber,
+                      width: Tokens.openFrame,
+                    ),
+                  )
+                : null,
             child: _Faded(
               on: status == EntryStatus.completed && !lit,
               child: CoverView(
@@ -341,39 +371,13 @@ class WatchOrderCard extends StatelessWidget {
             ).copyWith(height: Tokens.lineHeightWrapped),
           ),
           const SizedBox(height: Tokens.space1),
-          OneLineText(state, style: _stateStyle(stateColor)),
-          const SizedBox(height: Tokens.space2),
-          _Progress(seen, live: stateColor == Tokens.mint),
+          OneLineText(
+            state,
+            style: _stateStyle(live ? Tokens.mint : Tokens.inkMuted),
+          ),
           const SizedBox(height: Tokens.space2),
         ],
       ),
-    );
-  }
-}
-
-/// How much of a title is watched, as a thin line; nothing for a title not
-/// on the list.
-class _Progress extends StatelessWidget {
-  const _Progress(this.share, {required this.live});
-
-  final double? share;
-  final bool live;
-
-  @override
-  Widget build(BuildContext context) {
-    final share = this.share;
-    return SizedBox(
-      height: Tokens.hoverEdge,
-      child: share == null
-          ? null
-          : ColoredBox(
-              color: Tokens.surface,
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: share,
-                child: ColoredBox(color: live ? Tokens.mint : Tokens.inkMuted),
-              ),
-            ),
     );
   }
 }
@@ -421,36 +425,6 @@ class _Faded extends StatelessWidget {
               colorFilter: ColorFilter.matrix(_matrix(t)),
               child: child,
             ),
-    );
-  }
-}
-
-/// The small type label over a cover: mint for TV and its seasons, amber for
-/// movies, OVAs, specials and the rest.
-class TypeTag extends StatelessWidget {
-  const TypeTag(this.mediaType, {super.key, required this.isExtra});
-
-  final String? mediaType;
-  final bool isExtra;
-
-  @override
-  Widget build(BuildContext context) {
-    final type = mediaType;
-    final story = type == 'tv' && !isExtra;
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: Tokens.space2),
-        alignment: Alignment.center,
-        color: Tokens.surface,
-        child: Text(
-          type == null || type.isEmpty ? '?' : typeName(type),
-          maxLines: 1,
-          softWrap: false,
-          style: AppText.caption(story ? Tokens.mint : Tokens.amber)
-              .copyWith(fontWeight: FontWeight.w700),
-        ),
-      ),
     );
   }
 }

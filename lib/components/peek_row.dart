@@ -5,9 +5,8 @@ import 'package:flutter/widgets.dart';
 import '../design/tokens.dart';
 import '../icons/app_icons.dart';
 import '../icons/icon_def.dart';
-import 'floating_panel.dart';
-import 'icon_square_button.dart';
 import 'motion.dart';
+import 'solid_icon_button.dart';
 
 /// How a peeking row fills its width: [whole] items of [itemWidth], then a
 /// sliver of the next, [Tokens.peekShare] of an item wide. When every item
@@ -81,6 +80,7 @@ class PeekRow extends StatefulWidget {
     required this.itemBuilder,
     required this.arrowTop,
     this.gap = Tokens.space3,
+    this.startAt = 0,
   });
 
   final int count;
@@ -94,6 +94,9 @@ class PeekRow extends StatefulWidget {
   /// pictures rather than on the whole item.
   final double Function(double itemWidth) arrowTop;
   final double gap;
+
+  /// The item to have on screen when the row first shows.
+  final int startAt;
 
   @override
   State<PeekRow> createState() => _PeekRowState();
@@ -151,6 +154,7 @@ class _PeekRowState extends State<PeekRow> {
         );
         final before = _layout;
         _layout = layout;
+        if (before == null) _first = layout.firstShowing(widget.startAt, 0);
         if (before == null ||
             before.itemWidth != layout.itemWidth ||
             before.count != layout.count) {
@@ -233,8 +237,7 @@ class _Arrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FloatingPanel(
-      child: IconSquareButton(icon: icon, label: label, onPressed: onPressed),
-    );
+    // white like the back button in the jump bar, so it reads over covers
+    return SolidIconButton(icon: icon, label: label, onPressed: onPressed);
   }
 }

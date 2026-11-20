@@ -14,8 +14,8 @@ import 'page_picker.dart';
 import 'picker_skeleton.dart';
 
 /// The Detail page of an entry with no MAL page yet: its saved name, a blank
-/// cover, its controls, and the page picker where MAL's details would be. Once a page is picked
-/// the screen swaps this for the normal page.
+/// cover, its controls, and the page picker where MAL's details would be.
+/// Once a page is picked the screen swaps this for the normal page.
 class NotLinkedDetail extends ConsumerWidget {
   const NotLinkedDetail({super.key, required this.entry, required this.onBack});
 
