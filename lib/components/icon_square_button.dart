@@ -32,7 +32,7 @@ class IconSquareButton extends StatelessWidget {
           icon: icon,
           size: Tokens.iconSize,
           color: selected
-              ? Tokens.amber
+              ? Tokens.pop
               : (state.hovered ? Tokens.ink : Tokens.inkMuted),
         ),
       ),

@@ -14,9 +14,9 @@ class HoverMark extends StatelessWidget {
       position: DecorationPosition.foreground,
       decoration: on
           ? BoxDecoration(
-              color: Tokens.mint.withValues(alpha: 0.06),
+              color: Tokens.support.withValues(alpha: 0.06),
               border: const Border(
-                bottom: BorderSide(color: Tokens.mint, width: Tokens.hoverEdge),
+                bottom: BorderSide(color: Tokens.support, width: Tokens.hoverEdge),
               ),
             )
           : const BoxDecoration(),

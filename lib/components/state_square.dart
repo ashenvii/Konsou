@@ -4,7 +4,7 @@ import '../design/tokens.dart';
 import '../library/entry_status.dart';
 
 /// A title's state as a small square, in three looks: a filled check for a
-/// finished title, a mint fill that rises with the episodes while it is under
+/// finished title, a teal fill that rises with the episodes while it is under
 /// way, and an empty outline for everything else. The exact status is said in
 /// words beside it.
 class StateSquare extends StatelessWidget {
@@ -73,9 +73,9 @@ class _SquarePainter extends CustomPainter {
             inner.right,
             inner.bottom,
           ),
-          Paint()..color = Tokens.mint,
+          Paint()..color = Tokens.support,
         );
-        canvas.drawRect(box.deflate(edge / 2), stroke(Tokens.mint));
+        canvas.drawRect(box.deflate(edge / 2), stroke(Tokens.support));
       default:
         canvas.drawRect(box.deflate(edge / 2), stroke(Tokens.inkMuted));
     }

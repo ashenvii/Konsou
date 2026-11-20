@@ -44,7 +44,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             const _Note(
               'Every token and component built so far: the foundations, the '
               'controls, the parts a page is built from, then the icons. The '
-              'mint scrollbar on the right is the one every page gets.',
+              'teal scrollbar on the right is the one every page gets.',
             ),
             const _Section('Colors'),
             const _Colors(),
@@ -167,7 +167,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             const _Note(
               'Straight lines on a fixed grid, only 90 and 45 degrees. '
               'Nekomimi at 20 (logo size) and 96; the score star, the one icon '
-              'off the grid, at 16 and 64; Discover at 20 on the amber rail '
+              'off the grid, at 16 and 64; Discover at 20 on the cyan rail '
               'item.',
             ),
           ],
@@ -379,23 +379,23 @@ class _Icons extends StatelessWidget {
         const AppIcon(
           mascot,
           size: 20,
-          color: Tokens.mint,
+          color: Tokens.support,
           lineColor: Tokens.ground,
         ),
         const SizedBox(width: Tokens.space5),
         const AppIcon(
           mascot,
           size: 96,
-          color: Tokens.mint,
+          color: Tokens.support,
           lineColor: Tokens.ground,
         ),
         const SizedBox(width: Tokens.space5),
-        const ScoreStar(size: Tokens.iconSize, color: Tokens.amber),
+        const ScoreStar(size: Tokens.iconSize, color: Tokens.pop),
         const SizedBox(width: Tokens.space3),
-        const ScoreStar(size: 64, color: Tokens.amber),
+        const ScoreStar(size: 64, color: Tokens.pop),
         const SizedBox(width: Tokens.space5),
         const ColoredBox(
-          color: Tokens.amber,
+          color: Tokens.pop,
           child: SizedBox.square(
             dimension: Tokens.railItemSize,
             child: Center(
@@ -431,8 +431,8 @@ class _Colors extends StatelessWidget {
     ('ink', Tokens.ink),
     ('ink-soft', Tokens.inkSoft),
     ('ink-muted', Tokens.inkMuted),
-    ('amber', Tokens.amber),
-    ('mint', Tokens.mint),
+    ('pop', Tokens.pop),
+    ('support', Tokens.support),
     ('red', Tokens.red),
   ];
 
@@ -567,7 +567,7 @@ class _Space extends StatelessWidget {
               children: [
                 SizedBox(width: 72, child: _Note('$name ${size.toInt()}')),
                 ColoredBox(
-                  color: Tokens.amber,
+                  color: Tokens.pop,
                   child: SizedBox(width: size, height: Tokens.space3),
                 ),
               ],

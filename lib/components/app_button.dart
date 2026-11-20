@@ -35,7 +35,7 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onPressed != null;
     final primary = kind == ButtonKind.primary;
-    final fill = primary && enabled ? Tokens.amber : null;
+    final fill = primary && enabled ? Tokens.pop : null;
     final ink = !enabled
         ? Tokens.inkMuted
         : (primary ? Tokens.ground : Tokens.ink);

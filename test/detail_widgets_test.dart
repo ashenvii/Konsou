@@ -37,7 +37,7 @@ void main() {
     );
   });
 
-  test('a card says the status with its episodes, live ones in mint', () {
+  test('a card says the status with its episodes, live ones in teal', () {
     final rows = sampleWatchOrder.rows;
     expect(watchOrderState(rows[0]), ('Watching 4 / 28', true));
     // a finished title says only its episodes

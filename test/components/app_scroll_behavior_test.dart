@@ -23,7 +23,7 @@ void main() {
     ),
   );
 
-  testWidgets('a desktop list has exactly one scrollbar, the mint one', (
+  testWidgets('a desktop list has exactly one scrollbar, the teal one', (
     tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
@@ -31,7 +31,7 @@ void main() {
       await pumpList(tester);
       final bars = tester.widgetList<RawScrollbar>(find.byType(RawScrollbar));
       expect(bars, hasLength(1));
-      expect(bars.single.thumbColor, Tokens.mint);
+      expect(bars.single.thumbColor, Tokens.support);
       expect(bars.single.thumbVisibility, isTrue);
     } finally {
       debugDefaultTargetPlatformOverride = null;

@@ -57,7 +57,7 @@ void main() {
       );
     });
 
-    testWidgets('selected is an amber icon with no box', (tester) async {
+    testWidgets('selected is a cyan icon with no box', (tester) async {
       await pumpWidget(
         tester,
         Row(
@@ -85,8 +85,8 @@ void main() {
             ),
           )
           .color;
-      // no boxes: the chosen one is an amber icon, the other muted
-      expect(iconOf('Grid view'), Tokens.amber);
+      // no boxes: the chosen one is a cyan icon, the other muted
+      expect(iconOf('Grid view'), Tokens.pop);
       expect(iconOf('List view'), Tokens.inkMuted);
       expect(fillOf(tester, find.bySemanticsLabel('List view')), isNull);
     });

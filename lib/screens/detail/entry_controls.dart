@@ -14,7 +14,7 @@ import 'episode_count.dart';
 
 /// The user's own controls for a title, under its name on the Detail page.
 /// On the list: the status menu button, minus and plus around the progress,
-/// and the count. Off the list: an amber "Add to list" that opens the same
+/// and the count. Off the list: a cyan "Add to list" that opens the same
 /// menu. [statusOnly] keeps just the status button, for the jump bar.
 class EntryControls extends StatelessWidget {
   const EntryControls({

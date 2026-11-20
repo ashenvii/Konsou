@@ -22,7 +22,7 @@ class ToastTimer extends StatelessWidget {
           if (share <= 0) return const SizedBox.shrink();
           final color = !running
               ? Tokens.inkMuted
-              : (share <= urgentBelow ? Tokens.amber : Tokens.inkSoft);
+              : (share <= urgentBelow ? Tokens.pop : Tokens.inkSoft);
           return Align(
             alignment: Alignment.centerLeft,
             child: FractionallySizedBox(

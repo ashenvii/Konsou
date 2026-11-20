@@ -40,7 +40,7 @@ class StatusMark extends StatelessWidget {
     return AppIcon(
       iconFor(status),
       size: Tokens.iconSize,
-      color: status == EntryStatus.completed && green ? Tokens.mint : color,
+      color: status == EntryStatus.completed && green ? Tokens.support : color,
     );
   }
 }

@@ -2,18 +2,24 @@ import 'package:flutter/painting.dart';
 
 abstract final class Tokens {
   // colors
-  static const Color ground = Color(0xFF060A0D);
-  static const Color ink = Color(0xFFF4F5F5);
-  static const Color inkSoft = Color(0xFFBCC1C4);
-  static const Color inkMuted = Color(0xFF748992);
-  static const Color amber = Color(0xFFF2B33D);
-  static const Color mint = Color(0xFF3DD6A0);
-  static const Color red = Color(0xFFE94D52);
-  // fill of secondary buttons, fields and panels (approved 2026-11-08).
-  static const Color surface = Color(0xFF0E1E24);
-  // floating panels and hairlines: even OKLCH steps at ground's hue (owner, 2026-11-12)
-  static const Color raised = Color(0xFF121B20);
-  static const Color line = Color(0xFF384147);
+  // scheme 12 of visme.co/blog/website-color-schemes, picked by the owner
+  // 2026-11-21: ground, surface, ink, pop and support are its five colors.
+  // ink-soft and ink-muted are ink stepped toward ground; red is not in the
+  // scheme and is lifted to keep 4.5:1 on surface.
+  static const Color ground = Color(0xFF0D0E12);
+  static const Color ink = Color(0xFFC5C6CA);
+  static const Color inkSoft = Color(0xFFA9AAAE);
+  static const Color inkMuted = Color(0xFF8E8F94);
+  // the one bright color: main action, current place, your score
+  static const Color pop = Color(0xFF6AFBEE);
+  // done marks, tags and live counts
+  static const Color support = Color(0xFF46A29F);
+  static const Color red = Color(0xFFEF5A5F);
+  // fill of secondary buttons, fields and panels
+  static const Color surface = Color(0xFF1C232B);
+  // floating panels and hairlines: halfway between ground and surface
+  static const Color raised = Color(0xFF14181E);
+  static const Color line = Color(0xFF3A3D44);
   static const Color shadow = Color(0x8C000000);
 
   // radius: square everywhere
@@ -75,14 +81,14 @@ abstract final class Tokens {
   static const double findFieldWidth = 240;
 
   // key cap C, locked by the owner 2026-11-13: a face and a slab under it
-  static const Color keyFace = Color(0xFF303B42);
-  static const Color keySlab = Color(0xFF262F35);
+  static const Color keyFace = Color(0xFF2E343C);
+  static const Color keySlab = Color(0xFF242A31);
   static const double keyDepth = 4;
   static const double keyPadX = 6;
   static const double keyPadY = 2;
 
   // the quick search button in the top bar
-  static const Color wellEdge = Color(0xFF101518);
+  static const Color wellEdge = Color(0xFF14161A);
   static const double quickSearchWidth = 280;
   static const double quickSearchHeight = 28;
 
@@ -109,7 +115,7 @@ abstract final class Tokens {
   static const double stateSquare = 16;
   static const double railLaneHeight = 24;
   static const double railDash = 4;
-  // the amber frame on the open title's cover
+  // the pop frame on the open title's cover
   static const double openFrame = 4;
 
   // line height for text that can wrap onto a second line (owner, 2026-11-13);

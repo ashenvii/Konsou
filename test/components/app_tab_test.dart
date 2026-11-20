@@ -7,7 +7,7 @@ import 'package:konsou/design/tokens.dart';
 import '../support/pump_widget.dart';
 
 void main() {
-  testWidgets('selected is amber, the others have no fill', (tester) async {
+  testWidgets('selected is cyan, the others have no fill', (tester) async {
     await pumpWidget(
       tester,
       Row(
@@ -18,7 +18,7 @@ void main() {
         ],
       ),
     );
-    expect(fillOf(tester, find.widgetWithText(AppTab, 'Browse')), Tokens.amber);
+    expect(fillOf(tester, find.widgetWithText(AppTab, 'Browse')), Tokens.pop);
     expect(fillOf(tester, find.widgetWithText(AppTab, 'Top 10')), isNull);
   });
 
@@ -79,7 +79,7 @@ void main() {
       tester,
       AppTab(label: 'Watching', selected: false, count: 5, onPressed: () {}),
     );
-    expect(fillOf(tester, find.byType(CountBadge)), Tokens.mint);
+    expect(fillOf(tester, find.byType(CountBadge)), Tokens.support);
   });
 
   testWidgets('tab width is the label plus 16 each side', (tester) async {

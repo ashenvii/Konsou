@@ -251,7 +251,7 @@ void main() {
     );
   });
 
-  testWidgets('the facts are one quiet line, the episode count amber', (
+  testWidgets('the facts are one quiet line, the episode count cyan', (
     tester,
   ) async {
     await open(tester, title, page: onList, size: const Size(1800, 900));
@@ -264,7 +264,7 @@ void main() {
       find.descendant(of: scores, matching: find.textContaining('episodes')),
     );
     final number = (episodes.textSpan! as TextSpan).children!.first as TextSpan;
-    expect(number.style?.color, Tokens.amber);
+    expect(number.style?.color, Tokens.pop);
     final rank = tester.widget<Text>(
       find.descendant(of: scores, matching: find.textContaining('rank')),
     );

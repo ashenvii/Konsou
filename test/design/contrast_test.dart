@@ -15,8 +15,8 @@ void main() {
     'ink': Tokens.ink,
     'inkSoft': Tokens.inkSoft,
     'inkMuted': Tokens.inkMuted,
-    'amber': Tokens.amber,
-    'mint': Tokens.mint,
+    'pop': Tokens.pop,
+    'support': Tokens.support,
     'red': Tokens.red,
   };
 

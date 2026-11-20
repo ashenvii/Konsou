@@ -3,9 +3,9 @@ import 'package:flutter/widgets.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 
-/// A small mint count, always the real number; the badge grows to fit it.
-/// [onAccent] is for a badge on an amber fill, where mint would vanish: it
-/// turns dark with a mint number.
+/// A small teal count, always the real number; the badge grows to fit it.
+/// [onAccent] is for a badge on a cyan fill, where teal would vanish: it
+/// turns dark with a teal number.
 class CountBadge extends StatelessWidget {
   const CountBadge(this.count, {super.key, this.onAccent = false});
 
@@ -25,7 +25,7 @@ class CountBadge extends StatelessWidget {
           maxHeight: Tokens.badgeSize,
         ),
         child: ColoredBox(
-          color: onAccent ? Tokens.ground : Tokens.mint,
+          color: onAccent ? Tokens.ground : Tokens.support,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: Tokens.space1),
             child: Center(
@@ -35,7 +35,7 @@ class CountBadge extends StatelessWidget {
               child: Text(
                 text,
                 textScaler: TextScaler.noScaling,
-                style: AppText.count(onAccent ? Tokens.mint : Tokens.ground),
+                style: AppText.count(onAccent ? Tokens.support : Tokens.ground),
               ),
             ),
           ),

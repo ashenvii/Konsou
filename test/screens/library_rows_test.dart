@@ -272,7 +272,7 @@ void main() {
           matching: find.byType(AppIcon),
         ),
       );
-      expect(icon.color, Tokens.mint);
+      expect(icon.color, Tokens.support);
     });
 
     testWidgets('a franchise with a season left is not green', (tester) async {

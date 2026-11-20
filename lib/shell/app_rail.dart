@@ -104,7 +104,7 @@ class _RailItem extends StatelessWidget {
                             destination.icon,
                             size: Tokens.iconSize,
                             color: active
-                                ? Tokens.amber
+                                ? Tokens.pop
                                 : (state.hovered
                                       ? Tokens.ink
                                       : Tokens.inkMuted),
@@ -119,7 +119,7 @@ class _RailItem extends StatelessWidget {
                       top: Tokens.space2,
                       bottom: Tokens.space2,
                       width: Tokens.hoverEdge,
-                      child: ColoredBox(color: Tokens.amber),
+                      child: ColoredBox(color: Tokens.pop),
                     ),
                 ],
               ),

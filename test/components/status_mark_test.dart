@@ -21,7 +21,7 @@ void main() {
       final icon = tester.widget<AppIcon>(find.byType(AppIcon));
       expect(
         icon.color,
-        status == EntryStatus.completed ? Tokens.mint : Tokens.ink,
+        status == EntryStatus.completed ? Tokens.support : Tokens.ink,
         reason: status.name,
       );
     }

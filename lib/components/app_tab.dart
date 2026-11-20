@@ -6,7 +6,7 @@ import 'menu_chevron.dart';
 import 'pressable.dart';
 import 'weight_text.dart';
 
-/// One tab. The selected tab is a filled amber block. Put tabs side by side in
+/// One tab. The selected tab is a filled cyan block. Put tabs side by side in
 /// a Row; the padding gives the gap.
 class AppTab extends StatelessWidget {
   const AppTab({
@@ -39,7 +39,7 @@ class AppTab extends StatelessWidget {
         return Container(
           height: Tokens.controlHeight,
           padding: const EdgeInsets.symmetric(horizontal: Tokens.space4),
-          color: selected ? Tokens.amber : null,
+          color: selected ? Tokens.pop : null,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

@@ -105,9 +105,9 @@ final _band = DecoratedBox(
   decoration: BoxDecoration(
     gradient: LinearGradient(
       colors: [
-        Tokens.mint.withValues(alpha: 0),
-        Tokens.mint.withValues(alpha: 0.38),
-        Tokens.mint.withValues(alpha: 0),
+        Tokens.support.withValues(alpha: 0),
+        Tokens.support.withValues(alpha: 0.38),
+        Tokens.support.withValues(alpha: 0),
       ],
       stops: const [0.3, 0.5, 0.7],
     ),

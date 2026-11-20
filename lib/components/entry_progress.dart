@@ -93,7 +93,7 @@ class _ProgressPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (total <= 0) return;
     final track = Paint()..color = Tokens.line;
-    final fill = Paint()..color = Tokens.amber;
+    final fill = Paint()..color = Tokens.pop;
     if (!steps) {
       canvas.drawRect(Offset.zero & size, track);
       final share = (watched / total).clamp(0.0, 1.0);

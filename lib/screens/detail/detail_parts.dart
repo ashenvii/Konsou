@@ -275,7 +275,7 @@ class _ClampedState extends State<_Clamped> {
                 builder: (context, state) => Text(
                   _open ? 'Less' : 'More',
                   style: AppText.label(
-                    state.hovered || state.focused ? Tokens.ink : Tokens.amber,
+                    state.hovered || state.focused ? Tokens.ink : Tokens.pop,
                     bold: true,
                   ),
                 ),
@@ -325,9 +325,9 @@ class StatsPart extends StatelessWidget {
     final statuses = counts == null
         ? const <(String, int, Color)>[]
         : [
-            ('Watching', counts.watching, Tokens.mint),
+            ('Watching', counts.watching, Tokens.support),
             ('Completed', counts.completed, Tokens.inkSoft),
-            ('On hold', counts.onHold, Tokens.amber),
+            ('On hold', counts.onHold, Tokens.pop),
             ('Dropped', counts.dropped, Tokens.red),
             ('Plan to watch', counts.planned, Tokens.line),
           ];
@@ -670,7 +670,7 @@ class _SongRow extends ConsumerWidget {
           child: const AppIcon(
             AppIcons.search,
             size: Tokens.iconSize,
-            color: Tokens.amber,
+            color: Tokens.pop,
           ),
         ),
       ],

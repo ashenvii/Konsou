@@ -50,7 +50,7 @@ class TrailersPart extends StatelessWidget {
   }
 }
 
-/// A trailer: its picture with a play mark that turns amber under the
+/// A trailer: its picture with a play mark that turns cyan under the
 /// pointer, its name, and where it plays.
 class _VideoTile extends ConsumerWidget {
   const _VideoTile({
@@ -94,7 +94,7 @@ class _VideoTile extends ConsumerWidget {
                     width: Tokens.controlHeight,
                     height: Tokens.controlHeight,
                     alignment: Alignment.center,
-                    color: lit ? Tokens.amber : Tokens.ink,
+                    color: lit ? Tokens.pop : Tokens.ink,
                     child: const AppIcon(
                       AppIcons.play,
                       size: Tokens.iconSize,
@@ -445,7 +445,7 @@ class _MangaRow extends StatelessWidget {
         AppIcon(
           AppIcons.external,
           size: Tokens.iconSize,
-          color: lit ? Tokens.amber : Tokens.inkMuted,
+          color: lit ? Tokens.pop : Tokens.inkMuted,
         ),
       ],
     );

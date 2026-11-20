@@ -5,7 +5,7 @@ import 'pressable.dart';
 
 enum CheckValue { empty, checked, excluded }
 
-/// Empty, checked (amber with a check) or excluded (a red minus). With
+/// Empty, checked (cyan with a check) or excluded (a red minus). With
 /// [allowExclude] off it only switches between empty and checked.
 class AppCheckbox extends StatelessWidget {
   const AppCheckbox({
@@ -61,13 +61,13 @@ class _BoxPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const w = Tokens.checkboxBorder;
     final checked = value == CheckValue.checked;
-    // an empty box under the pointer fills mint; the click turns it amber
+    // an empty box under the pointer fills teal; the click turns it cyan
     final lit = hovered && value == CheckValue.empty;
     final edge = Paint()
       ..color = checked
-          ? Tokens.amber
+          ? Tokens.pop
           : lit
-          ? Tokens.mint
+          ? Tokens.support
           : Tokens.inkMuted
       ..style = PaintingStyle.stroke
       ..strokeWidth = w
@@ -75,7 +75,7 @@ class _BoxPainter extends CustomPainter {
     if (checked || lit) {
       canvas.drawRect(
         Offset.zero & size,
-        Paint()..color = checked ? Tokens.amber : Tokens.mint,
+        Paint()..color = checked ? Tokens.pop : Tokens.support,
       );
     }
     canvas.drawRect(

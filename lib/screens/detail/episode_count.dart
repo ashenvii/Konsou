@@ -116,7 +116,7 @@ class _EpisodeCountState extends State<EpisodeCount> {
               decoration: BoxDecoration(
                 color: Tokens.ground,
                 border: Border.all(
-                  color: Tokens.amber,
+                  color: Tokens.pop,
                   width: Tokens.focusRing,
                 ),
               ),

@@ -1,20 +1,20 @@
 ---
 name: Konsou
-description: A flat, square, dark anime tracker where amber marks the chosen thing and mint marks what is live.
+description: A flat, square, dark anime tracker where cyan pop marks the chosen thing and teal marks what is done or live.
 colors:
-  ground: "#060A0D"
-  surface: "#0E1E24"
-  raised: "#121B20"
-  line: "#384147"
-  ink: "#F4F5F5"
-  ink-soft: "#BCC1C4"
-  ink-muted: "#748992"
-  amber: "#F2B33D"
-  mint: "#3DD6A0"
-  red: "#E94D52"
-  key-face: "#303B42"
-  key-slab: "#262F35"
-  well-edge: "#101518"
+  ground: "#0D0E12"
+  surface: "#1C232B"
+  raised: "#14181E"
+  line: "#3A3D44"
+  ink: "#C5C6CA"
+  ink-soft: "#A9AAAE"
+  ink-muted: "#8E8F94"
+  pop: "#6AFBEE"
+  support: "#46A29F"
+  red: "#EF5A5F"
+  key-face: "#2E343C"
+  key-slab: "#242A31"
+  well-edge: "#14161A"
 typography:
   heading:
     fontFamily: "IBM Plex Sans, system-ui, sans-serif"
@@ -51,7 +51,7 @@ spacing:
   space-5: "24px"
 components:
   button-primary:
-    backgroundColor: "{colors.amber}"
+    backgroundColor: "{colors.pop}"
     textColor: "{colors.ground}"
     rounded: "{rounded.square}"
     height: "36px"
@@ -81,39 +81,39 @@ components:
 
 ## Overview
 
-One flat dark ground, square edges, and almost no color, so that the few marks that do carry color (amber for the chosen thing, mint for what is live) read at once. It is an Operate surface: the user is scanning hundreds of entries and changing a status in two keystrokes, so familiarity and speed outrank expression. Personality lives in details: the Nekomimi, the key caps, the live edge under a hovered control.
+One flat dark ground, square edges, and almost no color, so that the few marks that do carry color (pop cyan for the chosen thing, support teal for what is done or live) read at once. It is an Operate surface: the user is scanning hundreds of entries and changing a status in two keystrokes, so familiarity and speed outrank expression. Personality lives in details: the Nekomimi, the key caps, the live edge under a hovered control.
 
 **Key Characteristics:**
 - One dark ground with two fill steps above it. No gradients inside content, no rounded corners.
-- Color is rare and carries meaning. Amber chooses, mint is live, red removes.
+- Color is rare and carries meaning. Pop chooses, support is done or live, red removes.
 - Plex Sans for words, Plex Mono for numbers and labels. Weights regular and bold only.
 - Hairline separation through tone, not lines. Hover is a live edge, not a box.
 
 ## Colors
 
-A near-black teal ground with cool grey inks and two signal colors.
+A near-black blue-grey ground with cool grey inks, one bright pop and one quiet support color. All five main colors are scheme 12 of visme.co/blog/website-color-schemes, picked by the owner on 2026-11-21.
 
 ### Primary
-- **Lantern Amber** (#F2B33D): the chosen state and the primary button. An amber icon with no fill marks the selected item; in the rail an amber mark sits on its edge.
+- **Pop Cyan** (#6AFBEE): the chosen state and the primary button. A cyan icon with no fill marks the selected item; in the rail a cyan mark sits on its edge.
 
 ### Secondary
-- **Live Mint** (#3DD6A0): live things and counts: the rail badge, status dots, a finished title's check, the hover edge.
+- **Support Teal** (#46A29F): done and live things: the rail badge, status dots, a finished title's check, tags, the hover edge.
 
 ### Tertiary
-- **Remove Red** (#E94D52): remove, exclude, sync lost. Never the only cue. Lifted from #E5484D on 2026-11-13 to pass 4.5:1 on every fill (4.54 on panel).
+- **Remove Red** (#EF5A5F): remove, exclude, sync lost. Never the only cue. Not in the scheme; lifted from #E94D52 on 2026-11-21 to pass 4.5:1 on Panel Slate (about 4.7).
 
 ### Neutral
-- **Night Ground** (#060A0D): the page, rail and top bar.
-- **Panel Teal** (#0E1E24): fields, secondary buttons, panels, skeletons.
-- **Raised Teal** (#121B20): menus and popovers.
-- **Divider Slate** (#384147): the hairline inside menus. Decoration only.
-- **Ink** (#F4F5F5), **Soft Ink** (#BCC1C4), **Muted Ink** (#748992): main, secondary and meta text.
-- **Key Face** (#303B42) and **Key Slab** (#262F35, the hairline tone, so the key's side shows against the ground): the two steps of a key cap. **Well Edge** (#101518): the top cut of the dropped search well.
+- **Night Ground** (#0D0E12): the page, rail and top bar.
+- **Panel Slate** (#1C232B): fields, secondary buttons, panels, skeletons.
+- **Raised Slate** (#14181E): menus and popovers.
+- **Divider Slate** (#3A3D44): the hairline inside menus. Decoration only.
+- **Ink** (#C5C6CA), **Soft Ink** (#A9AAAE), **Muted Ink** (#8E8F94): main, secondary and meta text. Soft and Muted are Ink stepped toward the ground.
+- **Key Face** (#2E343C) and **Key Slab** (#242A31, the hairline tone, so the key's side shows against the ground): the two steps of a key cap. **Well Edge** (#14161A): the top cut of the dropped search well.
 
 ### Named Rules
-**The Rare Color Rule.** Amber, mint and red together cover a small part of any screen. If a screen needs a second place to look, it is wrong.
-**The No Color Alone Rule.** Every state has a shape, word or position as well as its color. The Completed check is a check mark first and green second.
-**The Muted Ink Rule.** Muted Ink (#748992) is 5.33:1 on the ground, 4.61:1 on Panel Teal and 4.77:1 on Raised Teal, so it passes 4.5:1 on every fill (lifted from #6E838C on 2026-11-13). Check any new fill before putting meta text on it.
+**The Rare Color Rule.** Pop, support and red together cover a small part of any screen. If a screen needs a second place to look, it is wrong.
+**The No Color Alone Rule.** Every state has a shape, word or position as well as its color. The Completed check is a check mark first and teal second.
+**The Muted Ink Rule.** Muted Ink (#8E8F94) is about 5.9:1 on the ground, 4.8:1 on Panel Slate and 5.4:1 on Raised Slate, so it passes 4.5:1 on every fill. Check any new fill before putting meta text on it.
 
 ## Typography
 
@@ -152,21 +152,21 @@ Radius is 0 everywhere. No pills, no circles except the mascot's own geometry. I
 
 ### Buttons
 - **Shape:** square, 36 tall.
-- **Primary:** amber fill, Ground text.
-- **Secondary:** Panel Teal fill, Ink text. A transparent variant exists for the one-time green shimmer.
-- **Hover / Focus:** hover is the live edge (faint mint wash and a 2px mint line underneath) and brighter text; focus is a 2px Ink ring on every pressable.
+- **Primary:** pop fill, Ground text.
+- **Secondary:** Panel Slate fill, Ink text. A transparent variant exists for the one-time green shimmer.
+- **Hover / Focus:** hover is the live edge (faint teal wash and a 2px teal line underneath) and brighter text; focus is a 2px Ink ring on every pressable.
 
 ### Menus and popovers
-- **Style:** Raised Teal, status names left, counts or shortcut keys right, a divider between groups, an optional footnote. One `AppMenu` serves every dropdown, including the sort and the status switcher.
+- **Style:** Raised Slate, status names left, counts or shortcut keys right, a divider between groups, an optional footnote. One `AppMenu` serves every dropdown, including the sort and the status switcher.
 
 ### Inputs / Fields
-- **Style:** Panel Teal, 36 tall, Soft Ink icon, an Esc hint. The top search is the dropped well: Ground fill, 2px Well Edge top, faint lip, centred, with key caps.
+- **Style:** Panel Slate, 36 tall, Soft Ink icon, an Esc hint. The top search is the dropped well: Ground fill, 2px Well Edge top, faint lip, centred, with key caps.
 
 ### Key caps
 - **Style:** a Key Face over a 4px Key Slab, mono 11 bold, joined by a muted plus. They size to whatever keys the user sets.
 
 ### Navigation
-- **Style:** the Windows rail holds icons only, amber mark on the active item, mint count badge on Watching. Each icon shows its name in a hover tip beside it (a Raised Teal panel, Ink text, no click taken). Android gets labels on the bottom bar.
+- **Style:** the Windows rail holds icons only, cyan mark on the active item, teal count badge on Watching. Each icon shows its name in a hover tip beside it (a Raised Slate panel, Ink text, no click taken). Android gets labels on the bottom bar.
 
 ### Toast
 - **Style:** bottom, max 480 wide, an optional 2px timer bar, actions and a star rating. Pauses on hover.
@@ -182,7 +182,7 @@ Radius is 0 everywhere. No pills, no circles except the mascot's own geometry. I
 
 ### Don't:
 - **Don't** round anything or add a border, box or shadow at rest.
-- **Don't** use Muted Ink on Panel Teal or Raised Teal.
+- **Don't** use Muted Ink on Panel Slate or Raised Slate.
 - **Don't** let an icon pass redraw the Nekomimi.
 - **Don't** add a modal where an inline or popover answer exists.
 - **Don't** add a token or color without the owner's approval.

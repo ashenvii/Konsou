@@ -7,7 +7,7 @@ import 'hover_popover.dart';
 import 'menu_chevron.dart';
 import 'pressable.dart';
 
-/// A word (and an optional count) with an amber chevron that opens an
+/// A word (and an optional count) with a cyan chevron that opens an
 /// [AppMenu] on hover or click. The Library's status heading and its sort
 /// button are both this, so they open, close and light up the same way.
 class MenuSwitcher extends StatelessWidget {
@@ -60,7 +60,7 @@ class MenuSwitcher extends StatelessWidget {
                       ),
                     ),
                   ],
-                  MenuChevron(color: Tokens.amber, open: handle.isOpen),
+                  MenuChevron(color: Tokens.pop, open: handle.isOpen),
                 ],
               ),
             ),

@@ -36,7 +36,7 @@ Operate mode. The user is completing small tasks (change a status, add an episod
 ## Brand Commitments
 
 - The Nekomimi is a logo and mascot, not an icon. It keeps its own painting and must not be redrawn by an icon pass.
-- Square corners, one flat dark ground, amber for the chosen thing, mint for live things. The owner's approved screenshots in `notes/design/` are the visual source.
+- Square corners, one flat dark ground, cyan pop for the chosen thing, teal for done and live things. The owner's approved screenshots in `notes/design/` are the visual source.
 
 ## Evidence on Hand
 

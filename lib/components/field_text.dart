@@ -14,7 +14,7 @@ class FieldText extends StatelessWidget {
     required this.style,
     // soft ink: muted ink on the surface fill is under 4.5:1
     this.placeholderColor = Tokens.inkSoft,
-    this.cursorColor = Tokens.amber,
+    this.cursorColor = Tokens.pop,
     this.autofocus = false,
     this.multiline = false,
     this.onChanged,

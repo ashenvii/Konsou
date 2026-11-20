@@ -66,7 +66,7 @@ class _StarRatingState extends State<StarRating> {
                       ),
                       child: ScoreStar(
                         size: Tokens.iconSize,
-                        color: score <= lit ? Tokens.amber : Tokens.inkMuted,
+                        color: score <= lit ? Tokens.pop : Tokens.inkMuted,
                       ),
                     ),
                   ),
@@ -86,7 +86,7 @@ class _StarRatingState extends State<StarRating> {
               Text(
                 caption,
                 style: AppText.label(
-                  hover != null ? Tokens.amber : Tokens.inkSoft,
+                  hover != null ? Tokens.pop : Tokens.inkSoft,
                 ),
               ),
             ],

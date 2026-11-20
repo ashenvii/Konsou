@@ -58,15 +58,15 @@ void main() {
       )
       .color;
 
-  testWidgets('only the page showing is amber, with a mark on the edge', (
+  testWidgets('only the page showing is cyan, with a mark on the edge', (
     tester,
   ) async {
     await pumpRail(tester, discoverPath);
-    expect(iconOf(tester, 'Discover'), Tokens.amber);
+    expect(iconOf(tester, 'Discover'), Tokens.pop);
     final mark = find.descendant(
       of: find.bySemanticsLabel('Discover'),
       matching: find.byWidgetPredicate(
-        (widget) => widget is ColoredBox && widget.color == Tokens.amber,
+        (widget) => widget is ColoredBox && widget.color == Tokens.pop,
       ),
     );
     expect(tester.getSize(mark).width, Tokens.hoverEdge);
@@ -78,7 +78,7 @@ void main() {
   testWidgets('Library is active only on its own path', (tester) async {
     await pumpRail(tester, watchingPath);
     expect(iconOf(tester, 'Library'), Tokens.inkMuted);
-    expect(iconOf(tester, 'Watching'), Tokens.amber);
+    expect(iconOf(tester, 'Watching'), Tokens.pop);
   });
 
   testWidgets('a tap names the place', (tester) async {

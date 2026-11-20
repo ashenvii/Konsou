@@ -42,7 +42,7 @@ String watchOrderStateLabel(WatchOrderRow row) {
 }
 
 /// The line under a title's name: the status in words with its episodes, live
-/// ones in mint. A finished title says only its episodes.
+/// ones in teal. A finished title says only its episodes.
 (String, bool) watchOrderState(WatchOrderRow row) {
   if (row.isLoadingDetails) return ('', false);
   final status = row.status;
@@ -274,8 +274,8 @@ void setOrAdd(WidgetRef ref, WatchOrderRow row, EntryStatus status) {
 
 /// One title of the watch order: its release number, date and type, its stop
 /// on the line, then its cover, name and its state in words. A finished
-/// title's cover is dimmed until [lit]. The open title's cover has an amber
-/// frame, the only amber on the strip.
+/// title's cover is dimmed until [lit]. The open title's cover has a cyan
+/// frame, the only cyan on the strip.
 class WatchOrderCard extends StatelessWidget {
   const WatchOrderCard({
     super.key,
@@ -342,7 +342,7 @@ class WatchOrderCard extends StatelessWidget {
             foregroundDecoration: row.isOpenTitle
                 ? BoxDecoration(
                     border: Border.all(
-                      color: Tokens.amber,
+                      color: Tokens.pop,
                       width: Tokens.openFrame,
                     ),
                   )
@@ -373,7 +373,7 @@ class WatchOrderCard extends StatelessWidget {
           const SizedBox(height: Tokens.space1),
           OneLineText(
             state,
-            style: _stateStyle(live ? Tokens.mint : Tokens.inkMuted),
+            style: _stateStyle(live ? Tokens.support : Tokens.inkMuted),
           ),
           const SizedBox(height: Tokens.space2),
         ],

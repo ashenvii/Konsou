@@ -7,7 +7,7 @@ import '../../icons/score_star.dart';
 
 /// The page's second voice after the title: the MAL score and [mine], the
 /// user's own, large, then a quiet line of facts, rank, popularity, the share
-/// who finish it and the episodes, the episode count in amber. Wraps on a
+/// who finish it and the episodes, the episode count in cyan. Wraps on a
 /// narrow window. With none of these it draws nothing.
 class DetailScores extends StatelessWidget {
   const DetailScores({super.key, required this.details, this.mine});
@@ -34,7 +34,7 @@ class DetailScores extends StatelessWidget {
       if (share != null && share > 0)
         _Fact('${(share * 100).round()}%', 'finish it'),
       if (episodes != null && episodes > 0)
-        _Fact('$episodes', 'episodes', amber: true),
+        _Fact('$episodes', 'episodes', cyan: true),
     ];
     return Wrap(
       spacing: Tokens.space5 + Tokens.space4,
@@ -60,13 +60,13 @@ class DetailScores extends StatelessWidget {
 
 /// A fact in the quiet line: its number a step brighter than its word.
 class _Fact extends StatelessWidget {
-  const _Fact(this.value, this.label, {this.amber = false});
+  const _Fact(this.value, this.label, {this.cyan = false});
 
   final String value;
   final String label;
 
   /// The one fact that stands out, the episode count.
-  final bool amber;
+  final bool cyan;
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +76,7 @@ class _Fact extends StatelessWidget {
           TextSpan(
             text: value,
             style: AppText.label(
-              amber ? Tokens.amber : Tokens.inkSoft,
+              cyan ? Tokens.pop : Tokens.inkSoft,
               bold: true,
             ),
           ),
@@ -87,10 +87,10 @@ class _Fact extends StatelessWidget {
   }
 }
 
-/// A score as the Detail page shows one: an amber star and the number large
+/// A score as the Detail page shows one: a cyan star and the number large
 /// and bright, over its [label] in muted ink. With no [value] the star is
 /// grey and [empty] stands in; a score the user can set says so instead,
-/// with a small star and an amber [empty] such as "Rate", so it never weighs
+/// with a small star and a cyan [empty] such as "Rate", so it never weighs
 /// as much as a real score. [lit] brightens it under the pointer.
 class ScoreFigure extends StatelessWidget {
   const ScoreFigure({
@@ -120,14 +120,14 @@ class ScoreFigure extends StatelessWidget {
           children: [
             ScoreStar(
               size: value == null && settable ? Tokens.text3 : Tokens.text4,
-              color: value == null ? Tokens.inkMuted : Tokens.amber,
+              color: value == null ? Tokens.inkMuted : Tokens.pop,
             ),
             const SizedBox(width: Tokens.space2),
             Text(
               value ?? empty,
               style: switch ((value, settable)) {
                 (null, true) => AppText.label(
-                  lit ? Tokens.ink : Tokens.amber,
+                  lit ? Tokens.ink : Tokens.pop,
                   bold: true,
                 ),
                 (null, false) => AppText.caption(Tokens.inkMuted),

@@ -34,7 +34,7 @@ class TextAction extends StatelessWidget {
             style: AppText.label(
               onPressed == null
                   ? Tokens.inkMuted
-                  : (quiet ? Tokens.ink : Tokens.amber),
+                  : (quiet ? Tokens.ink : Tokens.pop),
               bold: true,
             ),
           ),

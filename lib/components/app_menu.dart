@@ -129,7 +129,7 @@ class _MenuRow extends StatelessWidget {
                             child: AppIcon(
                               AppIcons.check,
                               size: Tokens.iconSize,
-                              color: entry.destructive ? ink : Tokens.amber,
+                              color: entry.destructive ? ink : Tokens.pop,
                             ),
                           )
                         : null,

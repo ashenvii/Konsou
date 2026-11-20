@@ -171,7 +171,7 @@ class _Score extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        ScoreStar(size: Tokens.iconSize, color: Tokens.amber),
+        ScoreStar(size: Tokens.iconSize, color: Tokens.pop),
         const SizedBox(width: Tokens.space1),
         Text('$score', style: AppText.tally(Tokens.ink, size: Tokens.text1)),
       ],

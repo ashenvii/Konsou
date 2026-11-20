@@ -228,7 +228,7 @@ class _StripState extends State<_Strip> {
                         letter,
                         style: AppText.caption(
                           probe?.letter == letter
-                              ? Tokens.amber
+                              ? Tokens.pop
                               : (widget.present.contains(letter)
                                     ? Tokens.inkSoft
                                     : Tokens.inkMuted),
@@ -265,7 +265,7 @@ class _Bubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: Tokens.space2),
       child: ColoredBox(
-        color: Tokens.amber,
+        color: Tokens.pop,
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: Tokens.space4,

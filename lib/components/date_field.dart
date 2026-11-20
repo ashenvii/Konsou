@@ -66,7 +66,7 @@ class DateField extends StatelessWidget {
                     ),
                   ),
                 ),
-                MenuChevron(color: Tokens.amber, open: handle.isOpen),
+                MenuChevron(color: Tokens.pop, open: handle.isOpen),
                 const SizedBox(width: Tokens.space2),
               ],
             ),
@@ -231,7 +231,7 @@ class _MonthGridState extends State<_MonthGrid> {
           width: cell,
           height: cell,
           alignment: Alignment.center,
-          color: isSelected ? Tokens.amber : null,
+          color: isSelected ? Tokens.pop : null,
           child: Text(
             '$day',
             style:
@@ -240,7 +240,7 @@ class _MonthGridState extends State<_MonthGrid> {
                       ? Tokens.ground
                       : !allowed
                       ? Tokens.inkMuted
-                      : (isToday ? Tokens.mint : Tokens.ink),
+                      : (isToday ? Tokens.support : Tokens.ink),
                 ).copyWith(
                   fontWeight: isSelected || isToday ? FontWeight.w700 : null,
                 ),

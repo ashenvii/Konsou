@@ -34,7 +34,7 @@ class DetailBackButton extends StatelessWidget {
 }
 
 /// The Detail page's section names in a row under its top, each jumping to
-/// its part of the page, the one in view underlined in amber. It sticks to
+/// its part of the page, the one in view underlined in cyan. It sticks to
 /// the top as the page scrolls, and once [stuck] the back button, a small
 /// cover and the title slide in at its left and [status] at its right, so it
 /// becomes the page's bar. Names that do not fit go under More.
@@ -303,7 +303,7 @@ class _Sections extends StatelessWidget {
 }
 
 /// One name in the jump bar: muted, brighter under the pointer, and the one
-/// in view in full ink over an amber line.
+/// in view in full ink over a cyan line.
 class _JumpTab extends StatelessWidget {
   const _JumpTab({
     required this.label,
@@ -334,7 +334,7 @@ class _JumpTab extends StatelessWidget {
             border: Border(
               bottom: BorderSide(
                 color: selected
-                    ? Tokens.amber
+                    ? Tokens.pop
                     : Tokens.ground.withValues(alpha: 0),
                 width: Tokens.hoverEdge,
               ),
