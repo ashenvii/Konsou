@@ -5,8 +5,8 @@ import 'package:konsou/screens/library/grid_layout.dart';
 
 void main() {
   test('as many columns as fit at the minimum card width and the gap', () {
-    // 5 cards of 168 with 4 gaps of 16 is 904
-    final layout = GridLayout.forWidth(904);
+    // 5 cards of 168 with 4 gaps of 12 is 888
+    final layout = GridLayout.forWidth(888);
     expect(layout.columns, 5);
     expect(layout.cardWidth, 168);
   });
@@ -19,7 +19,7 @@ void main() {
       expect(layout.cardWidth, greaterThan(Tokens.gridCardMinWidth));
       expect(
         layout.cardWidth * layout.columns +
-            Tokens.space4 * (layout.columns - 1),
+            GridLayout.columnGap * (layout.columns - 1),
         closeTo(1000, 0.001),
       );
     },
@@ -34,7 +34,9 @@ void main() {
   test('a phone gets two columns', () {
     expect(GridLayout.forWidth(360 - 2 * Tokens.space4).columns, 1);
     expect(
-      GridLayout.forWidth(2 * Tokens.gridCardMinWidth + Tokens.space4).columns,
+      GridLayout.forWidth(
+        2 * Tokens.gridCardMinWidth + GridLayout.columnGap,
+      ).columns,
       2,
     );
   });

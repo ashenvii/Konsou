@@ -19,21 +19,23 @@ class GridLayout {
   final double cardWidth;
   final double cardHeight;
 
-  static const gap = Tokens.space4;
+  // closer across than down, so a row of covers reads as one line
+  static const columnGap = Tokens.space3;
+  static const rowGap = Tokens.space5;
 
   SliverGridDelegate get delegate => SliverGridDelegateWithFixedCrossAxisCount(
     crossAxisCount: columns,
-    mainAxisSpacing: gap,
-    crossAxisSpacing: gap,
+    mainAxisSpacing: rowGap,
+    crossAxisSpacing: columnGap,
     mainAxisExtent: cardHeight,
   );
 
   factory GridLayout.forWidth(double width) {
     final columns = max(
       1,
-      ((width + gap) / (Tokens.gridCardMinWidth + gap)).floor(),
+      ((width + columnGap) / (Tokens.gridCardMinWidth + columnGap)).floor(),
     );
-    final cardWidth = (width - gap * (columns - 1)) / columns;
+    final cardWidth = (width - columnGap * (columns - 1)) / columns;
     // cover, then the title and the small line under it
     final cardHeight =
         CoverImage.heightFor(cardWidth) +

@@ -273,9 +273,8 @@ void setOrAdd(WidgetRef ref, WatchOrderRow row, EntryStatus status) {
 }
 
 /// One title of the watch order: its release number, date and type, its stop
-/// on the line, then its cover, name and its state in words. A finished
-/// title's cover is dimmed until [lit]. The open title's cover has a cyan
-/// frame, the only cyan on the strip.
+/// on the line, then its cover, name and its state in words. Every cover is
+/// grey and dimmed until [lit], except the open title's, which stays in colour.
 class WatchOrderCard extends StatelessWidget {
   const WatchOrderCard({
     super.key,
@@ -338,22 +337,12 @@ class WatchOrderCard extends StatelessWidget {
             reachToNext: hasNext ? width + watchOrderGap : null,
           ),
           const SizedBox(height: Tokens.space2),
-          Container(
-            foregroundDecoration: row.isOpenTitle
-                ? BoxDecoration(
-                    border: Border.all(
-                      color: Tokens.pop,
-                      width: Tokens.openFrame,
-                    ),
-                  )
-                : null,
-            child: _Faded(
-              on: status == EntryStatus.completed && !lit,
-              child: CoverView(
-                malId: row.malId,
-                width: width,
-                loading: row.isLoadingDetails,
-              ),
+          _Faded(
+            on: !row.isOpenTitle && !lit,
+            child: CoverView(
+              malId: row.malId,
+              width: width,
+              loading: row.isLoadingDetails,
             ),
           ),
           const SizedBox(height: Tokens.space2),

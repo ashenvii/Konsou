@@ -45,6 +45,7 @@ class DetailScores extends StatelessWidget {
           value: details.score?.toStringAsFixed(2),
           empty: 'Not scored yet',
           label: 'MAL score',
+          starColor: Tokens.star,
         ),
         ?mine,
         if (facts.isNotEmpty)
@@ -87,7 +88,7 @@ class _Fact extends StatelessWidget {
   }
 }
 
-/// A score as the Detail page shows one: a cyan star and the number large
+/// A score as the Detail page shows one: a star and the number large
 /// and bright, over its [label] in muted ink. With no [value] the star is
 /// grey and [empty] stands in; a score the user can set says so instead,
 /// with a small star and a cyan [empty] such as "Rate", so it never weighs
@@ -100,6 +101,7 @@ class ScoreFigure extends StatelessWidget {
     required this.label,
     this.lit = false,
     this.settable = false,
+    this.starColor = Tokens.pop,
   });
 
   final String? value;
@@ -107,6 +109,10 @@ class ScoreFigure extends StatelessWidget {
   final String label;
   final bool lit;
   final bool settable;
+
+  /// The star's colour: the user's own score uses pop, MyAnimeList's the
+  /// ordinary star gold.
+  final Color starColor;
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +126,7 @@ class ScoreFigure extends StatelessWidget {
           children: [
             ScoreStar(
               size: value == null && settable ? Tokens.text3 : Tokens.text4,
-              color: value == null ? Tokens.inkMuted : Tokens.pop,
+              color: value == null ? Tokens.inkMuted : starColor,
             ),
             const SizedBox(width: Tokens.space2),
             Text(

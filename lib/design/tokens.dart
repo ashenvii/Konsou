@@ -14,6 +14,8 @@ abstract final class Tokens {
   static const Color pop = Color(0xFF6AFBEE);
   // done marks, tags and live counts
   static const Color support = Color(0xFF46A29F);
+  // the ordinary star gold, for MyAnimeList's score only (owner, 2026-11-21)
+  static const Color star = Color(0xFFF2B33D);
   static const Color red = Color(0xFFEF5A5F);
   // fill of secondary buttons, fields and panels
   static const Color surface = Color(0xFF1C232B);
@@ -115,8 +117,6 @@ abstract final class Tokens {
   static const double stateSquare = 16;
   static const double railLaneHeight = 24;
   static const double railDash = 4;
-  // the pop frame on the open title's cover
-  static const double openFrame = 4;
 
   // line height for text that can wrap onto a second line (owner, 2026-11-13);
   // single-line labels stay at 1 inside their fixed controls.

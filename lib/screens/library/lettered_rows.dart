@@ -70,11 +70,11 @@ class _LetteredRowsState extends ConsumerState<LetteredRows> {
         double extent(int count) {
           final lines = grid ? (count / layout.columns).ceil() : count;
           final lineHeight = grid ? layout.cardHeight : Tokens.listRowHeight;
-          final between = grid ? GridLayout.gap * (lines - 1) : 0;
+          final between = grid ? GridLayout.rowGap * (lines - 1) : 0;
           return Tokens.controlHeight +
               lines * lineHeight +
               between +
-              GridLayout.gap;
+              GridLayout.rowGap;
         }
 
         var at = 0.0;
@@ -115,7 +115,7 @@ class _LetteredRowsState extends ConsumerState<LetteredRows> {
                                 widget.itemBuilder(context, group.rows[index]),
                           ),
                         const SliverToBoxAdapter(
-                          child: SizedBox(height: GridLayout.gap),
+                          child: SizedBox(height: GridLayout.rowGap),
                         ),
                       ],
                     ),

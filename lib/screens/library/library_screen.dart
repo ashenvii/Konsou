@@ -14,6 +14,7 @@ import '../../components/icon_square_button.dart';
 import '../../components/more_button.dart';
 import '../../components/menu_switcher.dart';
 import '../../components/page_frame.dart';
+import '../../components/presence.dart';
 import '../../components/hold_while_scrolling.dart';
 import '../../components/motion.dart';
 import '../../components/smooth_scroll.dart';
@@ -130,27 +131,33 @@ class LibraryScreen extends ConsumerWidget {
               ? (failed
                     ? const _Message('Your library could not be read.')
                     : LibrarySkeleton(layout: layout))
-              : HoldWhileScrolling(
-                  // a new status, sort, view or search starts at the top, at
-                  // once. the view is here too: swapping the scroll view
-                  // mid-scroll would never report that scroll's end
-                  key: ValueKey('$tab $sort $layout ${find ?? ''}'),
-                  value: (
-                    rows: RowsSnapshot(
-                      sortRows(rowsInTab(all, tab, keep: kept), sort),
+              // a new status, sort, view or search fades the new rows in
+              // instead of cutting to them
+              : Presence(
+                  key: ValueKey('fade $tab $sort $layout ${find ?? ''}'),
+                  visible: true,
+                  child: HoldWhileScrolling(
+                    // a new status, sort, view or search starts at the top, at
+                    // once. the view is here too: swapping the scroll view
+                    // mid-scroll would never report that scroll's end
+                    key: ValueKey('$tab $sort $layout ${find ?? ''}'),
+                    value: (
+                      rows: RowsSnapshot(
+                        sortRows(rowsInTab(all, tab, keep: kept), sort),
+                      ),
+                      kept: kept,
                     ),
-                    kept: kept,
-                  ),
-                  builder: (context, held) => _Rows(
-                    rows: held.rows.rows!,
-                    keptIds: held.kept,
-                    libraryIsEmpty: loadedRows!.isEmpty,
-                    finding: matches != null,
-                    showStatus: tab == LibraryTab.all,
-                    layout: layout,
-                    sort: sort,
-                    onDiscover: onDiscover,
-                    onOpen: onOpen,
+                    builder: (context, held) => _Rows(
+                      rows: held.rows.rows!,
+                      keptIds: held.kept,
+                      libraryIsEmpty: loadedRows!.isEmpty,
+                      finding: matches != null,
+                      showStatus: tab == LibraryTab.all,
+                      layout: layout,
+                      sort: sort,
+                      onDiscover: onDiscover,
+                      onOpen: onOpen,
+                    ),
                   ),
                 ),
         ),

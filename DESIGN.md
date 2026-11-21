@@ -11,6 +11,7 @@ colors:
   ink-muted: "#8E8F94"
   pop: "#6AFBEE"
   support: "#46A29F"
+  star: "#F2B33D"
   red: "#EF5A5F"
   key-face: "#2E343C"
   key-slab: "#242A31"
@@ -100,6 +101,7 @@ A near-black blue-grey ground with cool grey inks, one bright pop and one quiet 
 - **Support Teal** (#46A29F): done and live things: the rail badge, status dots, a finished title's check, tags, the hover edge.
 
 ### Tertiary
+- **Star Gold** (#F2B33D): the star beside MyAnimeList's score, so it reads as the ordinary rating star and apart from the user's own cyan one. Nothing else uses it.
 - **Remove Red** (#EF5A5F): remove, exclude, sync lost. Never the only cue. Not in the scheme; lifted from #E94D52 on 2026-11-21 to pass 4.5:1 on Panel Slate (about 4.7).
 
 ### Neutral

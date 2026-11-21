@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
+import 'motion.dart';
 import 'skeleton.dart';
 
 class CoverImage extends StatelessWidget {
@@ -43,9 +44,22 @@ class CoverImage extends StatelessWidget {
         // decoded at the size it is drawn, not the file's size
         cacheWidth: (width * MediaQuery.devicePixelRatioOf(context)).round(),
         gaplessPlayback: true,
-        // the blank block while the file is decoded, so nothing flashes
-        frameBuilder: (context, child, frame, sync) =>
-            frame == null && !sync ? blank : child,
+        // the blank block while the file is decoded, so nothing flashes; a
+        // picture that was not already in memory fades in over it
+        frameBuilder: (context, child, frame, sync) {
+          if (sync) return child;
+          if (frame == null) return blank;
+          return TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: chooseMotionDuration(context, Tokens.motionSlide),
+            curve: Curves.easeOut,
+            child: child,
+            builder: (context, t, child) => ColoredBox(
+              color: Tokens.surface,
+              child: Opacity(opacity: t, child: child),
+            ),
+          );
+        },
         errorBuilder: (context, error, stack) => blank,
       ),
     );
