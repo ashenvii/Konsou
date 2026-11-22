@@ -45,3 +45,17 @@ flutter:
         - asset: assets/fonts/IBMPlexMono-Regular.ttf
         - asset: assets/fonts/IBMPlexMono-Bold.ttf
           weight: 700
+    # Garnet console fonts (owner, 2026-11-22), from google/fonts, OFL.
+    # PlexSans and PlexMono go once the text styles move over.
+    - family: ChakraPetch
+      fonts:
+        - asset: assets/fonts/ChakraPetch-SemiBold.ttf
+          weight: 600
+    - family: PlexSansJP
+      fonts:
+        - asset: assets/fonts/IBMPlexSansJP-Regular.ttf
+        - asset: assets/fonts/IBMPlexSansJP-Bold.ttf
+          weight: 700
+    - family: ShareTechMono
+      fonts:
+        - asset: assets/fonts/ShareTechMono-Regular.ttf
