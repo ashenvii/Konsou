@@ -168,6 +168,29 @@ void main() {
     expect((await readEntry('e5')).episodesWatched, 0);
   });
 
+  test('two quick presses add two episodes and finish once', () async {
+    await addTitle(
+      5,
+      '2020-01-01',
+      entryId: 'e5',
+      status: 'watching',
+      watched: 10,
+    );
+    await Future.wait([actions.addEpisode('e5'), actions.addEpisode('e5')]);
+    final entry = await readEntry('e5');
+    expect(entry.episodesWatched, 12);
+    expect(entry.status, 'completed');
+    final record = databases.record;
+    expect(await record.select(record.completion).get(), hasLength(1));
+  });
+
+  test('an undo waits for the edit before it', () async {
+    await addTitle(5, '2020-01-01', entryId: 'e5', status: 'watching');
+    await actions.addEpisode('e5');
+    await Future.wait([shown.single.undo!(), actions.addEpisode('e5')]);
+    expect((await readEntry('e5')).episodesWatched, 1);
+  });
+
   test('an episode on a title that is not being watched says why', () async {
     await addTitle(5, '2020-01-01', entryId: 'e5');
     await actions.addEpisode('e5');

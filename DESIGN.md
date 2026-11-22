@@ -176,6 +176,9 @@ Radius is 0 everywhere. No pills, no circles except the mascot's own geometry. I
 ### Toast
 - **Style:** bottom, max 480 wide, an optional 2px timer bar, actions and a star rating. Pauses on hover.
 
+### Wordmark while loading
+- **Style:** while details or covers load in the background, the Konsou wordmark takes turns with the count (4 s each), turning over as a split flap in 360 ms with a small bounce and a shade on the turning half; the count's digits are LED garnet and each flaps on its own as it ticks (240 ms). Waiting on MAL turns the count Ink with a pause mark. When all is in it reads "All loaded" for 2 s, then rests on Konsou. A click while it loads lists each job with a lamp. Reduce motion swaps the faces in place.
+
 ## Do's and Don'ts
 
 ### Do:

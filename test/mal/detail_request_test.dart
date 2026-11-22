@@ -130,6 +130,22 @@ void main() {
     expect(await rows('gone_page'), isEmpty);
   });
 
+  test('a 200 that is not this title saves nothing', () async {
+    for (final body in [
+      utf8.encode('<html>Down for maintenance</html>'),
+      [0xff, 0xfe, 0x00],
+      utf8.encode('[]'),
+      utf8.encode('{"error":"not_found"}'),
+      utf8.encode(shortJson.replaceFirst(RegExp(r'"id":\s*52991'), '"id": 1')),
+    ]) {
+      final outcome = await detailRequest(
+        (_) async => http.Response.bytes(body, 200),
+      ).fetch(52991, lane: Lane.trickle, full: false);
+      expect(outcome, FetchOutcome.failed);
+    }
+    expect(await rows('detail'), isEmpty);
+  });
+
   group('a title on screen is stale', () {
     int fetchedAgo(Duration age) => _now.subtract(age).millisecondsSinceEpoch;
 

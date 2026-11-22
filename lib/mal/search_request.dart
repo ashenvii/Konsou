@@ -70,11 +70,18 @@ class SearchRequest {
       return null;
     }
     if (response.statusCode != 200) return null;
-    // the body is utf-8; http assumes latin-1 when no charset is sent
-    final body = jsonDecode(utf8.decode(response.bodyBytes)) as Map;
-    return [
-      for (final result in body['data'] as List)
-        (result as Map)['node'] as Map<String, dynamic>,
-    ];
+    try {
+      // the body is utf-8; http assumes latin-1 when no charset is sent
+      final body = jsonDecode(utf8.decode(response.bodyBytes));
+      final found = body is Map ? body['data'] : null;
+      if (found is! List) return null;
+      return [
+        for (final result in found)
+          if (result is Map && result['node'] is Map<String, dynamic>)
+            result['node'] as Map<String, dynamic>,
+      ];
+    } on FormatException {
+      return null;
+    }
   }
 }

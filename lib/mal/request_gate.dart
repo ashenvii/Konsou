@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:http/http.dart' as http;
 
 import '../net/backoff.dart';
+import '../net/request_timeout.dart';
 
 const requestGap = Duration(milliseconds: 500);
 
@@ -13,20 +14,30 @@ class RequestCancelled implements Exception {
   const RequestCancelled();
 }
 
+// a screen shows its retry rather than wait minutes behind the trickle's backoff
+class GateBackingOff implements Exception {
+  const GateBackingOff();
+}
+
 class RequestGate {
   RequestGate({
     this.gap = requestGap,
+    this.timeout = requestTimeout,
     DateTime Function()? now,
     Future<void> Function(Duration duration)? wait,
   }) : _now = now ?? DateTime.now,
        _wait = wait ?? Future<void>.delayed;
 
   final Duration gap;
+  final Duration timeout;
   final DateTime Function() _now;
   final Future<void> Function(Duration duration) _wait;
   final _screen = Queue<_Job>();
   final _trickle = Queue<_Job>();
   var _running = false;
+  var _backingOff = false;
+
+  bool get backingOff => _backingOff;
   DateTime? _nextStart;
   final _backoff = Backoff();
 
@@ -36,6 +47,10 @@ class RequestGate {
     bool Function()? wanted,
   }) {
     final job = _Job(request, wanted);
+    if (lane == Lane.screen && _holdsScreenTooLong()) {
+      job.done.completeError(const GateBackingOff());
+      return job.done.future;
+    }
     (lane == Lane.screen ? _screen : _trickle).add(job);
     _run();
     return job.done.future;
@@ -55,11 +70,12 @@ class RequestGate {
       if (job == null) continue;
       _nextStart = _now().add(gap);
       try {
-        final response = await job.request();
+        final response = await job.request().timeout(timeout);
         if (response.statusCode == 429 || response.statusCode >= 500) {
           _slowDown();
         } else {
           _backoff.reset();
+          _backingOff = false;
         }
         job.done.complete(response);
       } catch (error, stack) {
@@ -81,7 +97,22 @@ class RequestGate {
     return null;
   }
 
-  void _slowDown() => _nextStart = _now().add(_backoff.next());
+  void _slowDown() {
+    _backingOff = true;
+    _nextStart = _now().add(_backoff.next());
+    if (!_holdsScreenTooLong()) return;
+    while (_screen.isNotEmpty) {
+      _screen.removeFirst().done.completeError(const GateBackingOff());
+    }
+  }
+
+  // the first step is short enough to wait out; anything longer is turned away
+  bool _holdsScreenTooLong() {
+    final nextStart = _nextStart;
+    return _backingOff &&
+        nextStart != null &&
+        nextStart.difference(_now()) > Backoff.first;
+  }
 }
 
 class _Job {

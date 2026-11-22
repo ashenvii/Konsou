@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:konsou/app/keys.dart';
+import 'package:konsou/app/load_progress.dart';
 import 'package:konsou/app/services.dart';
 import 'package:konsou/data/databases.dart';
 import 'package:konsou/data/details_database.dart';
@@ -181,6 +182,87 @@ void main() {
     expect(covers, [1]);
     // after sync and at the end of the chain
     expect(changes, greaterThanOrEqualTo(2));
+  });
+
+  test('a title missed while offline is fetched on the next retry', () async {
+    await addEntry('a', malId: 1);
+    var offline = true;
+    final services = build(
+      _allKeys,
+      onMal: () {
+        if (offline) throw const SocketException('no network');
+      },
+    );
+    await services.start();
+    expect(asked, ['mal 1']);
+    offline = false;
+    await services.retryLeftBehind();
+    expect(asked, ['mal 1', 'mal 1']);
+    await services.retryLeftBehind();
+    expect(asked, ['mal 1', 'mal 1']);
+  });
+
+  test('the wordmark hears what loads, then that it is all in', () async {
+    await addEntry('a', malId: 1);
+    await addEntry('b', malId: 2);
+    await addDetailWithCover(2);
+    final services = build(_allKeys);
+    final seen = <LoadProgress>[];
+    services.loadProgress.listen(seen.add);
+    await services.start();
+    await Future<void>.delayed(Duration.zero);
+    expect(
+      seen.first,
+      const LoadProgress(
+        job: LoadJob.details,
+        details: (done: 1, total: 2),
+        covers: (done: 0, total: 1),
+      ),
+    );
+    // the 404 is a gone page, so it no longer counts
+    expect(
+      seen,
+      contains(
+        const LoadProgress(
+          job: LoadJob.covers,
+          details: (done: 1, total: 1),
+          covers: (done: 0, total: 1),
+        ),
+      ),
+    );
+    expect(seen.last, const LoadProgress(finished: true));
+    expect(services.progress, const LoadProgress(finished: true));
+  });
+
+  test('with nothing to load the wordmark hears nothing', () async {
+    final services = build(_allKeys);
+    final seen = <LoadProgress>[];
+    services.loadProgress.listen(seen.add);
+    await services.start();
+    await Future<void>.delayed(Duration.zero);
+    expect(seen, isEmpty);
+  });
+
+  test('when MAL stops answering the details wait', () async {
+    await addEntry('a', malId: 1);
+    final services = build(
+      _allKeys,
+      onMal: () => throw const SocketException('no network'),
+    );
+    final seen = <LoadProgress>[];
+    services.loadProgress.listen(seen.add);
+    await services.start();
+    await Future<void>.delayed(Duration.zero);
+    expect(seen.map((progress) => progress.waiting), contains(isTrue));
+  });
+
+  test('a retry with nothing left behind asks nothing', () async {
+    await addEntry('a', malId: 1);
+    final services = build(_allKeys);
+    await services.start();
+    asked.clear();
+    await services.retryLeftBehind();
+    expect(asked, isEmpty);
   });
 
   test('stop ends the chain and runs the close sync', () async {

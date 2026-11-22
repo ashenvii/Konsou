@@ -41,7 +41,7 @@ class CoverStore {
     final row = await _readRow(malId, size);
     if (row == null) return null;
     final file = _fileOf(row.fileName);
-    if (!file.existsSync()) {
+    if (!await file.exists()) {
       await _deleteRow(malId, size);
       return null;
     }
@@ -62,7 +62,7 @@ class CoverStore {
     final url = await _readUrl(malId, size) ?? pictureUrl;
     if (url == null) return CoverOutcome.none;
     final old = await _readRow(malId, size);
-    if (old != null && old.url == url && _fileOf(old.fileName).existsSync()) {
+    if (old != null && old.url == url && await _fileOf(old.fileName).exists()) {
       return CoverOutcome.current;
     }
 
@@ -84,10 +84,9 @@ class CoverStore {
     }
 
     final fileName = '$malId-${size.name}${_extension(url)}';
-    folder.createSync(recursive: true);
-    _fileOf(fileName).writeAsBytesSync(response.bodyBytes);
+    await _save(_fileOf(fileName), response.bodyBytes);
     if (old != null && old.fileName != fileName) {
-      _deleteFile(old.fileName);
+      await _deleteFile(old.fileName);
     }
     final at = _now().millisecondsSinceEpoch;
     await _details
@@ -123,7 +122,7 @@ class CoverStore {
       '${titleFolder.path}${Platform.pathSeparator}'
       '${url.hashCode.toRadixString(36)}${_extension(url)}',
     );
-    if (file.existsSync()) return file;
+    if (await file.exists()) return file;
     final http.Response response;
     try {
       response = await gate.send(
@@ -140,9 +139,8 @@ class CoverStore {
     if (response.statusCode != 200 || !isImage || response.bodyBytes.isEmpty) {
       return null;
     }
-    titleFolder.createSync(recursive: true);
-    file.writeAsBytesSync(response.bodyBytes);
-    _keepRecentPictures();
+    await _save(file, response.bodyBytes);
+    await _keepRecentPictures();
     return file;
   }
 
@@ -152,11 +150,13 @@ class CoverStore {
       Directory('${folder.path}${Platform.pathSeparator}pictures');
 
   // the folders of titles seen longest ago go first
-  void _keepRecentPictures() {
-    final titles = _pictures.listSync().whereType<Directory>().toList()
-      ..sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
-    for (final old in titles.skip(keptPictureTitles)) {
-      old.deleteSync(recursive: true);
+  Future<void> _keepRecentPictures() async {
+    final titles = [
+      for (final folder in await _pictures.list().toList())
+        if (folder is Directory) (folder, (await folder.stat()).modified),
+    ]..sort((a, b) => b.$2.compareTo(a.$2));
+    for (final (old, _) in titles.skip(keptPictureTitles)) {
+      await old.delete(recursive: true);
     }
   }
 
@@ -180,7 +180,7 @@ class CoverStore {
   Future<void> forgetMissingFiles() async {
     final rows = await _details.select(_details.cover).get();
     for (final row in rows) {
-      if (!_fileOf(row.fileName).existsSync()) {
+      if (!await _fileOf(row.fileName).exists()) {
         await _deleteRow(row.providerId, CoverSize.values.byName(row.size));
       }
     }
@@ -201,7 +201,7 @@ class CoverStore {
       if (total <= poolLimit) return;
       final size = CoverSize.values.byName(row.read<String>('size'));
       final malId = row.read<int>('provider_id');
-      _deleteFile(row.read<String>('file_name'));
+      await _deleteFile(row.read<String>('file_name'));
       await _deleteRow(malId, size);
       total -= row.read<int>('bytes');
     }
@@ -242,9 +242,17 @@ class CoverStore {
   File _fileOf(String fileName) =>
       File('${folder.path}${Platform.pathSeparator}$fileName');
 
-  void _deleteFile(String fileName) {
+  Future<void> _deleteFile(String fileName) async {
     final file = _fileOf(fileName);
-    if (file.existsSync()) file.deleteSync();
+    if (await file.exists()) await file.delete();
+  }
+
+  // written whole under another name first, so a crash never leaves half a file
+  Future<void> _save(File file, List<int> bytes) async {
+    await file.parent.create(recursive: true);
+    final part = File('${file.path}.part');
+    await part.writeAsBytes(bytes, flush: true);
+    await part.rename(file.path);
   }
 
   String _extension(String url) {

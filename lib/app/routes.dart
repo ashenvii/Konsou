@@ -62,6 +62,8 @@ DetailScreen _detailScreen(BuildContext context, GoRouterState state) {
 
 GoRouter buildRouter({
   Future<void> Function()? beforeClose,
+  VoidCallback? onFocus,
+  Widget? wordmark,
   Future<void> Function()? openSupport,
 }) {
   return GoRouter(
@@ -72,7 +74,9 @@ GoRouter buildRouter({
           libraryOpen: state.matchedLocation == libraryPath,
           child: AppShell(
             beforeClose: beforeClose,
+            onFocus: onFocus,
             openSupport: openSupport,
+            wordmark: wordmark,
             onSearch: () =>
                 ProviderScope.containerOf(context)
                     .read(quickSearchProvider.notifier)

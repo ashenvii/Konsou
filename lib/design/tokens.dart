@@ -185,4 +185,18 @@ abstract final class Tokens {
   static const Duration motionSegment = Duration(milliseconds: 120);
   static const Duration motionFirstFade = Duration(milliseconds: 200);
   static const Duration motionPictureChange = Duration(milliseconds: 400);
+
+  // the wordmark takes turns with the load count while the background work
+  // loads (owner, 2026-11-22): a split flap with a small bounce and a shade on
+  // the turning half; each digit flaps on its own as it changes; "All loaded"
+  // holds a moment before Konsou comes back
+  static const Duration motionFlap = Duration(milliseconds: 360);
+  static const Duration motionFlapTick = Duration(milliseconds: 240);
+  static const Duration countTurn = Duration(seconds: 4);
+  static const Duration wordmarkTurn = Duration(seconds: 4);
+  static const Duration allLoadedHold = Duration(seconds: 2);
+  static const double flapShade = 0.55;
+  static const double flapBounce = 8;
+  // a lamp waiting on something is an empty ring
+  static const double lampRing = 2;
 }

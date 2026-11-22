@@ -51,6 +51,16 @@ void main() {
     );
   });
 
+  test('a 200 that is not a search answer is a failure', () async {
+    for (final body in ['<html>Down</html>', '[]', '{"data":{}}', '{}']) {
+      expect(
+        await searchAnswering(() => http.Response(body, 200))
+            .search('Frieren', lane: Lane.screen),
+        isNull,
+      );
+    }
+  });
+
   test('a short query asks nothing and a long one is cut', () async {
     final search = searchAnswering(() => readSample('search_nothing'));
     expect(await search.search(' ab ', lane: Lane.screen), isEmpty);

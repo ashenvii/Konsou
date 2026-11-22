@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
 import '../library/entry_status.dart';
+import 'lamp.dart';
 
 /// A small round lamp for a title's status, the console's light. Watching (and
 /// rewatching) is lit pop, a finished title is lit ink, everything else is off.
@@ -21,23 +22,6 @@ class StatusLamp extends StatelessWidget {
       EntryStatus.completed when finished => Tokens.ink,
       _ => null,
     };
-    return SizedBox.square(
-      key: const Key('status-lamp'),
-      dimension: Tokens.lampSize,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: lit ?? Tokens.lampOff,
-          boxShadow: lit == null
-              ? null
-              : [
-                  BoxShadow(
-                    color: lit.withValues(alpha: 0.6),
-                    blurRadius: Tokens.lampGlow,
-                  ),
-                ],
-        ),
-      ),
-    );
+    return Lamp(key: const Key('status-lamp'), lit: lit);
   }
 }

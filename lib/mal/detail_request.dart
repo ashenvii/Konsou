@@ -94,6 +94,9 @@ class DetailRequest {
       return FetchOutcome.gone;
     }
     if (response.statusCode != 200) return FetchOutcome.failed;
+    final json = _readTitle(response.bodyBytes, malId);
+    // the title columns read this json, so a bad row would break every list read
+    if (json == null) return FetchOutcome.failed;
 
     await details.transaction(() async {
       await details
@@ -103,8 +106,7 @@ class DetailRequest {
               provider: 'mal',
               providerId: malId,
               fetchedAt: checkedAt,
-              // the body is utf-8; http assumes latin-1 when no charset is sent
-              json: utf8.decode(response.bodyBytes),
+              json: json,
               isFull: Value(keepFull),
             ),
           );
@@ -115,6 +117,17 @@ class DetailRequest {
           .go();
     });
     return FetchOutcome.fetched;
+  }
+
+  String? _readTitle(List<int> bytes, int malId) {
+    try {
+      // the body is utf-8; http assumes latin-1 when no charset is sent
+      final text = utf8.decode(bytes);
+      final body = jsonDecode(text);
+      return body is Map && body['id'] == malId ? text : null;
+    } on FormatException {
+      return null;
+    }
   }
 
   Future<bool> _holdsFull(int malId) async {

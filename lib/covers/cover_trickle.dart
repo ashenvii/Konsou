@@ -8,25 +8,33 @@ import 'cover_store.dart';
 /// background once its details are in. Newest change first, so what the user
 /// is working on comes before the old shelf.
 class CoverTrickle {
-  CoverTrickle({required this.databases, required this.store});
+  CoverTrickle({required this.databases, required this.store, this.onProgress});
 
   final Databases databases;
   final CoverStore store;
+
+  /// Runs after each cover is tried.
+  final void Function()? onProgress;
   var _stopped = false;
+
+  /// True when the last run skipped a cover it could not get.
+  var leftBehind = false;
 
   /// Runs until every entry has its cover, or [stop] is called, then trims the
   /// pool.
   Future<void> run() async {
     _stopped = false;
     await store.forgetMissingFiles();
-    await drainQueue<int>(
+    final run = await drainQueue<int>(
       isStopped: () => _stopped,
       next: _nextTitle,
       // a failure or a title with no picture is left alone for this run
       work: (malId) async =>
           await store.fetchCover(malId, CoverSize.medium, lane: Lane.trickle) !=
           CoverOutcome.fetched,
+      onItem: onProgress,
     );
+    leftBehind = run.leftBehind;
     await store.trimPool();
   }
 

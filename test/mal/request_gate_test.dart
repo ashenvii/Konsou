@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -122,5 +123,62 @@ void main() {
     await gate.send(Lane.trickle, () => time.respond(404));
     await gate.send(Lane.trickle, () => time.respond(200));
     expect(time.starts, [0, 500]);
+  });
+
+  test('a request that never answers times out and slows the gate', () async {
+    final quick = RequestGate(
+      now: () => time.now,
+      wait: time.wait,
+      timeout: const Duration(milliseconds: 50),
+    );
+    final stalled = quick.send(
+      Lane.trickle,
+      () => Completer<http.Response>().future,
+    );
+    final next = quick.send(Lane.trickle, () => time.respond(200));
+    await expectLater(stalled, throwsA(isA<TimeoutException>()));
+    expect((await next).statusCode, 200);
+    // the clock starts at the first answer, which waited out the backoff
+    expect(time.begin, DateTime.utc(2026, 11, 8, 0, 0, 5));
+  });
+
+  test('the screen waits out the first backoff step', () async {
+    await gate.send(Lane.trickle, () => time.respond(500));
+    await gate.send(Lane.screen, () => time.respond(200));
+    expect(time.starts, [0, 5000]);
+  });
+
+  test('the screen is not held behind a longer backoff', () async {
+    await gate.send(Lane.trickle, () => time.respond(500));
+    await gate.send(Lane.trickle, () => time.respond(500));
+    await expectLater(
+      gate.send(Lane.screen, () => time.respond(200)),
+      throwsA(isA<GateBackingOff>()),
+    );
+    expect(time.starts, [0, 5000]);
+  });
+
+  test('a screen request queued when the backoff grows is let go', () async {
+    await gate.send(Lane.trickle, () => time.respond(500));
+    final answer = Completer<http.Response>();
+    final second = gate.send(Lane.trickle, () => answer.future);
+    await pumpEventQueue();
+    final queued = expectLater(
+      gate.send(Lane.screen, () => time.respond(200)),
+      throwsA(isA<GateBackingOff>()),
+    );
+    answer.complete(http.Response('', 503));
+    await second;
+    await queued;
+  });
+
+  test('after a success the screen goes through again', () async {
+    for (final status in [500, 500, 200]) {
+      await gate.send(Lane.trickle, () => time.respond(status));
+    }
+    expect(
+      (await gate.send(Lane.screen, () => time.respond(200))).statusCode,
+      200,
+    );
   });
 }

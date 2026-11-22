@@ -37,11 +37,14 @@ class Trickle {
   final DateTime Function() _now;
   var _stopped = false;
 
+  /// True when the last run skipped a title that failed (offline, say).
+  var leftBehind = false;
+
   /// Runs until every entry has details and every due match is tried, or
   /// [stop] is called.
   Future<void> run() async {
     _stopped = false;
-    final finished = await drainQueue<int>(
+    final run = await drainQueue<int>(
       isStopped: () => _stopped,
       next: _nextTitle,
       work: (malId) async => (await detailRequest.fetch(
@@ -51,7 +54,8 @@ class Trickle {
       )).didFail,
       onItem: onProgress,
     );
-    if (finished) await matching.run();
+    leftBehind = run.leftBehind;
+    if (run.finished) await matching.run();
   }
 
   void stop() {

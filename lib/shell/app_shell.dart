@@ -17,6 +17,20 @@ import 'window_buttons.dart';
 import 'window_config.dart';
 import 'window_memory.dart';
 
+/// The console's title bar: a raised strip, lit along its top and cut off from
+/// the page by a dark line.
+const titleBarFill = BoxDecoration(
+  gradient: LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Tokens.barTop, Tokens.barBottom],
+  ),
+  border: Border(
+    top: BorderSide(color: Tokens.edgeLight),
+    bottom: BorderSide(color: Tokens.wellFill),
+  ),
+);
+
 class AppShell extends StatefulWidget {
   const AppShell({
     super.key,
@@ -24,8 +38,10 @@ class AppShell extends StatefulWidget {
     this.rail,
     this.overlay,
     this.beforeClose,
+    this.onFocus,
     this.openSupport,
     this.onSearch,
+    this.wordmark,
   });
 
   final Widget child;
@@ -36,11 +52,17 @@ class AppShell extends StatefulWidget {
 
   final Future<void> Function()? beforeClose;
 
+  /// Runs each time the window comes to the front.
+  final VoidCallback? onFocus;
+
   /// Opens the support page from the heart. Null leaves the heart inert.
   final Future<void> Function()? openSupport;
 
   /// Opens Quick search from the search well.
   final VoidCallback? onSearch;
+
+  /// The wordmark in the title bar; plain Konsou when null.
+  final Widget? wordmark;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -90,6 +112,9 @@ class _AppShellState extends State<AppShell> with WindowListener {
   // alt f4, the taskbar and the window menu close here too
   @override
   void onWindowClose() => _close();
+
+  @override
+  void onWindowFocus() => widget.onFocus?.call();
 
   Future<void> _close() async {
     if (_closing) return;
@@ -197,20 +222,8 @@ class _AppShellState extends State<AppShell> with WindowListener {
         color: Tokens.ground,
         child: Column(
           children: [
-            // the console's title bar: a raised strip, lit along its top and
-            // cut off from the page by a dark line
             DecoratedBox(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Tokens.barTop, Tokens.barBottom],
-                ),
-                border: Border(
-                  top: BorderSide(color: Tokens.edgeLight),
-                  bottom: BorderSide(color: Tokens.wellFill),
-                ),
-              ),
+              decoration: titleBarFill,
               child: _TopBar(
                 maximized: _maximized,
                 maximizeButton: _maximizeButton,
@@ -219,6 +232,7 @@ class _AppShellState extends State<AppShell> with WindowListener {
                 onClose: _close,
                 onSupport: widget.openSupport,
                 onSearch: widget.onSearch,
+                wordmark: widget.wordmark,
               ),
             ),
             Expanded(
@@ -276,8 +290,10 @@ class _TopBar extends StatelessWidget {
     required this.onClose,
     this.onSupport,
     this.onSearch,
+    this.wordmark,
   });
 
+  final Widget? wordmark;
   final bool maximized;
   final MaximizeButtonState maximizeButton;
   final VoidCallback onMinimize;
@@ -315,7 +331,11 @@ class _TopBar extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const Text(WindowConfig.title, style: AppText.heading),
+                        wordmark ??
+                            const Text(
+                              WindowConfig.title,
+                              style: AppText.heading,
+                            ),
                       ],
                     ),
                   ),

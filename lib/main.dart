@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app/keys.dart';
+import 'app/load_wordmark.dart';
 import 'app/providers.dart';
 import 'app/routes.dart';
 import 'app/secure_token_store.dart';
@@ -40,6 +41,11 @@ Future<void> main() async {
       child: KonsouApp(
         router: buildRouter(
           beforeClose: services.stop,
+          onFocus: services.retryLeftBehind,
+          wordmark: LoadWordmark(
+            progress: services.progress,
+            updates: services.loadProgress,
+          ),
           openSupport: support == null || !support.hasScheme
               ? null
               : () => launchUrl(support, mode: LaunchMode.externalApplication),

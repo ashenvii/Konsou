@@ -16,7 +16,16 @@ void main() {
       },
       onItem: () => reported.add(done.length),
     );
-    expect(finished, isTrue);
+    expect(finished, (finished: true, leftBehind: false));
     expect(reported, [1, 2, 3]);
+  });
+
+  test('says when a failed item was left behind', () async {
+    final run = await drainQueue<int>(
+      isStopped: () => false,
+      next: (skip) async => skip.contains(1) ? null : 1,
+      work: (item) async => true,
+    );
+    expect(run, (finished: true, leftBehind: true));
   });
 }

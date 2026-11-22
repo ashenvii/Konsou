@@ -74,11 +74,11 @@ class EntryActions {
     return locked != null;
   }
 
-  Future<void> remove(List<String> entryIds) async {
+  Future<void> remove(List<String> entryIds) => _inTurn(() async {
     await edits.remove(entryIds);
     onEdited?.call();
     show(ToastMessage(removed(entryIds.length)));
-  }
+  });
 
   Future<void> acceptReview(
     ReviewOffer offer,
@@ -132,12 +132,24 @@ class EntryActions {
     databases.record.entry,
   )..where((row) => row.entryId.equals(entryId))).getSingleOrNull();
 
-  Future<void> rate(String entryId, int? score) async {
+  Future<void> rate(String entryId, int? score) => _inTurn(() async {
     await edits.setScore(entryId, score);
     onEdited?.call();
+  });
+
+  // one edit at a time, so two quick presses never read the same old count
+  var _turn = Future<void>.value();
+
+  Future<T> _inTurn<T>(Future<T> Function() action) {
+    final result = _turn.then((_) => action());
+    _turn = result.then((_) {}, onError: (_) {});
+    return result;
   }
 
-  Future<EditResult> _run(
+  Future<EditResult> _run(String entryId, Future<EditResult> Function() edit) =>
+      _inTurn(() => _runNow(entryId, edit));
+
+  Future<EditResult> _runNow(
     String entryId,
     Future<EditResult> Function() edit,
   ) async {
@@ -210,8 +222,9 @@ class EntryActions {
       ? episodeAdded(now.episodes)
       : markedAs(now.status);
 
-  Undo _undoable(Undo run) => () async {
-    await run();
-    onEdited?.call();
-  };
+  Undo _undoable(Undo run) =>
+      () => _inTurn(() async {
+        await run();
+        onEdited?.call();
+      });
 }
