@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/widgets.dart';
 
 import '../components/hover_mark.dart';
@@ -100,26 +102,38 @@ class _RailItem extends StatelessWidget {
                       child: SizedBox.square(
                         dimension: Tokens.railItemSize,
                         child: Center(
-                          child: AppIcon(
-                            destination.icon,
-                            size: Tokens.iconSize,
-                            color: active
-                                ? Tokens.pop
-                                : (state.hovered
+                          child: active
+                              ? _LitIcon(destination.icon)
+                              : AppIcon(
+                                  destination.icon,
+                                  size: Tokens.iconSize,
+                                  color: state.hovered
                                       ? Tokens.ink
-                                      : Tokens.inkMuted),
-                          ),
+                                      : Tokens.inkMuted,
+                                ),
                         ),
                       ),
                     ),
                   ),
+                  // the lit edge on the window side, glowing a little
                   if (active)
                     const Positioned(
                       right: 0,
                       top: Tokens.space2,
                       bottom: Tokens.space2,
-                      width: Tokens.hoverEdge,
-                      child: ColoredBox(color: Tokens.pop),
+                      width: Tokens.litEdge,
+                      child: DecoratedBox(
+                        key: Key('rail-lit-edge'),
+                        decoration: BoxDecoration(
+                          color: Tokens.pop,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Tokens.pop,
+                              blurRadius: Tokens.lampGlow,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                 ],
               ),
@@ -127,6 +141,35 @@ class _RailItem extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The current page's icon: pop, over a soft blurred copy of itself, the way a
+/// lit key glows. One small blur, only ever on one icon.
+class _LitIcon extends StatelessWidget {
+  const _LitIcon(this.icon);
+
+  final IconDef icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        ImageFiltered(
+          imageFilter: ImageFilter.blur(
+            sigmaX: Tokens.ledGlow / 2,
+            sigmaY: Tokens.ledGlow / 2,
+          ),
+          child: AppIcon(
+            icon,
+            size: Tokens.iconSize,
+            color: Tokens.pop.withValues(alpha: 0.4),
+          ),
+        ),
+        AppIcon(icon, size: Tokens.iconSize, color: Tokens.pop),
+      ],
     );
   }
 }

@@ -49,13 +49,16 @@ void main() {
     expect(settings, greaterThan(library));
   });
 
+  // the current page also draws a blurred copy under its icon; the icon itself
+  // is the last one
   Color iconOf(WidgetTester tester, String label) => tester
-      .widget<AppIcon>(
+      .widgetList<AppIcon>(
         find.descendant(
           of: find.bySemanticsLabel(label),
           matching: find.byType(AppIcon),
         ),
       )
+      .last
       .color;
 
   testWidgets('only the page showing is cyan, with a mark on the edge', (
@@ -65,11 +68,9 @@ void main() {
     expect(iconOf(tester, 'Discover'), Tokens.pop);
     final mark = find.descendant(
       of: find.bySemanticsLabel('Discover'),
-      matching: find.byWidgetPredicate(
-        (widget) => widget is ColoredBox && widget.color == Tokens.pop,
-      ),
+      matching: find.byKey(const Key('rail-lit-edge')),
     );
-    expect(tester.getSize(mark).width, Tokens.hoverEdge);
+    expect(tester.getSize(mark).width, Tokens.litEdge);
     for (final label in ['Library', 'Watching', 'Schedule', 'Settings']) {
       expect(iconOf(tester, label), Tokens.inkMuted);
     }

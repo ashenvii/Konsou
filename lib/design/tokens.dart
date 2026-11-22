@@ -30,6 +30,15 @@ abstract final class Tokens {
   static const double coverRadius = 3;
   static const double keyRadius = 5;
   static const double wellRadius = 6;
+  static const BorderRadius coverCorners = BorderRadius.all(
+    Radius.circular(coverRadius),
+  );
+  static const BorderRadius keyCorners = BorderRadius.all(
+    Radius.circular(keyRadius),
+  );
+  static const BorderRadius wellCorners = BorderRadius.all(
+    Radius.circular(wellRadius),
+  );
 
   // the garnet console (owner, 2026-11-22): chassis and title bar gradients,
   // the faceplate rail, sunk wells, a slab under the primary key, an off lamp,

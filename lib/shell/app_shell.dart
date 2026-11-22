@@ -197,8 +197,20 @@ class _AppShellState extends State<AppShell> with WindowListener {
         color: Tokens.ground,
         child: Column(
           children: [
+            // the console's title bar: a raised strip, lit along its top and
+            // cut off from the page by a dark line
             DecoratedBox(
-              decoration: BoxDecoration(gradient: _barTint),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Tokens.barTop, Tokens.barBottom],
+                ),
+                border: Border(
+                  top: BorderSide(color: Tokens.edgeLight),
+                  bottom: BorderSide(color: Tokens.wellFill),
+                ),
+              ),
               child: _TopBar(
                 maximized: _maximized,
                 maximizeButton: _maximizeButton,
@@ -215,8 +227,9 @@ class _AppShellState extends State<AppShell> with WindowListener {
                   Positioned.fill(
                     child: Row(
                       children: [
-                        DecoratedBox(
-                          decoration: BoxDecoration(gradient: _railTint),
+                        // the faceplate: a flat strip on the window's edge
+                        ColoredBox(
+                          color: Tokens.railFill,
                           child: SizedBox(
                             width: Tokens.railWidth,
                             child: widget.rail,
@@ -226,23 +239,21 @@ class _AppShellState extends State<AppShell> with WindowListener {
                       ],
                     ),
                   ),
-                  Positioned(
-                    left: Tokens.railWidth,
-                    right: 0,
+                  // the faceplate's edge: a dark cut, then a faint lit lip on
+                  // the page side
+                  const Positioned(
+                    left: Tokens.railWidth - 1,
                     top: 0,
-                    height: 1,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(gradient: _barLine),
-                    ),
+                    bottom: 0,
+                    width: 1,
+                    child: ColoredBox(color: Tokens.wellFill),
                   ),
-                  Positioned(
+                  const Positioned(
                     left: Tokens.railWidth,
                     top: 0,
                     bottom: 0,
                     width: 1,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(gradient: _railLine),
-                    ),
+                    child: ColoredBox(color: Tokens.edgeLight),
                   ),
                   if (widget.overlay != null)
                     Positioned.fill(child: widget.overlay!(Tokens.railWidth)),
@@ -255,37 +266,6 @@ class _AppShellState extends State<AppShell> with WindowListener {
     );
   }
 }
-
-// the frame fades into the page so the page is not caged
-Color _tint(double alpha) => Tokens.surface.withValues(alpha: alpha);
-Color _line(double alpha) => Tokens.line.withValues(alpha: alpha);
-
-// the bar fades into the page the way the rail does, strongest at the left
-// edge and gone by the middle, so it is not a flat coloured strip
-final _tints = [_tint(0.69), _tint(0.28), _tint(0), _tint(0), _tint(0.38)];
-const _tintStops = [0.0, 0.3, 0.55, 0.82, 1.0];
-final _lines = [_line(1), _line(1), _line(0), _line(0), _line(1)];
-
-final _barTint = LinearGradient(colors: _tints, stops: _tintStops);
-
-final _railTint = LinearGradient(
-  begin: Alignment.topCenter,
-  end: Alignment.bottomCenter,
-  colors: _tints,
-  stops: _tintStops,
-);
-
-final _barLine = LinearGradient(
-  colors: _lines,
-  stops: const [0, 0.06, 0.35, 0.82, 1],
-);
-
-final _railLine = LinearGradient(
-  begin: Alignment.topCenter,
-  end: Alignment.bottomCenter,
-  colors: _lines,
-  stops: const [0, 0.04, 0.45, 0.85, 1],
-);
 
 class _TopBar extends StatelessWidget {
   const _TopBar({
@@ -335,15 +315,7 @@ class _TopBar extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const Text(
-                          WindowConfig.title,
-                          style: TextStyle(
-                            fontFamily: Tokens.sans,
-                            fontWeight: FontWeight.w700,
-                            fontSize: Tokens.text3,
-                            color: Tokens.ink,
-                          ),
-                        ),
+                        const Text(WindowConfig.title, style: AppText.heading),
                       ],
                     ),
                   ),
@@ -431,43 +403,52 @@ class _QuickSearchButton extends StatelessWidget {
       onPressed: onPressed ?? () {},
       builder: (context, state) {
         final ink = state.hovered ? Tokens.ink : Tokens.inkMuted;
-        // a well dropped into the bar: page ground, dark where the bar
-        // overhangs it, a faint lip below. The hover is the app's live edge.
-        return HoverMark(
-          on: state.hovered,
-          child: Container(
-            // a fixed size and no alignment: an aligned Container grows to
-            // fill the bar and its fill paints over everything beside it
-            width: Tokens.quickSearchWidth,
-            height: Tokens.quickSearchHeight,
-            padding: const EdgeInsets.symmetric(horizontal: Tokens.space2),
-            decoration: BoxDecoration(
-              // darker than the bar around it, so it reads as dropped in
-              color: Tokens.wellEdge,
-              border: Border(
-                top: const BorderSide(
-                  color: Tokens.wellEdge,
-                  width: Tokens.hoverEdge,
-                ),
-                bottom: BorderSide(color: Tokens.ink.withValues(alpha: 0.06)),
-              ),
-            ),
-            child: Row(
-              children: [
-                AppIcon(AppIcons.search, size: Tokens.iconSize, color: ink),
-                const SizedBox(width: Tokens.space2),
-                Expanded(
-                  child: Text(
-                    _searchPlaceholder,
-                    maxLines: 1,
-                    softWrap: false,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.label(ink),
+        // a well sunk into the bar: near black, shaded at its top where the
+        // bar overhangs it, a faint lit lip below. The hover is the live edge.
+        return DecoratedBox(
+          decoration: const BoxDecoration(
+            borderRadius: Tokens.keyCorners,
+            boxShadow: [
+              BoxShadow(color: Tokens.edgeLight, offset: Offset(0, 1)),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: Tokens.keyCorners,
+            child: HoverMark(
+              on: state.hovered,
+              child: Container(
+                // a fixed size and no alignment: an aligned Container grows to
+                // fill the bar and its fill paints over everything beside it
+                width: Tokens.quickSearchWidth,
+                height: Tokens.quickSearchHeight,
+                padding: const EdgeInsets.symmetric(horizontal: Tokens.space2),
+                decoration: const BoxDecoration(color: Tokens.wellFill),
+                foregroundDecoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Tokens.shadow, Tokens.shadow.withValues(alpha: 0)],
+                    stops: const [0, 0.25],
                   ),
                 ),
-                const SizedBox(width: Tokens.space2),
-                const KeyCaps('Ctrl+K'),
-              ],
+                child: Row(
+                  children: [
+                    AppIcon(AppIcons.search, size: Tokens.iconSize, color: ink),
+                    const SizedBox(width: Tokens.space2),
+                    Expanded(
+                      child: Text(
+                        _searchPlaceholder,
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.label(ink),
+                      ),
+                    ),
+                    const SizedBox(width: Tokens.space2),
+                    const KeyCaps('Ctrl+K'),
+                  ],
+                ),
+              ),
             ),
           ),
         );

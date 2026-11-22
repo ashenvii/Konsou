@@ -165,13 +165,13 @@ Radius is 0 everywhere. No pills, no circles except the mascot's own geometry. I
 - **Style:** Raised Slate, status names left, counts or shortcut keys right, a divider between groups, an optional footnote. One `AppMenu` serves every dropdown, including the sort and the status switcher.
 
 ### Inputs / Fields
-- **Style:** Panel Slate, 36 tall, Soft Ink icon, an Esc hint. The top search is the dropped well: Ground fill, 2px Well Edge top, faint lip, centred, with key caps.
+- **Style:** Panel Slate, 36 tall, Soft Ink icon, an Esc hint. The top search is a sunk well: Well Fill, rounded 5, shaded at the top, a faint lit lip below, centred, with key caps.
 
 ### Key caps
 - **Style:** a Key Face over a 4px Key Slab, mono 11 bold, joined by a muted plus. They size to whatever keys the user sets.
 
 ### Navigation
-- **Style:** the Windows rail holds icons only, garnet mark on the active item, garnet count badge on Watching. Each icon shows its name in a hover tip beside it (a Raised Slate panel, Ink text, no click taken). Android gets labels on the bottom bar.
+- **Style:** the Windows rail is the faceplate: a flat strip (Rail Fill) with a dark cut and a faint lit lip on its edge. It holds icons only; the active icon is garnet over a soft glow, with a 3 wide lit garnet edge on the window side. Garnet count badge on Watching. The title bar above is a raised strip (Bar Top to Bar Bottom) with a lit top line and a dark cut under it. Each icon shows its name in a hover tip beside it (a Raised Slate panel, Ink text, no click taken). Android gets labels on the bottom bar.
 
 ### Toast
 - **Style:** bottom, max 480 wide, an optional 2px timer bar, actions and a star rating. Pauses on hover.
