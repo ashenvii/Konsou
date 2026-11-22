@@ -31,7 +31,7 @@ void main() {
       await pumpList(tester);
       final bars = tester.widgetList<RawScrollbar>(find.byType(RawScrollbar));
       expect(bars, hasLength(1));
-      expect(bars.single.thumbColor, Tokens.support);
+      expect(bars.single.thumbColor, Tokens.inkMuted);
       expect(bars.single.thumbVisibility, isTrue);
     } finally {
       debugDefaultTargetPlatformOverride = null;

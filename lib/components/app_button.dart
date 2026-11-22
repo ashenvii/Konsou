@@ -38,10 +38,10 @@ class AppButton extends StatelessWidget {
     final fill = primary && enabled ? Tokens.pop : null;
     final ink = !enabled
         ? Tokens.inkMuted
-        : (primary ? Tokens.ground : Tokens.ink);
+        : (primary ? Tokens.onPop : Tokens.ink);
     return Pressable(
       onPressed: onPressed,
-      focusColor: primary && enabled ? Tokens.ground : Tokens.ink,
+      focusColor: primary && enabled ? Tokens.onPop : Tokens.ink,
       builder: (context, state) => HoverMark(
         on: !primary && state.hovered,
         child: Container(

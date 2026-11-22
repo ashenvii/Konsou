@@ -18,10 +18,10 @@ class HoverMark extends StatelessWidget {
       curve: Curves.easeOut,
       // the off state is the same shape at no alpha, so the two blend
       foregroundDecoration: BoxDecoration(
-        color: Tokens.support.withValues(alpha: on ? 0.06 : 0),
+        color: Tokens.pop.withValues(alpha: on ? 0.06 : 0),
         border: Border(
           bottom: BorderSide(
-            color: Tokens.support.withValues(alpha: on ? 1 : 0),
+            color: Tokens.pop.withValues(alpha: on ? 1 : 0),
             width: Tokens.hoverEdge,
           ),
         ),

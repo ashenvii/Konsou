@@ -31,10 +31,10 @@ class AppTab extends StatelessWidget {
     return Pressable(
       onPressed: onPressed,
       selected: selected,
-      focusColor: selected ? Tokens.ground : Tokens.ink,
+      focusColor: selected ? Tokens.onPop : Tokens.ink,
       builder: (context, state) {
         final ink = selected
-            ? Tokens.ground
+            ? Tokens.onPop
             : (state.hovered ? Tokens.ink : Tokens.inkMuted);
         return Container(
           height: Tokens.controlHeight,

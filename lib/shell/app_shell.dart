@@ -330,7 +330,7 @@ class _TopBar extends StatelessWidget {
                             child: AppIcon(
                               AppIcons.nekomimi,
                               size: Tokens.iconSize,
-                              color: Tokens.support,
+                              color: Tokens.pop,
                               lineColor: Tokens.ground,
                             ),
                           ),

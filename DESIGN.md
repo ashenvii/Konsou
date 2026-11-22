@@ -1,21 +1,21 @@
 ---
 name: Konsou
-description: A flat, square, dark anime tracker where cyan pop marks the chosen thing and teal marks what is done or live.
+description: A flat, square, near-black anime tracker where one garnet pop marks the chosen thing and everything else is ink.
 colors:
-  ground: "#0D0E12"
-  surface: "#1C232B"
-  raised: "#14181E"
-  line: "#3A3D44"
-  ink: "#C5C6CA"
-  ink-soft: "#A9AAAE"
-  ink-muted: "#8E8F94"
-  pop: "#6AFBEE"
-  support: "#46A29F"
+  ground: "#09090B"
+  surface: "#131315"
+  raised: "#0E0E10"
+  line: "#3A383B"
+  ink: "#F6F4F5"
+  ink-soft: "#CFC9CC"
+  ink-muted: "#9A9296"
+  pop: "#E0526A"
+  on-pop: "#1A0509"
   star: "#F2B33D"
-  red: "#EF5A5F"
-  key-face: "#2E343C"
-  key-slab: "#242A31"
-  well-edge: "#14161A"
+  red: "#FF7F45"
+  key-face: "#2C2B2E"
+  key-slab: "#222124"
+  well-edge: "#151517"
 typography:
   heading:
     fontFamily: "IBM Plex Sans, system-ui, sans-serif"
@@ -53,7 +53,7 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.pop}"
-    textColor: "{colors.ground}"
+    textColor: "{colors.on-pop}"
     rounded: "{rounded.square}"
     height: "36px"
   button-secondary:
@@ -82,40 +82,40 @@ components:
 
 ## Overview
 
-One flat dark ground, square edges, and almost no color, so that the few marks that do carry color (pop cyan for the chosen thing, support teal for what is done or live) read at once. It is an Operate surface: the user is scanning hundreds of entries and changing a status in two keystrokes, so familiarity and speed outrank expression. Personality lives in details: the Nekomimi, the key caps, the live edge under a hovered control.
+One flat dark ground, square edges, and almost no color, so that the few marks that do carry color (garnet pop for the chosen thing, orange-red for remove) read at once. It is an Operate surface: the user is scanning hundreds of entries and changing a status in two keystrokes, so familiarity and speed outrank expression. Personality lives in details: the Nekomimi, the key caps, the live edge under a hovered control.
 
 **Key Characteristics:**
 - One dark ground with two fill steps above it. No gradients inside content, no rounded corners.
-- Color is rare and carries meaning. Pop chooses, support is done or live, red removes.
+- Color is rare and carries meaning. Pop chooses, ink marks done and live by shape, red removes.
 - Plex Sans for words, Plex Mono for numbers and labels. Weights regular and bold only.
 - Hairline separation through tone, not lines. Hover is a live edge, not a box.
 
 ## Colors
 
-A near-black blue-grey ground with cool grey inks, one bright pop and one quiet support color. All five main colors are scheme 12 of visme.co/blog/website-color-schemes, picked by the owner on 2026-11-21.
+A neutral near-black ground with warm-white inks and one garnet pop. Black and garnet, picked by the owner on 2026-11-22 from a live rig; pop is lightened a notch from the pasted D83B55 to pass 4.5:1. There is no glow and no glass.
 
 ### Primary
-- **Pop Cyan** (#6AFBEE): the chosen state and the primary button. A cyan icon with no fill marks the selected item; in the rail a cyan mark sits on its edge.
+- **Pop Garnet** (#E0526A): the chosen state, the primary button, the hover edge, your score and the rail badge. A garnet icon with no fill marks the selected item; in the rail a garnet mark sits on its edge. Text on a pop fill is **On Pop** (#1A0509).
 
 ### Secondary
-- **Support Teal** (#46A29F): done and live things: the rail badge, status dots, a finished title's check, tags, the hover edge.
+- None. Done and live things are shown by shape in Ink (a filled check, a filled square), not by a second hue.
 
 ### Tertiary
-- **Star Gold** (#F2B33D): the star beside MyAnimeList's score, so it reads as the ordinary rating star and apart from the user's own cyan one. Nothing else uses it.
-- **Remove Red** (#EF5A5F): remove, exclude, sync lost. Never the only cue. Not in the scheme; lifted from #E94D52 on 2026-11-21 to pass 4.5:1 on Panel Slate (about 4.7).
+- **Star Gold** (#F2B33D): the star beside MyAnimeList's score, so it reads as the ordinary rating star and apart from the user's own garnet one. Nothing else uses it.
+- **Remove Red** (#EF5A5F): remove, exclude, sync lost. Never the only cue. Moved from #EF5A5F to an orange-red on 2026-11-22 so it is 29 degrees from pop instead of 9 (7.4:1 on Panel).
 
 ### Neutral
-- **Night Ground** (#0D0E12): the page, rail and top bar.
-- **Panel Slate** (#1C232B): fields, secondary buttons, panels, skeletons.
-- **Raised Slate** (#14181E): menus and popovers.
-- **Divider Slate** (#3A3D44): the hairline inside menus. Decoration only.
-- **Ink** (#C5C6CA), **Soft Ink** (#A9AAAE), **Muted Ink** (#8E8F94): main, secondary and meta text. Soft and Muted are Ink stepped toward the ground.
-- **Key Face** (#2E343C) and **Key Slab** (#242A31, the hairline tone, so the key's side shows against the ground): the two steps of a key cap. **Well Edge** (#14161A): the top cut of the dropped search well.
+- **Night Ground** (#09090B): the page, rail and top bar.
+- **Panel Slate** (#131315): fields, secondary buttons, panels, skeletons.
+- **Raised Slate** (#0E0E10): menus and popovers.
+- **Divider Slate** (#3A383B): the hairline inside menus. Decoration only.
+- **Ink** (#F6F4F5), **Soft Ink** (#CFC9CC), **Muted Ink** (#9A9296): main, secondary and meta text. Soft and Muted are Ink stepped toward the ground.
+- **Key Face** (#2C2B2E) and **Key Slab** (#222124, so the key's side shows against the ground): the two steps of a key cap. **Well Edge** (#151517): the top cut of the dropped search well.
 
 ### Named Rules
-**The Rare Color Rule.** Pop, support and red together cover a small part of any screen. If a screen needs a second place to look, it is wrong.
-**The No Color Alone Rule.** Every state has a shape, word or position as well as its color. The Completed check is a check mark first and teal second.
-**The Muted Ink Rule.** Muted Ink (#8E8F94) is about 5.9:1 on the ground, 4.8:1 on Panel Slate and 5.4:1 on Raised Slate, so it passes 4.5:1 on every fill. Check any new fill before putting meta text on it.
+**The Rare Color Rule.** Pop and red together cover a small part of any screen. If a screen needs a second place to look, it is wrong.
+**The No Color Alone Rule.** Every state has a shape, word or position as well as its color. The Completed check is a check mark in Ink, no hue.
+**The Muted Ink Rule.** Muted Ink (#9A9296) is 6.6:1 on the ground, 6.1:1 on Panel Slate and 6.4:1 on Raised Slate, so it passes 4.5:1 on every fill. Check any new fill before putting meta text on it.
 
 ## Typography
 
@@ -154,9 +154,9 @@ Radius is 0 everywhere. No pills, no circles except the mascot's own geometry. I
 
 ### Buttons
 - **Shape:** square, 36 tall.
-- **Primary:** pop fill, Ground text.
+- **Primary:** pop fill, On Pop text.
 - **Secondary:** Panel Slate fill, Ink text. A transparent variant exists for the one-time green shimmer.
-- **Hover / Focus:** hover is the live edge (faint teal wash and a 2px teal line underneath) and brighter text; focus is a 2px Ink ring on every pressable.
+- **Hover / Focus:** hover is the live edge (faint pop wash and a 2px pop line underneath) and brighter text; focus is a 2px Ink ring on every pressable.
 
 ### Menus and popovers
 - **Style:** Raised Slate, status names left, counts or shortcut keys right, a divider between groups, an optional footnote. One `AppMenu` serves every dropdown, including the sort and the status switcher.
@@ -168,7 +168,7 @@ Radius is 0 everywhere. No pills, no circles except the mascot's own geometry. I
 - **Style:** a Key Face over a 4px Key Slab, mono 11 bold, joined by a muted plus. They size to whatever keys the user sets.
 
 ### Navigation
-- **Style:** the Windows rail holds icons only, cyan mark on the active item, teal count badge on Watching. Each icon shows its name in a hover tip beside it (a Raised Slate panel, Ink text, no click taken). Android gets labels on the bottom bar.
+- **Style:** the Windows rail holds icons only, garnet mark on the active item, garnet count badge on Watching. Each icon shows its name in a hover tip beside it (a Raised Slate panel, Ink text, no click taken). Android gets labels on the bottom bar.
 
 ### Toast
 - **Style:** bottom, max 480 wide, an optional 2px timer bar, actions and a star rating. Pauses on hover.

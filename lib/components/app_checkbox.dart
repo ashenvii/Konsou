@@ -5,7 +5,7 @@ import 'pressable.dart';
 
 enum CheckValue { empty, checked, excluded }
 
-/// Empty, checked (cyan with a check) or excluded (a red minus). With
+/// Empty, checked (pop with a check) or excluded (a red minus). With
 /// [allowExclude] off it only switches between empty and checked.
 class AppCheckbox extends StatelessWidget {
   const AppCheckbox({
@@ -61,22 +61,15 @@ class _BoxPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const w = Tokens.checkboxBorder;
     final checked = value == CheckValue.checked;
-    // an empty box under the pointer fills teal; the click turns it cyan
+    // an empty box under the pointer gets a pop edge; the click fills it
     final lit = hovered && value == CheckValue.empty;
     final edge = Paint()
-      ..color = checked
-          ? Tokens.pop
-          : lit
-          ? Tokens.support
-          : Tokens.inkMuted
+      ..color = checked || lit ? Tokens.pop : Tokens.inkMuted
       ..style = PaintingStyle.stroke
       ..strokeWidth = w
       ..isAntiAlias = false;
-    if (checked || lit) {
-      canvas.drawRect(
-        Offset.zero & size,
-        Paint()..color = checked ? Tokens.pop : Tokens.support,
-      );
+    if (checked) {
+      canvas.drawRect(Offset.zero & size, Paint()..color = Tokens.pop);
     }
     canvas.drawRect(
       Rect.fromLTWH(w / 2, w / 2, size.width - w, size.height - w),
@@ -84,7 +77,7 @@ class _BoxPainter extends CustomPainter {
     );
 
     final mark = Paint()
-      ..color = checked ? Tokens.ground : Tokens.red
+      ..color = checked ? Tokens.onPop : Tokens.red
       ..style = PaintingStyle.stroke
       ..strokeWidth = w;
     // The mark was drawn for a box of checkboxSize; this scales it with the box.

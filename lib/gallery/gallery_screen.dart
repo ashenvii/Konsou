@@ -379,14 +379,14 @@ class _Icons extends StatelessWidget {
         const AppIcon(
           mascot,
           size: 20,
-          color: Tokens.support,
+          color: Tokens.pop,
           lineColor: Tokens.ground,
         ),
         const SizedBox(width: Tokens.space5),
         const AppIcon(
           mascot,
           size: 96,
-          color: Tokens.support,
+          color: Tokens.pop,
           lineColor: Tokens.ground,
         ),
         const SizedBox(width: Tokens.space5),
@@ -432,7 +432,6 @@ class _Colors extends StatelessWidget {
     ('ink-soft', Tokens.inkSoft),
     ('ink-muted', Tokens.inkMuted),
     ('pop', Tokens.pop),
-    ('support', Tokens.support),
     ('red', Tokens.red),
   ];
 

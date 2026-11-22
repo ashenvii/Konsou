@@ -31,7 +31,7 @@ class AppScrollBehavior extends ScrollBehavior {
           radius: Radius.zero,
           // a long list would make the thumb too small to grab
           minThumbLength: Tokens.touchTarget,
-          thumbColor: Tokens.support,
+          thumbColor: Tokens.inkMuted,
           child: child,
         );
     }

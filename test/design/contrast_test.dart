@@ -16,9 +16,12 @@ void main() {
     'inkSoft': Tokens.inkSoft,
     'inkMuted': Tokens.inkMuted,
     'pop': Tokens.pop,
-    'support': Tokens.support,
     'red': Tokens.red,
   };
+
+  test('onPop on pop is at least 4.5:1', () {
+    expect(_contrast(Tokens.onPop, Tokens.pop), greaterThanOrEqualTo(4.5));
+  });
 
   for (final ink in inks.entries) {
     for (final fill in fills.entries) {

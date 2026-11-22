@@ -11,7 +11,7 @@ void main() {
     // Tests draw text with a fixed-width test font, so only the floor is exact.
     expect(size.width, greaterThanOrEqualTo(Tokens.badgeSize));
     expect(size.height, Tokens.badgeSize);
-    expect(fillOf(tester, find.byType(CountBadge)), Tokens.support);
+    expect(fillOf(tester, find.byType(CountBadge)), Tokens.pop);
     expect(find.text('5'), findsOneWidget);
   });
 

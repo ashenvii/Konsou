@@ -74,12 +74,12 @@ void main() {
       tester,
       AppTab(label: 'Watching', selected: true, count: 5, onPressed: () {}),
     );
-    expect(fillOf(tester, find.byType(CountBadge)), Tokens.ground);
+    expect(fillOf(tester, find.byType(CountBadge)), Tokens.onPop);
     await pumpWidget(
       tester,
       AppTab(label: 'Watching', selected: false, count: 5, onPressed: () {}),
     );
-    expect(fillOf(tester, find.byType(CountBadge)), Tokens.support);
+    expect(fillOf(tester, find.byType(CountBadge)), Tokens.pop);
   });
 
   testWidgets('tab width is the label plus 16 each side', (tester) async {

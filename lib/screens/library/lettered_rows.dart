@@ -273,7 +273,7 @@ class _Bubble extends StatelessWidget {
           ),
           child: Text(
             letter,
-            style: AppText.heading.copyWith(color: Tokens.ground),
+            style: AppText.heading.copyWith(color: Tokens.onPop),
           ),
         ),
       ),

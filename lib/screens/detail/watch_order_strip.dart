@@ -362,7 +362,7 @@ class WatchOrderCard extends StatelessWidget {
           const SizedBox(height: Tokens.space1),
           OneLineText(
             state,
-            style: _stateStyle(live ? Tokens.support : Tokens.inkMuted),
+            style: _stateStyle(live ? Tokens.ink : Tokens.inkMuted),
           ),
           const SizedBox(height: Tokens.space2),
         ],

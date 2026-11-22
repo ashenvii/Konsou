@@ -10,13 +10,13 @@ void main() {
   testWidgets('is as wide as asked and as tall as its grid', (tester) async {
     await pumpWidget(
       tester,
-      const AppIcon(AppIcons.nekomimi, size: 20, color: Tokens.support),
+      const AppIcon(AppIcons.nekomimi, size: 20, color: Tokens.pop),
     );
     // The face grid is 20 by 21, so at 20 wide it is 21 tall.
     expect(tester.getSize(find.byType(AppIcon)), const Size(20, 21));
     await pumpWidget(
       tester,
-      const AppIcon(AppIcons.discover, size: 32, color: Tokens.support),
+      const AppIcon(AppIcons.discover, size: 32, color: Tokens.pop),
     );
     expect(tester.getSize(find.byType(AppIcon)), const Size.square(32));
   });
@@ -30,7 +30,7 @@ void main() {
           AppIcon(
             AppIcons.nekomimi,
             size: 80,
-            color: Tokens.support,
+            color: Tokens.pop,
             lineColor: Tokens.ground,
           ),
         ],

@@ -325,7 +325,7 @@ class StatsPart extends StatelessWidget {
     final statuses = counts == null
         ? const <(String, int, Color)>[]
         : [
-            ('Watching', counts.watching, Tokens.support),
+            ('Watching', counts.watching, Tokens.ink),
             ('Completed', counts.completed, Tokens.inkSoft),
             ('On hold', counts.onHold, Tokens.pop),
             ('Dropped', counts.dropped, Tokens.red),

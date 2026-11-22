@@ -15,15 +15,11 @@ void main() {
     expect(icons, hasLength(EntryStatus.values.length));
   });
 
-  testWidgets('only Completed is coloured, the rest are ink', (tester) async {
+  testWidgets('every status is ink', (tester) async {
     for (final status in EntryStatus.values) {
       await pumpWidget(tester, StatusMark(status));
       final icon = tester.widget<AppIcon>(find.byType(AppIcon));
-      expect(
-        icon.color,
-        status == EntryStatus.completed ? Tokens.support : Tokens.ink,
-        reason: status.name,
-      );
+      expect(icon.color, Tokens.ink, reason: status.name);
     }
   });
 

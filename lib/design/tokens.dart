@@ -2,26 +2,26 @@ import 'package:flutter/painting.dart';
 
 abstract final class Tokens {
   // colors
-  // scheme 12 of visme.co/blog/website-color-schemes, picked by the owner
-  // 2026-11-21: ground, surface, ink, pop and support are its five colors.
-  // ink-soft and ink-muted are ink stepped toward ground; red is not in the
-  // scheme and is lifted to keep 4.5:1 on surface.
-  static const Color ground = Color(0xFF0D0E12);
-  static const Color ink = Color(0xFFC5C6CA);
-  static const Color inkSoft = Color(0xFFA9AAAE);
-  static const Color inkMuted = Color(0xFF8E8F94);
-  // the one bright color: main action, current place, your score
-  static const Color pop = Color(0xFF6AFBEE);
-  // done marks, tags and live counts
-  static const Color support = Color(0xFF46A29F);
+  // black and garnet, picked by the owner 2026-11-22 from a live rig. Pop is
+  // the owner's D83B55 lightened a notch to pass 4.5:1 on every fill; red
+  // moved to orange-red to sit well away from pop. Done and live are ink and
+  // shape, so there is no second hue.
+  static const Color ground = Color(0xFF09090B);
+  static const Color ink = Color(0xFFF6F4F5);
+  static const Color inkSoft = Color(0xFFCFC9CC);
+  static const Color inkMuted = Color(0xFF9A9296);
+  // the one bright color: main action, current place, hover, your score
+  static const Color pop = Color(0xFFE0526A);
+  // text and marks on a pop fill
+  static const Color onPop = Color(0xFF1A0509);
   // the ordinary star gold, for MyAnimeList's score only (owner, 2026-11-21)
   static const Color star = Color(0xFFF2B33D);
-  static const Color red = Color(0xFFEF5A5F);
+  static const Color red = Color(0xFFFF7F45);
   // fill of secondary buttons, fields and panels
-  static const Color surface = Color(0xFF1C232B);
+  static const Color surface = Color(0xFF131315);
   // floating panels and hairlines: halfway between ground and surface
-  static const Color raised = Color(0xFF14181E);
-  static const Color line = Color(0xFF3A3D44);
+  static const Color raised = Color(0xFF0E0E10);
+  static const Color line = Color(0xFF3A383B);
   static const Color shadow = Color(0x8C000000);
 
   // radius: square everywhere
@@ -83,14 +83,14 @@ abstract final class Tokens {
   static const double findFieldWidth = 240;
 
   // key cap C, locked by the owner 2026-11-13: a face and a slab under it
-  static const Color keyFace = Color(0xFF2E343C);
-  static const Color keySlab = Color(0xFF242A31);
+  static const Color keyFace = Color(0xFF2C2B2E);
+  static const Color keySlab = Color(0xFF222124);
   static const double keyDepth = 4;
   static const double keyPadX = 6;
   static const double keyPadY = 2;
 
   // the quick search button in the top bar
-  static const Color wellEdge = Color(0xFF14161A);
+  static const Color wellEdge = Color(0xFF151517);
   static const double quickSearchWidth = 280;
   static const double quickSearchHeight = 28;
 

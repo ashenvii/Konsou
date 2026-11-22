@@ -6,8 +6,8 @@ import '../icons/app_icons.dart';
 import '../icons/icon_def.dart';
 import '../library/entry_status.dart';
 
-/// The picture that tells a status apart. Completed is the one green mark; every
-/// other status is an icon in ink, so colour stays rare.
+/// The picture that tells a status apart. Every status is an icon in ink, so colour stays rare;
+/// Completed is the brightest ink.
 class StatusMark extends StatelessWidget {
   const StatusMark(
     this.status, {
@@ -22,7 +22,7 @@ class StatusMark extends StatelessWidget {
   final Color color;
 
   /// Off for a Completed that is not the whole story, such as a franchise with
-  /// a season left: the check is drawn in ink, not green.
+  /// a season left: the check is drawn in the quieter ink.
   final bool green;
 
   static IconDef iconFor(EntryStatus status) => switch (status) {
@@ -40,7 +40,7 @@ class StatusMark extends StatelessWidget {
     return AppIcon(
       iconFor(status),
       size: Tokens.iconSize,
-      color: status == EntryStatus.completed && green ? Tokens.support : color,
+      color: status == EntryStatus.completed && green ? Tokens.ink : color,
     );
   }
 }
