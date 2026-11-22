@@ -3,6 +3,19 @@ import 'package:flutter/painting.dart';
 import 'tokens.dart';
 
 abstract final class AppText {
+  /// How far a style's capitals sit above the middle of their line box, as a
+  /// share of the font size. Measured from rendered capitals at 16 px:
+  /// Plex Sans JP 3 px, Chakra Petch 2 px, Share Tech Mono half a pixel.
+  static const _capRise = {Tokens.sans: 0.1875, Tokens.label: 0.125};
+  static const _capRiseMono = 0.04;
+
+  /// The whole pixels to move text down so its capitals centre on their box,
+  /// for the eye. The line box is centred already, but the capitals are not.
+  static double capDrop(TextStyle style) {
+    final share = _capRise[style.fontFamily] ?? _capRiseMono;
+    return (share * (style.fontSize ?? Tokens.text2)).roundToDouble();
+  }
+
   // Chakra Petch has no kana or kanji; those fall back to Plex Sans JP.
   static const _labelFallback = [Tokens.sans];
 

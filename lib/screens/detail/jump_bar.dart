@@ -4,6 +4,7 @@ import '../../app/cover_view.dart';
 import '../../components/app_menu.dart';
 import '../../components/app_popover.dart';
 import '../../components/menu_chevron.dart';
+import '../../components/cap_centered.dart';
 import '../../components/cover_image.dart';
 import '../../components/motion.dart';
 import '../../components/one_line_text.dart';
@@ -208,9 +209,12 @@ class _TitleButton extends StatelessWidget {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(right: Tokens.space3),
-                    child: OneLineText(
-                      title,
+                    child: CapCentered(
                       style: AppText.label(Tokens.ground, bold: true),
+                      child: OneLineText(
+                        title,
+                        style: AppText.label(Tokens.ground, bold: true),
+                      ),
                     ),
                   ),
                 ),

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
+import 'cap_centered.dart';
 import 'count_badge.dart';
 import 'menu_chevron.dart';
 import 'pressable.dart';
@@ -54,12 +55,15 @@ class AppButton extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    softWrap: false,
-                    overflow: TextOverflow.ellipsis,
+                  child: CapCentered(
                     style: AppText.label(ink, bold: primary && enabled),
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.label(ink, bold: primary && enabled),
+                    ),
                   ),
                 ),
                 if (opensMenu) MenuChevron(color: ink, open: menuOpen),

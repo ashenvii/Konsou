@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
+import 'cap_centered.dart';
 import 'floating_panel.dart';
 import 'hairline.dart';
 import '../icons/app_icon.dart';
@@ -135,20 +136,26 @@ class _MenuRow extends StatelessWidget {
                         : null,
                   ),
                 Expanded(
-                  child: Text(
-                    entry.label,
-                    maxLines: 1,
-                    softWrap: false,
-                    overflow: TextOverflow.ellipsis,
+                  child: CapCentered(
                     style: AppText.label(ink, bold: entry.selected),
+                    child: Text(
+                      entry.label,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.label(ink, bold: entry.selected),
+                    ),
                   ),
                 ),
                 if (entry.count != null) ...[
                   const SizedBox(width: Tokens.space4),
-                  Text(
-                    entry.count!,
-                    style: AppText.tally(
-                      entry.selected ? Tokens.ink : Tokens.inkSoft,
+                  CapCentered(
+                    style: AppText.tally(Tokens.ink),
+                    child: Text(
+                      entry.count!,
+                      style: AppText.tally(
+                        entry.selected ? Tokens.ink : Tokens.inkSoft,
+                      ),
                     ),
                   ),
                 ],

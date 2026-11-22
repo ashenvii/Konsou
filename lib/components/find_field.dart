@@ -6,6 +6,7 @@ import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
 import 'close_on_escape.dart';
 import 'field_text.dart';
+import 'search_well.dart';
 
 class FindField extends StatefulWidget {
   const FindField({
@@ -62,11 +63,10 @@ class _FindFieldState extends State<FindField> {
   Widget build(BuildContext context) {
     return CloseOnEscape(
       onClose: widget.onClose,
-      child: Container(
+      // a well; its lip hangs below, so the well is a lip short of the slot
+      child: SearchWell(
         width: widget.width,
-        height: Tokens.controlHeight,
-        padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
-        color: Tokens.surface,
+        height: Tokens.controlHeight - SearchWell.lip,
         child: Row(
           children: [
             const AppIcon(

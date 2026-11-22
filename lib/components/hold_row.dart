@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
+import 'cap_centered.dart';
 import 'countdown.dart';
 
 const holdToRemoveLabel = 'Hold to remove';
@@ -56,12 +57,15 @@ class _HoldRowState extends State<HoldRow> {
   @override
   Widget build(BuildContext context) {
     Widget label(Color color) => Center(
-      child: Text(
-        widget.label,
-        maxLines: 1,
-        softWrap: false,
-        overflow: TextOverflow.ellipsis,
+      child: CapCentered(
         style: AppText.label(color, bold: true),
+        child: Text(
+          widget.label,
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.ellipsis,
+          style: AppText.label(color, bold: true),
+        ),
       ),
     );
     return Semantics(

@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../design/text_styles.dart';
 import '../design/tokens.dart';
 
 /// The typing part of a field: the text, with the placeholder under it until
@@ -40,7 +41,10 @@ class FieldText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    // a single line is moved down so its capitals centre in the box, and the
+    // caret, which spans the line, is moved back up onto them
+    final drop = multiline ? 0.0 : AppText.capDrop(style);
+    final stack = Stack(
       alignment: multiline
           ? AlignmentDirectional.topStart
           : Alignment.centerLeft,
@@ -73,8 +77,12 @@ class FieldText extends StatelessWidget {
           onTapOutside: onTapOutside,
           inputFormatters: inputFormatters,
           textAlign: textAlign,
+          cursorOffset: Offset(0, -drop),
         ),
       ],
     );
+    return drop == 0
+        ? stack
+        : Transform.translate(offset: Offset(0, drop), child: stack);
   }
 }

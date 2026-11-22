@@ -4,8 +4,9 @@ import 'package:flutter/widgets.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../components/countdown.dart';
-import '../components/hover_mark.dart';
+import '../components/cap_centered.dart';
 import '../components/key_cap.dart';
+import '../components/search_well.dart';
 import '../components/pressable.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
@@ -425,51 +426,29 @@ class _QuickSearchButton extends StatelessWidget {
         final ink = state.hovered ? Tokens.ink : Tokens.inkMuted;
         // a well sunk into the bar: near black, shaded at its top where the
         // bar overhangs it, a faint lit lip below. The hover is the live edge.
-        return DecoratedBox(
-          decoration: const BoxDecoration(
-            borderRadius: Tokens.keyCorners,
-            boxShadow: [
-              BoxShadow(color: Tokens.edgeLight, offset: Offset(0, 1)),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: Tokens.keyCorners,
-            child: HoverMark(
-              on: state.hovered,
-              child: Container(
-                // a fixed size and no alignment: an aligned Container grows to
-                // fill the bar and its fill paints over everything beside it
-                width: Tokens.quickSearchWidth,
-                height: Tokens.quickSearchHeight,
-                padding: const EdgeInsets.symmetric(horizontal: Tokens.space2),
-                decoration: const BoxDecoration(color: Tokens.wellFill),
-                foregroundDecoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Tokens.shadow, Tokens.shadow.withValues(alpha: 0)],
-                    stops: const [0, 0.25],
+        return SearchWell(
+          hovered: state.hovered,
+          width: Tokens.quickSearchWidth,
+          height: Tokens.quickSearchHeight,
+          child: Row(
+            children: [
+              AppIcon(AppIcons.search, size: Tokens.iconSize, color: ink),
+              const SizedBox(width: Tokens.space2),
+              Expanded(
+                child: CapCentered(
+                  style: AppText.label(ink),
+                  child: Text(
+                    _searchPlaceholder,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.label(ink),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    AppIcon(AppIcons.search, size: Tokens.iconSize, color: ink),
-                    const SizedBox(width: Tokens.space2),
-                    Expanded(
-                      child: Text(
-                        _searchPlaceholder,
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppText.label(ink),
-                      ),
-                    ),
-                    const SizedBox(width: Tokens.space2),
-                    const KeyCaps('Ctrl+K'),
-                  ],
-                ),
               ),
-            ),
+              const SizedBox(width: Tokens.space2),
+              const KeyCaps('Ctrl+K'),
+            ],
           ),
         );
       },

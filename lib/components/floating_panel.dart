@@ -11,7 +11,7 @@ class FloatingPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: const BoxDecoration(
-        color: Tokens.raised,
+        borderRadius: Tokens.keyCorners,
         boxShadow: [
           BoxShadow(
             color: Tokens.shadow,
@@ -20,7 +20,18 @@ class FloatingPanel extends StatelessWidget {
           ),
         ],
       ),
-      child: child,
+      // the fill and the lit top edge are inside the corners, so a row's
+      // hover mark stops at them
+      child: ClipRRect(
+        borderRadius: Tokens.keyCorners,
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: Tokens.edgeLight)),
+          ),
+          child: ColoredBox(color: Tokens.raised, child: child),
+        ),
+      ),
     );
   }
 }

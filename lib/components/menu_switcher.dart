@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
 import 'app_menu.dart';
+import 'cap_centered.dart';
 import 'hover_mark.dart';
 import 'hover_popover.dart';
 import 'menu_chevron.dart';
@@ -53,16 +54,27 @@ class MenuSwitcher extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(current, maxLines: 1, softWrap: false, style: style),
-                if (count != null) ...[
-                  const SizedBox(width: Tokens.space2),
-                  Text(
-                    count!,
+                CapCentered(
+                  style: style,
+                  child: Text(
+                    current,
                     maxLines: 1,
                     softWrap: false,
-                    style: style.copyWith(
-                      fontWeight: FontWeight.w400,
-                      color: lit ? Tokens.inkSoft : Tokens.inkMuted,
+                    style: style,
+                  ),
+                ),
+                if (count != null) ...[
+                  const SizedBox(width: Tokens.space2),
+                  CapCentered(
+                    style: style,
+                    child: Text(
+                      count!,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: style.copyWith(
+                        fontWeight: FontWeight.w400,
+                        color: lit ? Tokens.inkSoft : Tokens.inkMuted,
+                      ),
                     ),
                   ),
                 ],
