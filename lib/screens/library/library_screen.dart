@@ -1,5 +1,5 @@
-import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter/widgets.dart';
+import '../../components/dithered_gradient.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/entry_actions.dart';
@@ -79,14 +79,9 @@ class LibraryScreen extends ConsumerWidget {
     final all = loadedRows == null ? null : rowsMatching(loadedRows, matches);
     final counts = all == null ? null : countTabs(all);
     // the console's chassis behind the page, lighter at the top
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Tokens.chassisTop, Tokens.chassisBottom],
-        ),
-      ),
+    return DitheredGradient(
+      top: Tokens.chassisTop,
+      bottom: Tokens.chassisBottom,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

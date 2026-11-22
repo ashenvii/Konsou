@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import '../../components/dithered_gradient.dart';
 
 import '../../components/motion.dart';
 import '../../components/page_frame.dart';
@@ -133,14 +134,9 @@ class _DetailFrameState extends State<DetailFrame> {
       children: [
         // the console's chassis, fixed behind the page as it scrolls
         const Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Tokens.chassisTop, Tokens.chassisBottom],
-              ),
-            ),
+          child: DitheredGradient(
+            top: Tokens.chassisTop,
+            bottom: Tokens.chassisBottom,
           ),
         ),
         Positioned.fill(
