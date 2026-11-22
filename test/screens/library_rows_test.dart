@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:konsou/components/cover_well.dart';
 import 'package:konsou/components/app_checkbox.dart';
 import 'package:konsou/components/cover_image.dart';
 import 'package:konsou/components/status_mark.dart';
@@ -221,9 +222,14 @@ void main() {
       );
     });
 
-    testWidgets('the cover fills the card width', (tester) async {
+    testWidgets('the cover fills the card width inside its well', (
+      tester,
+    ) async {
       await pump(tester, SizedBox(width: 168, child: card(row())));
-      expect(tester.getSize(find.byType(CoverImage)).width, 168);
+      expect(
+        tester.getSize(find.byType(CoverImage)).width,
+        168 - CoverWell.inset,
+      );
     });
 
     testWidgets('on All the chip shows the status mark and the count', (

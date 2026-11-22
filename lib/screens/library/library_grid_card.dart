@@ -1,8 +1,9 @@
 import 'package:flutter/widgets.dart';
 
 import '../../app/cover_view.dart';
-import '../../components/hover_mark.dart';
+import '../../components/cover_well.dart';
 import '../../components/one_line_text.dart';
+import '../../components/status_lamp.dart';
 import '../../components/status_mark.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
@@ -37,13 +38,13 @@ class LibraryGridCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            HoverMark(
-              on: state.hovered || state.focused,
+            CoverWell(
+              lit: state.hovered || state.focused,
               child: Stack(
                 children: [
                   CoverView(
                     malId: row.malId,
-                    width: constraints.maxWidth,
+                    width: constraints.maxWidth - CoverWell.inset,
                     loading: row.isLoadingDetails,
                   ),
                   Positioned(
@@ -84,11 +85,17 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     final count = chipCount(row);
     if (!showStatus && count.isEmpty) return const SizedBox.shrink();
-    // A franchise is green only when every season is done.
+    final status = EntryStatus.parse(row.status);
+    // A franchise is lit as finished only when every season is done.
     final finished = !row.isFranchise || row.seasonsDone == row.seasonsTotal;
-    return ColoredBox(
+    // a small dark display on the cover: the lamp, the status mark where the
+    // tab mixes statuses, and the count in LED digits
+    return DecoratedBox(
       key: const Key('card-chip'),
-      color: Tokens.ground,
+      decoration: const BoxDecoration(
+        color: Tokens.wellFill,
+        borderRadius: Tokens.keyCorners,
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: Tokens.space2,
@@ -97,12 +104,15 @@ class _Chip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (showStatus)
-              StatusMark(EntryStatus.parse(row.status), green: finished),
-            if (showStatus && count.isNotEmpty)
+            StatusLamp(status, finished: finished),
+            if (showStatus) ...[
               const SizedBox(width: Tokens.space1),
-            if (count.isNotEmpty)
+              StatusMark(status, green: finished),
+            ],
+            if (count.isNotEmpty) ...[
+              const SizedBox(width: Tokens.space1),
               Text(count, style: AppText.tally(Tokens.ink, size: Tokens.text1)),
+            ],
           ],
         ),
       ),

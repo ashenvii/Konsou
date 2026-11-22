@@ -77,91 +77,103 @@ class LibraryScreen extends ConsumerWidget {
     // find narrows the rows first, so the counts follow it
     final all = loadedRows == null ? null : rowsMatching(loadedRows, matches);
     final counts = all == null ? null : countTabs(all);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: PageFrame.top,
-          child: Row(
-            children: [
-              Expanded(
-                // a window under the minimum width shrinks the heading instead of overflowing
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: _StatusSwitcher(
-                    selected: tab,
-                    counts: counts,
-                    onSelect: ref
-                        .read(libraryTabChoiceProvider.notifier)
-                        .select,
+    // the console's chassis behind the page, lighter at the top
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Tokens.chassisTop, Tokens.chassisBottom],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: PageFrame.top,
+            child: Row(
+              children: [
+                Expanded(
+                  // a window under the minimum width shrinks the heading instead of overflowing
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: _StatusSwitcher(
+                      selected: tab,
+                      counts: counts,
+                      onSelect: ref
+                          .read(libraryTabChoiceProvider.notifier)
+                          .select,
+                    ),
                   ),
                 ),
-              ),
-              _LayoutSwitch(
-                layout: layout,
-                onLayout: ref.read(libraryLayoutChoiceProvider.notifier).select,
-              ),
-              // the switch sits on the window's centre, not the page's
-              SizedBox(width: PageFrame.railInset),
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const _Find(),
-                      const SizedBox(width: Tokens.space2),
-                      _SortButton(
-                        sort: sort,
-                        onSort: ref
-                            .read(librarySortChoiceProvider.notifier)
-                            .select,
-                      ),
-                    ],
+                _LayoutSwitch(
+                  layout: layout,
+                  onLayout: ref
+                      .read(libraryLayoutChoiceProvider.notifier)
+                      .select,
+                ),
+                // the switch sits on the window's centre, not the page's
+                SizedBox(width: PageFrame.railInset),
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const _Find(),
+                        const SizedBox(width: Tokens.space2),
+                        _SortButton(
+                          sort: sort,
+                          onSort: ref
+                              .read(librarySortChoiceProvider.notifier)
+                              .select,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        Expanded(
-          child: all == null
-              ? (failed
-                    ? const _Message('Your library could not be read.')
-                    : LibrarySkeleton(layout: layout))
-              // a new status, sort, view or search fades the new rows in
-              // instead of cutting to them
-              : Presence(
-                  key: ValueKey('fade $tab $sort $layout ${find ?? ''}'),
-                  visible: true,
-                  child: HoldWhileScrolling(
-                    // a new status, sort, view or search starts at the top, at
-                    // once. the view is here too: swapping the scroll view
-                    // mid-scroll would never report that scroll's end
-                    key: ValueKey('$tab $sort $layout ${find ?? ''}'),
-                    value: (
-                      rows: RowsSnapshot(
-                        sortRows(rowsInTab(all, tab, keep: kept), sort),
+          Expanded(
+            child: all == null
+                ? (failed
+                      ? const _Message('Your library could not be read.')
+                      : LibrarySkeleton(layout: layout))
+                // a new status, sort, view or search fades the new rows in
+                // instead of cutting to them
+                : Presence(
+                    key: ValueKey('fade $tab $sort $layout ${find ?? ''}'),
+                    visible: true,
+                    child: HoldWhileScrolling(
+                      // a new status, sort, view or search starts at the top, at
+                      // once. the view is here too: swapping the scroll view
+                      // mid-scroll would never report that scroll's end
+                      key: ValueKey('$tab $sort $layout ${find ?? ''}'),
+                      value: (
+                        rows: RowsSnapshot(
+                          sortRows(rowsInTab(all, tab, keep: kept), sort),
+                        ),
+                        kept: kept,
                       ),
-                      kept: kept,
-                    ),
-                    builder: (context, held) => _Rows(
-                      rows: held.rows.rows!,
-                      keptIds: held.kept,
-                      libraryIsEmpty: loadedRows!.isEmpty,
-                      finding: matches != null,
-                      showStatus: tab == LibraryTab.all,
-                      layout: layout,
-                      sort: sort,
-                      onDiscover: onDiscover,
-                      onOpen: onOpen,
+                      builder: (context, held) => _Rows(
+                        rows: held.rows.rows!,
+                        keptIds: held.kept,
+                        libraryIsEmpty: loadedRows!.isEmpty,
+                        finding: matches != null,
+                        showStatus: tab == LibraryTab.all,
+                        layout: layout,
+                        sort: sort,
+                        onDiscover: onDiscover,
+                        onOpen: onOpen,
+                      ),
                     ),
                   ),
-                ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }

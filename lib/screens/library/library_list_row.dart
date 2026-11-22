@@ -4,6 +4,7 @@ import '../../app/cover_view.dart';
 import '../../components/app_checkbox.dart';
 import '../../components/hover_mark.dart';
 import '../../components/one_line_text.dart';
+import '../../components/status_lamp.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../icons/score_star.dart';
@@ -104,10 +105,26 @@ class _LibraryListRowState extends State<LibraryListRow> {
                     ),
                   SizedBox(
                     width: _progressWidth,
-                    child: OneLineText(
-                      progressText(row),
-                      align: TextAlign.right,
-                      style: AppText.tally(Tokens.inkSoft, size: Tokens.text1),
+                    child: Row(
+                      children: [
+                        StatusLamp(
+                          EntryStatus.parse(row.status),
+                          finished:
+                              !row.isFranchise ||
+                              row.seasonsDone == row.seasonsTotal,
+                        ),
+                        const SizedBox(width: Tokens.space2),
+                        Expanded(
+                          child: OneLineText(
+                            progressText(row),
+                            align: TextAlign.right,
+                            style: AppText.tally(
+                              Tokens.inkSoft,
+                              size: Tokens.text1,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   SizedBox(width: _scoreWidth, child: _Score(row.score)),
