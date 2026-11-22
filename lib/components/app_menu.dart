@@ -10,6 +10,7 @@ import '../icons/app_icons.dart';
 import 'hold_row.dart';
 import 'hover_mark.dart';
 import 'key_cap.dart';
+import 'motion.dart';
 import 'pressable.dart';
 
 class MenuEntry {
@@ -121,16 +122,25 @@ class _MenuRow extends StatelessWidget {
                 if (showMarks)
                   SizedBox(
                     width: Tokens.iconSize + Tokens.space4,
+                    // the label is centred on its capitals, so the mark is
+                    // centred on the row and fades in when it shows
                     child: entry.selected
-                        // the label's capitals sit above the line box's middle
-                        ? Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: Tokens.space4,
+                        ? TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0, end: 1),
+                            duration: chooseMotionDuration(
+                              context,
+                              Tokens.motionOpen,
                             ),
-                            child: AppIcon(
-                              AppIcons.check,
-                              size: Tokens.iconSize,
-                              color: entry.destructive ? ink : Tokens.pop,
+                            curve: Curves.easeOut,
+                            builder: (context, opacity, child) =>
+                                Opacity(opacity: opacity, child: child),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: AppIcon(
+                                AppIcons.check,
+                                size: Tokens.iconSize,
+                                color: entry.destructive ? ink : Tokens.pop,
+                              ),
                             ),
                           )
                         : null,

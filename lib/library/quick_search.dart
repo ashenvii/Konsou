@@ -87,6 +87,7 @@ class QuickState {
     this.mineShown = quickFirst,
     this.onlineShown = quickFirst,
     this.searching = false,
+    this.paging = false,
     this.onlineMore = false,
     this.failed = false,
     this.focus = 0,
@@ -106,6 +107,11 @@ class QuickState {
 
   /// An online search is running, so skeleton rows hold the space.
   final bool searching;
+
+  /// The running search is for the next page, so the rows already shown stay
+  /// and skeleton rows follow them. A new word keeps the old rows until its
+  /// own arrive, with no skeletons, so the list never blinks empty.
+  final bool paging;
 
   /// More online results can be asked for.
   final bool onlineMore;
@@ -140,6 +146,7 @@ class QuickState {
     int? mineShown,
     int? onlineShown,
     bool? searching,
+    bool? paging,
     bool? onlineMore,
     bool? failed,
     int? focus,
@@ -152,6 +159,7 @@ class QuickState {
     mineShown: mineShown ?? this.mineShown,
     onlineShown: onlineShown ?? this.onlineShown,
     searching: searching ?? this.searching,
+    paging: paging ?? this.paging,
     onlineMore: onlineMore ?? this.onlineMore,
     failed: failed ?? this.failed,
     focus: focus ?? this.focus,

@@ -84,8 +84,11 @@ class QuickSearch extends _$QuickSearch {
     state = state.copyWith(
       query: query,
       mine: _mineRows(query),
-      online: const [],
+      // the last online rows stay until the new ones arrive, so the screen
+      // does not blink empty between two words
+      online: online ? null : const [],
       searching: online,
+      paging: false,
       onlineMore: false,
       failed: false,
       mineShown: quickFirst,
@@ -112,7 +115,7 @@ class QuickSearch extends _$QuickSearch {
       focus: target,
     );
     if (before.onlineMore && before.online.length < state.onlineShown) {
-      state = state.copyWith(searching: true);
+      state = state.copyWith(searching: true, paging: true);
       await _fetch(before.query, run);
     }
     if (run != _run) return;
@@ -178,7 +181,7 @@ class QuickSearch extends _$QuickSearch {
     final matching = ref.read(servicesProvider).matching;
     final search = _search;
     if (matching == null || search == null) {
-      if (run == _run) state = state.copyWith(searching: false);
+      if (run == _run) state = state.copyWith(searching: false, paging: false);
       return;
     }
     final List<Map<String, dynamic>>? pages;
@@ -201,7 +204,12 @@ class QuickSearch extends _$QuickSearch {
     }
     if (run != _run) return;
     if (pages == null) {
-      state = state.copyWith(searching: false, failed: true);
+      state = state.copyWith(
+        online: _offset == 0 ? const [] : null,
+        searching: false,
+        paging: false,
+        failed: true,
+      );
       return;
     }
     final unlisted = (await search.dropListed([
@@ -212,13 +220,15 @@ class QuickSearch extends _$QuickSearch {
     _offset += pages.length;
     state = state.copyWith(
       online: [
-        ...state.online,
+        // the first page replaces the rows of the old word
+        if (_offset > pages.length) ...state.online,
         for (final page in pages)
           if (unlisted.contains(page['id'] as int))
             quickRowFromPage(page, _language),
       ],
       onlineMore: pages.length >= quickPage,
       searching: false,
+      paging: false,
       failed: false,
     );
   }

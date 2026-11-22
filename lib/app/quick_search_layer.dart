@@ -223,6 +223,7 @@ class _Results extends StatelessWidget {
     Widget rowFor(QuickRow row) {
       final at = index++;
       return _ResultRow(
+        key: ValueKey(row.entryId ?? 'm${row.malId}'),
         row: row,
         focused: at == state.focus,
         onFocus: () => search.focusRow(at),
@@ -249,7 +250,9 @@ class _Results extends StatelessWidget {
       if (online.isNotEmpty || state.searching) {
         children.add(const _GroupLabel('All anime'));
         children.addAll(online.map(rowFor));
-        if (state.searching) {
+        // old rows stay while a new word is searched; skeletons only hold
+        // the space when there is nothing to show or a page is coming
+        if (state.searching && (online.isEmpty || state.paging)) {
           children.addAll(
             List.generate(
               online.isEmpty ? quickFirst : 3,
@@ -357,6 +360,7 @@ mixin _KeepsInView<T extends StatefulWidget> on State<T> {
 
 class _ResultRow extends StatefulWidget {
   const _ResultRow({
+    super.key,
     required this.row,
     required this.focused,
     required this.onFocus,
