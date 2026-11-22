@@ -23,6 +23,11 @@ Future<void> loadAppFonts() async {
     }
     await loader.load();
   }
+  // Flutter 3.50 tells the framework about new fonts a moment later, and the
+  // frame that asks for would land after the test ends and fail it
+  await TestWidgetsFlutterBinding.instance.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 50)),
+  );
 }
 
 /// Draws [child] at [size] and saves it as a PNG at [path]. For screens the
