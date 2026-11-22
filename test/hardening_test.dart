@@ -95,7 +95,7 @@ void main() {
         tester.getSize(find.byType(AppButton)).height,
         Tokens.controlHeight,
       );
-      expect(tester.getSize(find.byType(CountBadge)).height, Tokens.badgeSize);
+      expect(find.text('12'), findsOneWidget);
     });
   }
 

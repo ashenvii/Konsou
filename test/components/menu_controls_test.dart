@@ -57,7 +57,9 @@ void main() {
       );
     });
 
-    testWidgets('selected is a cyan icon with no box', (tester) async {
+    testWidgets('both are keys; the selected one is pop and pressed in', (
+      tester,
+    ) async {
       await pumpWidget(
         tester,
         Row(
@@ -85,10 +87,22 @@ void main() {
             ),
           )
           .color;
-      // no boxes: the chosen one is a cyan icon, the other muted
       expect(iconOf('Grid view'), Tokens.pop);
       expect(iconOf('List view'), Tokens.inkMuted);
-      expect(fillOf(tester, find.bySemanticsLabel('List view')), isNull);
+      expect(
+        fillOf(tester, find.bySemanticsLabel('List view')),
+        Tokens.keyFace,
+      );
+      // pressed in: its icon sits lower than the one beside it
+      double iconTop(String label) => tester
+          .getTopLeft(
+            find.descendant(
+              of: find.bySemanticsLabel(label),
+              matching: find.byType(AppIcon),
+            ),
+          )
+          .dy;
+      expect(iconTop('Grid view'), greaterThan(iconTop('List view')));
     });
 
     testWidgets('a tap runs it', (tester) async {

@@ -1,14 +1,15 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/app_tab.dart';
-import 'package:konsou/components/count_badge.dart';
 import 'package:konsou/components/weight_text.dart';
 import 'package:konsou/design/tokens.dart';
 
 import '../support/pump_widget.dart';
 
 void main() {
-  testWidgets('selected is cyan, the others have no fill', (tester) async {
+  testWidgets('selected has a pop underline, the others nothing', (
+    tester,
+  ) async {
     await pumpWidget(
       tester,
       Row(
@@ -19,11 +20,21 @@ void main() {
         ],
       ),
     );
-    expect(fillOf(tester, find.widgetWithText(AppTab, 'Browse')), Tokens.pop);
-    expect(fillOf(tester, find.widgetWithText(AppTab, 'Top 10')), isNull);
+    Decoration? lineOf(String label) => tester
+        .widget<Container>(
+          find.descendant(
+            of: find.widgetWithText(AppTab, label),
+            matching: find.byType(Container),
+          ),
+        )
+        .foregroundDecoration;
+    final line = lineOf('Browse')! as BoxDecoration;
+    expect((line.border! as Border).bottom.color, Tokens.pop);
+    expect(lineOf('Top 10'), isNull);
+    expect(fillOf(tester, find.widgetWithText(AppTab, 'Browse')), isNull);
   });
 
-  testWidgets('a tap fires and a count shows a badge', (tester) async {
+  testWidgets('a tap fires and a count shows beside the word', (tester) async {
     var taps = 0;
     await pumpWidget(
       tester,
@@ -34,7 +45,7 @@ void main() {
         onPressed: () => taps++,
       ),
     );
-    expect(find.byType(CountBadge), findsOneWidget);
+    expect(find.text('5'), findsOneWidget);
     await tester.tap(find.byType(AppTab));
     expect(taps, 1);
   });
@@ -70,17 +81,18 @@ void main() {
     expect(await widthWhen(true), await widthWhen(false));
   });
 
-  testWidgets('a badge on the selected tab turns dark', (tester) async {
+  testWidgets('the selected count lights up in pop', (tester) async {
+    Color? countColor() => tester.widget<Text>(find.text('5')).style?.color;
     await pumpWidget(
       tester,
       AppTab(label: 'Watching', selected: true, count: 5, onPressed: () {}),
     );
-    expect(fillOf(tester, find.byType(CountBadge)), Tokens.onPop);
+    expect(countColor(), Tokens.pop);
     await pumpWidget(
       tester,
       AppTab(label: 'Watching', selected: false, count: 5, onPressed: () {}),
     );
-    expect(fillOf(tester, find.byType(CountBadge)), Tokens.pop);
+    expect(countColor(), Tokens.inkMuted);
   });
 
   testWidgets('tab width is the label plus 16 each side', (tester) async {
@@ -89,6 +101,9 @@ void main() {
       AppTab(label: 'For you', selected: false, onPressed: () {}),
     );
     final label = tester.getSize(find.byType(WeightText)).width;
-    expect(tester.getSize(find.byType(AppTab)).width, label + 2 * Tokens.space4);
+    expect(
+      tester.getSize(find.byType(AppTab)).width,
+      label + 2 * Tokens.space4,
+    );
   });
 }

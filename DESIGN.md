@@ -156,9 +156,9 @@ Radius is 0 everywhere. No pills, no circles except the mascot's own geometry. I
 ## Components
 
 ### Buttons
-- **Shape:** square, 36 tall.
-- **Primary:** pop fill, On Pop text.
-- **Secondary:** Panel Slate fill, Ink text. A transparent variant exists for the one-time green shimmer.
+- **Shape:** a raised key, 36 tall: a Key Face over a 3 deep Key Slab, a soft shadow, corners 5. Pressed or selected, it sinks to a 1 slab.
+- **Primary:** pop face over the Pop Slab (#8A2537), On Pop text in Chakra Petch.
+- **Secondary:** Key Face, Ink text. Icon buttons (view switch, plus and minus, arrows) are the same key; the selected view stays pressed in with a pop icon.
 - **Hover / Focus:** hover is the live edge (faint pop wash and a 2px pop line underneath) and brighter text; focus is a 2px Ink ring on every pressable.
 
 ### Menus and popovers

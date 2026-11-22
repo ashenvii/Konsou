@@ -6,6 +6,7 @@ import 'hover_mark.dart';
 import 'hover_popover.dart';
 import 'menu_chevron.dart';
 import 'pressable.dart';
+import 'raised_key.dart';
 
 /// A word (and an optional count) with a cyan chevron that opens an
 /// [AppMenu] on hover or click. The Library's status heading and its sort
@@ -19,7 +20,12 @@ class MenuSwitcher extends StatelessWidget {
     this.count,
     this.footnote,
     this.gap = Tokens.space1,
+    this.raised = false,
   });
+
+  /// Drawn as a raised key, as the sort and the status button are. Off for
+  /// the Library's big status heading, which is a word, not a key.
+  final bool raised;
 
   final String current;
   final String? count;
@@ -39,32 +45,35 @@ class MenuSwitcher extends StatelessWidget {
         selected: handle.isOpen,
         builder: (context, state) {
           final lit = state.hovered || state.focused || handle.isOpen;
-          return HoverMark(
-            on: lit,
-            child: Container(
-              height: Tokens.controlHeight,
-              padding: const EdgeInsets.symmetric(horizontal: Tokens.space2),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(current, maxLines: 1, softWrap: false, style: style),
-                  if (count != null) ...[
-                    const SizedBox(width: Tokens.space2),
-                    Text(
-                      count!,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: style.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: lit ? Tokens.inkSoft : Tokens.inkMuted,
-                      ),
+          final content = Container(
+            height: Tokens.controlHeight,
+            padding: EdgeInsets.symmetric(
+              horizontal: raised ? Tokens.space3 : Tokens.space2,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(current, maxLines: 1, softWrap: false, style: style),
+                if (count != null) ...[
+                  const SizedBox(width: Tokens.space2),
+                  Text(
+                    count!,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: style.copyWith(
+                      fontWeight: FontWeight.w400,
+                      color: lit ? Tokens.inkSoft : Tokens.inkMuted,
                     ),
-                  ],
-                  MenuChevron(color: Tokens.pop, open: handle.isOpen),
+                  ),
                 ],
-              ),
+                MenuChevron(color: Tokens.pop, open: handle.isOpen),
+              ],
             ),
           );
+          if (raised) {
+            return RaisedKey(lit: lit, sunk: state.pressed, child: content);
+          }
+          return HoverMark(on: lit, child: content);
         },
       ),
       popoverBuilder: (context, handle) => AppMenu(

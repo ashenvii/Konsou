@@ -34,9 +34,8 @@ void main() {
   test('a phone gets two columns', () {
     expect(GridLayout.forWidth(360 - 2 * Tokens.space4).columns, 1);
     expect(
-      GridLayout.forWidth(
-        2 * Tokens.gridCardMinWidth + GridLayout.columnGap,
-      ).columns,
+      GridLayout.forWidth(2 * Tokens.gridCardMinWidth + GridLayout.columnGap)
+          .columns,
       2,
     );
   });

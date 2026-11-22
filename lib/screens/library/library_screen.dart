@@ -216,6 +216,7 @@ class _SortButton extends StatelessWidget {
     return MenuSwitcher(
       current: _sortLabel(sort),
       style: AppText.label(Tokens.ink),
+      raised: true,
       entries: [
         for (final choice in LibrarySort.values)
           MenuEntry(

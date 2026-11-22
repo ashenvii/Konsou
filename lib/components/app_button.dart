@@ -3,9 +3,9 @@ import 'package:flutter/widgets.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import 'count_badge.dart';
-import 'hover_mark.dart';
 import 'menu_chevron.dart';
 import 'pressable.dart';
+import 'raised_key.dart';
 
 enum ButtonKind { primary, secondary }
 
@@ -35,19 +35,19 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onPressed != null;
     final primary = kind == ButtonKind.primary;
-    final fill = primary && enabled ? Tokens.pop : null;
     final ink = !enabled
         ? Tokens.inkMuted
         : (primary ? Tokens.onPop : Tokens.ink);
     return Pressable(
       onPressed: onPressed,
       focusColor: primary && enabled ? Tokens.onPop : Tokens.ink,
-      builder: (context, state) => HoverMark(
-        on: !primary && state.hovered,
+      builder: (context, state) => RaisedKey(
+        primary: primary && enabled,
+        lit: !primary && enabled && state.hovered,
+        sunk: enabled && state.pressed,
         child: Container(
           height: Tokens.controlHeight,
           padding: const EdgeInsets.symmetric(horizontal: Tokens.space4),
-          color: fill,
           child: Center(
             widthFactor: 1,
             child: Row(

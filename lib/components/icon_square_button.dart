@@ -2,9 +2,9 @@ import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
 import '../icons/icon_def.dart';
-import 'hover_mark.dart';
 import 'icon_cell.dart';
 import 'pressable.dart';
+import 'raised_key.dart';
 
 class IconSquareButton extends StatelessWidget {
   const IconSquareButton({
@@ -26,8 +26,10 @@ class IconSquareButton extends StatelessWidget {
       label: label,
       onPressed: onPressed,
       selected: selected,
-      builder: (context, state) => HoverMark(
-        on: state.hovered,
+      // a raised key; the selected one (the view showing) stays pressed in
+      builder: (context, state) => RaisedKey(
+        lit: state.hovered && !selected,
+        sunk: selected || state.pressed,
         child: IconCell(
           icon: icon,
           size: Tokens.iconSize,

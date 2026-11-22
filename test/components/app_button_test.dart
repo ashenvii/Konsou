@@ -19,7 +19,7 @@ void main() {
     expect(taps, 1);
   });
 
-  testWidgets('secondary has no box at rest', (tester) async {
+  testWidgets('secondary is a raised key face', (tester) async {
     await pumpWidget(
       tester,
       AppButton(
@@ -28,7 +28,7 @@ void main() {
         onPressed: () {},
       ),
     );
-    expect(fillOf(tester, find.byType(AppButton)), isNull);
+    expect(fillOf(tester, find.byType(AppButton)), Tokens.keyFace);
   });
 
   testWidgets('a count shows in a badge after the label', (tester) async {
@@ -70,8 +70,12 @@ void main() {
     expect(weight(), FontWeight.w400);
   });
 
-  testWidgets('disabled primary drops the cyan', (tester) async {
+  testWidgets('primary is pop, disabled primary drops to a plain key', (
+    tester,
+  ) async {
+    await pumpWidget(tester, AppButton(label: 'Save', onPressed: () {}));
+    expect(fillOf(tester, find.byType(AppButton)), Tokens.pop);
     await pumpWidget(tester, const AppButton(label: 'Save', onPressed: null));
-    expect(fillOf(tester, find.byType(AppButton)), isNull);
+    expect(fillOf(tester, find.byType(AppButton)), Tokens.keyFace);
   });
 }

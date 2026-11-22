@@ -1,13 +1,14 @@
 import 'package:flutter/widgets.dart';
 
+import '../design/text_styles.dart';
 import '../design/tokens.dart';
-import 'count_badge.dart';
 import 'menu_chevron.dart';
 import 'pressable.dart';
 import 'weight_text.dart';
 
-/// One tab. The selected tab is a filled cyan block. Put tabs side by side in
-/// a Row; the padding gives the gap.
+/// One tab: a word with a lit pop underline when selected and its count in LED
+/// digits beside it, pop and glowing on the selected tab. Put tabs side by side
+/// in a Row; the padding gives the gap.
 class AppTab extends StatelessWidget {
   const AppTab({
     super.key,
@@ -31,15 +32,21 @@ class AppTab extends StatelessWidget {
     return Pressable(
       onPressed: onPressed,
       selected: selected,
-      focusColor: selected ? Tokens.onPop : Tokens.ink,
       builder: (context, state) {
-        final ink = selected
-            ? Tokens.onPop
-            : (state.hovered ? Tokens.ink : Tokens.inkMuted);
+        final ink = selected || state.hovered ? Tokens.ink : Tokens.inkMuted;
         return Container(
           height: Tokens.controlHeight,
           padding: const EdgeInsets.symmetric(horizontal: Tokens.space4),
-          color: selected ? Tokens.pop : null,
+          foregroundDecoration: selected
+              ? const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Tokens.pop,
+                      width: Tokens.hoverEdge,
+                    ),
+                  ),
+                )
+              : null,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -49,7 +56,22 @@ class AppTab extends StatelessWidget {
               if (opensMenu) MenuChevron(color: ink),
               if (count != null) ...[
                 const SizedBox(width: Tokens.space2),
-                CountBadge(count!, onAccent: selected),
+                Text(
+                  '$count',
+                  maxLines: 1,
+                  softWrap: false,
+                  style: AppText.count(selected ? Tokens.pop : Tokens.inkMuted)
+                      .copyWith(
+                        shadows: selected
+                            ? const [
+                                Shadow(
+                                  color: Tokens.pop,
+                                  blurRadius: Tokens.ledGlow,
+                                ),
+                              ]
+                            : null,
+                      ),
+                ),
               ],
             ],
           ),

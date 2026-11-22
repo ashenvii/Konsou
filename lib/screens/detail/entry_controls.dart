@@ -56,6 +56,7 @@ class EntryControls extends StatelessWidget {
       entries: statusEntries,
       style: AppText.label(Tokens.ink, bold: true),
       gap: Tokens.space1,
+      raised: true,
     );
     if (statusOnly) return switcher;
     final total = this.total;
