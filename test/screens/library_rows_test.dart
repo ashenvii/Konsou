@@ -217,7 +217,7 @@ void main() {
       expect(find.text('TV · 2023'), findsOneWidget);
       expect(
         tester.widget<Text>(find.text('Frieren')).style!.fontWeight,
-        FontWeight.w700,
+        FontWeight.w600,
       );
     });
 

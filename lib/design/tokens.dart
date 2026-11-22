@@ -24,8 +24,35 @@ abstract final class Tokens {
   static const Color line = Color(0xFF3A383B);
   static const Color shadow = Color(0x8C000000);
 
-  // radius: square everywhere
+  // radius: square for anything flat; the garnet console's raised and sunk
+  // parts get small corners (owner, 2026-11-22)
   static const BorderRadius square = BorderRadius.zero;
+  static const double coverRadius = 3;
+  static const double keyRadius = 5;
+  static const double wellRadius = 6;
+
+  // the garnet console (owner, 2026-11-22): chassis and title bar gradients,
+  // the faceplate rail, sunk wells, a slab under the primary key, an off lamp,
+  // and a faint white lip on raised edges
+  static const Color chassisTop = Color(0xFF1D1C20);
+  static const Color chassisBottom = Color(0xFF0E0D10);
+  static const Color barTop = Color(0xFF211F24);
+  static const Color barBottom = Color(0xFF161518);
+  static const Color railFill = Color(0xFF121114);
+  static const Color wellFill = Color(0xFF050506);
+  static const Color popSlab = Color(0xFF8A2537);
+  static const Color lampOff = Color(0xFF2A282D);
+  static const Color edgeLight = Color(0x0DFFFFFF);
+  // raised buttons sit on a 3 slab; key caps keep keyDepth
+  static const double buttonDepth = 3;
+  static const double wellPad = 6;
+  static const double lampSize = 9;
+  // the rail's lit edge and the open watch order cover's ring
+  static const double litEdge = 3;
+  // glow blur: LED digits, lamps and the lit edge, the open cover
+  static const double ledGlow = 6;
+  static const double lampGlow = 8;
+  static const double openGlow = 14;
 
   // space
   static const double space1 = 4;
@@ -41,9 +68,14 @@ abstract final class Tokens {
   static const double text4 = 24;
   static const double text5 = 32;
 
-  // fonts
-  static const String sans = 'PlexSans';
-  static const String mono = 'PlexMono';
+  // fonts (owner, 2026-11-22): three families, one job each. sans for running
+  // text and Japanese names, label for headings, titles, tabs and buttons, mono
+  // for every number and key cap. Share Tech Mono has one weight.
+  static const String sans = 'PlexSansJP';
+  static const String label = 'ChakraPetch';
+  static const String mono = 'ShareTechMono';
+  // label tracking, as a share of the font size
+  static const double labelTracking = 0.02;
 
   // shell sizes from the comp (2026-11-08); windowIconSize is not measured
   static const double barHeight = 36;

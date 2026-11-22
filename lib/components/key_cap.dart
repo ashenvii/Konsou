@@ -60,7 +60,6 @@ class _KeyCap extends StatelessWidget {
               softWrap: false,
               style: TextStyle(
                 fontFamily: Tokens.mono,
-                fontWeight: FontWeight.w700,
                 fontSize: Tokens.text1,
                 height: 1,
                 color: Tokens.inkSoft,

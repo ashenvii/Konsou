@@ -9,14 +9,12 @@ import 'package:flutter_test/flutter_test.dart';
 /// Loads the bundled fonts, so a rendered image shows the real type.
 Future<void> loadAppFonts() async {
   const families = {
-    'PlexSans': [
-      'assets/fonts/IBMPlexSans-Regular.ttf',
-      'assets/fonts/IBMPlexSans-Bold.ttf',
+    'PlexSansJP': [
+      'assets/fonts/IBMPlexSansJP-Regular.ttf',
+      'assets/fonts/IBMPlexSansJP-Bold.ttf',
     ],
-    'PlexMono': [
-      'assets/fonts/IBMPlexMono-Regular.ttf',
-      'assets/fonts/IBMPlexMono-Bold.ttf',
-    ],
+    'ChakraPetch': ['assets/fonts/ChakraPetch-SemiBold.ttf'],
+    'ShareTechMono': ['assets/fonts/ShareTechMono-Regular.ttf'],
   };
   for (final MapEntry(:key, :value) in families.entries) {
     final loader = FontLoader(key);

@@ -18,32 +18,35 @@ colors:
   well-edge: "#151517"
 typography:
   heading:
-    fontFamily: "IBM Plex Sans, system-ui, sans-serif"
-    fontSize: "18px"
-    fontWeight: 700
+    fontFamily: "Chakra Petch, IBM Plex Sans JP, sans-serif"
+    fontSize: "20px"
+    fontWeight: 600
     lineHeight: 1
   label:
-    fontFamily: "IBM Plex Sans, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans JP, system-ui, sans-serif"
     fontSize: "14px"
     fontWeight: 400
     lineHeight: 1
   caption:
-    fontFamily: "IBM Plex Sans, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans JP, system-ui, sans-serif"
     fontSize: "12px"
     fontWeight: 400
     lineHeight: 1
   figure:
-    fontFamily: "IBM Plex Mono, ui-monospace, monospace"
+    fontFamily: "Share Tech Mono, ui-monospace, monospace"
     fontSize: "12px"
     fontWeight: 400
     lineHeight: 1
   count:
-    fontFamily: "IBM Plex Mono, ui-monospace, monospace"
-    fontSize: "11px"
-    fontWeight: 700
+    fontFamily: "Share Tech Mono, ui-monospace, monospace"
+    fontSize: "12px"
+    fontWeight: 400
     lineHeight: 1
 rounded:
   square: "0px"
+  cover: "3px"
+  key: "5px"
+  well: "6px"
 spacing:
   space-1: "4px"
   space-2: "8px"
@@ -76,7 +79,7 @@ components:
     rounded: "{rounded.square}"
 ---
 
-<!-- Generated from lib/design/tokens.dart and the shipped components, 2026-11-13. Tokens in the frontmatter are normative; change them in tokens.dart and notes/design/tokens.md first. -->
+<!-- Generated from lib/design/tokens.dart and the shipped components, 2026-11-13; colours and fonts updated 2026-11-22 for the garnet console, whose shapes (keys, wells, lamps) are not built yet, see notes/DECISIONS.md "Garnet console". Tokens in the frontmatter are normative; change them in tokens.dart and notes/design/tokens.md first. -->
 
 # Design System: Konsou
 
@@ -87,7 +90,7 @@ One flat dark ground, square edges, and almost no color, so that the few marks t
 **Key Characteristics:**
 - One dark ground with two fill steps above it. No gradients inside content, no rounded corners.
 - Color is rare and carries meaning. Pop chooses, ink marks done and live by shape, red removes.
-- Plex Sans for words, Plex Mono for numbers and labels. Weights regular and bold only.
+- Chakra Petch for labels, Plex Sans JP for words and Japanese names, Share Tech Mono for every number.
 - Hairline separation through tone, not lines. Hover is a live edge, not a box.
 
 ## Colors
@@ -119,9 +122,9 @@ A neutral near-black ground with warm-white inks and one garnet pop. Black and g
 
 ## Typography
 
-**Display Font:** none. **Body and labels:** IBM Plex Sans (with system-ui). **Numbers and tags:** IBM Plex Mono.
+**Labels:** Chakra Petch 600 (headings, titles, tabs, buttons), 2% tracking, falling back to Plex Sans JP for kana and kanji. **Running text and Japanese names:** IBM Plex Sans JP, regular and bold. **Every number and key cap:** Share Tech Mono, one weight, the LED digits. Three families, one job each (owner, 2026-11-22).
 
-**Character:** a technical, even pair. The mono carries counts and "EP 07 / 24" so numbers line up and read as data.
+**Character:** a console. Chakra Petch's squared letters label the controls; Share Tech Mono reads like an LED display; Plex Sans JP keeps long text and Japanese names calm and matched.
 
 ### Hierarchy
 - **Heading** (700, 18px, 1.0): page and section heads.
@@ -130,7 +133,7 @@ A neutral near-black ground with warm-white inks and one garnet pop. Black and g
 - **Figure** (Mono 400, 12px) and **Count** (Mono 700, 11px): progress, counts, key caps.
 
 ### Named Rules
-**The Four Sizes Rule.** 11, 12, 14 and 18 are the only sizes. Weights are regular and bold only.
+**The Five Sizes Rule.** 12, 16, 20, 24 and 32 are the only sizes. Weights: Plex Sans JP regular and bold, Chakra Petch 600, Share Tech Mono regular.
 **The Wrapping Text Rule.** Text that can wrap onto a second line (toast messages, long titles, notes) uses a line height of 1.4 (`lineHeightWrapped`, `AppText.paragraph`). Single-line labels stay at 1.0 inside their fixed control. No extra word or letter spacing anywhere; the text stays compact.
 
 ## Layout

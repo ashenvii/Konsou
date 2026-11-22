@@ -60,7 +60,7 @@ void main() {
     FontWeight? weight() =>
         tester.widget<Text>(find.byType(Text)).style?.fontWeight;
     await pumpWidget(tester, AppButton(label: 'Go', onPressed: () {}));
-    expect(weight(), FontWeight.w700);
+    expect(weight(), FontWeight.w600);
     await pumpWidget(
       tester,
       AppButton(label: 'Go', kind: ButtonKind.secondary, onPressed: () {}),

@@ -35,18 +35,7 @@ dev_dependencies:
 flutter:
   uses-material-design: false
   fonts:
-    - family: PlexSans
-      fonts:
-        - asset: assets/fonts/IBMPlexSans-Regular.ttf
-        - asset: assets/fonts/IBMPlexSans-Bold.ttf
-          weight: 700
-    - family: PlexMono
-      fonts:
-        - asset: assets/fonts/IBMPlexMono-Regular.ttf
-        - asset: assets/fonts/IBMPlexMono-Bold.ttf
-          weight: 700
-    # Garnet console fonts (owner, 2026-11-22), from google/fonts, OFL.
-    # PlexSans and PlexMono go once the text styles move over.
+    # garnet console fonts (owner, 2026-11-22), from google/fonts, OFL
     - family: ChakraPetch
       fonts:
         - asset: assets/fonts/ChakraPetch-SemiBold.ttf

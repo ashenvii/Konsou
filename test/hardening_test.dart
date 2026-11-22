@@ -71,8 +71,9 @@ void main() {
             textDirection: TextDirection.ltr,
             child: Align(
               alignment: Alignment.topLeft,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              // a Wrap, so three controls at 3x that are wider together than
+              // the 800 test screen do not count as one of them breaking
+              child: Wrap(
                 children: [
                   AppButton(label: 'Browse', onPressed: () {}),
                   AppTab(

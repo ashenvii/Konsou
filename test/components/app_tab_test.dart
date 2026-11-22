@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/app_tab.dart';
 import 'package:konsou/components/count_badge.dart';
+import 'package:konsou/components/weight_text.dart';
 import 'package:konsou/design/tokens.dart';
 
 import '../support/pump_widget.dart';
@@ -53,7 +54,7 @@ void main() {
     );
     FontWeight? weight(String label) =>
         tester.widget<Text>(find.text(label)).style?.fontWeight;
-    expect(weight('Browse'), FontWeight.w700);
+    expect(weight('Browse'), FontWeight.w600);
     expect(weight('Top 10'), FontWeight.w400);
   });
 
@@ -87,7 +88,7 @@ void main() {
       tester,
       AppTab(label: 'For you', selected: false, onPressed: () {}),
     );
-    final text = tester.getSize(find.text('For you')).width;
-    expect(tester.getSize(find.byType(AppTab)).width, text + 2 * Tokens.space4);
+    final label = tester.getSize(find.byType(WeightText)).width;
+    expect(tester.getSize(find.byType(AppTab)).width, label + 2 * Tokens.space4);
   });
 }
