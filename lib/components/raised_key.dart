@@ -39,7 +39,7 @@ class RaisedKey extends StatelessWidget {
             ),
             if (!sunk)
               BoxShadow(
-                color: Tokens.shadow,
+                color: Tokens.keyShadow,
                 offset: Offset(0, depth + 1),
                 blurRadius: Tokens.ledGlow,
               ),
@@ -51,7 +51,18 @@ class RaisedKey extends StatelessWidget {
             on: lit,
             child: ColoredBox(
               color: primary ? Tokens.pop : Tokens.keyFace,
-              child: child,
+              // the lit top edge
+              child: DecoratedBox(
+                position: DecorationPosition.foreground,
+                decoration: const BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: Color.fromRGBO(255, 255, 255, Tokens.keyLipAlpha),
+                    ),
+                  ),
+                ),
+                child: child,
+              ),
             ),
           ),
         ),

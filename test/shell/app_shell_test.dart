@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/hover_mark.dart';
+import 'package:konsou/components/raised_key.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/shell/app_shell.dart';
 import 'package:konsou/shell/maximize_button_link.dart';
@@ -11,6 +12,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../support/render_png.dart' show loadAppFonts;
+
+// the search well is the one live edge whose child is a Container; the window
+// buttons' raised keys carry one too
+final searchMark = find.byWidgetPredicate(
+  (widget) => widget is HoverMark && widget.child is Container,
+);
 
 void main() {
   // An aligned Container once filled the whole bar, so its fill hid the
@@ -34,10 +41,7 @@ void main() {
       );
       await tester.pump();
       final well = find
-          .descendant(
-            of: find.byType(HoverMark),
-            matching: find.byType(Container),
-          )
+          .descendant(of: searchMark, matching: find.byType(Container))
           .first;
       final size = tester.getSize(well);
       expect(size.width, Tokens.quickSearchWidth);
@@ -116,19 +120,15 @@ void main() {
       ),
     );
     await tester.pump();
-    double fill() => tester
-        .widget<ColoredBox>(
-          find.descendant(
-            of: find.byWidgetPredicate(
-              (widget) =>
-                  widget is WindowButton &&
-                  widget.glyph == WindowGlyph.maximize,
-            ),
-            matching: find.byType(ColoredBox),
-          ),
-        )
-        .color
-        .a;
+    RaisedKey key() => tester.widget<RaisedKey>(
+      find.descendant(
+        of: find.byWidgetPredicate(
+          (widget) =>
+              widget is WindowButton && widget.glyph == WindowGlyph.maximize,
+        ),
+        matching: find.byType(RaisedKey),
+      ),
+    );
     Future<void> say(MaximizeButtonState state) async {
       await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
         maximizeButtonChannel.name,
@@ -140,14 +140,14 @@ void main() {
       await tester.pump();
     }
 
-    expect(fill(), 0);
+    expect(key().lit, isFalse);
     await say(MaximizeButtonState.hovered);
-    final hovered = fill();
-    expect(hovered, greaterThan(0));
+    expect(key().lit, isTrue);
     await say(MaximizeButtonState.pressed);
-    expect(fill(), inExclusiveRange(0, hovered));
+    expect(key().sunk, isTrue);
     await say(MaximizeButtonState.none);
-    expect(fill(), 0);
+    expect(key().lit, isFalse);
+    expect(key().sunk, isFalse);
   });
 
   testWidgets('hovering the search well lights the live edge', (tester) async {
@@ -165,7 +165,7 @@ void main() {
       ),
     );
     await tester.pump();
-    final mark = find.byType(HoverMark);
+    final mark = searchMark;
     expect(tester.widget<HoverMark>(mark).on, isFalse);
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
     await mouse.addPointer(location: const Offset(5, 250));

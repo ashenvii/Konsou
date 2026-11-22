@@ -44,11 +44,11 @@ class _KeyCap extends StatelessWidget {
   Widget build(BuildContext context) {
     // the slab under the face is the key's side
     return ColoredBox(
-      color: Tokens.keySlab,
+      color: Tokens.keyCapSlab,
       child: Padding(
         padding: const EdgeInsets.only(bottom: Tokens.keyDepth),
         child: ColoredBox(
-          color: Tokens.keyFace,
+          color: Tokens.keyCapFace,
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: Tokens.keyPadX,

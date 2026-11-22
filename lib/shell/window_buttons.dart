@@ -1,13 +1,17 @@
 import 'package:flutter/widgets.dart';
 
 import '../components/pressable.dart';
+import '../components/raised_key.dart';
 import '../design/tokens.dart';
+import '../icons/app_icon.dart';
+import '../icons/app_icons.dart';
+import '../icons/icon_def.dart';
 
 enum WindowGlyph { minimize, maximize, restore, close }
 
-/// One of the three window buttons. Icons use only horizontal, vertical and
-/// 45 degree lines. Hover fills the button the way Windows does: a faint fill
-/// on minimize and maximize, red on close. A press dims the fill.
+/// One of the three window buttons, drawn like every other app button: a
+/// raised key with an icon from the library. The slot keeps the size Windows
+/// is told about, so snap layouts still line up. Close turns red on hover.
 /// Built on [Pressable], so the keyboard reaches it and it has a spoken name.
 class WindowButton extends StatelessWidget {
   const WindowButton({
@@ -32,9 +36,15 @@ class WindowButton extends StatelessWidget {
     WindowGlyph.close => 'Close',
   };
 
+  IconDef get _icon => switch (glyph) {
+    WindowGlyph.minimize => AppIcons.minimize,
+    WindowGlyph.maximize => AppIcons.maximize,
+    WindowGlyph.restore => AppIcons.restore,
+    WindowGlyph.close => AppIcons.close,
+  };
+
   @override
   Widget build(BuildContext context) {
-    final isClose = glyph == WindowGlyph.close;
     return Semantics(
       label: _label,
       child: Pressable(
@@ -42,22 +52,30 @@ class WindowButton extends StatelessWidget {
         cursor: SystemMouseCursors.basic,
         builder: (context, state) {
           final held = state.pressed || pressed;
-          final lit = held || state.hovered || hovered;
-          final fill = isClose ? Tokens.red : Tokens.ink;
-          final strength = isClose
-              ? (held ? _closePressed : 1.0)
-              : (held ? _plainPressed : _plainHover);
-          return ColoredBox(
-            color: lit ? fill.withValues(alpha: strength) : _noFill,
-            child: SizedBox(
-              width: Tokens.windowButtonWidth,
-              height: Tokens.barHeight,
+          final over = state.hovered || hovered;
+          final color = !over && !held
+              ? Tokens.inkMuted
+              : (glyph == WindowGlyph.close ? Tokens.red : Tokens.ink);
+          return SizedBox(
+            width: Tokens.windowButtonWidth,
+            height: Tokens.barHeight,
+            // the slab under the key is not part of its height
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: Tokens.buttonDepth),
               child: Center(
-                child: CustomPaint(
-                  size: const Size.square(Tokens.windowIconSize),
-                  painter: _GlyphPainter(
-                    glyph,
-                    lit ? Tokens.ink : Tokens.inkMuted,
+                child: SizedBox(
+                  width: Tokens.windowKeyWidth,
+                  height: Tokens.windowKeyHeight,
+                  child: RaisedKey(
+                    lit: over && !held,
+                    sunk: held,
+                    child: Center(
+                      child: AppIcon(
+                        _icon,
+                        size: Tokens.iconSize,
+                        color: color,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -67,45 +85,4 @@ class WindowButton extends StatelessWidget {
       ),
     );
   }
-}
-
-// windows 11's own caption buttons: 6% and 4% of the ink, close at 90% pressed
-const _plainHover = 0.06;
-const _plainPressed = 0.04;
-const _closePressed = 0.9;
-final _noFill = Tokens.ink.withValues(alpha: 0);
-
-class _GlyphPainter extends CustomPainter {
-  _GlyphPainter(this.glyph, this.color);
-
-  final WindowGlyph glyph;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final s = size.width;
-    final line = Paint()
-      ..color = color
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke
-      // Square lines stay sharp; only the close cross is diagonal.
-      ..isAntiAlias = glyph == WindowGlyph.close;
-    switch (glyph) {
-      case WindowGlyph.minimize:
-        canvas.drawLine(Offset(0, s / 2), Offset(s, s / 2), line);
-      case WindowGlyph.maximize:
-        canvas.drawRect(Rect.fromLTWH(0.5, 0.5, s - 1, s - 1), line);
-      case WindowGlyph.restore:
-        canvas.drawRect(Rect.fromLTWH(0.5, 2.5, s - 3, s - 3), line);
-        canvas.drawLine(const Offset(2.5, 0.5), Offset(s - 0.5, 0.5), line);
-        canvas.drawLine(Offset(s - 0.5, 0.5), Offset(s - 0.5, s - 2.5), line);
-      case WindowGlyph.close:
-        canvas.drawLine(Offset.zero, Offset(s, s), line);
-        canvas.drawLine(Offset(s, 0), Offset(0, s), line);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_GlyphPainter old) =>
-      old.glyph != glyph || old.color != color;
 }

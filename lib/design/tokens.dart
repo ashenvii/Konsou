@@ -3,9 +3,9 @@ import 'package:flutter/painting.dart';
 abstract final class Tokens {
   // colors
   // black and garnet, picked by the owner 2026-11-22 from a live rig. Pop is
-  // the owner's D83B55 lightened a notch to pass 4.5:1 on every fill; red
-  // moved to orange-red to sit well away from pop. Done and live are ink and
-  // shape, so there is no second hue.
+  // the owner's D83B55 lightened a notch to pass 4.5:1 on every fill; red is
+  // a true red (orange read wrong), the usual dark-mode system red. Done and
+  // live are ink and shape, so there is no second hue.
   static const Color ground = Color(0xFF09090B);
   static const Color ink = Color(0xFFF6F4F5);
   static const Color inkSoft = Color(0xFFCFC9CC);
@@ -16,7 +16,7 @@ abstract final class Tokens {
   static const Color onPop = Color(0xFF1A0509);
   // the ordinary star gold, for MyAnimeList's score only (owner, 2026-11-21)
   static const Color star = Color(0xFFF2B33D);
-  static const Color red = Color(0xFFFF7F45);
+  static const Color red = Color(0xFFFF453A);
   // fill of secondary buttons, fields and panels
   static const Color surface = Color(0xFF131315);
   // floating panels and hairlines: halfway between ground and surface
@@ -52,8 +52,11 @@ abstract final class Tokens {
   static const Color popSlab = Color(0xFF8A2537);
   static const Color lampOff = Color(0xFF2A282D);
   static const Color edgeLight = Color(0x0DFFFFFF);
-  // raised buttons sit on a 3 slab; key caps keep keyDepth
-  static const double buttonDepth = 3;
+  // raised buttons (owner, 2026-11-22, from the key depth rig): a 4 slab, a
+  // lit top edge and a heavier shadow so the slab reads against the bar
+  static const double buttonDepth = 4;
+  static const double keyLipAlpha = 0.23;
+  static const Color keyShadow = Color(0xCC000000);
   static const double wellPad = 6;
   // the gap inside a small display, such as the progress segments' well
   static const double displayInset = 2;
@@ -88,14 +91,16 @@ abstract final class Tokens {
   // label tracking, as a share of the font size
   static const double labelTracking = 0.02;
 
-  // shell sizes from the comp (2026-11-08); windowIconSize is not measured
+  // shell sizes from the comp (2026-11-08); the window key size is not measured
   static const double barHeight = 36;
   static const double railWidth = 48;
   static const double railItemSize = 36;
   // one size for every icon (owner, 2026-11-12)
   static const double iconSize = 20;
   static const double windowButtonWidth = 40;
-  static const double windowIconSize = 12;
+  // the raised key drawn inside each window button's slot
+  static const double windowKeyWidth = 32;
+  static const double windowKeyHeight = 26;
 
   // component sizes from the comp (2026-11-08); focusRing is not in it
   static const double controlHeight = 36;
@@ -126,8 +131,11 @@ abstract final class Tokens {
   static const double findFieldWidth = 240;
 
   // key cap C, locked by the owner 2026-11-13: a face and a slab under it
-  static const Color keyFace = Color(0xFF2C2B2E);
-  static const Color keySlab = Color(0xFF222124);
+  static const Color keyCapFace = Color(0xFF2C2B2E);
+  static const Color keyCapSlab = Color(0xFF222124);
+  // the raised button's face and slab
+  static const Color keyFace = Color(0xFF3A383D);
+  static const Color keySlab = Color(0xFF050506);
   static const double keyDepth = 4;
   static const double keyPadX = 6;
   static const double keyPadY = 2;

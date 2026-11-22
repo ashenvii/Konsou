@@ -314,6 +314,34 @@ abstract final class AppIcons {
     ],
   );
 
+  // the window buttons
+  static const minimize = IconDef(lines: [((3, 12), (13, 12))]);
+
+  static const maximize = IconDef(
+    lines: [
+      ((3, 3), (13, 3)),
+      ((13, 3), (13, 13)),
+      ((13, 13), (3, 13)),
+      ((3, 13), (3, 3)),
+    ],
+  );
+
+  // a window that can shrink back: the square with another behind it
+  static const restore = IconDef(
+    lines: [
+      ((2, 6), (10, 6)),
+      ((10, 6), (10, 14)),
+      ((10, 14), (2, 14)),
+      ((2, 14), (2, 6)),
+      ((6, 6), (6, 2)),
+      ((6, 2), (14, 2)),
+      ((14, 2), (14, 10)),
+      ((14, 10), (10, 10)),
+    ],
+  );
+
+  static const close = IconDef(lines: [((3, 3), (13, 13)), ((13, 3), (3, 13))]);
+
   static const all = <String, IconDef>{
     'nekomimi': nekomimi,
     'bell': bell,
@@ -347,5 +375,9 @@ abstract final class AppIcons {
     'people': people,
     'external': external,
     'expand': expand,
+    'minimize': minimize,
+    'maximize': maximize,
+    'restore': restore,
+    'close': close,
   };
 }

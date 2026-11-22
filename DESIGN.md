@@ -12,7 +12,7 @@ colors:
   pop: "#E0526A"
   on-pop: "#1A0509"
   star: "#F2B33D"
-  red: "#FF7F45"
+  red: "#FF453A"
   key-face: "#2C2B2E"
   key-slab: "#222124"
   well-edge: "#151517"
@@ -85,7 +85,7 @@ components:
 
 ## Overview
 
-One flat dark ground, square edges, and almost no color, so that the few marks that do carry color (garnet pop for the chosen thing, orange-red for remove) read at once. It is an Operate surface: the user is scanning hundreds of entries and changing a status in two keystrokes, so familiarity and speed outrank expression. Personality lives in details: the Nekomimi, the key caps, the live edge under a hovered control.
+One flat dark ground, square edges, and almost no color, so that the few marks that do carry color (garnet pop for the chosen thing, true red for remove) read at once. It is an Operate surface: the user is scanning hundreds of entries and changing a status in two keystrokes, so familiarity and speed outrank expression. Personality lives in details: the Nekomimi, the key caps, the live edge under a hovered control.
 
 **Key Characteristics:**
 - One dark ground with two fill steps above it. No gradients inside content, no rounded corners.
@@ -105,7 +105,7 @@ A neutral near-black ground with warm-white inks and one garnet pop. Black and g
 
 ### Tertiary
 - **Star Gold** (#F2B33D): the star beside MyAnimeList's score, so it reads as the ordinary rating star and apart from the user's own garnet one. Nothing else uses it.
-- **Remove Red** (#EF5A5F): remove, exclude, sync lost. Never the only cue. Moved from #EF5A5F to an orange-red on 2026-11-22 so it is 29 degrees from pop instead of 9 (7.4:1 on Panel).
+- **Remove Red** (#FF453A): remove, exclude, sync lost. Never the only cue. A true red, the same one other apps use, whatever the app color. The orange-red tried on 2026-11-22 read as orange and was dropped.
 
 ### Neutral
 - **Night Ground** (#09090B): the page, rail and top bar.

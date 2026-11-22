@@ -1,7 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:konsou/components/raised_key.dart';
 import 'package:konsou/design/tokens.dart';
+import 'package:konsou/icons/app_icon.dart';
+import 'package:konsou/icons/app_icons.dart';
 import 'package:konsou/shell/window_buttons.dart';
 
 import 'support/pump_widget.dart';
@@ -23,51 +26,55 @@ void main() {
     expect(taps, 1);
   });
 
-  Color fillOf(WidgetTester tester) => tester
-      .widget<ColoredBox>(
-        find.descendant(
-          of: find.byType(WindowButton),
-          matching: find.byType(ColoredBox),
-        ),
-      )
-      .color;
+  testWidgets('it is a raised key holding a library icon at the app size', (
+    tester,
+  ) async {
+    await pumpWidget(
+      tester,
+      WindowButton(glyph: WindowGlyph.maximize, onPressed: () {}),
+    );
+    expect(find.byType(RaisedKey), findsOneWidget);
+    final icon = tester.widget<AppIcon>(find.byType(AppIcon));
+    expect(icon.def, AppIcons.maximize);
+    expect(icon.size, Tokens.iconSize);
+  });
 
-  testWidgets('close fills red under the pointer and dims while held', (
+  Color iconColor(WidgetTester tester) =>
+      tester.widget<AppIcon>(find.byType(AppIcon)).color;
+
+  Future<TestGesture> hover(WidgetTester tester) async {
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(tester.getCenter(find.byType(WindowButton)));
+    await tester.pump();
+    return mouse;
+  }
+
+  testWidgets('close turns red under the pointer and sinks while held', (
     tester,
   ) async {
     await pumpWidget(
       tester,
       WindowButton(glyph: WindowGlyph.close, onPressed: () {}),
     );
-    expect(fillOf(tester).a, 0);
-    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-    await mouse.addPointer(location: Offset.zero);
-    addTearDown(mouse.removePointer);
-    await mouse.moveTo(tester.getCenter(find.byType(WindowButton)));
-    await tester.pump();
-    expect(fillOf(tester), Tokens.red);
+    expect(iconColor(tester), Tokens.inkMuted);
+    final mouse = await hover(tester);
+    expect(iconColor(tester), Tokens.red);
+    expect(tester.widget<RaisedKey>(find.byType(RaisedKey)).sunk, isFalse);
     await mouse.down(tester.getCenter(find.byType(WindowButton)));
     await tester.pump();
-    expect(fillOf(tester).a, lessThan(1));
+    expect(tester.widget<RaisedKey>(find.byType(RaisedKey)).sunk, isTrue);
     await mouse.up();
-    await tester.pump();
-    expect(fillOf(tester), Tokens.red);
   });
 
-  testWidgets('minimize gets a faint fill, never red', (tester) async {
+  testWidgets('minimize brightens to ink, never red', (tester) async {
     await pumpWidget(
       tester,
       WindowButton(glyph: WindowGlyph.minimize, onPressed: () {}),
     );
-    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-    await mouse.addPointer(location: Offset.zero);
-    addTearDown(mouse.removePointer);
-    await mouse.moveTo(tester.getCenter(find.byType(WindowButton)));
-    await tester.pump();
-    final fill = fillOf(tester);
-    expect(fill.withValues(alpha: 1), Tokens.ink);
-    expect(fill.a, greaterThan(0));
-    expect(fill.a, lessThan(0.2));
+    await hover(tester);
+    expect(iconColor(tester), Tokens.ink);
   });
 
   testWidgets('each glyph has a spoken name', (tester) async {
