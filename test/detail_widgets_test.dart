@@ -122,6 +122,40 @@ void main() {
     expect(tester.hasRunningAnimations, isFalse);
   });
 
+  testWidgets(
+    'minus and plus sit together right of the bar, the count under it',
+    (tester) async {
+      await pumpWidget(
+        tester,
+        SizedBox(
+          width: 700,
+          child: EntryControls(
+            statusEntries: const [],
+            status: EntryStatus.watching,
+            watched: 4,
+            total: 12,
+            onMinus: () {},
+            onPlus: () {},
+            onStep: (_) {},
+          ),
+        ),
+      );
+      final bar = tester.getRect(find.byType(EntryProgress));
+      final minus = tester.getRect(find.bySemanticsLabel('One episode less'));
+      final plus = tester.getRect(find.bySemanticsLabel('One episode more'));
+      final count = tester.getRect(find.byKey(const Key('episode-display')));
+      expect(minus.left, greaterThan(bar.right));
+      expect(plus.left - minus.right, closeTo(Tokens.space1, 1));
+      expect(count.top, greaterThan(bar.bottom));
+      expect(count.top - minus.bottom, closeTo(Tokens.space2, 1));
+      // the count and its pencil together sit under the middle of the bar
+      final pencil = tester.getRect(
+        find.bySemanticsLabel('Edit the episode count'),
+      );
+      expect((count.left + pencil.right) / 2, closeTo(bar.center.dx, 1));
+    },
+  );
+
   testWidgets('the entry controls show 4 / ? with no total', (tester) async {
     await pumpWidget(
       tester,

@@ -185,7 +185,8 @@ void main() {
       title,
       page: onList,
       order: sampleWatchOrder,
-      size: const Size(1200, 500),
+      // short, but tall enough that the bar starts on screen under the top
+      size: const Size(1200, 600),
     );
     expect(bar(tester).stuck, isFalse);
     expect(find.byType(DetailBackButton), findsNWidgets(2));

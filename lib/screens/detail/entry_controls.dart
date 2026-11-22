@@ -13,8 +13,9 @@ import '../../library/entry_status.dart';
 import 'episode_count.dart';
 
 /// The user's own controls for a title, under its name on the Detail page.
-/// On the list: the status menu button, minus and plus around the progress,
-/// and the count. Off the list: a cyan "Add to list" that opens the same
+/// On the list: the status menu button, the progress with minus and plus
+/// side by side at its right, and centred under the progress the count and
+/// its pencil. Off the list: a cyan "Add to list" that opens the same
 /// menu. [statusOnly] keeps just the status button, for the jump bar.
 class EntryControls extends StatelessWidget {
   const EntryControls({
@@ -61,38 +62,51 @@ class EntryControls extends StatelessWidget {
     if (statusOnly) return switcher;
     final total = this.total;
     final known = total != null && total > 0;
-    return SizedBox(
-      height: Tokens.controlHeight,
-      child: Row(
-        children: [
-          switcher,
-          const SizedBox(width: Tokens.space4),
-          IconSquareButton(
-            icon: AppIcons.minus,
-            label: 'One episode less',
-            onPressed: onMinus,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        switcher,
+        const SizedBox(width: Tokens.space4),
+        Expanded(
+          child: Column(
+            children: [
+              SizedBox(
+                height: Tokens.controlHeight,
+                child: Center(
+                  child: known
+                      ? EntryProgress(
+                          watched: watched,
+                          total: total,
+                          onStep: onStep,
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+              // the count reads with the bar it counts, so it sits right under
+              // its middle, with the pencil beside it
+              const SizedBox(height: Tokens.space2),
+              EpisodeCount(
+                watched: watched,
+                total: total,
+                onSet: onStep,
+                limit: episodeLimit,
+              ),
+            ],
           ),
-          const SizedBox(width: Tokens.space3),
-          Expanded(
-            child: known
-                ? EntryProgress(watched: watched, total: total, onStep: onStep)
-                : const SizedBox.shrink(),
-          ),
-          const SizedBox(width: Tokens.space3),
-          IconSquareButton(
-            icon: AppIcons.plus,
-            label: 'One episode more',
-            onPressed: onPlus,
-          ),
-          const SizedBox(width: Tokens.space4),
-          EpisodeCount(
-            watched: watched,
-            total: total,
-            onSet: onStep,
-            limit: episodeLimit,
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(width: Tokens.space3),
+        IconSquareButton(
+          icon: AppIcons.minus,
+          label: 'One episode less',
+          onPressed: onMinus,
+        ),
+        const SizedBox(width: Tokens.space1),
+        IconSquareButton(
+          icon: AppIcons.plus,
+          label: 'One episode more',
+          onPressed: onPlus,
+        ),
+      ],
     );
   }
 
