@@ -11,6 +11,7 @@ import '../components/page_title.dart';
 import '../components/panel.dart';
 import '../components/status_mark.dart';
 import 'detail_section.dart';
+import 'mal_trouble_section.dart';
 import 'motion_section.dart';
 import 'wordmark_section.dart';
 import 'library_rows_section.dart';
@@ -158,6 +159,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
             const MotionSection(),
             const _Section('Wordmark while loading'),
             const WordmarkSection(),
+            const _Section('MAL trouble'),
+            const MalTroubleSection(),
             const _Section('Library rows and cards'),
             const LibraryRowsSection(),
             const _Section('Detail page'),

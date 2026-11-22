@@ -181,4 +181,73 @@ void main() {
       200,
     );
   });
+
+  group('fake trouble', () {
+    var reachedMal = false;
+    Future<http.Response> fromMal() {
+      reachedMal = true;
+      return time.respond(200);
+    }
+
+    setUp(() => reachedMal = false);
+    tearDown(() => RequestGate.trouble = MalTrouble.normal);
+
+    test('normal sends the request', () async {
+      RequestGate.trouble = MalTrouble.normal;
+      expect((await gate.send(Lane.trickle, fromMal)).statusCode, 200);
+      expect(reachedMal, isTrue);
+    });
+
+    test('slow runs into the timeout and slows the gate', () async {
+      RequestGate.trouble = MalTrouble.slow;
+      final quick = RequestGate(
+        now: () => time.now,
+        wait: time.wait,
+        timeout: const Duration(milliseconds: 50),
+      );
+      await expectLater(
+        quick.send(Lane.trickle, fromMal),
+        throwsA(isA<TimeoutException>()),
+      );
+      expect(reachedMal, isFalse);
+      expect(quick.backingOff, isTrue);
+    });
+
+    test('rate limited answers 429 and slows the gate', () async {
+      RequestGate.trouble = MalTrouble.rateLimited;
+      expect((await gate.send(Lane.trickle, fromMal)).statusCode, 429);
+      expect(gate.backingOff, isTrue);
+      RequestGate.trouble = MalTrouble.normal;
+      await gate.send(Lane.trickle, fromMal);
+      // the next request waited out the first backoff step
+      expect(time.now, DateTime.utc(2026, 11, 8, 0, 0, 5));
+    });
+
+    test(
+      'offline fails like a lost connection and lets the screen go',
+      () async {
+        RequestGate.trouble = MalTrouble.offline;
+        for (var i = 0; i < 2; i++) {
+          await expectLater(
+            gate.send(Lane.trickle, fromMal),
+            throwsA(isA<SocketException>()),
+          );
+        }
+        await expectLater(
+          gate.send(Lane.screen, fromMal),
+          throwsA(isA<GateBackingOff>()),
+        );
+        expect(reachedMal, isFalse);
+      },
+    );
+
+    test('every gate hears it, the picture server too', () async {
+      RequestGate.trouble = MalTrouble.offline;
+      final pictures = RequestGate(gap: Duration.zero, wait: (_) async {});
+      await expectLater(
+        pictures.send(Lane.screen, fromMal),
+        throwsA(isA<SocketException>()),
+      );
+    });
+  });
 }

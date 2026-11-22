@@ -158,4 +158,21 @@ void main() {
       'title': 'Sousou no Frieren',
     });
   });
+
+  // 1 is NORMAL, 2 is FULL, sqlite's default
+  Future<int> readSynchronous(GeneratedDatabase database, String schema) async {
+    final row = await database
+        .customSelect('PRAGMA $schema.synchronous')
+        .getSingle();
+    return row.data.values.single as int;
+  }
+
+  test(
+    'details.db commits without waiting on the disk, the record does not',
+    () async {
+      expect(await readSynchronous(databases.details, 'main'), 1);
+      expect(await readSynchronous(databases.record, 'details'), 1);
+      expect(await readSynchronous(databases.record, 'main'), 2);
+    },
+  );
 }

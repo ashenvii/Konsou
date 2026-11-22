@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -8,7 +9,23 @@ import '../net/request_timeout.dart';
 
 const requestGap = Duration(milliseconds: 500);
 
+// flutter's kDebugMode, spelled out since lib/mal stays plain dart
+const _debugBuild =
+    !bool.fromEnvironment('dart.vm.product') &&
+    !bool.fromEnvironment('dart.vm.profile');
+
 enum Lane { screen, trickle }
+
+/// Fake trouble for every gate, set from the gallery to see the app's
+/// offline and waiting states. Debug builds only.
+enum MalTrouble {
+  normal,
+
+  /// Never answers, so each request runs into the timeout.
+  slow,
+  rateLimited,
+  offline,
+}
 
 class RequestCancelled implements Exception {
   const RequestCancelled();
@@ -27,6 +44,8 @@ class RequestGate {
     Future<void> Function(Duration duration)? wait,
   }) : _now = now ?? DateTime.now,
        _wait = wait ?? Future<void>.delayed;
+
+  static var trouble = MalTrouble.normal;
 
   final Duration gap;
   final Duration timeout;
@@ -70,7 +89,7 @@ class RequestGate {
       if (job == null) continue;
       _nextStart = _now().add(gap);
       try {
-        final response = await job.request().timeout(timeout);
+        final response = await _start(job).timeout(timeout);
         if (response.statusCode == 429 || response.statusCode >= 500) {
           _slowDown();
         } else {
@@ -84,6 +103,18 @@ class RequestGate {
       }
     }
     _running = false;
+  }
+
+  Future<http.Response> _start(_Job job) {
+    if (!_debugBuild) return job.request();
+    return switch (trouble) {
+      MalTrouble.normal => job.request(),
+      MalTrouble.slow => Completer<http.Response>().future,
+      MalTrouble.rateLimited => Future.value(http.Response('', 429)),
+      MalTrouble.offline => Future.error(
+        const SocketException('fake trouble: offline'),
+      ),
+    };
   }
 
   _Job? _next() {

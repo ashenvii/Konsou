@@ -29,7 +29,14 @@ Future<Databases> openDatabases(Directory folder) async {
     stderr.writeln('details.db failed its check and was rebuilt');
   }
   final details = DetailsDatabase(
-    NativeDatabase.createInBackground(File(detailsPath), setup: _setUp),
+    NativeDatabase.createInBackground(
+      File(detailsPath),
+      setup: (raw) {
+        _setUp(raw);
+        // refetchable only: a power cut can lose the last commits, never the file
+        raw.execute('PRAGMA synchronous = NORMAL');
+      },
+    ),
   );
   // the tables must exist before the record connection attaches the file
   await details.customSelect('SELECT 1').get();
@@ -40,6 +47,8 @@ Future<Databases> openDatabases(Directory folder) async {
       setup: (raw) {
         _setUp(raw);
         raw.execute('ATTACH DATABASE ? AS details', [detailsPath]);
+        // per connection and per schema, so the attached copy needs it too
+        raw.execute('PRAGMA details.synchronous = NORMAL');
       },
     ),
   );
