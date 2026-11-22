@@ -342,9 +342,25 @@ abstract final class AppIcons {
 
   static const close = IconDef(lines: [((3, 3), (13, 13)), ((13, 3), (3, 13))]);
 
+  static const bin = IconDef(
+    lines: [
+      // lid, handle, body, two slots
+      ((2, 4), (14, 4)),
+      ((6, 4), (6, 2)),
+      ((6, 2), (10, 2)),
+      ((10, 2), (10, 4)),
+      ((4, 6), (4, 14)),
+      ((4, 14), (12, 14)),
+      ((12, 14), (12, 6)),
+      ((6, 8), (6, 12)),
+      ((10, 8), (10, 12)),
+    ],
+  );
+
   static const all = <String, IconDef>{
     'nekomimi': nekomimi,
     'bell': bell,
+    'bin': bin,
     'heart': heart,
     'discover': discover,
     'library': library,

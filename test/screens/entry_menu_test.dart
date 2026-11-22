@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/app_menu.dart';
 import 'package:konsou/components/hold_row.dart';
 import 'package:konsou/icons/app_icon.dart';
+import 'package:konsou/icons/app_icons.dart';
 import 'package:konsou/library/library_row.dart';
 import 'package:konsou/screens/library/entry_menu.dart';
 
@@ -76,7 +77,11 @@ void main() {
         .where((e) => e.selected)
         .map((e) => e.label);
     expect(selected, ['On hold']);
-    expect(find.byType(AppIcon), findsOneWidget);
+    // the bin on the remove key is an icon too, so count the checks
+    expect(
+      find.byWidgetPredicate((w) => w is AppIcon && w.def == AppIcons.check),
+      findsOneWidget,
+    );
   });
 
   testWidgets('+ Episode only while watching or rewatching', (tester) async {

@@ -4,7 +4,10 @@ import 'package:flutter/widgets.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import 'cap_centered.dart';
+import '../icons/app_icon.dart';
+import '../icons/app_icons.dart';
 import 'countdown.dart';
+import 'raised_key.dart';
 
 const holdToRemoveLabel = 'Hold to remove';
 const holdToRemoveHint = 'Hold for a second. It cannot be undone.';
@@ -56,15 +59,16 @@ class _HoldRowState extends State<HoldRow> {
 
   @override
   Widget build(BuildContext context) {
-    Widget label(Color color) => Center(
+    final label = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
       child: CapCentered(
-        style: AppText.label(color, bold: true),
+        style: AppText.label(Tokens.red, bold: true),
         child: Text(
           widget.label,
           maxLines: 1,
           softWrap: false,
           overflow: TextOverflow.ellipsis,
-          style: AppText.label(color, bold: true),
+          style: AppText.label(Tokens.red, bold: true),
         ),
       ),
     );
@@ -91,51 +95,72 @@ class _HoldRowState extends State<HoldRow> {
               padding: const EdgeInsets.all(Tokens.space3),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // a button of its own: red outline, filling red as it is held
-                  DecoratedBox(
-                    position: DecorationPosition.foreground,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: _focused ? Tokens.ink : Tokens.red,
-                        width: Tokens.checkboxBorder,
-                      ),
-                    ),
-                    child: ColoredBox(
-                      color: _hovered || _focused
-                          ? Tokens.ground
-                          : Tokens.surface,
-                      child: SizedBox(
-                        height: Tokens.controlHeight,
-                        child: CountdownBuilder(
-                          countdown: _hold,
-                          builder: (context, share, running) {
-                            // empty until held, full when the hold is done
-                            final fill = _hold.started ? 1 - share : 0.0;
-                            return Stack(
-                              children: [
-                                Positioned.fill(
-                                  child: FractionallySizedBox(
-                                    alignment: Alignment.centerLeft,
-                                    widthFactor: fill,
-                                    child: const ColoredBox(color: Tokens.red),
+                  // only as wide as the bin and the words; the slab hangs below
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: Tokens.buttonDepth),
+                    child: CountdownBuilder(
+                      countdown: _hold,
+                      builder: (context, share, running) {
+                        // empty until held, full when the hold is done
+                        final fill = _hold.started ? 1 - share : 0.0;
+                        return DecoratedBox(
+                          position: DecorationPosition.foreground,
+                          decoration: BoxDecoration(
+                            borderRadius: Tokens.keyCorners,
+                            border: _focused
+                                ? Border.all(
+                                    color: Tokens.ink,
+                                    width: Tokens.checkboxBorder,
+                                  )
+                                : null,
+                          ),
+                          child: RaisedKey(
+                            lit: _hovered,
+                            sunk: _hold.started,
+                            child: SizedBox(
+                              height: Tokens.controlHeight,
+                              child: Stack(
+                                children: [
+                                  // the hold rises through the key from the foot
+                                  Positioned.fill(
+                                    child: FractionallySizedBox(
+                                      alignment: Alignment.bottomCenter,
+                                      heightFactor: fill,
+                                      child: ColoredBox(
+                                        color: Tokens.red.withValues(
+                                          alpha: 0.22,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                // the label sizes the row
-                                label(Tokens.red),
-                                // the same label in dark ink over the filled part
-                                Positioned.fill(
-                                  child: ClipRect(
-                                    clipper: _LeftShare(fill),
-                                    child: label(Tokens.ground),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(
+                                        width: Tokens.controlHeight,
+                                        height: Tokens.controlHeight,
+                                        child: ColoredBox(
+                                          color: Tokens.red,
+                                          child: Center(
+                                            child: AppIcon(
+                                              AppIcons.bin,
+                                              size: Tokens.iconSize,
+                                              color: Tokens.onPop,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Flexible(child: label),
+                                    ],
                                   ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   if (widget.hint != null) ...[
@@ -152,15 +177,3 @@ class _HoldRowState extends State<HoldRow> {
   }
 }
 
-class _LeftShare extends CustomClipper<Rect> {
-  _LeftShare(this.share);
-
-  final double share;
-
-  @override
-  Rect getClip(Size size) =>
-      Rect.fromLTWH(0, 0, size.width * share, size.height);
-
-  @override
-  bool shouldReclip(_LeftShare oldClipper) => oldClipper.share != share;
-}
