@@ -90,6 +90,7 @@ class TitleDetails {
     this.endings = const [],
     this.videos = const [],
     this.pictures = const [],
+    this.coverUrl,
     this.recommendations = const [],
     this.manga = const [],
   });
@@ -139,6 +140,9 @@ class TitleDetails {
 
   /// MAL's extra pictures of the title, large, besides the cover.
   final List<String> pictures;
+
+  /// The address of MAL's cover, large, which also shows among [pictures].
+  final String? coverUrl;
   final List<LinkedTitle> recommendations;
   final List<LinkedTitle> manga;
 
@@ -244,6 +248,9 @@ TitleDetails parseTitleDetails(Detail row, TitleLanguage language) {
         if (_map(item)['large'] ?? _map(item)['medium'] case final String url)
           url,
     ],
+    coverUrl: switch (_map(json['main_picture'])) {
+      final picture => (picture['large'] ?? picture['medium']) as String?,
+    },
     recommendations: [
       for (final item in _list(json['recommendations']))
         if (_linked(item) case final linked?)

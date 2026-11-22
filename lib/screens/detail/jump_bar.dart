@@ -70,13 +70,18 @@ class JumpBar extends StatelessWidget {
 
   static const height = Tokens.controlHeight + 2 * Tokens.space2;
 
+  // the bar's fill runs this far up under the top above it, so a pixel of
+  // rounding between the two while scrolling shows chassis, not the page
+  // behind
+  static const _underlap = Tokens.space2;
+
   static const _miniCover = Tokens.space5;
   static const _titleWidth = Tokens.space5 * 10;
 
   @override
   Widget build(BuildContext context) {
     final duration = chooseMotionDuration(context, Tokens.motionQuick);
-    return Container(
+    final bar = Container(
       height: height,
       padding: const EdgeInsets.symmetric(horizontal: PageFrame.edge),
       decoration: BoxDecoration(
@@ -145,6 +150,19 @@ class JumpBar extends StatelessWidget {
             ),
         ],
       ),
+    );
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        const Positioned(
+          left: 0,
+          right: 0,
+          top: -_underlap,
+          height: _underlap,
+          child: ColoredBox(color: Tokens.chassisTop),
+        ),
+        bar,
+      ],
     );
   }
 }

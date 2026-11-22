@@ -110,6 +110,56 @@ void main() {
     expect(tapped, 1);
   });
 
+  testWidgets('every glide lands and the list takes clicks after it', (
+    tester,
+  ) async {
+    // the notches of a real wheel run, which once left the glide two pixels
+    // short of its stop for good, ignoring every click
+    for (final ratio in [1.0, 1.25, 1.5]) {
+      var tapped = 0;
+      controller = SmoothScrollController();
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: MediaQuery(
+            data: MediaQueryData(devicePixelRatio: ratio),
+            child: ListView.builder(
+              controller: controller,
+              itemExtent: 50,
+              itemCount: 400,
+              itemBuilder: (context, index) => GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => tapped++,
+                child: Text('$index'),
+              ),
+            ),
+          ),
+        ),
+      );
+      for (final dy in [60.0, 60.0, 120.0, -60.0, 60.0, 180.0]) {
+        await wheel(tester, dy);
+        for (var f = 0; f < 3; f++) {
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+      }
+      for (var f = 0; f < 200; f++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      final position = controller.position;
+      expect(
+        position.activity?.shouldIgnorePointer,
+        isFalse,
+        reason: 'still gliding at $ratio, at ${position.pixels}',
+      );
+      expect(position.pixels, closeTo(420 * wheelBoost, 1 / ratio));
+      expect((position.pixels * ratio) % 1, closeTo(0, 1e-6));
+      await tester.tapAt(const Offset(100, 100));
+      expect(tapped, 1, reason: 'a click after the glide at $ratio');
+      await tester.pumpWidget(const SizedBox());
+      controller.dispose();
+    }
+  });
+
   testWidgets('it jumps when the system turns animations off', (tester) async {
     await pumpList(tester, still: true);
     await wheel(tester, 200);

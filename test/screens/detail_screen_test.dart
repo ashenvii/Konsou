@@ -272,20 +272,26 @@ void main() {
     expect(rankNumber.style?.color, Tokens.inkSoft);
   });
 
-  testWidgets('the cover is key art at the right, fading into the page', (
+  testWidgets('the cover is a poster at the left, the title beside it', (
     tester,
   ) async {
     await open(tester, title, page: onList, size: const Size(1800, 900));
     final top = tester.getRect(find.byType(DetailTop));
-    final art = tester.getRect(
+    final poster = tester.getRect(
       find.byWidgetPredicate(
         (w) => w is Pressable && w.label == 'Open the cover full size',
       ),
     );
-    expect(art.right, closeTo(top.right, 1));
-    expect(art.width, lessThanOrEqualTo(Tokens.keyArtMaxWidth));
-    // it stops short of the top's foot, so that edge is plain ground
-    expect(art.bottom, lessThan(top.bottom));
+    final name = tester.getRect(
+      find.descendant(
+        of: find.byType(DetailTop),
+        matching: find.text('Sousou no Frieren'),
+      ),
+    );
+    expect(poster.left, lessThan(top.left + Tokens.space5));
+    expect(poster.width, closeTo(Tokens.detailPosterWidth, 1));
+    expect(name.left, greaterThan(poster.right));
+    expect(name.top, closeTo(poster.top, Tokens.space5));
   });
 
   testWidgets('nothing at the top is said twice below', (tester) async {

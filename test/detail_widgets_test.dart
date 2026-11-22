@@ -102,6 +102,26 @@ void main() {
     expect(set, 3);
   });
 
+  testWidgets('a new segment lights over a moment, not at once', (
+    tester,
+  ) async {
+    Widget progress(int watched) => Center(
+      child: SizedBox(
+        width: 300,
+        child: EntryProgress(watched: watched, total: 10, onStep: (_) {}),
+      ),
+    );
+    await pumpWidget(tester, progress(1));
+    expect(tester.hasRunningAnimations, isFalse);
+    await pumpWidget(tester, progress(2));
+    expect(tester.hasRunningAnimations, isTrue);
+    await tester.pump();
+    await tester.pump(Tokens.motionSegment ~/ 2);
+    expect(tester.hasRunningAnimations, isTrue);
+    await tester.pump(Tokens.motionSegment * 2);
+    expect(tester.hasRunningAnimations, isFalse);
+  });
+
   testWidgets('the entry controls show 4 / ? with no total', (tester) async {
     await pumpWidget(
       tester,

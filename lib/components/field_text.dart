@@ -63,7 +63,9 @@ class FieldText extends StatelessWidget {
           style: style,
           cursorColor: cursorColor,
           backgroundCursorColor: Tokens.inkMuted,
-          selectionColor: Tokens.inkMuted,
+          // the garnet slab: ink reads on it at 7.9:1, where the old light
+          // grey left ink at 2.6:1 and pop digits near invisible
+          selectionColor: Tokens.popSlab,
           maxLines: multiline ? null : 1,
           keyboardType: multiline ? TextInputType.multiline : null,
           onChanged: onChanged,

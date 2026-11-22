@@ -145,9 +145,10 @@ abstract final class Tokens {
   static const double quickCoverWidth = 32;
 
   // the Detail page, layout A of the redo (owner, 2026-11-18)
-  // the cover as key art at the top of the Detail page; MAL's covers are
-  // about 425 wide and turn soft when drawn much wider
-  static const double keyArtMaxWidth = 640;
+  // the poster at the left of the Detail top, and the veil over the picture
+  // behind it (B1, owner, 2026-11-22)
+  static const double detailPosterWidth = 200;
+  static const double heroVeil = 0.8;
   // the widest a column of running text gets, about 90 characters
   static const double detailTextWidth = 720;
   // a row of covers that peeks: no cover narrower than this, and the next
@@ -177,4 +178,11 @@ abstract final class Tokens {
   static const Duration motionTip = Duration(milliseconds: 100);
   static const double openSlide = 4;
   static const Duration tipDelay = Duration(milliseconds: 400);
+
+  // feedback on the Detail top (owner, 2026-11-22): a progress segment lights
+  // or goes dark; a picture fades in the first time and fades over the one
+  // before on a change, never swapped in place
+  static const Duration motionSegment = Duration(milliseconds: 120);
+  static const Duration motionFirstFade = Duration(milliseconds: 200);
+  static const Duration motionPictureChange = Duration(milliseconds: 400);
 }

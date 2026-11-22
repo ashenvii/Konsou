@@ -126,7 +126,9 @@ class _EpisodeCountState extends State<EpisodeCount> {
                 focusNode: _focus,
                 placeholder: '',
                 autofocus: true,
-                style: style,
+                // the digits go plain ink while typed: pop on the selection
+                // slab is 2.3:1, ink on it 7.9:1
+                style: AppText.tally(Tokens.ink),
                 textAlign: TextAlign.end,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 onSubmitted: (_) => _commit(),

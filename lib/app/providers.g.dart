@@ -404,3 +404,165 @@ final class DetailOnScreenFamily extends $Family
   @override
   String toString() => r'detailOnScreenProvider';
 }
+
+/// The large cover of a title, kept or fetched.
+
+@ProviderFor(largeCover)
+final largeCoverProvider = LargeCoverFamily._();
+
+/// The large cover of a title, kept or fetched.
+
+final class LargeCoverProvider
+    extends $FunctionalProvider<AsyncValue<File?>, File?, FutureOr<File?>>
+    with $FutureModifier<File?>, $FutureProvider<File?> {
+  /// The large cover of a title, kept or fetched.
+  LargeCoverProvider._({
+    required LargeCoverFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'largeCoverProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$largeCoverHash();
+
+  @override
+  String toString() {
+    return r'largeCoverProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<File?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<File?> create(Ref ref) {
+    final argument = this.argument as int;
+    return largeCover(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is LargeCoverProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$largeCoverHash() => r'cb776fbaf18b8faf0f6428738badc8b290ba7b3c';
+
+/// The large cover of a title, kept or fetched.
+
+final class LargeCoverFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<File?>, int> {
+  LargeCoverFamily._()
+    : super(
+        retry: null,
+        name: r'largeCoverProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The large cover of a title, kept or fetched.
+
+  LargeCoverProvider call(int malId) =>
+      LargeCoverProvider._(argument: malId, from: this);
+
+  @override
+  String toString() => r'largeCoverProvider';
+}
+
+/// A picture file's size and detail per row, for cropping it to a box.
+
+@ProviderFor(pictureLook)
+final pictureLookProvider = PictureLookFamily._();
+
+/// A picture file's size and detail per row, for cropping it to a box.
+
+final class PictureLookProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<PictureLook?>,
+          PictureLook?,
+          FutureOr<PictureLook?>
+        >
+    with $FutureModifier<PictureLook?>, $FutureProvider<PictureLook?> {
+  /// A picture file's size and detail per row, for cropping it to a box.
+  PictureLookProvider._({
+    required PictureLookFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'pictureLookProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$pictureLookHash();
+
+  @override
+  String toString() {
+    return r'pictureLookProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<PictureLook?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<PictureLook?> create(Ref ref) {
+    final argument = this.argument as String;
+    return pictureLook(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PictureLookProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$pictureLookHash() => r'3c2826547502505b065aa74ebc7e34d2939f192f';
+
+/// A picture file's size and detail per row, for cropping it to a box.
+
+final class PictureLookFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<PictureLook?>, String> {
+  PictureLookFamily._()
+    : super(
+        retry: null,
+        name: r'pictureLookProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A picture file's size and detail per row, for cropping it to a box.
+
+  PictureLookProvider call(String path) =>
+      PictureLookProvider._(argument: path, from: this);
+
+  @override
+  String toString() => r'pictureLookProvider';
+}

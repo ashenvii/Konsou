@@ -94,6 +94,7 @@ class LinkedDetail extends ConsumerWidget {
         children: [
           DetailTop(
             malId: malId,
+            details: details,
             hidden: data.isHidden,
             loading: details == null && fetching,
             header: name.isEmpty

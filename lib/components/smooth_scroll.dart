@@ -37,10 +37,27 @@ class _GlidingPosition extends ScrollPositionWithSingleContext {
 
   Ticker? _ticker;
   Duration? _last;
+  Duration? _began;
   double _target = 0;
   double _speed = 0;
 
+  // where the spring is, unrounded; what is drawn is this on a whole pixel
+  double _at = 0;
+
   bool get _gliding => _ticker?.isActive ?? false;
+
+  double _ratio = 1;
+
+  // every frame of the glide is drawn on a whole device pixel, not only its
+  // rest: a picture cached on its own layer is drawn on whole pixels while
+  // the page around it is not, and at a fraction between them a seam shows.
+  // Only the drawn place is rounded; the spring runs on [_at], so rounding
+  // can never hold it short of its stop
+  double _snap(double offset) => (offset * _ratio).roundToDouble() / _ratio;
+
+  // a glide that has not landed by now lands anyway: while it runs the page
+  // takes no clicks, so it must always end
+  static const _longest = Duration(seconds: 2);
 
   @override
   void pointerScroll(double delta) {
@@ -50,15 +67,20 @@ class _GlidingPosition extends ScrollPositionWithSingleContext {
     );
     if (still ?? false) return super.pointerScroll(delta);
     final from = _gliding ? _target : pixels;
-    final target = (from + delta * wheelBoost).clamp(
-      minScrollExtent,
-      maxScrollExtent,
-    );
-    if (target == from) return;
-    _target = target;
+    // the glide rests on a whole device pixel, so glows, masks and the pinned
+    // bar's edge are drawn the same way at every stop, not shifted by half a
+    // pixel on every other notch
+    _ratio =
+        MediaQuery.maybeDevicePixelRatioOf(context.notificationContext!) ?? 1;
+    final target = _snap(from + delta * wheelBoost);
+    final clamped = target.clamp(minScrollExtent, maxScrollExtent);
+    if (clamped == from) return;
+    _target = clamped;
     if (_gliding) return;
     _speed = 0;
     _last = null;
+    _began = null;
+    _at = pixels;
     beginActivity(_GlideActivity(this, () => _speed));
     (_ticker ??= context.vsync.createTicker(_tick)).start();
   }
@@ -66,21 +88,24 @@ class _GlidingPosition extends ScrollPositionWithSingleContext {
   void _tick(Duration elapsed) {
     final last = _last;
     _last = elapsed;
+    final began = _began ??= elapsed;
     if (last == null) return;
     // a long frame must not throw the spring past its target
     final dt = ((elapsed - last).inMicroseconds / 1e6).clamp(0.0, 0.05);
     _target = _target.clamp(minScrollExtent, maxScrollExtent);
-    final gap = pixels - _target;
+    final gap = _at - _target;
     final carry = _speed + _pull * gap;
     final fade = math.exp(-_pull * dt);
     final nextGap = (gap + carry * dt) * fade;
     _speed = (carry - _pull * (gap + carry * dt)) * fade;
-    if (nextGap.abs() < 0.4 && _speed.abs() < 8) {
+    if ((nextGap.abs() < 0.4 && _speed.abs() < 8) ||
+        elapsed - began > _longest) {
       setPixels(_target);
       _finish();
       return;
     }
-    final overscroll = setPixels(_target + nextGap);
+    _at = _target + nextGap;
+    final overscroll = setPixels(_snap(_at));
     if (overscroll != 0) _finish();
   }
 
@@ -92,6 +117,7 @@ class _GlidingPosition extends ScrollPositionWithSingleContext {
   void _stop() {
     _ticker?.stop();
     _last = null;
+    _began = null;
     _speed = 0;
   }
 

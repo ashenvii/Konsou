@@ -241,9 +241,10 @@ class _DetailSectionState extends State<DetailSection> {
             ),
             const SizedBox(height: Tokens.space3),
           ],
-          _label('Top: key art, title, meta, scores and controls'),
+          _label('Top: poster, title, meta, scores and controls'),
           DetailTop(
             malId: sampleDetails.malId,
+            details: sampleDetails,
             header: DetailHeader(
               name: sampleDetails.name,
               otherName: sampleDetails.otherName,

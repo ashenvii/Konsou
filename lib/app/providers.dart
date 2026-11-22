@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../covers/cover_size.dart';
+import '../components/picture_crop.dart';
 import '../covers/cover_store.dart';
 import '../mal/detail_request.dart';
 import '../mal/request_gate.dart';
@@ -88,3 +89,16 @@ Future<void> detailOnScreen(Ref ref, int malId) async {
   );
   if (outcome == FetchOutcome.fetched) services.notifyScreenDataChanged();
 }
+
+/// The large cover of a title, kept or fetched.
+@riverpod
+Future<File?> largeCover(Ref ref, int malId) async {
+  final kept = await ref.watch(keptCoversProvider.future);
+  return kept[(malId, CoverSize.large)] ??
+      ref.watch(coverFileProvider(malId, CoverSize.large).future);
+}
+
+/// A picture file's size and detail per row, for cropping it to a box.
+@riverpod
+Future<PictureLook?> pictureLook(Ref ref, String path) =>
+    PictureLook.read(File(path));
