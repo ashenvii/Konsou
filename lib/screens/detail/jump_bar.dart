@@ -5,31 +5,29 @@ import '../../components/app_menu.dart';
 import '../../components/app_popover.dart';
 import '../../components/menu_chevron.dart';
 import '../../components/cover_image.dart';
-import '../../components/hover_mark.dart';
 import '../../components/motion.dart';
 import '../../components/one_line_text.dart';
 import '../../components/page_frame.dart';
 import '../../components/pressable.dart';
+import '../../components/raised_key.dart';
 import '../../components/solid_icon_button.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../icons/app_icons.dart';
 
-/// The back button, square. It floats over the top of the Detail page on the
-/// ground, and turns white with a dark arrow as it moves into the
-/// [JumpBar] at the top; [white] runs from 0 to 1 over that change.
+/// The back button, a white key with a dark arrow. It floats over the top of
+/// the Detail page and moves into the [JumpBar] at the top, the same either
+/// place.
 class DetailBackButton extends StatelessWidget {
-  const DetailBackButton({super.key, required this.onBack, this.white = 0});
+  const DetailBackButton({super.key, required this.onBack});
 
   final VoidCallback onBack;
-  final double white;
 
   @override
   Widget build(BuildContext context) => SolidIconButton(
     icon: AppIcons.arrowLeft,
     label: 'Back',
     onPressed: onBack,
-    solid: white,
   );
 }
 
@@ -99,7 +97,6 @@ class JumpBar extends StatelessWidget {
             tween: Tween(end: stuck ? 1 : 0),
             duration: duration,
             curve: Curves.easeOut,
-            // the back button and title turn white as they arrive
             builder: (context, share, child) => ClipRect(
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -111,14 +108,13 @@ class JumpBar extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        DetailBackButton(onBack: onBack, white: share),
+                        DetailBackButton(onBack: onBack),
                         const SizedBox(width: Tokens.space2),
                         _TitleButton(
                           title: title,
                           malId: hideCover ? null : malId,
                           width: _titleWidth,
                           coverWidth: _miniCover,
-                          white: share,
                           onPressed: onTop,
                         ),
                         const SizedBox(width: Tokens.space4),
@@ -173,7 +169,6 @@ class _TitleButton extends StatelessWidget {
     required this.malId,
     required this.width,
     required this.coverWidth,
-    required this.white,
     required this.onPressed,
   });
 
@@ -181,28 +176,27 @@ class _TitleButton extends StatelessWidget {
   final int? malId;
   final double width;
   final double coverWidth;
-
-  /// From 0 to 1: the box goes from the ground to white, the text to dark.
-  final double white;
   final VoidCallback onPressed;
 
+  /// The title as a key: the back button's white key, wider, with the small
+  /// cover at its left edge.
   @override
   Widget build(BuildContext context) {
     return Pressable(
       label: title,
       onPressed: onPressed,
-      focusColor: white > 0.5 ? Tokens.ground : Tokens.ink,
-      builder: (context, state) => HoverMark(
-        on: state.hovered,
+      focusColor: Tokens.ground,
+      builder: (context, state) => Transform.translate(
+        offset: keyLift,
         child: Container(
           width: width,
           height: Tokens.controlHeight,
-          color: Color.lerp(Tokens.ground, Tokens.ink, white),
-          padding: const EdgeInsets.only(right: Tokens.space3),
-          child: Row(
-            children: [
-              ClipRect(
-                child: SizedBox(
+          decoration: solidKeyDecoration(hovered: state.hovered),
+          child: ClipRRect(
+            borderRadius: Tokens.keyCorners,
+            child: Row(
+              children: [
+                SizedBox(
                   width: coverWidth,
                   height: Tokens.controlHeight,
                   child: OverflowBox(
@@ -210,18 +204,18 @@ class _TitleButton extends StatelessWidget {
                     child: CoverView(malId: malId, width: coverWidth),
                   ),
                 ),
-              ),
-              const SizedBox(width: Tokens.space2),
-              Expanded(
-                child: OneLineText(
-                  title,
-                  style: AppText.label(
-                    Color.lerp(Tokens.ink, Tokens.ground, white)!,
-                    bold: true,
+                const SizedBox(width: Tokens.space2),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: Tokens.space3),
+                    child: OneLineText(
+                      title,
+                      style: AppText.label(Tokens.ground, bold: true),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

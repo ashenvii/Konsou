@@ -3,6 +3,11 @@ import 'package:flutter/widgets.dart';
 import '../design/tokens.dart';
 import 'hover_mark.dart';
 
+/// A key's slab hangs below its box, so face and slab together sit low. Every
+/// key moves up by half the depth, which centres the pair on its box for the
+/// eye.
+const Offset keyLift = Offset(0, -Tokens.buttonDepth / 2);
+
 /// A raised console key: a face over a slab, a soft shadow under it and small
 /// corners. Every button, the view switch and the sort are drawn on one.
 /// [sunk] pushes it down most of the way (pressed, or the selected view).
@@ -28,7 +33,7 @@ class RaisedKey extends StatelessWidget {
     final depth = sunk ? 1.0 : Tokens.buttonDepth;
     return Transform.translate(
       // a sunk key moves down by the slab it lost, so its foot stays put
-      offset: Offset(0, Tokens.buttonDepth - depth),
+      offset: Offset(0, Tokens.buttonDepth - depth) + keyLift,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: Tokens.keyCorners,

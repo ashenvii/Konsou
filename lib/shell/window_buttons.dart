@@ -59,23 +59,15 @@ class WindowButton extends StatelessWidget {
           return SizedBox(
             width: Tokens.windowButtonWidth,
             height: Tokens.barHeight,
-            // the slab under the key is not part of its height
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: Tokens.buttonDepth),
-              child: Center(
-                child: SizedBox(
-                  width: Tokens.windowKeyWidth,
-                  height: Tokens.windowKeyHeight,
-                  child: RaisedKey(
-                    lit: over && !held,
-                    sunk: held,
-                    child: Center(
-                      child: AppIcon(
-                        _icon,
-                        size: Tokens.iconSize,
-                        color: color,
-                      ),
-                    ),
+            child: Center(
+              child: SizedBox(
+                width: Tokens.windowKeyWidth,
+                height: Tokens.windowKeyHeight,
+                child: RaisedKey(
+                  lit: over && !held,
+                  sunk: held,
+                  child: Center(
+                    child: AppIcon(_icon, size: Tokens.iconSize, color: color),
                   ),
                 ),
               ),

@@ -197,11 +197,6 @@ void main() {
     expect(tester.getTopLeft(find.byType(JumpBar)).dy, lessThan(100));
     // the floating one is gone; only the bar's own is left
     expect(find.byType(DetailBackButton), findsOneWidget);
-    // and it has turned white, as has the title box
-    expect(
-      tester.widget<DetailBackButton>(find.byType(DetailBackButton)).white,
-      1,
-    );
     expect(
       find.descendant(
         of: find.byType(JumpBar),

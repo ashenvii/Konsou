@@ -4,7 +4,6 @@ import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
 import '../icons/app_icons.dart';
-import '../icons/icon_def.dart';
 import 'motion.dart';
 import 'solid_icon_button.dart';
 
@@ -201,7 +200,7 @@ class _PeekRowState extends State<PeekRow> {
               Positioned(
                 left: 0,
                 top: arrowTop,
-                child: _Arrow(
+                child: SolidIconButton(
                   icon: AppIcons.chevronLeft,
                   label: 'Earlier titles',
                   onPressed: () => _go(_first - layout.whole),
@@ -211,7 +210,7 @@ class _PeekRowState extends State<PeekRow> {
               Positioned(
                 right: 0,
                 top: arrowTop,
-                child: _Arrow(
+                child: SolidIconButton(
                   icon: AppIcons.chevronRight,
                   label: 'Later titles',
                   onPressed: () => _go(_first + layout.whole),
@@ -221,23 +220,5 @@ class _PeekRowState extends State<PeekRow> {
         );
       },
     );
-  }
-}
-
-class _Arrow extends StatelessWidget {
-  const _Arrow({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
-
-  final IconDef icon;
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    // white like the back button in the jump bar, so it reads over covers
-    return SolidIconButton(icon: icon, label: label, onPressed: onPressed);
   }
 }
