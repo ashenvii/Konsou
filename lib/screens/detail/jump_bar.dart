@@ -82,9 +82,9 @@ class JumpBar extends StatelessWidget {
       decoration: BoxDecoration(
         // under the art on the page's ground; at the top, a line between it
         // and the page scrolling under it
-        color: Tokens.ground,
+        color: Tokens.chassisTop,
         border: Border(
-          bottom: BorderSide(color: stuck ? Tokens.line : Tokens.surface),
+          bottom: BorderSide(color: stuck ? Tokens.line : Tokens.edgeLight),
         ),
       ),
       child: Row(

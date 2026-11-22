@@ -143,35 +143,33 @@ class _KeyArtState extends State<_KeyArt> with FadingPortalOwner<_KeyArt> {
         builder: (context, state) => Stack(
           fit: StackFit.expand,
           children: [
-            ClipRect(
-              child: OverflowBox(
-                alignment: const Alignment(0, -0.4),
-                maxHeight: double.infinity,
-                child: CoverView(malId: widget.malId, width: widget.width),
-              ),
-            ),
-            // into the ground on the left, where the text reads
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Tokens.ground,
-                    Tokens.ground.withValues(alpha: 0.7),
-                    Tokens.ground.withValues(alpha: 0.15),
-                    Tokens.ground.withValues(alpha: 0.35),
-                  ],
-                  stops: const [0, 0.3, 0.75, 1],
-                ),
-              ),
-            ),
-            // and into the ground at the foot
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
+            // the art fades out on the left, where the text reads, and at its
+            // foot, so the chassis shows through instead of a flat colour
+            ShaderMask(
+              blendMode: BlendMode.dstIn,
+              shaderCallback: (bounds) => LinearGradient(
+                colors: [
+                  Tokens.ink.withValues(alpha: 0),
+                  Tokens.ink.withValues(alpha: 0.3),
+                  Tokens.ink.withValues(alpha: 0.85),
+                  Tokens.ink.withValues(alpha: 0.65),
+                ],
+                stops: const [0, 0.3, 0.75, 1],
+              ).createShader(bounds),
+              child: ShaderMask(
+                blendMode: BlendMode.dstIn,
+                shaderCallback: (bounds) => LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Tokens.ground.withValues(alpha: 0), Tokens.ground],
+                  colors: [Tokens.ink, Tokens.ink.withValues(alpha: 0)],
                   stops: const [0.55, 1],
+                ).createShader(bounds),
+                child: ClipRect(
+                  child: OverflowBox(
+                    alignment: const Alignment(0, -0.4),
+                    maxHeight: double.infinity,
+                    child: CoverView(malId: widget.malId, width: widget.width),
+                  ),
                 ),
               ),
             ),

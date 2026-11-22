@@ -55,6 +55,8 @@ abstract final class Tokens {
   // raised buttons sit on a 3 slab; key caps keep keyDepth
   static const double buttonDepth = 3;
   static const double wellPad = 6;
+  // the gap inside a small display, such as the progress segments' well
+  static const double displayInset = 2;
   static const double lampSize = 9;
   // the rail's lit edge and the open watch order cover's ring
   static const double litEdge = 3;

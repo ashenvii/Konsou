@@ -137,10 +137,14 @@ class ScoreFigure extends StatelessWidget {
                   bold: true,
                 ),
                 (null, false) => AppText.caption(Tokens.inkMuted),
-                _ => AppText.tally(
-                  Tokens.ink,
-                  size: Tokens.text5,
-                ).copyWith(fontWeight: FontWeight.w700),
+                // the user's own score is lit, like an LED display
+                _ when settable =>
+                  AppText.tally(Tokens.pop, size: Tokens.text5).copyWith(
+                    shadows: const [
+                      Shadow(color: Tokens.pop, blurRadius: Tokens.ledGlow),
+                    ],
+                  ),
+                _ => AppText.tally(Tokens.ink, size: Tokens.text5),
               },
             ),
           ],

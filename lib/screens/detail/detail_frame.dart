@@ -131,6 +131,18 @@ class _DetailFrameState extends State<DetailFrame> {
     final keys = _keysFor(parts);
     return Stack(
       children: [
+        // the console's chassis, fixed behind the page as it scrolls
+        const Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Tokens.chassisTop, Tokens.chassisBottom],
+              ),
+            ),
+          ),
+        ),
         Positioned.fill(
           child: CustomScrollView(
             key: _viewportKey,

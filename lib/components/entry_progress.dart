@@ -58,22 +58,45 @@ class _EntryProgressState extends State<EntryProgress> {
           ),
         );
         if (!steps || widget.onStep == null) {
-          return SizedBox(height: height, child: painter);
-        }
-        return MouseRegion(
-          cursor: SystemMouseCursors.click,
-          onHover: (e) =>
-              setState(() => _hover = _stepAt(e.localPosition.dx, width)),
-          onExit: (_) => setState(() => _hover = null),
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTapUp: (d) => widget.onStep!(_stepAt(d.localPosition.dx, width)),
+          return _Display(
             child: SizedBox(height: height, child: painter),
+          );
+        }
+        return _Display(
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onHover: (e) =>
+                setState(() => _hover = _stepAt(e.localPosition.dx, width)),
+            onExit: (_) => setState(() => _hover = null),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapUp: (d) =>
+                  widget.onStep!(_stepAt(d.localPosition.dx, width)),
+              child: SizedBox(height: height, child: painter),
+            ),
           ),
         );
       },
     );
   }
+}
+
+/// The sunk well the segments sit in.
+class _Display extends StatelessWidget {
+  const _Display({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(Tokens.displayInset),
+    decoration: const BoxDecoration(
+      color: Tokens.wellFill,
+      borderRadius: Tokens.coverCorners,
+      boxShadow: [BoxShadow(color: Tokens.edgeLight, offset: Offset(0, 1))],
+    ),
+    child: child,
+  );
 }
 
 class _ProgressPainter extends CustomPainter {
@@ -92,15 +115,22 @@ class _ProgressPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (total <= 0) return;
-    final track = Paint()..color = Tokens.line;
+    final track = Paint()..color = Tokens.lampOff;
     final fill = Paint()..color = Tokens.pop;
+    // lit segments glow a little, like the LED digits beside them
+    final glow = Paint()
+      ..color = Tokens.pop.withValues(alpha: 0.5)
+      ..maskFilter = const MaskFilter.blur(
+        BlurStyle.normal,
+        Tokens.ledGlow / 2,
+      );
     if (!steps) {
       canvas.drawRect(Offset.zero & size, track);
       final share = (watched / total).clamp(0.0, 1.0);
-      canvas.drawRect(
-        Offset.zero & Size(size.width * share, size.height),
-        fill,
-      );
+      final lit = Offset.zero & Size(size.width * share, size.height);
+      canvas
+        ..drawRect(lit, glow)
+        ..drawRect(lit, fill);
       return;
     }
     final step = size.width / total;
@@ -115,6 +145,7 @@ class _ProgressPainter extends CustomPainter {
       final paint = i < watched
           ? fill
           : (hover != null && i < hover! ? preview : track);
+      if (i < watched) canvas.drawRect(rect, glow);
       canvas.drawRect(rect, paint);
     }
   }

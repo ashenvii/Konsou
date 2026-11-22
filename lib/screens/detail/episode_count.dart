@@ -96,7 +96,10 @@ class _EpisodeCountState extends State<EpisodeCount> {
   Widget build(BuildContext context) {
     final total = widget.total;
     final known = total != null && total > 0;
-    final style = AppText.tally(Tokens.ink);
+    // LED digits, pop and glowing, in a sunk display
+    final style = AppText.tally(Tokens.pop).copyWith(
+      shadows: const [Shadow(color: Tokens.pop, blurRadius: Tokens.ledGlow)],
+    );
     final of = Text(
       known ? ' / $total' : ' / ?',
       maxLines: 1,
@@ -115,10 +118,7 @@ class _EpisodeCountState extends State<EpisodeCount> {
               padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
               decoration: BoxDecoration(
                 color: Tokens.ground,
-                border: Border.all(
-                  color: Tokens.pop,
-                  width: Tokens.focusRing,
-                ),
+                border: Border.all(color: Tokens.pop, width: Tokens.focusRing),
               ),
               alignment: Alignment.centerRight,
               child: FieldText(
@@ -135,8 +135,32 @@ class _EpisodeCountState extends State<EpisodeCount> {
             ),
           )
         else
-          Text('${widget.watched}', maxLines: 1, softWrap: false, style: style),
-        of,
+          Container(
+            key: const Key('episode-display'),
+            height: Tokens.controlHeight,
+            padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: Tokens.wellFill,
+              borderRadius: Tokens.coverCorners,
+              boxShadow: [
+                BoxShadow(color: Tokens.edgeLight, offset: Offset(0, 1)),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${widget.watched}',
+                  maxLines: 1,
+                  softWrap: false,
+                  style: style,
+                ),
+                of,
+              ],
+            ),
+          ),
+        if (_editing) of,
         if (widget.onSet != null) ...[
           const SizedBox(width: Tokens.space1),
           IconSquareButton(

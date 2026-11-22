@@ -339,10 +339,28 @@ class WatchOrderCard extends StatelessWidget {
           const SizedBox(height: Tokens.space2),
           _Faded(
             on: !row.isOpenTitle && !lit,
-            child: CoverView(
-              malId: row.malId,
-              width: width,
-              loading: row.isLoadingDetails,
+            child: DecoratedBox(
+              // the open title is this page: its cover is lit
+              position: DecorationPosition.foreground,
+              decoration: row.isOpenTitle
+                  ? BoxDecoration(
+                      border: Border.all(
+                        color: Tokens.pop,
+                        width: Tokens.litEdge,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Tokens.pop.withValues(alpha: 0.5),
+                          blurRadius: Tokens.openGlow,
+                        ),
+                      ],
+                    )
+                  : const BoxDecoration(),
+              child: CoverView(
+                malId: row.malId,
+                width: width,
+                loading: row.isLoadingDetails,
+              ),
             ),
           ),
           const SizedBox(height: Tokens.space2),

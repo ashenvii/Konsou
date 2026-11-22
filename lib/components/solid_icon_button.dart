@@ -6,7 +6,7 @@ import '../icons/icon_def.dart';
 import 'hover_mark.dart';
 import 'pressable.dart';
 
-/// A square icon button that can turn white with a dark icon, for a control
+/// A square icon key that can turn white with a dark icon, for a control
 /// that has to stand out over pictures or a busy page. [solid] runs from 0,
 /// on the ground with a soft icon, to 1, white; under the pointer the white
 /// dims a step. It always has a drop shadow behind it, so it never blends
@@ -43,8 +43,14 @@ class SolidIconButton extends StatelessWidget {
               state.hovered ? Tokens.inkSoft : Tokens.ink,
               solid,
             ),
-            boxShadow: const [
+            borderRadius: Tokens.keyCorners,
+            boxShadow: [
+              // white, it is a key: a muted slab under it
               BoxShadow(
+                color: Tokens.inkMuted.withValues(alpha: solid),
+                offset: const Offset(0, Tokens.buttonDepth),
+              ),
+              const BoxShadow(
                 color: Tokens.shadow,
                 blurRadius: Tokens.shadowBlur,
                 offset: Offset(0, Tokens.shadowDrop),
