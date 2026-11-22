@@ -20,7 +20,7 @@ class MenuChevron extends StatelessWidget {
       child: AnimatedRotation(
         turns: open ? 0.5 : 0,
         duration: chooseMotionDuration(context, Tokens.motionQuick),
-        curve: Curves.easeInOut,
+        curve: Curves.easeOut,
         child: AppIcon(
           AppIcons.chevronDown,
           size: Tokens.iconSize,

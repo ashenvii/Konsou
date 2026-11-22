@@ -170,8 +170,8 @@ abstract final class Tokens {
   static const Duration motionSlide = Duration(milliseconds: 220);
 
   // things appearing and going (owner, 2026-11-17): menus and popovers fade in
-  // with a small slide down, the toast and tips only fade; ease-out opening,
-  // ease-in closing
+  // with a small slide out of their anchor, the toast and tips only fade;
+  // ease-out opening, ease-in closing
   static const Duration motionOpen = Duration(milliseconds: 120);
   static const Duration motionClose = Duration(milliseconds: 80);
   static const Duration motionTip = Duration(milliseconds: 100);

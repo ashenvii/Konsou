@@ -204,6 +204,7 @@ void main() {
     Future<void> pumpPopover(
       WidgetTester tester, {
       Offset overlayAt = Offset.zero,
+      double anchorTop = 100,
     }) {
       picked = '';
       return tester.pumpWidget(
@@ -219,7 +220,7 @@ void main() {
                     builder: (context) => Align(
                       alignment: Alignment.topLeft,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 100, top: 100),
+                        padding: EdgeInsets.only(left: 100, top: anchorTop),
                         child: AppPopover(
                           builder: (context, handle) => AppButton(
                             label: 'Sort',
@@ -258,6 +259,28 @@ void main() {
       final anchor = tester.getRect(find.byType(AppButton));
       final menu = tester.getTopLeft(find.byType(AppMenu));
       expect(menu, Offset(anchor.left, anchor.bottom));
+    });
+
+    testWidgets('slides 4 px down out of its anchor', (tester) async {
+      await pumpPopover(tester);
+      await tester.tap(find.text('Sort'));
+      await tester.pump();
+      final anchor = tester.getRect(find.byType(AppButton));
+      expect(tester.getTopLeft(find.byType(AppMenu)).dy, anchor.bottom - 4);
+      await tester.pumpAndSettle();
+      expect(tester.getTopLeft(find.byType(AppMenu)).dy, anchor.bottom);
+    });
+
+    testWidgets('rises 4 px out of its anchor when it opens above it', (
+      tester,
+    ) async {
+      await pumpPopover(tester, anchorTop: 560);
+      await tester.tap(find.text('Sort'));
+      await tester.pump();
+      final anchor = tester.getRect(find.byType(AppButton));
+      expect(tester.getBottomLeft(find.byType(AppMenu)).dy, anchor.top + 4);
+      await tester.pumpAndSettle();
+      expect(tester.getBottomLeft(find.byType(AppMenu)).dy, anchor.top);
     });
 
     testWidgets('opens under its anchor when the overlay is moved in', (

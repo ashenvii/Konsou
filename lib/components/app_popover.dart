@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'close_on_escape.dart';
 import 'popover_placement.dart';
 import 'fading_portal.dart';
+import 'presence.dart';
 
 abstract interface class PopoverHandle {
   bool get isOpen;
@@ -71,7 +72,6 @@ class _AppPopoverState extends State<AppPopover>
     return FadingPortal(
       controller: portal,
       visible: portalOpen,
-      slide: true,
       overlay: (context) => _PopoverLayer(
         anchor: _anchor,
         gap: widget.gap,
@@ -126,8 +126,14 @@ class _PopoverLayer extends StatelessWidget {
               ),
             Positioned.fill(
               child: CustomSingleChildLayout(
-                delegate: AnchoredLayout(anchor, gap, placePopover),
-                child: child,
+                delegate: AnchoredLayout(
+                  anchor,
+                  gap,
+                  placePopover,
+                  shown: Presence.shownOf(context),
+                ),
+                // moved each frame of the slide, never redrawn
+                child: RepaintBoundary(child: child),
               ),
             ),
           ],

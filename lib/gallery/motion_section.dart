@@ -85,7 +85,8 @@ class _MotionSectionState extends State<MotionSection> {
           ),
         ),
         Text(
-          'Menus and popovers fade in over 120 ms with a 4 px slide down; '
+          'Menus and popovers fade in over 120 ms with a 4 px slide out of '
+          'what opened them, down or up; '
           'they fade out over 80 ms. The toast and tips only fade. Ease-out '
           'on the way in, ease-in on the way out. A tip waits 400 ms, a menu '
           '60 ms. With reduced motion on, all of it is instant.',

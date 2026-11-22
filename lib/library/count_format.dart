@@ -7,3 +7,7 @@ String formatCount(int count) {
   }
   return out.toString();
 }
+
+/// "1 title", "3 titles", "1,200 users". Only for words that take an s.
+String formatCountOf(int count, String word) =>
+    count == 1 ? '1 $word' : '${formatCount(count)} ${word}s';

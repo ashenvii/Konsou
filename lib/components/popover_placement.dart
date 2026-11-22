@@ -1,6 +1,9 @@
 import 'dart:math';
 
+import 'package:flutter/animation.dart';
 import 'package:flutter/rendering.dart';
+
+import '../design/tokens.dart';
 
 Offset placePopover({
   required Rect anchor,
@@ -55,24 +58,35 @@ typedef Placer = Offset Function({
 });
 
 /// Lays a floating child out next to an anchor, by one of the placers above.
+/// With [shown] it slides [Tokens.openSlide] out of the anchor as it arrives:
+/// down when it sits below the anchor, up when it sits above. It leaves with
+/// no slide.
 class AnchoredLayout extends SingleChildLayoutDelegate {
-  AnchoredLayout(this.anchor, this.gap, this.place);
+  AnchoredLayout(this.anchor, this.gap, this.place, {this.shown})
+    : super(relayout: shown);
 
   final Rect anchor;
   final double gap;
   final Placer place;
+  final Animation<double>? shown;
 
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) =>
       constraints.loosen();
 
   @override
-  Offset getPositionForChild(Size size, Size childSize) =>
-      place(anchor: anchor, child: childSize, area: size, gap: gap);
+  Offset getPositionForChild(Size size, Size childSize) {
+    final at = place(anchor: anchor, child: childSize, area: size, gap: gap);
+    final shown = this.shown;
+    if (shown == null || shown.status == AnimationStatus.reverse) return at;
+    final towardAnchor = at.dy < anchor.top ? 1.0 : -1.0;
+    return at.translate(0, towardAnchor * Tokens.openSlide * (1 - shown.value));
+  }
 
   @override
   bool shouldRelayout(AnchoredLayout oldDelegate) =>
       oldDelegate.anchor != anchor ||
       oldDelegate.gap != gap ||
-      oldDelegate.place != place;
+      oldDelegate.place != place ||
+      oldDelegate.shown != shown;
 }

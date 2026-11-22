@@ -1,3 +1,4 @@
+import 'count_format.dart';
 import 'library_row.dart';
 
 /// The word for a MAL media type: "TV", "Movie", "TV Special".
@@ -30,7 +31,7 @@ String typeYear(String? type, String? date) {
 
 String capitalise(String text) => text[0].toUpperCase() + text.substring(1);
 
-String episodeCount(int n) => n == 1 ? '1 episode' : '$n episodes';
+String episodeCount(int n) => formatCountOf(n, 'episode');
 
 /// A month's name, 1 for January. Short gives the first three letters.
 String monthName(int month, {bool short = false}) {

@@ -51,22 +51,8 @@ abstract final class AppText {
     color: color,
   );
 
-  static TextStyle figure(Color color) => TextStyle(
-    fontFamily: Tokens.mono,
-    fontSize: Tokens.text1,
-    height: 1,
-    color: color,
-  );
-
-  /// Same face as [figure]; Share Tech Mono has one weight, so a count stands
-  /// out by its colour, not by bold.
-  static TextStyle count(Color color) => TextStyle(
-    fontFamily: Tokens.mono,
-    fontSize: Tokens.text1,
-    height: 1,
-    color: color,
-  );
-
+  /// Every number. Share Tech Mono has one weight, so a count stands out by
+  /// its colour, not by bold.
   static TextStyle tally(Color color, {double size = Tokens.text2}) =>
       TextStyle(
         fontFamily: Tokens.mono,

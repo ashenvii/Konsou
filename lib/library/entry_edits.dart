@@ -66,8 +66,7 @@ class EntryEdits {
     }
     final locked = airingLock(facts.airing, target);
     if (locked != null) return locked;
-    await _record.transaction(() async {
-      final time = await readEditTime(_record, _now());
+    await _edit((time) async {
       final finishing = target == EntryStatus.completed;
       final episodes = finishing
           ? _maxOf(facts.total, facts.episodesWatched)
@@ -85,7 +84,6 @@ class EntryEdits {
         await _takeBackLastCompletion(entryId);
       }
     });
-    onChanged?.call();
     return EditResult.done;
   }
 
@@ -116,8 +114,7 @@ class EntryEdits {
     final locked = finishes
         ? airingLock(facts.airing, EntryStatus.completed)
         : null;
-    await _record.transaction(() async {
-      final time = await readEditTime(_record, _now());
+    await _edit((time) async {
       await _writeProgress(
         entryId,
         time,
@@ -131,7 +128,6 @@ class EntryEdits {
         await _logCompletion(entryId, facts, episodes);
       }
     });
-    onChanged?.call();
     return locked ?? EditResult.done;
   }
 
@@ -147,8 +143,7 @@ class EntryEdits {
   Future<EditResult> rewatch(String entryId) async {
     final facts = await _readFacts(entryId);
     if (facts.status != EntryStatus.completed) return EditResult.notCompleted;
-    await _record.transaction(() async {
-      final time = await readEditTime(_record, _now());
+    await _edit((time) async {
       await _writeProgress(
         entryId,
         time,
@@ -156,14 +151,12 @@ class EntryEdits {
         episodes: 0,
       );
     });
-    onChanged?.call();
     return EditResult.done;
   }
 
   Future<void> remove(List<String> entryIds) async {
     if (entryIds.isEmpty) return;
-    await _record.transaction(() async {
-      final time = await readEditTime(_record, _now());
+    await _edit((time) async {
       for (final id in entryIds) {
         final withId = [Variable.withString(id)];
         for (final table in [
@@ -190,7 +183,6 @@ class EntryEdits {
             );
       }
     });
-    onChanged?.call();
   }
 
   Future<UndoEdit> snapshot(List<String> entryIds) async {
@@ -206,8 +198,7 @@ class EntryEdits {
   Future<void> _restore(List<Entry> entries, List<Completion> watches) async {
     if (entries.isEmpty) return;
     final ids = {for (final entry in entries) entry.entryId};
-    await _record.transaction(() async {
-      final time = await readEditTime(_record, _now());
+    await _edit((time) async {
       for (final entry in entries) {
         await (_record.update(
           _record.entry,
@@ -227,40 +218,34 @@ class EntryEdits {
         await _record.into(_record.completion).insert(watch);
       }
     });
-    onChanged?.call();
   }
 
   Future<void> setScore(String entryId, int? score) async {
-    await _record.transaction(() async {
-      final time = await readEditTime(_record, _now());
+    await _edit((time) async {
       await _writeEntry(
         entryId,
         EntryCompanion(score: Value(score), scoreChangedAt: Value(time)),
       );
     });
-    onChanged?.call();
   }
 
   Future<void> setNotes(String entryId, String text) async {
     final notes = text.trim().isEmpty ? null : text;
     final entry = await _readEntry(entryId);
     if (entry == null || entry.notes == notes) return;
-    await _record.transaction(() async {
-      final time = await readEditTime(_record, _now());
+    await _edit((time) async {
       await _writeEntry(
         entryId,
         EntryCompanion(notes: Value(notes), notesChangedAt: Value(time)),
       );
     });
-    onChanged?.call();
   }
 
   Future<void> setStartedDate(String entryId, DateTime? date) async {
     final startedAt = date?.millisecondsSinceEpoch;
     final entry = await _readEntry(entryId);
     if (entry == null || entry.startedAt == startedAt) return;
-    await _record.transaction(() async {
-      final time = await readEditTime(_record, _now());
+    await _edit((time) async {
       await _writeEntry(
         entryId,
         EntryCompanion(
@@ -269,6 +254,13 @@ class EntryEdits {
         ),
       );
     });
+  }
+
+  // one edit time for all of it, then one reload
+  Future<void> _edit(Future<void> Function(int time) write) async {
+    await _record.transaction(
+      () async => write(await readEditTime(_record, _now())),
+    );
     onChanged?.call();
   }
 
@@ -297,8 +289,7 @@ class EntryEdits {
     final restore = await snapshot(onList);
     final created = <String>[];
     var applied = 0;
-    await _record.transaction(() async {
-      final time = await readEditTime(_record, _now());
+    await _edit((time) async {
       for (final title in titles) {
         var entryId = title.entryId;
         if (entryId == null) {
@@ -354,7 +345,6 @@ class EntryEdits {
         applied++;
       }
     });
-    onChanged?.call();
     return EarlierMark(
       UndoEdit(() async {
         await restore.run();

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
-import 'motion.dart';
+import 'presence.dart';
 import 'skeleton.dart';
 
 class CoverImage extends StatelessWidget {
@@ -49,14 +49,12 @@ class CoverImage extends StatelessWidget {
         frameBuilder: (context, child, frame, sync) {
           if (sync) return child;
           if (frame == null) return blank;
-          return TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: 1),
-            duration: chooseMotionDuration(context, Tokens.motionSlide),
-            curve: Curves.easeOut,
-            child: child,
-            builder: (context, t, child) => ColoredBox(
-              color: Tokens.surface,
-              child: Opacity(opacity: t, child: child),
+          return ColoredBox(
+            color: Tokens.surface,
+            child: Presence(
+              visible: true,
+              openTime: Tokens.motionSlide,
+              child: child,
             ),
           );
         },

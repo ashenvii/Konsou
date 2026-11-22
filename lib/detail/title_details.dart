@@ -7,6 +7,7 @@ import '../data/details_database.dart';
 import '../library/title_language.dart';
 import '../mal/detail_request.dart';
 import 'theme_song.dart';
+import '../library/count_format.dart';
 
 class ListCounts {
   const ListCounts({
@@ -251,8 +252,7 @@ TitleDetails parseTitleDetails(Detail row, TitleLanguage language) {
             name: linked.name,
             pictureUrl: linked.pictureUrl,
             note: switch (_int(_map(item)['num_recommendations'])) {
-              final count? when count > 0 =>
-                count == 1 ? '1 user' : '$count users',
+              final count? when count > 0 => formatCountOf(count, 'user'),
               _ => null,
             },
           ),

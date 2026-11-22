@@ -60,8 +60,11 @@ class AppTab extends StatelessWidget {
                   '$count',
                   maxLines: 1,
                   softWrap: false,
-                  style: AppText.count(selected ? Tokens.pop : Tokens.inkMuted)
-                      .copyWith(
+                  style:
+                      AppText.tally(
+                        selected ? Tokens.pop : Tokens.inkMuted,
+                        size: Tokens.text1,
+                      ).copyWith(
                         shadows: selected
                             ? const [
                                 Shadow(

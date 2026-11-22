@@ -4,26 +4,28 @@ import '../design/tokens.dart';
 import 'motion.dart';
 
 /// Fades its child in when [visible] turns true and out when it turns false.
-/// The child stays built, and takes no pointer, while it leaves. With [slide]
-/// it also drops [Tokens.openSlide] on the way in; the way out is a fade only.
-/// A null [child] while leaving keeps the last one shown until it is gone.
+/// The child stays built, and takes no pointer, while it leaves. A null
+/// [child] while leaving keeps the last one shown until it is gone. Something
+/// inside that moves as it arrives reads the fade from [shownOf].
 class Presence extends StatefulWidget {
   const Presence({
     super.key,
     required this.visible,
     required this.child,
-    this.slide = false,
     this.openTime = Tokens.motionOpen,
     this.onGone,
   });
 
   final bool visible;
   final Widget? child;
-  final bool slide;
   final Duration openTime;
 
   /// Called once the fade out has finished.
   final VoidCallback? onGone;
+
+  /// The nearest Presence's fade, 0 gone and 1 shown, eased.
+  static Animation<double>? shownOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_Shown>()?.animation;
 
   @override
   State<Presence> createState() => _PresenceState();
@@ -37,13 +39,18 @@ class _PresenceState extends State<Presence>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(vsync: this)
     ..addStatusListener(_status);
+  // keeps the way-in curve if it is closed halfway in, so nothing jumps
+  late final _shown = CurvedAnimation(
+    parent: _controller,
+    curve: _easeOut,
+    reverseCurve: _easeIn,
+  );
   Widget? _kept;
 
   @override
   void initState() {
     super.initState();
     _kept = widget.child;
-    if (widget.visible) _controller.value = 0;
   }
 
   @override
@@ -70,48 +77,44 @@ class _PresenceState extends State<Presence>
   void _status(AnimationStatus status) {
     if (status != AnimationStatus.dismissed || widget.visible) return;
     widget.onGone?.call();
-    // the kept child was only for the fade; let it go
-    if (mounted && widget.child == null && _kept != null) {
-      setState(() => _kept = null);
-    }
+    if (!mounted) return;
+    // gone: nothing is built, and the kept child was only for the fade
+    setState(() {
+      if (widget.child == null) _kept = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final child = _kept;
-    if (child == null) return const SizedBox.shrink();
+    if (child == null || (!widget.visible && _controller.isDismissed)) {
+      return const SizedBox.shrink();
+    }
     return IgnorePointer(
       ignoring: !widget.visible,
-      child: AnimatedBuilder(
-        animation: _controller,
-        child: child,
-        builder: (context, child) {
-          // gone: nothing is built, the fade has finished
-          if (!widget.visible && _controller.isDismissed) {
-            return const SizedBox.shrink();
-          }
-          final opening = _controller.status != AnimationStatus.reverse;
-          final t = (opening ? _easeOut : _easeIn).transform(_controller.value);
-          return Opacity(
-            opacity: t,
-            // a screen reader hears it at once, not after the fade
-            alwaysIncludeSemantics: true,
-            child: Transform.translate(
-              offset: Offset(
-                0,
-                widget.slide && opening ? -Tokens.openSlide * (1 - t) : 0,
-              ),
-              child: child,
-            ),
-          );
-        },
+      // the fade is the layer's alpha: no rebuild and no repaint per frame
+      child: FadeTransition(
+        opacity: _shown,
+        // a screen reader hears it at once, not after the fade
+        alwaysIncludeSemantics: true,
+        child: _Shown(animation: _shown, child: child),
       ),
     );
   }
 
   @override
   void dispose() {
+    _shown.dispose();
     _controller.dispose();
     super.dispose();
   }
+}
+
+class _Shown extends InheritedWidget {
+  const _Shown({required this.animation, required super.child});
+
+  final Animation<double> animation;
+
+  @override
+  bool updateShouldNotify(_Shown old) => old.animation != animation;
 }

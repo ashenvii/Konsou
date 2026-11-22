@@ -14,7 +14,6 @@ class FadingPortal extends StatefulWidget {
     required this.visible,
     required this.overlay,
     required this.child,
-    this.slide = false,
     this.openTime = Tokens.motionOpen,
   });
 
@@ -22,7 +21,6 @@ class FadingPortal extends StatefulWidget {
   final bool visible;
   final WidgetBuilder overlay;
   final Widget child;
-  final bool slide;
   final Duration openTime;
 
   @override
@@ -45,7 +43,6 @@ class _FadingPortalState extends State<FadingPortal> {
       controller: widget.controller,
       overlayChildBuilder: (context) => Presence(
         visible: widget.visible,
-        slide: widget.slide,
         openTime: widget.openTime,
         onGone: _gone,
         child: widget.overlay(context),

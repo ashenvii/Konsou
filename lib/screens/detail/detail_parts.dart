@@ -547,7 +547,7 @@ class MusicPart extends StatelessWidget {
 
     return DetailSection(
       title: 'Music',
-      count: count == 1 ? '1 song' : '$count songs',
+      count: formatCountOf(count, 'song'),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final twoUp =
@@ -614,7 +614,7 @@ class _SongRow extends ConsumerWidget {
           width: _numberWidth,
           child: Text(
             '$tag ${song.number}',
-            style: AppText.count(Tokens.inkMuted),
+            style: AppText.tally(Tokens.inkMuted, size: Tokens.text1),
           ),
         ),
         Expanded(
@@ -659,8 +659,10 @@ class _SongRow extends ConsumerWidget {
             child: Text(
               episodes,
               textAlign: TextAlign.right,
-              style: AppText.figure(Tokens.inkMuted)
-                  .copyWith(height: Tokens.lineHeightWrapped),
+              style: AppText.tally(
+                Tokens.inkMuted,
+                size: Tokens.text1,
+              ).copyWith(height: Tokens.lineHeightWrapped),
             ),
           ),
         ],

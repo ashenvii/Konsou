@@ -144,31 +144,24 @@ class _KeyArtState extends State<_KeyArt> with FadingPortalOwner<_KeyArt> {
           fit: StackFit.expand,
           children: [
             // the art fades out on the left, where the text reads, and at its
-            // foot, so the chassis shows through instead of a flat colour
-            ShaderMask(
-              blendMode: BlendMode.dstIn,
-              shaderCallback: (bounds) => LinearGradient(
-                colors: [
-                  Tokens.ink.withValues(alpha: 0),
-                  Tokens.ink.withValues(alpha: 0.3),
-                  Tokens.ink.withValues(alpha: 0.85),
-                  Tokens.ink.withValues(alpha: 0.65),
-                ],
-                stops: const [0, 0.3, 0.75, 1],
-              ).createShader(bounds),
+            // foot, so the chassis shows through instead of a flat colour; the
+            // two masks are drawn once, not on every frame of a scroll
+            RepaintBoundary(
               child: ShaderMask(
                 blendMode: BlendMode.dstIn,
-                shaderCallback: (bounds) => LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Tokens.ink, Tokens.ink.withValues(alpha: 0)],
-                  stops: const [0.55, 1],
-                ).createShader(bounds),
-                child: ClipRect(
-                  child: OverflowBox(
-                    alignment: const Alignment(0, -0.4),
-                    maxHeight: double.infinity,
-                    child: CoverView(malId: widget.malId, width: widget.width),
+                shaderCallback: _sideFade.createShader,
+                child: ShaderMask(
+                  blendMode: BlendMode.dstIn,
+                  shaderCallback: _footFade.createShader,
+                  child: ClipRect(
+                    child: OverflowBox(
+                      alignment: const Alignment(0, -0.4),
+                      maxHeight: double.infinity,
+                      child: CoverView(
+                        malId: widget.malId,
+                        width: widget.width,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -179,6 +172,29 @@ class _KeyArtState extends State<_KeyArt> with FadingPortalOwner<_KeyArt> {
     );
   }
 }
+
+final _sideFade = LinearGradient(
+  colors: [
+    Tokens.ink.withValues(alpha: 0),
+    Tokens.ink.withValues(alpha: 0.3),
+    Tokens.ink.withValues(alpha: 0.85),
+    Tokens.ink.withValues(alpha: 0.65),
+  ],
+  stops: const [0, 0.3, 0.75, 1],
+);
+
+// a straight two-stop fade shows a line where it starts; stops along an
+// ease-in-out curve do not
+final _footSteps = [for (var i = 0; i <= 8; i++) i / 8];
+final _footFade = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: [
+    for (final t in _footSteps)
+      Tokens.ink.withValues(alpha: 1 - Curves.easeInOut.transform(t)),
+  ],
+  stops: [for (final t in _footSteps) 0.55 + 0.45 * t],
+);
 
 /// A cover full size over the dimmed page, as large as the page allows. A
 /// click anywhere or Escape closes it.

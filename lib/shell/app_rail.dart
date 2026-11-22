@@ -146,7 +146,8 @@ class _RailItem extends StatelessWidget {
 }
 
 /// The current page's icon: pop, over a soft blurred copy of itself, the way a
-/// lit key glows. One small blur, only ever on one icon.
+/// lit key glows. One small blur, only ever on one icon, drawn once and kept
+/// while the rest of the rail repaints for hover.
 class _LitIcon extends StatelessWidget {
   const _LitIcon(this.icon);
 
@@ -157,15 +158,17 @@ class _LitIcon extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        ImageFiltered(
-          imageFilter: ImageFilter.blur(
-            sigmaX: Tokens.ledGlow / 2,
-            sigmaY: Tokens.ledGlow / 2,
-          ),
-          child: AppIcon(
-            icon,
-            size: Tokens.iconSize,
-            color: Tokens.pop.withValues(alpha: 0.4),
+        RepaintBoundary(
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(
+              sigmaX: Tokens.ledGlow / 2,
+              sigmaY: Tokens.ledGlow / 2,
+            ),
+            child: AppIcon(
+              icon,
+              size: Tokens.iconSize,
+              color: Tokens.pop.withValues(alpha: 0.4),
+            ),
           ),
         ),
         AppIcon(icon, size: Tokens.iconSize, color: Tokens.pop),

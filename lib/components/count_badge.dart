@@ -35,7 +35,10 @@ class CountBadge extends StatelessWidget {
               child: Text(
                 text,
                 textScaler: TextScaler.noScaling,
-                style: AppText.count(onAccent ? Tokens.pop : Tokens.onPop),
+                style: AppText.tally(
+                  onAccent ? Tokens.pop : Tokens.onPop,
+                  size: Tokens.text1,
+                ),
               ),
             ),
           ),

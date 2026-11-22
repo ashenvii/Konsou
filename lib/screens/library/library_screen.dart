@@ -330,7 +330,7 @@ class _FindState extends ConsumerState<_Find> with HoverDelaysState<_Find> {
       ),
       child: AnimatedContainer(
         duration: chooseMotionDuration(context, Tokens.motionSlide),
-        curve: Curves.easeInOut,
+        curve: Curves.easeOut,
         width: open ? Tokens.findFieldWidth : Tokens.controlHeight,
         height: Tokens.controlHeight,
         onEnd: () {

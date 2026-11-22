@@ -22,6 +22,7 @@ import '../../detail/title_details.dart';
 import '../../icons/app_icon.dart';
 import '../../icons/app_icons.dart';
 import 'detail_block.dart';
+import '../../library/count_format.dart';
 
 /// MAL's trailers and promotional videos as pictures in a peeking row, each
 /// opening in the browser.
@@ -37,7 +38,7 @@ class TrailersPart extends StatelessWidget {
   Widget build(BuildContext context) {
     return DetailSection(
       title: 'Trailers',
-      count: videos.length == 1 ? '1 video' : '${videos.length} videos',
+      count: formatCountOf(videos.length, 'video'),
       aside: const SectionNote('Opens in your browser'),
       child: PeekRow(
         count: videos.length,
@@ -282,7 +283,7 @@ class _PictureViewerState extends State<PictureViewer> {
               child: Text(
                 '${_index + 1} / $_count',
                 textAlign: TextAlign.center,
-                style: AppText.figure(Tokens.inkSoft),
+                style: AppText.tally(Tokens.inkSoft, size: Tokens.text1),
               ),
             ),
             if (many) ...[
@@ -334,7 +335,7 @@ class RecommendationsPart extends StatelessWidget {
   Widget build(BuildContext context) {
     return DetailSection(
       title: 'Recommendations',
-      count: titles.length == 1 ? '1 title' : '${titles.length} titles',
+      count: formatCountOf(titles.length, 'title'),
       aside: const SectionNote('By MyAnimeList users'),
       child: PeekRow(
         count: titles.length,
@@ -393,7 +394,7 @@ class MangaPart extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return DetailSection(
       title: 'Manga',
-      count: titles.length == 1 ? '1 title' : '${titles.length} titles',
+      count: formatCountOf(titles.length, 'title'),
       child: Align(
         alignment: Alignment.topLeft,
         child: ConstrainedBox(

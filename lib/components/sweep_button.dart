@@ -79,15 +79,18 @@ class _SweepButtonState extends State<SweepButton>
                   ),
                 ),
               ),
+              // its own layer, so the sweep does not redraw the label
               Positioned.fill(
                 child: IgnorePointer(
-                  child: ClipRect(
-                    child: AnimatedBuilder(
-                      animation: _controller,
-                      builder: (context, _) => FractionalTranslation(
-                        // from fully left of the button to fully right of it
-                        translation: Offset(-1 + 2 * _controller.value, 0),
-                        child: _band,
+                  child: RepaintBoundary(
+                    child: ClipRect(
+                      child: AnimatedBuilder(
+                        animation: _controller,
+                        builder: (context, _) => FractionalTranslation(
+                          // from fully left of the button to fully right of it
+                          translation: Offset(-1 + 2 * _controller.value, 0),
+                          child: _band,
+                        ),
                       ),
                     ),
                   ),

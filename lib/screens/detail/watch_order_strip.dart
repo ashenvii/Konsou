@@ -25,6 +25,7 @@ import '../../library/row_labels.dart';
 import '../library/row_tap_area.dart';
 import 'detail_block.dart';
 import 'watch_order_rail.dart';
+import '../../library/count_format.dart';
 
 /// "3 of 5 on your list · 59 of 87 episodes watched".
 String watchOrderSummary(WatchOrder order) {
@@ -155,7 +156,7 @@ class WatchOrderSection extends StatelessWidget {
     final open = rows.indexWhere((row) => row.isOpenTitle);
     return DetailSection(
       title: 'Watch order',
-      count: rows.length == 1 ? '1 title' : '${rows.length} titles',
+      count: formatCountOf(rows.length, 'title'),
       aside: SectionNote(watchOrderSummary(order)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
