@@ -94,17 +94,31 @@ void main() {
     expect((await container.read(libraryRowsProvider.future)).length, 2);
   });
 
-  test('tab and sort start at All and Recent and keep what is picked', () {
+  test('the tab starts at All and keeps what is picked', () {
     expect(container.read(libraryTabChoiceProvider), LibraryTab.all);
-    expect(container.read(librarySortChoiceProvider), LibrarySort.recent);
     container
         .read(libraryTabChoiceProvider.notifier)
         .select(LibraryTab.planned);
-    container
+    expect(container.read(libraryTabChoiceProvider), LibraryTab.planned);
+  });
+
+  test('the sort is Recent until picked, then remembered', () async {
+    expect(
+      await container.read(librarySortChoiceProvider.future),
+      LibrarySort.recent,
+    );
+    await container
         .read(librarySortChoiceProvider.notifier)
         .select(LibrarySort.title);
-    expect(container.read(libraryTabChoiceProvider), LibraryTab.planned);
-    expect(container.read(librarySortChoiceProvider), LibrarySort.title);
+    expect(container.read(librarySortChoiceProvider).value, LibrarySort.title);
+    final fresh = ProviderContainer(
+      overrides: [servicesProvider.overrideWithValue(services)],
+    );
+    addTearDown(fresh.dispose);
+    expect(
+      await fresh.read(librarySortChoiceProvider.future),
+      LibrarySort.title,
+    );
   });
 
   test('the layout is grid until picked, then remembered', () async {

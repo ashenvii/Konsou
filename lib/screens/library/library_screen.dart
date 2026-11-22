@@ -68,7 +68,8 @@ class LibraryScreen extends ConsumerWidget {
       libraryRowsProvider.select((rows) => rows.hasError),
     );
     final tab = ref.watch(libraryTabChoiceProvider);
-    final sort = ref.watch(librarySortChoiceProvider);
+    final sort =
+        ref.watch(librarySortChoiceProvider).value ?? LibrarySort.recent;
     final kept = ref.watch(libraryKeptProvider);
     final layout =
         ref.watch(libraryLayoutChoiceProvider).value ?? LibraryLayout.grid;

@@ -485,7 +485,7 @@ abstract class _$LibraryLetterJump
 final librarySortChoiceProvider = LibrarySortChoiceProvider._();
 
 final class LibrarySortChoiceProvider
-    extends $NotifierProvider<LibrarySortChoice, LibrarySort> {
+    extends $AsyncNotifierProvider<LibrarySortChoice, LibrarySort> {
   LibrarySortChoiceProvider._()
     : super(
         from: null,
@@ -503,29 +503,21 @@ final class LibrarySortChoiceProvider
   @$internal
   @override
   LibrarySortChoice create() => LibrarySortChoice();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(LibrarySort value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<LibrarySort>(value),
-    );
-  }
 }
 
-String _$librarySortChoiceHash() => r'4bbe84d5bcd80a355f15722e80035eb093a8b206';
+String _$librarySortChoiceHash() => r'620103c3a899d01b96b9680b0fe0189dde7ab2c6';
 
-abstract class _$LibrarySortChoice extends $Notifier<LibrarySort> {
-  LibrarySort build();
+abstract class _$LibrarySortChoice extends $AsyncNotifier<LibrarySort> {
+  FutureOr<LibrarySort> build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<LibrarySort, LibrarySort>;
+    final ref = this.ref as $Ref<AsyncValue<LibrarySort>, LibrarySort>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<LibrarySort, LibrarySort>,
-              LibrarySort,
+              AnyNotifier<AsyncValue<LibrarySort>, LibrarySort>,
+              AsyncValue<LibrarySort>,
               Object?,
               Object?
             >;

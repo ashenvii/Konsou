@@ -129,12 +129,31 @@ class LibraryLetterJump extends _$LibraryLetterJump {
       state = (letter: letter, count: (state?.count ?? 0) + 1);
 }
 
+const _sortKey = 'library.sort';
+
 @Riverpod(keepAlive: true)
 class LibrarySortChoice extends _$LibrarySortChoice {
   @override
-  LibrarySort build() => LibrarySort.recent;
+  Future<LibrarySort> build() async {
+    try {
+      final saved = (await SharedPreferences.getInstance()).getString(_sortKey);
+      return LibrarySort.values.asNameMap()[saved] ?? LibrarySort.recent;
+    } on Exception {
+      return LibrarySort.recent;
+    }
+  }
 
-  void select(LibrarySort sort) => state = sort;
+  Future<void> select(LibrarySort sort) async {
+    state = AsyncData(sort);
+    try {
+      await (await SharedPreferences.getInstance()).setString(
+        _sortKey,
+        sort.name,
+      );
+    } on Exception {
+      // not remembered, but it still sorts
+    }
+  }
 }
 
 const _layoutKey = 'library.layout';

@@ -34,7 +34,7 @@ KeyEventResult handleLibraryKey(WidgetRef ref, KeyEvent event) {
   // a letter jumps to its heading in the A to Z view
   final letter = key.keyLabel.length == 1 ? key.keyLabel.toUpperCase() : '';
   if (RegExp(r'^[A-Z]$').hasMatch(letter) &&
-      ref.read(librarySortChoiceProvider) == LibrarySort.title) {
+      ref.read(librarySortChoiceProvider).value == LibrarySort.title) {
     ref.read(libraryLetterJumpProvider.notifier).to(letter);
     return KeyEventResult.handled;
   }
