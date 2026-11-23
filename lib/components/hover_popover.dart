@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import 'app_popover.dart';
-import 'countdown.dart';
+import 'hover_delays_state.dart';
 
 class HoverPopover extends StatefulWidget {
   const HoverPopover({

@@ -1,3 +1,5 @@
+import '../data/start_dates.dart';
+
 /// One MAL title as the grouping sees it: what it is and its relations.
 class FranchiseTitle {
   const FranchiseTitle({
@@ -124,12 +126,8 @@ Map<int, FranchisePlace> groupFranchises(Iterable<FranchiseTitle> titles) {
 /// come last; the smaller id breaks ties.
 List<FranchiseTitle> sortByStart(Iterable<FranchiseTitle> titles) =>
     titles.toList()..sort((a, b) {
-      final dateA = a.startDate;
-      final dateB = b.startDate;
-      if (dateA == dateB) return a.id.compareTo(b.id);
-      if (dateA == null) return 1;
-      if (dateB == null) return -1;
-      return dateA.compareTo(dateB);
+      final byDate = compareStartDates(a.startDate, b.startDate);
+      return byDate != 0 ? byDate : a.id.compareTo(b.id);
     });
 
 class _UnionFind {

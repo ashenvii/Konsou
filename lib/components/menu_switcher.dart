@@ -2,14 +2,14 @@ import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
 import 'app_menu.dart';
-import 'cap_centered.dart';
+import 'cap_centered_text.dart';
 import 'hover_mark.dart';
 import 'hover_popover.dart';
 import 'menu_chevron.dart';
 import 'pressable.dart';
 import 'raised_key.dart';
 
-/// A word (and an optional count) with a cyan chevron that opens an
+/// A word (and an optional count) with a pop chevron that opens an
 /// [AppMenu] on hover or click. The Library's status heading and its sort
 /// button are both this, so they open, close and light up the same way.
 class MenuSwitcher extends StatelessWidget {
@@ -43,7 +43,7 @@ class MenuSwitcher extends StatelessWidget {
       gap: gap,
       builder: (context, handle) => Pressable(
         onPressed: handle.open,
-        selected: handle.isOpen,
+        expanded: handle.isOpen,
         builder: (context, state) {
           final lit = state.hovered || state.focused || handle.isOpen;
           final content = Container(
@@ -54,27 +54,14 @@ class MenuSwitcher extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CapCentered(
-                  style: style,
-                  child: Text(
-                    current,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: style,
-                  ),
-                ),
+                CapCenteredText(current, style: style),
                 if (count != null) ...[
                   const SizedBox(width: Tokens.space2),
-                  CapCentered(
-                    style: style,
-                    child: Text(
-                      count!,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: style.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: lit ? Tokens.inkSoft : Tokens.inkMuted,
-                      ),
+                  CapCenteredText(
+                    count!,
+                    style: style.copyWith(
+                      fontWeight: FontWeight.w400,
+                      color: lit ? Tokens.inkSoft : Tokens.inkMuted,
                     ),
                   ),
                 ],
@@ -89,19 +76,7 @@ class MenuSwitcher extends StatelessWidget {
         },
       ),
       popoverBuilder: (context, handle) => AppMenu(
-        entries: [
-          for (final entry in entries)
-            MenuEntry(
-              label: entry.label,
-              selected: entry.selected,
-              count: entry.count,
-              dividerAbove: entry.dividerAbove,
-              onPressed: () {
-                entry.onPressed?.call();
-                handle.close();
-              },
-            ),
-        ],
+        entries: [for (final entry in entries) entry.thenRun(handle.close)],
         footnote: footnote,
       ),
     );

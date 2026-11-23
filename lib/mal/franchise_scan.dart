@@ -178,20 +178,7 @@ class FranchiseScan {
       ''').get())
         row.read<String>('entry_id'): row.read<int>('provider_id'),
     };
-    final gone = {
-      for (final row
-          in await record
-              .customSelect(
-                "SELECT provider_id FROM details.gone_page WHERE provider = 'mal' AND checked_at > ?",
-                variables: [
-                  Variable.withInt(
-                    _now().subtract(goneRecheck).millisecondsSinceEpoch,
-                  ),
-                ],
-              )
-              .get())
-        row.read<int>('provider_id'),
-    };
+    final gone = await readGonePages(record, _now());
     return _ScanState(
       titles: titles,
       places: groupFranchises(titles.values.map((saved) => saved.title)),

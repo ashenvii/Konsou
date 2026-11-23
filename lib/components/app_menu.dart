@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
-import 'cap_centered.dart';
+import 'cap_centered_text.dart';
 import 'floating_panel.dart';
 import 'hairline.dart';
 import '../icons/app_icon.dart';
@@ -42,6 +42,28 @@ class MenuEntry {
   final bool hold;
 
   final String? holdHint;
+
+  /// The same entry, running [after] once it is picked. A disabled entry stays
+  /// disabled.
+  MenuEntry thenRun(VoidCallback after) {
+    final onPressed = this.onPressed;
+    return MenuEntry(
+      label: label,
+      onPressed: onPressed == null
+          ? null
+          : () {
+              onPressed();
+              after();
+            },
+      shortcut: shortcut,
+      selected: selected,
+      destructive: destructive,
+      count: count,
+      dividerAbove: dividerAbove,
+      hold: hold,
+      holdHint: holdHint,
+    );
+  }
 }
 
 class AppMenu extends StatelessWidget {
@@ -146,26 +168,17 @@ class _MenuRow extends StatelessWidget {
                         : null,
                   ),
                 Expanded(
-                  child: CapCentered(
+                  child: CapCenteredText(
+                    entry.label,
                     style: AppText.label(ink, bold: entry.selected),
-                    child: Text(
-                      entry.label,
-                      maxLines: 1,
-                      softWrap: false,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppText.label(ink, bold: entry.selected),
-                    ),
                   ),
                 ),
                 if (entry.count != null) ...[
                   const SizedBox(width: Tokens.space4),
-                  CapCentered(
-                    style: AppText.tally(Tokens.ink),
-                    child: Text(
-                      entry.count!,
-                      style: AppText.tally(
-                        entry.selected ? Tokens.ink : Tokens.inkSoft,
-                      ),
+                  CapCenteredText(
+                    entry.count!,
+                    style: AppText.tally(
+                      entry.selected ? Tokens.ink : Tokens.inkSoft,
                     ),
                   ),
                 ],

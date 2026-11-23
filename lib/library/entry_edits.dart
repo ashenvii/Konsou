@@ -29,7 +29,7 @@ const autoMarkEarlierKey = 'auto_mark_earlier';
 
 /// Why a title with MAL's airing status [airing] cannot be set to [target],
 /// or null when it can.
-EditResult? airingLock(String? airing, EntryStatus target) {
+EditResult? findAiringLock(String? airing, EntryStatus target) {
   if (airing == 'not_yet_aired' &&
       const {
         EntryStatus.watching,
@@ -64,7 +64,7 @@ class EntryEdits {
         facts.status == EntryStatus.completed) {
       return rewatch(entryId);
     }
-    final locked = airingLock(facts.airing, target);
+    final locked = findAiringLock(facts.airing, target);
     if (locked != null) return locked;
     await _edit((time) async {
       final finishing = target == EntryStatus.completed;
@@ -96,7 +96,7 @@ class EntryEdits {
   /// completes it; a count past what has aired is refused.
   Future<EditResult> setEpisodes(String entryId, int count) async {
     final facts = await _readFacts(entryId);
-    if (!watchingStatuses.contains(facts.status.value)) {
+    if (!facts.status.isWatching) {
       return EditResult.notWatching;
     }
     final total = facts.total;
@@ -112,7 +112,7 @@ class EntryEdits {
     }
     final finishes = total != null && episodes >= total;
     final locked = finishes
-        ? airingLock(facts.airing, EntryStatus.completed)
+        ? findAiringLock(facts.airing, EntryStatus.completed)
         : null;
     await _edit((time) async {
       await _writeProgress(
@@ -269,6 +269,18 @@ class EntryEdits {
     _record.entry,
   )..where((row) => row.entryId.equals(entryId))).getSingleOrNull();
 
+  Future<String?> _findEntryOf(int malId) async {
+    final row =
+        await (_record.select(_record.entryReference)
+              ..where(
+                (row) =>
+                    row.provider.equals('mal') & row.providerId.equals(malId),
+              )
+              ..limit(1))
+            .getSingleOrNull();
+    return row?.entryId;
+  }
+
   Future<void> _writeEntry(String entryId, EntryCompanion changes) =>
       (_record.update(
         _record.entry,
@@ -285,15 +297,21 @@ class EntryEdits {
     EntryStatus status = EntryStatus.completed,
     bool withName = false,
   }) async {
-    final onList = [for (final title in titles) ?title.entryId];
+    // a title the caller saw as not on the list may have been added since,
+    // by a second quick press
+    final known = {
+      for (final title in titles)
+        title.malId: title.entryId ?? await _findEntryOf(title.malId),
+    };
+    final onList = [for (final entryId in known.values) ?entryId];
     final restore = await snapshot(onList);
     final created = <String>[];
     var applied = 0;
     await _edit((time) async {
       for (final title in titles) {
-        var entryId = title.entryId;
+        var entryId = known[title.malId];
         if (entryId == null) {
-          entryId = generateId();
+          entryId = known[title.malId] = generateId();
           created.add(entryId);
           await _record
               .into(_record.entry)
@@ -318,7 +336,7 @@ class EntryEdits {
         }
         final facts = await _readFacts(entryId);
         if (facts.status == status) continue;
-        if (airingLock(facts.airing, status) != null) continue;
+        if (findAiringLock(facts.airing, status) != null) continue;
         if (status == EntryStatus.completed) {
           final episodes = _maxOf(
             title.episodes ?? facts.total,

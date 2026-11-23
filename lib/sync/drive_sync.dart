@@ -11,6 +11,7 @@ import '../data/edit_clock.dart';
 import '../data/record_database.dart';
 import '../import/import_old_list.dart';
 import '../net/backoff.dart';
+import '../net/log.dart';
 import 'drive_client.dart';
 import 'google_sign_in.dart';
 import 'local_record.dart';
@@ -87,7 +88,12 @@ class DriveSync {
       _running = null;
       if (_runAgain) {
         _runAgain = false;
-        run();
+        unawaited(
+          run().catchError((Object error) {
+            log('sync', 'run failed: ${error.runtimeType}');
+            return null;
+          }),
+        );
       }
     });
     _running = next;
@@ -102,8 +108,13 @@ class DriveSync {
 
   /// On Close: syncs only when something is not on Drive yet, after any run
   /// already going, and gives up after [closeLimit] so Close always quits.
-  Future<void> runBeforeClose() =>
-      _syncBeforeClose().timeout(closeLimit, onTimeout: () {});
+  Future<void> runBeforeClose() async {
+    try {
+      await _syncBeforeClose().timeout(closeLimit, onTimeout: () {});
+    } catch (error) {
+      log('sync', 'close sync failed: ${error.runtimeType}');
+    }
+  }
 
   Future<void> _syncBeforeClose() async {
     _changeTimer?.cancel();
@@ -126,7 +137,16 @@ class DriveSync {
 
   Future<SyncReport?> _runOnce() async {
     _retryTimer?.cancel();
-    if (!await signIn.isSignedIn()) {
+    final bool signedIn;
+    try {
+      signedIn = await signIn.isSignedIn();
+    } catch (error) {
+      // a key store that cannot be read holds no sign-in this device can use
+      log('sync', 'token read failed: ${error.runtimeType}');
+      _stop(StopReason.signInAgain);
+      return null;
+    }
+    if (!signedIn) {
       _setStatus(const SyncStatus(SyncPhase.off));
       return null;
     }
@@ -141,10 +161,12 @@ class DriveSync {
       _stop(StopReason.updateKonsou);
     } on SignInNeeded {
       _stop(StopReason.signInAgain);
-    } on DriveUnavailable {
+    } on DriveUnavailable catch (error) {
+      log('sync', 'drive unavailable: ${error.statusCode ?? 'no answer'}');
       _wait();
-    } catch (_) {
+    } catch (error) {
       // anything else must not leave the icon on syncing; try again later
+      log('sync', 'failed: ${error.runtimeType}');
       _wait();
     }
     return null;
@@ -253,19 +275,24 @@ class DriveSync {
         record.device,
       )..where((row) => row.deviceId.equals(device.deviceId))).write(changes);
 
-  void _stop(StopReason reason) => _setStatus(
-    SyncStatus(
-      SyncPhase.stopped,
-      lastSyncedAt: _status.lastSyncedAt,
-      stopReason: reason,
-    ),
-  );
+  void _stop(StopReason reason) {
+    log('sync', 'stopped: ${reason.name}');
+    _setStatus(
+      SyncStatus(
+        SyncPhase.stopped,
+        lastSyncedAt: _status.lastSyncedAt,
+        stopReason: reason,
+      ),
+    );
+  }
 
   void _wait() {
     _setStatus(
       SyncStatus(SyncPhase.waiting, lastSyncedAt: _status.lastSyncedAt),
     );
-    _retryTimer = _startTimer(_backoff.next(), run);
+    final wait = _backoff.next();
+    log('sync', 'trying again in ${wait.inSeconds} s');
+    _retryTimer = _startTimer(wait, run);
   }
 
   void _setStatus(SyncStatus status) {
@@ -278,14 +305,14 @@ class DriveSync {
 /// pair of databases. Its ids come out as `legacy-<anilist id>`, the same as
 /// on any device that imported the same list, so nothing doubles.
 Future<SyncRecord> readOldDriveList(String json) async {
-  final folder = Directory.systemTemp.createTempSync('konsou_old_list');
+  final folder = await Directory.systemTemp.createTemp('konsou_old_list');
   final scratch = await openDatabases(folder);
   try {
     await importDriveList(json, scratch);
     return await readLocalRecord(scratch.record);
   } finally {
     await scratch.close();
-    folder.deleteSync(recursive: true);
+    await folder.delete(recursive: true);
   }
 }
 

@@ -1,11 +1,14 @@
+import 'dart:math';
+
 import 'package:flutter/widgets.dart';
 
 import '../../app/cover_view.dart';
+import '../../app/providers.dart';
 import '../../components/app_menu.dart';
 import '../../components/app_popover.dart';
-import '../../components/menu_chevron.dart';
 import '../../components/cap_centered.dart';
 import '../../components/cover_image.dart';
+import '../../components/menu_chevron.dart';
 import '../../components/motion.dart';
 import '../../components/one_line_text.dart';
 import '../../components/page_frame.dart';
@@ -14,27 +17,10 @@ import '../../components/raised_key.dart';
 import '../../components/solid_icon_button.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
-import '../../icons/app_icons.dart';
-import '../../mal/request_gate.dart';
-
-/// The back button, a white key with a dark arrow. It floats over the top of
-/// the Detail page and moves into the [JumpBar] at the top, the same either
-/// place.
-class DetailBackButton extends StatelessWidget {
-  const DetailBackButton({super.key, required this.onBack});
-
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) => SolidIconButton(
-    icon: AppIcons.arrowLeft,
-    label: 'Back',
-    onPressed: onBack,
-  );
-}
+import 'detail_back_button.dart';
 
 /// The Detail page's section names in a row under its top, each jumping to
-/// its part of the page, the one in view underlined in cyan. It sticks to
+/// its part of the page, the one in view underlined in pop. It sticks to
 /// the top as the page scrolls, and once [stuck] the back button, a small
 /// cover and the title slide in at its left and [status] at its right, so it
 /// becomes the page's bar. Names that do not fit go under More.
@@ -265,16 +251,28 @@ class _Sections extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final widths = [for (final label in labels) widthOf(label)];
-        final moreWidth = widthOf(_more) + Tokens.iconSize;
+        // the overflow tab shows the active name when it is in there, so it
+        // gets room for the widest name it might show
+        const chevronWidth = Tokens.space2 + Tokens.iconSize;
         var shown = labels.length;
-        if (widths.fold(0.0, (a, b) => a + b) > constraints.maxWidth) {
-          var used = moreWidth;
-          shown = 0;
-          while (shown < labels.length &&
-              used + widths[shown] <= constraints.maxWidth) {
-            used += widths[shown];
-            shown++;
-          }
+        if (widths.fold(0.0, (sum, width) => sum + width) >
+            constraints.maxWidth) {
+          final moreWidth = widthOf(_more);
+          var fitted = labels.length;
+          do {
+            shown = fitted;
+            var overflowWidth = moreWidth;
+            for (var i = shown; i < labels.length; i++) {
+              overflowWidth = max(overflowWidth, widths[i]);
+            }
+            var used = overflowWidth + chevronWidth;
+            fitted = 0;
+            while (fitted < shown &&
+                used + widths[fitted] <= constraints.maxWidth) {
+              used += widths[fitted];
+              fitted++;
+            }
+          } while (fitted < shown);
         }
         final rest = [for (var i = shown; i < labels.length; i++) i];
         // clipped, not spilled, in a window too narrow even for More
@@ -324,7 +322,7 @@ class _Sections extends StatelessWidget {
 }
 
 /// One name in the jump bar: muted, brighter under the pointer, and the one
-/// in view in full ink over a cyan line.
+/// in view in full ink over a pop line.
 class _JumpTab extends StatelessWidget {
   const _JumpTab({
     required this.label,

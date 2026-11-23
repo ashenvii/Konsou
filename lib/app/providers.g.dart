@@ -50,6 +50,60 @@ final class ServicesProvider
 
 String _$servicesHash() => r'1afb2ccdfe0ef5053954a999d779b484975b6ed4';
 
+/// Opens a link in the user's browser, for a screen's links out.
+
+@ProviderFor(openLink)
+final openLinkProvider = OpenLinkProvider._();
+
+/// Opens a link in the user's browser, for a screen's links out.
+
+final class OpenLinkProvider
+    extends
+        $FunctionalProvider<
+          Future<void> Function(Uri url),
+          Future<void> Function(Uri url),
+          Future<void> Function(Uri url)
+        >
+    with $Provider<Future<void> Function(Uri url)> {
+  /// Opens a link in the user's browser, for a screen's links out.
+  OpenLinkProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'openLinkProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$openLinkHash();
+
+  @$internal
+  @override
+  $ProviderElement<Future<void> Function(Uri url)> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  Future<void> Function(Uri url) create(Ref ref) {
+    return openLink(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Future<void> Function(Uri url) value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Future<void> Function(Uri url)>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$openLinkHash() => r'5e394f335dccc48a652b2837620c8e49bd4906bb';
+
 @ProviderFor(coverStore)
 final coverStoreProvider = CoverStoreProvider._();
 

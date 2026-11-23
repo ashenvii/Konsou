@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import '../../components/skeleton.dart';
+import '../../components/skeleton_lines.dart';
 import '../../design/tokens.dart';
 
 /// The rows that hold the page picker's space while pages are looked up.

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'send_to_google.dart';
 import 'sync_errors.dart';
 
 const _files = 'https://www.googleapis.com/drive/v3/files';
@@ -35,14 +36,19 @@ class DriveClient {
         'orderBy': 'createdTime',
       },
     );
-    final body = await _send(() async => http.Request('GET', url));
-    final files = (jsonDecode(body) as Map<String, dynamic>)['files'] as List;
-    if (files.isEmpty) return null;
-    return _parseFile(files.first as Map<String, dynamic>);
+    final reply = await sendForMap(
+      await _authorize(http.Request('GET', url)),
+      signInStatuses: const {401},
+    );
+    if (reply['files'] case final List files) {
+      return files.isEmpty ? null : _parseFile(files.first);
+    }
+    throw DriveUnavailable();
   }
 
-  Future<String> downloadFile(String id) => _send(
-    () async => http.Request('GET', Uri.parse('$_files/$id?alt=media')),
+  Future<String> downloadFile(String id) async => sendToGoogle(
+    await _authorize(http.Request('GET', Uri.parse('$_files/$id?alt=media'))),
+    signInStatuses: const {401},
   );
 
   Future<DriveFile> createFile(String name, String content) async {
@@ -51,46 +57,49 @@ class DriveClient {
       'name': name,
       'parents': ['appDataFolder'],
     });
-    final body = await _send(() async {
-      final request = http.Request(
-        'POST',
-        Uri.parse('$_uploads?uploadType=multipart&fields=id,version'),
-      );
-      request.headers['Content-Type'] = 'multipart/related; boundary=$boundary';
-      request.body =
-          '--$boundary\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'
-          '$metadata\r\n--$boundary\r\nContent-Type: application/json\r\n\r\n'
-          '$content\r\n--$boundary--';
-      return request;
-    });
-    return _parseFile(jsonDecode(body) as Map<String, dynamic>);
+    final request = http.Request(
+      'POST',
+      Uri.parse('$_uploads?uploadType=multipart&fields=id,version'),
+    );
+    request.headers['Content-Type'] = 'multipart/related; boundary=$boundary';
+    request.body =
+        '--$boundary\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'
+        '$metadata\r\n--$boundary\r\nContent-Type: application/json\r\n\r\n'
+        '$content\r\n--$boundary--';
+    final reply = await sendForMap(
+      await _authorize(request),
+      signInStatuses: const {401},
+    );
+    return _parseFile(reply);
   }
 
   Future<DriveFile> updateFile(String id, String content) async {
-    final body = await _send(() async {
-      final request = http.Request(
-        'PATCH',
-        Uri.parse('$_uploads/$id?uploadType=media&fields=id,version'),
-      );
-      request.headers['Content-Type'] = 'application/json';
-      request.body = content;
-      return request;
-    });
-    return _parseFile(jsonDecode(body) as Map<String, dynamic>);
+    final request = http.Request(
+      'PATCH',
+      Uri.parse('$_uploads/$id?uploadType=media&fields=id,version'),
+    );
+    request.headers['Content-Type'] = 'application/json';
+    request.body = content;
+    final reply = await sendForMap(
+      await _authorize(request),
+      signInStatuses: const {401},
+    );
+    return _parseFile(reply);
   }
 
-  DriveFile _parseFile(Map<String, dynamic> file) =>
-      DriveFile(file['id'] as String, '${file['version']}');
+  DriveFile _parseFile(Object? file) => switch (file) {
+    {'id': final String id, 'version': final Object version} => DriveFile(
+      id,
+      '$version',
+    ),
+    _ => throw DriveUnavailable(),
+  };
 
-  Future<String> _send(Future<http.Request> Function() build) async {
-    final request = await build();
+  // the token is read before sending, so a refresh never eats the timeout
+  Future<Future<http.Response> Function()> _authorize(
+    http.Request request,
+  ) async {
     request.headers['Authorization'] = 'Bearer ${await _accessToken()}';
-    final response = await sendToGoogle(
-      () async => http.Response.fromStream(await _client.send(request)),
-    );
-    if (response.statusCode == 401) throw SignInNeeded();
-    if (response.statusCode >= 300) throw DriveUnavailable(response.statusCode);
-    // drive sends no charset on file content, and http would fall back to latin-1
-    return utf8.decode(response.bodyBytes);
+    return () async => http.Response.fromStream(await _client.send(request));
   }
 }

@@ -102,6 +102,7 @@ class Matching {
   Future<void> run() async {
     _stopped = false;
     await drainQueue<String>(
+      tag: 'matching',
       isStopped: () => _stopped,
       next: _nextEntry,
       work: (entryId) async => await matchEntry(entryId) == MatchOutcome.failed,
@@ -164,7 +165,12 @@ class Matching {
     required Lane lane,
     bool full = false,
   }) async {
-    await _record.transaction(() async {
+    final linked = await _record.transaction(() async {
+      final entry = await (_record.select(
+        _record.entry,
+      )..where((entry) => entry.entryId.equals(entryId))).getSingleOrNull();
+      // the entry can be removed while a search for it is out
+      if (entry == null) return false;
       await _record
           .into(_record.entryReference)
           .insertOnConflictUpdate(
@@ -175,7 +181,9 @@ class Matching {
             ),
           );
       await _markLinkChanged(entryId);
+      return true;
     });
+    if (!linked) return;
     await _clearSearch(entryId);
     await detailRequest.fetch(malId, lane: lane, full: full);
   }

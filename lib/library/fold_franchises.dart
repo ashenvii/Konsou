@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import '../data/start_dates.dart';
+
 import 'entry_status.dart';
 import 'library_row.dart';
 
@@ -20,7 +22,7 @@ LibraryRow _foldGroup(List<LibraryEntry> group) {
   final story = group.where((entry) => !entry.isExtra).toList();
   final current = _currentSeason(story.isEmpty ? group : story);
   final seasonsDone = story
-      .where((entry) => entry.status == 'completed')
+      .where((entry) => entry.status == EntryStatus.completed)
       .length;
   return LibraryRow(
     current: current,
@@ -39,9 +41,9 @@ LibraryRow _foldGroup(List<LibraryEntry> group) {
 LibraryEntry _currentSeason(List<LibraryEntry> seasons) {
   final byRelease = [...seasons]..sort(_byRelease);
   for (final isCurrent in [
-    (LibraryEntry entry) => watchingStatuses.contains(entry.status),
-    (LibraryEntry entry) => entry.status == 'plan_to_watch',
-    (LibraryEntry entry) => entry.status == 'on_hold',
+    (LibraryEntry entry) => entry.status.isWatching,
+    (LibraryEntry entry) => entry.status == EntryStatus.planned,
+    (LibraryEntry entry) => entry.status == EntryStatus.onHold,
   ]) {
     for (final season in byRelease) {
       if (isCurrent(season)) return season;
@@ -54,14 +56,8 @@ LibraryEntry _currentSeason(List<LibraryEntry> seasons) {
 
 /// Earliest release first, undated last, then the older entry.
 int _byRelease(LibraryEntry first, LibraryEntry second) {
-  final firstDate = first.startDate;
-  final secondDate = second.startDate;
-  if (firstDate != secondDate) {
-    if (firstDate == null) return 1;
-    if (secondDate == null) return -1;
-    final byDate = firstDate.compareTo(secondDate);
-    if (byDate != 0) return byDate;
-  }
+  final byDate = compareStartDates(first.startDate, second.startDate);
+  if (byDate != 0) return byDate;
   final byAdded = first.addedAt.compareTo(second.addedAt);
   return byAdded != 0 ? byAdded : first.entryId.compareTo(second.entryId);
 }

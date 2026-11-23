@@ -6,6 +6,7 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 
+import 'send_to_google.dart';
 import 'sync_errors.dart';
 
 const _authorizeUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -131,15 +132,14 @@ class GoogleSignIn {
         'grant_type': 'authorization_code',
         'code_verifier': verifier,
       });
-      final refreshToken = tokens['refresh_token'] as String?;
+      final refreshToken = tokens.refreshToken;
       if (refreshToken == null) throw SignInCancelled();
-      final accessToken = tokens['access_token'] as String;
-      final email = await _readEmail(accessToken);
+      final email = await _readEmail(tokens.accessToken);
       await _store.write(
         GoogleTokens(
-          accessToken: accessToken,
+          accessToken: tokens.accessToken,
           refreshToken: refreshToken,
-          expiresAt: _expiresAt(tokens),
+          expiresAt: tokens.expiresAt,
           email: email,
         ),
       );
@@ -163,52 +163,58 @@ class GoogleSignIn {
       'refresh_token': tokens.refreshToken,
       'grant_type': 'refresh_token',
     });
-    final accessToken = refreshed['access_token'] as String;
     await _store.write(
       GoogleTokens(
-        accessToken: accessToken,
-        refreshToken:
-            refreshed['refresh_token'] as String? ?? tokens.refreshToken,
-        expiresAt: _expiresAt(refreshed),
+        accessToken: refreshed.accessToken,
+        refreshToken: refreshed.refreshToken ?? tokens.refreshToken,
+        expiresAt: refreshed.expiresAt,
         email: tokens.email,
       ),
     );
-    return accessToken;
+    return refreshed.accessToken;
   }
 
   /// Forgets the tokens. The list on this device and the Drive copy stay.
   Future<void> signOut() => _store.clear();
 
-  Future<Map<String, dynamic>> _postToken(Map<String, String> fields) async {
-    final response = await sendToGoogle(
+  Future<({String accessToken, String? refreshToken, int expiresAt})>
+  _postToken(Map<String, String> fields) async {
+    final reply = await sendForMap(
       () => _client.post(
         Uri.parse(_tokenUrl),
         body: {'client_id': clientId, 'client_secret': clientSecret, ...fields},
       ),
+      // google answers 400 invalid_grant when a refresh token is revoked or expired
+      signInStatuses: const {400, 401},
     );
-    // google answers 400 invalid_grant when a refresh token is revoked or expired
-    if (response.statusCode == 400 || response.statusCode == 401) {
-      throw SignInNeeded();
+    if (reply case {
+      'access_token': final String accessToken,
+      'expires_in': final int expiresIn,
+    }) {
+      return (
+        accessToken: accessToken,
+        refreshToken: switch (reply['refresh_token']) {
+          final String token => token,
+          _ => null,
+        },
+        expiresAt: _now()
+            .add(Duration(seconds: expiresIn))
+            .millisecondsSinceEpoch,
+      );
     }
-    if (response.statusCode >= 300) throw DriveUnavailable(response.statusCode);
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    throw DriveUnavailable();
   }
 
   Future<String> _readEmail(String accessToken) async {
-    final response = await sendToGoogle(
+    final reply = await sendForMap(
       () => _client.get(
         Uri.parse(_userInfoUrl),
         headers: {'Authorization': 'Bearer $accessToken'},
       ),
     );
-    if (response.statusCode >= 300) throw DriveUnavailable(response.statusCode);
-    return (jsonDecode(response.body) as Map<String, dynamic>)['email']
-        as String;
+    if (reply['email'] case final String email) return email;
+    throw DriveUnavailable();
   }
-
-  int _expiresAt(Map<String, dynamic> tokens) => _now()
-      .add(Duration(seconds: tokens['expires_in'] as int))
-      .millisecondsSinceEpoch;
 }
 
 const _letters =

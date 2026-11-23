@@ -1,16 +1,13 @@
-import 'dart:math' as math;
-
 import 'package:flutter/widgets.dart';
 
 import '../../app/cover_view.dart';
-import '../../components/cover_image.dart';
+import '../../app/providers.dart';
 import '../../components/fading_portal.dart';
 import '../../components/page_frame.dart';
-import '../../components/picture_overlay.dart';
 import '../../components/pressable.dart';
 import '../../design/tokens.dart';
 import '../../detail/title_details.dart';
-import '../../mal/request_gate.dart';
+import 'cover_viewer.dart';
 import 'hero_ground.dart';
 
 /// The top of the Detail page: the cover as a poster in a well at the left,
@@ -152,32 +149,6 @@ class _PosterState extends State<_Poster> with FadingPortalOwner<_Poster> {
               width: _coverWidth,
               loading: widget.loading,
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// A cover full size over the dimmed page, as large as the page allows. A
-/// click anywhere or Escape closes it.
-class CoverViewer extends StatelessWidget {
-  const CoverViewer({super.key, required this.malId, required this.onClose});
-
-  final int malId;
-  final VoidCallback onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    return PictureOverlay(
-      onClose: onClose,
-      builder: (context, room) => Center(
-        child: CoverView(
-          lane: Lane.page,
-          malId: malId,
-          width: math.min(
-            room.maxWidth,
-            room.maxHeight / CoverImage.heightFor(1),
           ),
         ),
       ),

@@ -175,12 +175,29 @@ class Services {
     }
   }
 
+  var _counting = false;
+  var _countAgain = false;
+
+  // one count at a time, so a slow older read never sends the digits back;
+  // items done meanwhile get one more count after it
   Future<void> _countProgress() async {
-    final job = _loading;
-    if (job == null) return;
-    final counts = await readLoadCounts(databases);
-    // the job may have ended while the counts were read
-    if (_loading == job) _showCounts(job, counts);
+    if (_counting) {
+      _countAgain = true;
+      return;
+    }
+    _counting = true;
+    try {
+      do {
+        _countAgain = false;
+        final job = _loading;
+        if (job == null) return;
+        final counts = await readLoadCounts(databases);
+        // the job may have ended while the counts were read
+        if (_loading == job) _showCounts(job, counts);
+      } while (_countAgain);
+    } finally {
+      _counting = false;
+    }
   }
 
   void _showCounts(

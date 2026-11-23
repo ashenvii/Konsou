@@ -1,5 +1,3 @@
-import 'package:drift/drift.dart' show Variable;
-
 import '../data/record_database.dart';
 import '../net/drain_queue.dart';
 import 'detail_request.dart';
@@ -32,7 +30,7 @@ class Trickle {
   final DetailRequest detailRequest;
   final Matching matching;
 
-  /// Runs after each title's details are fetched.
+  /// Runs after each title is tried, whether or not its details came.
   final void Function()? onProgress;
   final DateTime Function() _now;
   var _stopped = false;
@@ -45,6 +43,7 @@ class Trickle {
   Future<void> run() async {
     _stopped = false;
     final run = await drainQueue<int>(
+      tag: 'trickle',
       isStopped: () => _stopped,
       next: _nextTitle,
       work: (malId) async => (await detailRequest.fetch(
@@ -64,27 +63,19 @@ class Trickle {
   }
 
   Future<int?> _nextTitle(Set<int> skip) async {
-    final goneSince = _now().subtract(goneRecheck).millisecondsSinceEpoch;
-    final rows = await record
-        .customSelect(
-          '''
+    final passOver = {...skip, ...await readGonePages(record, _now())};
+    final rows = await record.customSelect('''
       SELECT entry_reference.provider_id
       FROM entry
       JOIN entry_reference ON entry_reference.entry_id = entry.entry_id
         AND entry_reference.provider = 'mal'
       LEFT JOIN details.detail ON detail.provider = 'mal'
         AND detail.provider_id = entry_reference.provider_id
-      LEFT JOIN details.gone_page ON gone_page.provider = 'mal'
-        AND gone_page.provider_id = entry_reference.provider_id
-        AND gone_page.checked_at > ?
-      WHERE detail.provider_id IS NULL AND gone_page.provider_id IS NULL
-        AND entry_reference.provider_id NOT IN (${skip.join(', ')})
+      WHERE detail.provider_id IS NULL
+        AND entry_reference.provider_id NOT IN (${passOver.join(', ')})
       ORDER BY $trickleOrder
       LIMIT 1
-      ''',
-          variables: [Variable.withInt(goneSince)],
-        )
-        .get();
+      ''').get();
     return rows.isEmpty ? null : rows.single.read<int>('provider_id');
   }
 }

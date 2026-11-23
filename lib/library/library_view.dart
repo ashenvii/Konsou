@@ -15,16 +15,16 @@ enum LibraryTab {
 enum LibrarySort { recent, title }
 
 bool isInTab(LibraryRow row, LibraryTab tab) => switch (tab) {
-  LibraryTab.all => row.status != 'not_interested',
-  LibraryTab.watching => watchingStatuses.contains(row.status),
-  LibraryTab.planned => row.status == 'plan_to_watch',
-  LibraryTab.completed => row.status == 'completed',
-  LibraryTab.onHold => row.status == 'on_hold',
-  LibraryTab.dropped => row.status == 'dropped',
-  LibraryTab.notInterested => row.status == 'not_interested',
+  LibraryTab.all => row.status != EntryStatus.notInterested,
+  LibraryTab.watching => row.status.isWatching,
+  LibraryTab.planned => row.status == EntryStatus.planned,
+  LibraryTab.completed => row.status == EntryStatus.completed,
+  LibraryTab.onHold => row.status == EntryStatus.onHold,
+  LibraryTab.dropped => row.status == EntryStatus.dropped,
+  LibraryTab.notInterested => row.status == EntryStatus.notInterested,
 };
 
-List<LibraryRow> rowsInTab(
+List<LibraryRow> filterRowsByTab(
   List<LibraryRow> rows,
   LibraryTab tab, {
   Set<String> keep = const {},
@@ -33,7 +33,7 @@ List<LibraryRow> rowsInTab(
     if (isInTab(row, tab) || keep.contains(row.entryId)) row,
 ];
 
-List<LibraryRow> rowsMatching(List<LibraryRow> rows, Set<String>? matches) {
+List<LibraryRow> filterRowsByFind(List<LibraryRow> rows, Set<String>? matches) {
   if (matches == null) return rows;
   return [
     for (final row in rows)
@@ -42,7 +42,7 @@ List<LibraryRow> rowsMatching(List<LibraryRow> rows, Set<String>? matches) {
 }
 
 Map<LibraryTab, int> countTabs(List<LibraryRow> rows) => {
-  for (final tab in LibraryTab.values) tab: rowsInTab(rows, tab).length,
+  for (final tab in LibraryTab.values) tab: filterRowsByTab(rows, tab).length,
 };
 
 // folding is the slow part of a sort that runs every rebuild, so keep it

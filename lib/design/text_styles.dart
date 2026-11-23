@@ -73,4 +73,10 @@ abstract final class AppText {
         height: 1,
         color: color,
       );
+
+  /// LED digits: a [tally] glowing in its own colour.
+  static TextStyle led(Color color, {double size = Tokens.text2}) =>
+      tally(color, size: size).copyWith(
+        shadows: [Shadow(color: color, blurRadius: Tokens.ledGlow)],
+      );
 }

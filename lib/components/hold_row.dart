@@ -3,10 +3,12 @@ import 'package:flutter/widgets.dart';
 
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
-import 'cap_centered.dart';
 import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
+import 'cap_centered_text.dart';
 import 'countdown.dart';
+import 'countdown_builder.dart';
+import 'focus_ring.dart';
 import 'raised_key.dart';
 
 const holdToRemoveLabel = 'Hold to remove';
@@ -59,38 +61,37 @@ class _HoldRowState extends State<HoldRow> {
 
   @override
   Widget build(BuildContext context) {
+    final enabled = widget.onDone != null;
     final label = Padding(
       padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
-      child: CapCentered(
+      child: CapCenteredText(
+        widget.label,
         style: AppText.label(Tokens.red, bold: true),
-        child: Text(
-          widget.label,
-          maxLines: 1,
-          softWrap: false,
-          overflow: TextOverflow.ellipsis,
-          style: AppText.label(Tokens.red, bold: true),
-        ),
       ),
     );
     return Semantics(
       button: true,
+      enabled: enabled,
       label: widget.label,
       hint: widget.hint,
+      onLongPress: widget.onDone,
       child: Focus(
-        onKeyEvent: _key,
+        canRequestFocus: enabled,
+        skipTraversal: !enabled,
+        onKeyEvent: enabled ? _key : null,
         onFocusChange: (focused) {
           setState(() => _focused = focused);
           if (!focused) _stop();
         },
         child: MouseRegion(
-          cursor: SystemMouseCursors.click,
+          cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
           onEnter: (_) => setState(() => _hovered = true),
           onExit: (_) => setState(() => _hovered = false),
           child: Listener(
             behavior: HitTestBehavior.opaque,
-            onPointerDown: (_) => _start(),
-            onPointerUp: (_) => _stop(),
-            onPointerCancel: (_) => _stop(),
+            onPointerDown: enabled ? (_) => _start() : null,
+            onPointerUp: enabled ? (_) => _stop() : null,
+            onPointerCancel: enabled ? (_) => _stop() : null,
             child: Padding(
               padding: const EdgeInsets.all(Tokens.space3),
               child: Column(
@@ -105,19 +106,11 @@ class _HoldRowState extends State<HoldRow> {
                       builder: (context, share, running) {
                         // empty until held, full when the hold is done
                         final fill = _hold.started ? 1 - share : 0.0;
-                        return DecoratedBox(
-                          position: DecorationPosition.foreground,
-                          decoration: BoxDecoration(
-                            borderRadius: Tokens.keyCorners,
-                            border: _focused
-                                ? Border.all(
-                                    color: Tokens.ink,
-                                    width: Tokens.checkboxBorder,
-                                  )
-                                : null,
-                          ),
+                        return FocusRing(
+                          on: _focused,
+                          corners: Tokens.keyCorners,
                           child: RaisedKey(
-                            lit: _hovered,
+                            lit: _hovered && enabled,
                             sunk: _hold.started,
                             child: SizedBox(
                               height: Tokens.controlHeight,
@@ -176,4 +169,3 @@ class _HoldRowState extends State<HoldRow> {
     );
   }
 }
-

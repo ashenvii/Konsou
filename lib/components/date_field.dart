@@ -15,10 +15,6 @@ import '../library/row_labels.dart';
 
 const _weekdays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
-/// "14 Nov 2026".
-String formatDate(DateTime date) =>
-    '${date.day} ${monthName(date.month, short: true)} ${date.year}';
-
 /// A button showing a date that opens a month grid, with a Clear row. Flutter's
 /// own date picker is a Material dialog, so it is not used.
 class DateField extends StatelessWidget {
@@ -45,7 +41,7 @@ class DateField extends StatelessWidget {
       gap: Tokens.space1,
       builder: (context, handle) => Pressable(
         onPressed: handle.open,
-        selected: handle.isOpen,
+        expanded: handle.isOpen,
         builder: (context, state) => HoverMark(
           on: state.hovered || state.focused || handle.isOpen,
           child: Container(
@@ -164,7 +160,7 @@ class _MonthGridState extends State<_MonthGrid> {
                 ),
                 Expanded(
                   child: Text(
-                    '${monthName(_month.month)} ${_month.year}',
+                    '${formatMonth(_month.month)} ${_month.year}',
                     textAlign: TextAlign.center,
                     style: AppText.label(Tokens.ink, bold: true),
                   ),

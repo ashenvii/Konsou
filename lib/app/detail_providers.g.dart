@@ -50,7 +50,7 @@ final class DetailPageProvider
   }
 }
 
-String _$detailPageHash() => r'e39767be97bc41b766d6aefd3364553ebaef8190';
+String _$detailPageHash() => r'18739c8ea4e4e4912988549ecdc4f7d9ec598b82';
 
 final class DetailPageFamily extends $Family
     with
@@ -156,7 +156,7 @@ final class WatchOrderProvider
   }
 }
 
-String _$watchOrderHash() => r'64ec31bf492382827a98d0b04e065115213c8944';
+String _$watchOrderHash() => r'69fec043342f21c6155243ea2c47e5dd715e42f5';
 
 final class WatchOrderFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<WatchOrder>, int> {
@@ -412,7 +412,7 @@ final class PickerSearchProvider
   }
 }
 
-String _$pickerSearchHash() => r'84dfea5afb9b60b04e9f235bfaf85d4eb42ac720';
+String _$pickerSearchHash() => r'c74b870a4baf91a497fd4634cead18bd1c46e9c9';
 
 /// The page picker's search box: the typed MAL search with the typo help.
 

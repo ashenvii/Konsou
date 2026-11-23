@@ -367,4 +367,54 @@ void main() {
       expect(await kept(), ['1-large', '2-medium']);
     });
   });
+
+  group('pictures', () {
+    String pictureUrl(int number) =>
+        'https://cdn.myanimelist.net/images/anime/1/picture$number.jpg';
+
+    Future<List<String>> keptTitles() async {
+      final pictures = Directory('${folder.path}/covers/pictures');
+      return [
+        for (final title in pictures.listSync())
+          title.uri.pathSegments.where((part) => part.isNotEmpty).last,
+      ]..sort();
+    }
+
+    test('a picture is named by its link, the same every run', () async {
+      final store = buildStore();
+      final first = await store.pictureFile(1, pictureUrl(1));
+      final again = await buildStore().pictureFile(1, pictureUrl(1));
+      expect(again!.path, first!.path);
+      expect(
+        first.uri.pathSegments.last,
+        matches(RegExp(r'^[0-9a-f]{40}\.jpg$')),
+      );
+      expect(asked, hasLength(1));
+    });
+
+    test(
+      'the titles seen longest ago go, a picture seen again stays',
+      () async {
+        final store = buildStore();
+        for (var malId = 1; malId <= CoverStore.keptPictureTitles; malId++) {
+          now = now.add(const Duration(minutes: 1));
+          await store.pictureFile(malId, pictureUrl(malId));
+        }
+        now = now.add(const Duration(minutes: 1));
+        await store.pictureFile(1, pictureUrl(1));
+        now = now.add(const Duration(minutes: 1));
+        await store.pictureFile(7, pictureUrl(7));
+        expect(await keptTitles(), ['1', '3', '4', '5', '6', '7']);
+      },
+    );
+
+    test('pictures saved at the same time trim without failing', () async {
+      final store = buildStore();
+      await Future.wait([
+        for (var malId = 1; malId <= 10; malId++)
+          store.pictureFile(malId, pictureUrl(malId)),
+      ]);
+      expect(await keptTitles(), hasLength(CoverStore.keptPictureTitles));
+    });
+  });
 }

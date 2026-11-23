@@ -10,22 +10,25 @@ import 'package:konsou/components/pressable.dart';
 import 'package:konsou/components/toast_view.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/detail/watch_order.dart';
+import 'package:konsou/detail/watch_order_words.dart';
 import 'package:konsou/gallery/detail_section.dart';
-import 'package:konsou/screens/detail/jump_bar.dart';
+import 'package:konsou/screens/detail/cover_viewer.dart';
+import 'package:konsou/screens/detail/detail_back_button.dart';
 import 'package:konsou/screens/detail/detail_frame.dart';
+import 'package:konsou/screens/detail/detail_meta.dart';
+import 'package:konsou/screens/detail/detail_scores.dart';
 import 'package:konsou/screens/detail/detail_top.dart';
 import 'package:konsou/screens/detail/entry_controls.dart';
-import 'package:konsou/screens/detail/detail_media.dart';
-import 'package:konsou/screens/detail/detail_parts.dart';
+import 'package:konsou/screens/detail/jump_bar.dart';
+import 'package:konsou/screens/detail/overview_part.dart';
 import 'package:konsou/screens/detail/page_picker.dart';
-import 'package:konsou/screens/detail/detail_header.dart';
-import 'package:konsou/screens/detail/detail_scores.dart';
-import 'package:konsou/screens/detail/watch_order_strip.dart';
+import 'package:konsou/screens/detail/picture_viewer.dart';
+import 'package:konsou/screens/detail/watch_order_card.dart';
 import 'package:konsou/shell/app_shell.dart';
 import 'package:konsou/shell/window_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../support/detail_app.dart';
+import '../../support/detail_app.dart';
 
 JumpBar bar(WidgetTester tester) =>
     tester.widget<JumpBar>(find.byType(JumpBar));

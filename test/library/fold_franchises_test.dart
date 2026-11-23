@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/library/fold_franchises.dart';
 import 'package:konsou/library/library_row.dart';
 
@@ -16,7 +17,7 @@ LibraryEntry entry(
 }) => LibraryEntry(
   entryId: id,
   name: 'Name $id',
-  status: status,
+  status: EntryStatus.parse(status),
   episodesWatched: watched,
   addedAt: added,
   changedAt: changed,
@@ -93,7 +94,7 @@ void main() {
       entry('s1', 'completed', franchise: 7, date: '2020'),
       entry('s2', 'completed', franchise: 7, date: '2021'),
     ]);
-    expect((row.entryId, row.status), ('s2', 'completed'));
+    expect((row.entryId, row.status), ('s2', EntryStatus.completed));
   });
 
   test('dropped and not interested seasons count as finished', () {
@@ -206,7 +207,7 @@ void main() {
     const notLinked = LibraryEntry(
       entryId: 'x',
       name: 'Saved name',
-      status: 'watching',
+      status: EntryStatus.watching,
       episodesWatched: 0,
       addedAt: 1,
       changedAt: 1,

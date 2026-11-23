@@ -2,30 +2,30 @@ import '../library/row_labels.dart';
 import 'title_details.dart';
 
 /// A date as MAL gives it ("2023", "2023-09", "2023-09-29") in words.
-String? dateWords(String? date) {
+String? formatMalDate(String? date) {
   if (date == null || date.length < 4) return null;
   final parts = date.split('-');
   final year = parts[0];
   final month = parts.length > 1 ? int.tryParse(parts[1]) : null;
   final day = parts.length > 2 ? int.tryParse(parts[2]) : null;
   if (month == null || month < 1 || month > 12) return year;
-  final name = monthName(month, short: true);
+  final name = formatMonth(month, short: true);
   return day == null ? '$name $year' : '$day $name $year';
 }
 
 /// "29 Sep 2023 to 22 Mar 2024", "29 Sep 2023 to ?" while it airs, or the one
 /// date for a title that has no end.
-String? airedWords(TitleDetails details) {
-  final start = dateWords(details.startDate);
+String? formatAired(TitleDetails details) {
+  final start = formatMalDate(details.startDate);
   if (start == null) return null;
-  final end = dateWords(details.endDate);
+  final end = formatMalDate(details.endDate);
   if (end == start) return start;
   if (end != null) return '$start to $end';
   final airing = details.airingStatus == 'currently_airing';
   return airing ? '$start to ?' : start;
 }
 
-String? seasonWords(TitleDetails details) {
+String? formatSeason(TitleDetails details) {
   final season = details.season;
   final year = details.seasonYear;
   if (season == null || year == null) return null;
@@ -33,7 +33,7 @@ String? seasonWords(TitleDetails details) {
 }
 
 /// "Sundays at 23:00 JST". MAL gives Japan time.
-String? broadcastWords(TitleDetails details) {
+String? formatBroadcast(TitleDetails details) {
   final day = details.broadcastDay;
   if (day == null || day.isEmpty) return null;
   final plural = '${capitalise(day)}s';
@@ -42,7 +42,7 @@ String? broadcastWords(TitleDetails details) {
 }
 
 /// "24 min per episode".
-String? durationWords(TitleDetails details) {
+String? formatDuration(TitleDetails details) {
   final seconds = details.secondsPerEpisode;
   if (seconds == null) return null;
   final minutes = (seconds / 60).round();
@@ -64,11 +64,11 @@ const _ratings = {
   'rx': 'Rx, hentai',
 };
 
-String? ratingWords(String? rating) =>
+String? formatRating(String? rating) =>
     rating == null || rating.isEmpty ? null : _ratings[rating] ?? rating;
 
 /// "light_novel" as "Light novel".
-String? sourceWords(String? source) {
+String? formatSource(String? source) {
   if (source == null || source.isEmpty) return null;
   return capitalise(source.replaceAll('_', ' '));
 }
@@ -76,13 +76,13 @@ String? sourceWords(String? source) {
 /// The info block's rows, in order, leaving out whatever MAL did not give.
 /// The type, season, studios and genres are tags at the top of the page and
 /// the episodes a fact there, so they are not said again here.
-List<(String, String)> infoRows(TitleDetails details) {
+List<(String, String)> listInfoRows(TitleDetails details) {
   final rows = <(String, String?)>[
-    ('Aired', airedWords(details)),
-    ('Broadcast', broadcastWords(details)),
-    ('Duration', durationWords(details)),
-    ('Source', sourceWords(details.source)),
-    ('Rating', ratingWords(details.rating)),
+    ('Aired', formatAired(details)),
+    ('Broadcast', formatBroadcast(details)),
+    ('Duration', formatDuration(details)),
+    ('Source', formatSource(details.source)),
+    ('Rating', formatRating(details.rating)),
   ];
   return [
     for (final (label, value) in rows)
@@ -92,12 +92,12 @@ List<(String, String)> infoRows(TitleDetails details) {
 
 /// The info block's rows in named groups: when it airs, and where it comes
 /// from. A group with nothing in it is left out.
-List<(String, List<(String, String)>)> infoGroups(TitleDetails details) {
+List<(String, List<(String, String)>)> groupInfoRows(TitleDetails details) {
   const groups = [
     ('Airing', {'Aired', 'Broadcast', 'Duration'}),
     ('Origin', {'Source', 'Rating'}),
   ];
-  final rows = infoRows(details);
+  final rows = listInfoRows(details);
   return [
     for (final (name, labels) in groups)
       if (rows.where((row) => labels.contains(row.$1)).toList()

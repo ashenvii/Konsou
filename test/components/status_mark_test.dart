@@ -38,4 +38,14 @@ void main() {
     );
     expect(tester.widget<AppIcon>(find.byType(AppIcon)).color, Tokens.inkMuted);
   });
+
+  testWidgets('a Completed that is not the whole story is muted', (
+    tester,
+  ) async {
+    await pumpWidget(
+      tester,
+      const StatusMark(EntryStatus.completed, green: false),
+    );
+    expect(tester.widget<AppIcon>(find.byType(AppIcon)).color, Tokens.inkMuted);
+  });
 }

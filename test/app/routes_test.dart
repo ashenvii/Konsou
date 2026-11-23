@@ -30,7 +30,7 @@ void main() {
     current: LibraryEntry(
       entryId: entryId,
       name: 'Saved name',
-      status: 'watching',
+      status: EntryStatus.watching,
       episodesWatched: 0,
       addedAt: 1,
       changedAt: 1,

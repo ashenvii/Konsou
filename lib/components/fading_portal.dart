@@ -69,4 +69,14 @@ mixin FadingPortalOwner<T extends StatefulWidget> on State<T> {
   void closePortal() {
     if (portalOpen) setState(() => portalOpen = false);
   }
+
+  // the page's overlay starts below the bar and right of the rail
+  RenderBox get overlayBox =>
+      Overlay.of(context).context.findRenderObject()! as RenderBox;
+
+  /// Where this widget sits in the overlay the portal draws in.
+  Rect measureAnchor() {
+    final box = context.findRenderObject()! as RenderBox;
+    return box.localToGlobal(Offset.zero, ancestor: overlayBox) & box.size;
+  }
 }

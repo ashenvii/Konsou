@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
+import '../icons/app_icon.dart';
 import '../icons/icon_def.dart';
-import 'icon_cell.dart';
 import 'pressable.dart';
 import 'raised_key.dart';
 
@@ -30,12 +30,17 @@ class IconSquareButton extends StatelessWidget {
       builder: (context, state) => RaisedKey(
         lit: state.hovered && !selected,
         sunk: selected || state.pressed,
-        child: IconCell(
-          icon: icon,
-          size: Tokens.iconSize,
-          color: selected
-              ? Tokens.pop
-              : (state.hovered ? Tokens.ink : Tokens.inkMuted),
+        child: SizedBox.square(
+          dimension: Tokens.controlHeight,
+          child: Center(
+            child: AppIcon(
+              icon,
+              size: Tokens.iconSize,
+              color: selected
+                  ? Tokens.pop
+                  : (state.hovered ? Tokens.ink : Tokens.inkMuted),
+            ),
+          ),
         ),
       ),
     );

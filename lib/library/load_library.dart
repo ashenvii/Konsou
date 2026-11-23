@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show QueryRow;
 
 import '../data/databases.dart';
 import '../data/record_database.dart';
+import 'entry_status.dart';
 import 'fold_franchises.dart';
 import 'library_row.dart';
 import 'title_language.dart';
@@ -31,7 +32,7 @@ Future<List<LibraryEntry>> loadLibraryEntries(
       LibraryEntry(
         entryId: row.read<String>('entry_id'),
         name: pickTitleName(row, language),
-        status: row.read<String>('status'),
+        status: EntryStatus.parse(row.read<String>('status')),
         episodesWatched: row.read<int>('episodes_watched'),
         addedAt: row.read<int>('added_at'),
         changedAt: row.read<int>('updated_at'),

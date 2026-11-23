@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:konsou/sync/google_sign_in.dart';
 import 'package:konsou/sync/sync_errors.dart';
 
@@ -37,10 +39,11 @@ void main() {
   GoogleSignIn buildSignIn({
     Future<void> Function(Uri url)? openBrowser,
     Duration timeout = const Duration(seconds: 5),
+    http.Client? client,
   }) => GoogleSignIn(
     clientId: 'client',
     clientSecret: 'secret',
-    client: google.client,
+    client: client ?? google.client,
     store: store,
     openBrowser: openBrowser ?? answerInBrowser,
     now: () => _now,
@@ -110,6 +113,17 @@ void main() {
       buildSignIn().accessToken(),
       throwsA(isA<SignInNeeded>()),
     );
+  });
+
+  test('an html page or a reply with no token is Drive unavailable', () async {
+    for (final body in ['<html>busy</html>', '{"refresh_token": "r"}']) {
+      await expectLater(
+        buildSignIn(client: MockClient((_) async => http.Response(body, 200)))
+            .signIn(),
+        throwsA(isA<DriveUnavailable>()),
+      );
+    }
+    expect(store.tokens, isNull);
   });
 
   test('signing out forgets the tokens', () async {

@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:http/http.dart' as http;
 
 import '../data/details_database.dart';
+import '../data/record_database.dart';
 import 'request_gate.dart';
 
 const shortDetailFields =
@@ -27,6 +28,21 @@ enum FetchOutcome {
 }
 
 const goneRecheck = Duration(days: 30);
+
+/// The MAL pages found gone within the last [goneRecheck]; older ones are due
+/// another look.
+Future<Set<int>> readGonePages(RecordDatabase record, DateTime now) async {
+  final rows = await record
+      .customSelect(
+        "SELECT provider_id FROM details.gone_page "
+        "WHERE provider = 'mal' AND checked_at > ?",
+        variables: [
+          Variable.withInt(now.subtract(goneRecheck).millisecondsSinceEpoch),
+        ],
+      )
+      .get();
+  return {for (final row in rows) row.read<int>('provider_id')};
+}
 
 const changingStatuses = {'currently_airing', 'not_yet_aired'};
 
@@ -139,16 +155,4 @@ class DetailRequest {
             .getSingleOrNull();
     return saved?.isFull ?? false;
   }
-}
-
-bool isStale({
-  required String? airingStatus,
-  required int fetchedAt,
-  required DateTime now,
-}) {
-  final maxAge = changingStatuses.contains(airingStatus)
-      ? const Duration(days: 1)
-      : const Duration(days: 30);
-  return now.difference(DateTime.fromMillisecondsSinceEpoch(fetchedAt)) >
-      maxAge;
 }

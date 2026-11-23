@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
-import 'countdown.dart';
+import 'hover_delays_state.dart';
 import 'floating_panel.dart';
 import 'popover_placement.dart';
 import 'fading_portal.dart';
@@ -19,41 +19,32 @@ class HoverTip extends StatefulWidget {
   State<HoverTip> createState() => _HoverTipState();
 }
 
-class _HoverTipState extends State<HoverTip> with HoverDelaysState<HoverTip> {
-  final _controller = OverlayPortalController();
+class _HoverTipState extends State<HoverTip>
+    with HoverDelaysState<HoverTip>, FadingPortalOwner<HoverTip> {
   Rect _anchor = Rect.zero;
-  var _wanted = false;
 
   @override
   Duration get hoverOpenDelay => Tokens.tipDelay;
 
-  RenderBox get _overlayBox =>
-      Overlay.of(context).context.findRenderObject()! as RenderBox;
-
   @override
   void hoverOpen() {
-    final box = context.findRenderObject()! as RenderBox;
-    final topLeft = box.localToGlobal(Offset.zero, ancestor: _overlayBox);
-    setState(() {
-      _anchor = topLeft & box.size;
-      _wanted = true;
-    });
-    _controller.show();
+    final anchor = measureAnchor();
+    openPortal(() => _anchor = anchor);
   }
 
   @override
-  void hoverClose() => setState(() => _wanted = false);
+  void hoverClose() => closePortal();
 
   void _stop() {
     hoverDelays.left(isOpen: false);
-    if (_wanted) setState(() => _wanted = false);
+    closePortal();
   }
 
   @override
   Widget build(BuildContext context) {
     return FadingPortal(
-      controller: _controller,
-      visible: _wanted,
+      controller: portal,
+      visible: portalOpen,
       openTime: Tokens.motionTip,
       overlay: (context) => IgnorePointer(
         child: ExcludeSemantics(
@@ -77,8 +68,8 @@ class _HoverTipState extends State<HoverTip> with HoverDelaysState<HoverTip> {
         ),
       ),
       child: MouseRegion(
-        onEnter: (_) => hoverDelays.entered(isOpen: _wanted),
-        onExit: (_) => hoverDelays.left(isOpen: _wanted),
+        onEnter: (_) => hoverDelays.entered(isOpen: portalOpen),
+        onExit: (_) => hoverDelays.left(isOpen: portalOpen),
         child: Listener(onPointerDown: (_) => _stop(), child: widget.child),
       ),
     );

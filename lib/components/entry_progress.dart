@@ -47,6 +47,8 @@ class _EntryProgressState extends State<EntryProgress>
   @override
   void didUpdateWidget(EntryProgress old) {
     super.didUpdateWidget(old);
+    // a mouse region that goes away never calls its exit
+    if (widget.onStep == null) _hover = null;
     if (old.watched == widget.watched) return;
     _from = old.watched;
     _light
@@ -70,6 +72,7 @@ class _EntryProgressState extends State<EntryProgress>
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final steps = EntryProgress.drawsSteps(width, widget.total);
+        final interactive = steps && widget.onStep != null;
         final height = steps
             ? EntryProgress.stepHeight
             : EntryProgress.lineHeight;
@@ -81,25 +84,28 @@ class _EntryProgressState extends State<EntryProgress>
             lit: _lit,
             total: widget.total,
             steps: steps,
-            hover: _hover,
+            hover: interactive ? _hover : null,
           ),
         );
-        if (!steps || widget.onStep == null) {
+        if (!interactive) {
           return _Display(
             child: SizedBox(height: height, child: painter),
           );
         }
+        // the minus and plus keys beside it are what a screen reader uses
         return _Display(
-          child: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            onHover: (e) =>
-                setState(() => _hover = _stepAt(e.localPosition.dx, width)),
-            onExit: (_) => setState(() => _hover = null),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapUp: (d) =>
-                  widget.onStep!(_stepAt(d.localPosition.dx, width)),
-              child: SizedBox(height: height, child: painter),
+          child: ExcludeSemantics(
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              onHover: (e) =>
+                  setState(() => _hover = _stepAt(e.localPosition.dx, width)),
+              onExit: (_) => setState(() => _hover = null),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapUp: (d) =>
+                    widget.onStep!(_stepAt(d.localPosition.dx, width)),
+                child: SizedBox(height: height, child: painter),
+              ),
             ),
           ),
         );

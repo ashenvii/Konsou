@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../design/tokens.dart';
 import 'motion.dart';
 
-/// The live edge: a faint teal wash and a line under the child while [on].
+/// The live edge: a faint pop wash and a line under the child while [on].
 /// It fades in and out, so a pointer sweeping across a grid does not flicker.
 class HoverMark extends StatelessWidget {
   const HoverMark({super.key, required this.on, required this.child});

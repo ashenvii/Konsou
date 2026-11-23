@@ -1,6 +1,3 @@
-/// The two statuses that count as watching now.
-const watchingStatuses = {'watching', 'rewatching'};
-
 /// What the user is doing with an entry. [value] is what the record stores,
 /// MAL's own words, so import and export match.
 enum EntryStatus {
@@ -18,6 +15,9 @@ enum EntryStatus {
 
   /// The word the screens show.
   final String label;
+
+  /// Watching or rewatching: the two that count as watching now.
+  bool get isWatching => this == watching || this == rewatching;
 
   static EntryStatus parse(String stored) =>
       values.firstWhere((status) => status.value == stored);

@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:drift/drift.dart';
+
 import 'generate_id.dart';
 import 'record_database.dart';
 
@@ -15,10 +17,12 @@ Future<int> readEditTime(RecordDatabase record, DateTime now) async {
 
 /// This device's row, made with a new id the first time it is asked for.
 Future<Device> readDevice(RecordDatabase record) async {
-  final existing = await record.select(record.device).getSingleOrNull();
-  if (existing != null) return existing;
-  await record
-      .into(record.device)
-      .insert(DeviceCompanion.insert(deviceId: generateId()));
+  // one statement, so two first calls at once cannot both add a row
+  await record.customInsert(
+    'INSERT INTO device (device_id) SELECT ? '
+    'WHERE NOT EXISTS (SELECT 1 FROM device)',
+    variables: [Variable.withString(generateId())],
+    updates: {record.device},
+  );
   return record.select(record.device).getSingle();
 }

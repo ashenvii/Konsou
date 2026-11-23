@@ -87,13 +87,16 @@ Future<void> writeLocalRecord(RecordDatabase record, SyncRecord merged) {
             'INSERT INTO $table (${_quote(columns).join(', ')}) '
             'VALUES (${_placeholders(columns.length)})';
         for (final row in rows) {
-          batch.customStatement(sql, [for (final c in columns) row[c]]);
+          batch.customStatement(sql, [
+            for (final column in columns) row[column],
+          ]);
         }
       }
 
       final columns = [...entryTableColumns, 'name'];
       final updates = [
-        for (final c in entryTableColumns.skip(1)) '$c = excluded.$c',
+        for (final column in entryTableColumns.skip(1))
+          '$column = excluded.$column',
         // a name from another device fills an empty one, never replaces one
         'name = COALESCE(entry.name, excluded.name)',
       ].join(', ');
@@ -102,7 +105,7 @@ Future<void> writeLocalRecord(RecordDatabase record, SyncRecord merged) {
           'INSERT INTO entry (${columns.join(', ')}) '
           'VALUES (${_placeholders(columns.length)}) '
           'ON CONFLICT (entry_id) DO UPDATE SET $updates',
-          [for (final c in columns) entry[c]],
+          [for (final column in columns) entry[column]],
         );
       }
       for (final id in localIds.difference(mergedIds)) {

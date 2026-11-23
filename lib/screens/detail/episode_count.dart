@@ -97,10 +97,8 @@ class _EpisodeCountState extends State<EpisodeCount> {
     final total = widget.total;
     final known = total != null && total > 0;
     // LED digits, pop and glowing, in a sunk display
-    final style = AppText.tally(Tokens.pop).copyWith(
-      shadows: const [Shadow(color: Tokens.pop, blurRadius: Tokens.ledGlow)],
-    );
-    final of = Text(
+    final style = AppText.led(Tokens.pop);
+    final ofTotal = Text(
       known ? ' / $total' : ' / ?',
       maxLines: 1,
       softWrap: false,
@@ -158,11 +156,11 @@ class _EpisodeCountState extends State<EpisodeCount> {
                   softWrap: false,
                   style: style,
                 ),
-                of,
+                ofTotal,
               ],
             ),
           ),
-        if (_editing) of,
+        if (_editing) ofTotal,
         if (widget.onSet != null) ...[
           const SizedBox(width: Tokens.space1),
           IconSquareButton(

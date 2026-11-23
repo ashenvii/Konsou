@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../components/cover_image.dart';
 import '../covers/cover_size.dart';
-import '../mal/request_gate.dart';
 import 'providers.dart';
 
 class CoverView extends ConsumerWidget {

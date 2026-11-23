@@ -36,7 +36,7 @@ String detailPathFor(LibraryRow row) =>
     detailPath(malId: row.malId, entryId: row.entryId);
 
 DetailScreen _detailScreen(BuildContext context, GoRouterState state) {
-  void back() => context.canPop() ? context.pop() : context.go(libraryPath);
+  void back() => goBack(context);
   void openTitle(int malId, {String? entryId}) =>
       context.push(titlePath(malId, entryId: entryId));
   // the picker takes this page's place, so Back does not return to a title

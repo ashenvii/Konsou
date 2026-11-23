@@ -7,7 +7,6 @@ import '../../components/status_lamp.dart';
 import '../../components/status_mark.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
-import '../../library/entry_status.dart';
 import '../../library/library_row.dart';
 import '../../library/row_labels.dart';
 import 'row_tap_area.dart';
@@ -57,7 +56,7 @@ class LibraryGridCard extends StatelessWidget {
             ),
             const SizedBox(height: Tokens.space2),
             OneLineText(
-              titleText(row),
+              formatTitle(row.name),
               style: AppText.label(
                 row.name.isEmpty ? Tokens.inkMuted : Tokens.ink,
                 bold: true,
@@ -65,7 +64,7 @@ class LibraryGridCard extends StatelessWidget {
             ),
             const SizedBox(height: Tokens.space1),
             OneLineText(
-              typeYearLine(row),
+              formatTypeYear(row.mediaType, row.startDate),
               style: AppText.caption(Tokens.inkMuted),
             ),
           ],
@@ -83,11 +82,10 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final count = chipCount(row);
+    final count = formatChipCount(row);
     if (!showStatus && count.isEmpty) return const SizedBox.shrink();
-    final status = EntryStatus.parse(row.status);
-    // A franchise is lit as finished only when every season is done.
-    final finished = !row.isFranchise || row.seasonsDone == row.seasonsTotal;
+    final status = row.status;
+    final finished = row.allSeasonsDone;
     // a small dark display on the cover: the lamp, the status mark where the
     // tab mixes statuses, and the count in LED digits
     return DecoratedBox(

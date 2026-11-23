@@ -49,7 +49,7 @@ class EntryActions {
     EarlierTitle title,
     EntryStatus status, {
     String? airing,
-  }) async {
+  }) => _inTurn(() async {
     if (_refusedOnAdd(status, airing)) return;
     final mark = await edits.markEarlier(
       [title],
@@ -65,11 +65,31 @@ class EntryActions {
     }
     // a lock the caller could not see leaves it Planned, and the toast says so
     show(ToastMessage(addedAs(added.status), undo: _undoable(mark.undo.run)));
+  });
+
+  /// Sets [status] on the title's entry, or adds the title with it when it is
+  /// not on the list.
+  Future<void> setOrAdd(
+    EarlierTitle title,
+    EntryStatus status, {
+    String? airing,
+  }) async {
+    final entryId = title.entryId;
+    entryId != null
+        ? await setStatus(entryId, status)
+        : await add(title, status, airing: airing);
   }
+
+  // notes and dates change nothing the Library shows, so it is not told
+  Future<void> setNotes(String entryId, String text) =>
+      _inTurn(() => edits.setNotes(entryId, text));
+
+  Future<void> setStartedDate(String entryId, DateTime? date) =>
+      _inTurn(() => edits.setStartedDate(entryId, date));
 
   // the locks the status menu has, for a title with no entry to ask yet
   bool _refusedOnAdd(EntryStatus status, String? airing) {
-    final locked = airingLock(airing, status);
+    final locked = findAiringLock(airing, status);
     if (locked != null) _explainRefusal(locked);
     return locked != null;
   }
@@ -84,7 +104,7 @@ class EntryActions {
     ReviewOffer offer,
     List<EarlierTitle> chosen, {
     EntryStatus status = EntryStatus.completed,
-  }) async {
+  }) => _inTurn(() async {
     if (chosen.isEmpty) return;
     final mark = await edits.markEarlier(chosen, status: status);
     onEdited?.call();
@@ -95,9 +115,9 @@ class EntryActions {
         rateEntryId: offer.entryId,
       ),
     );
-  }
+  });
 
-  Future<void> notNow(ReviewOffer offer) async {
+  Future<void> notNow(ReviewOffer offer) => _inTurn(() async {
     final saved = await edits.saveEarlierUnmarked(offer.entryId, offer.titles);
     answerReview(
       ToastMessage(
@@ -106,13 +126,14 @@ class EntryActions {
         rateEntryId: offer.entryId,
       ),
     );
-  }
+  });
 
-  Undo _backToReview(ReviewOffer offer, Undo takeBack) => () async {
-    await takeBack();
-    onEdited?.call();
-    show(_reviewToast(offer, rating: await _score(offer.entryId)));
-  };
+  Undo _backToReview(ReviewOffer offer, Undo takeBack) =>
+      () => _inTurn(() async {
+        await takeBack();
+        onEdited?.call();
+        show(_reviewToast(offer, rating: await _score(offer.entryId)));
+      });
 
   ToastMessage _reviewToast(ReviewOffer offer, {int? rating}) {
     final undoFinish = offer.undoFinish;
@@ -122,7 +143,8 @@ class EntryActions {
       review: offer,
       rateEntryId: offer.entryId,
       rating: rating,
-      onMissed: () => edits.saveEarlierUnmarked(offer.entryId, offer.titles),
+      onMissed: () =>
+          _inTurn(() => edits.saveEarlierUnmarked(offer.entryId, offer.titles)),
     );
   }
 
@@ -218,9 +240,7 @@ class EntryActions {
   String _describe(
     ({EntryStatus status, int episodes}) was,
     ({EntryStatus status, int episodes}) now,
-  ) => was.status == now.status
-      ? episodeAdded(now.episodes)
-      : markedAs(now.status);
+  ) => was.status == now.status ? episodeAdded(now.episodes) : now.status.label;
 
   Undo _undoable(Undo run) =>
       () => _inTurn(() async {

@@ -1,8 +1,6 @@
 import '../library/entry_edits.dart';
 import '../library/entry_status.dart';
 
-String markedAs(EntryStatus status) => status.label;
-
 String episodeAdded(int number) => 'Episode $number';
 
 String? refusal(EditResult result) => switch (result) {
@@ -13,24 +11,24 @@ String? refusal(EditResult result) => switch (result) {
   EditResult.notCompleted => 'Not completed yet.',
 };
 
-String reviewOffered(int n) => 'Completed. $n earlier not marked.';
+String reviewOffered(int count) => 'Completed. $count earlier not marked.';
 
 /// The toast after a review's mark. Completed keeps the old wording.
-String reviewMarkedAs(int n, EntryStatus status) {
-  if (n == 0) return 'Nothing changed';
-  if (status == EntryStatus.completed) return 'Marked $n earlier';
-  return 'Marked $n as ${status.label.toLowerCase()}';
+String reviewMarkedAs(int count, EntryStatus status) {
+  if (count == 0) return 'Nothing changed';
+  if (status == EntryStatus.completed) return 'Marked $count earlier';
+  return 'Marked $count as ${status.label.toLowerCase()}';
 }
 
 const reviewSetTo = 'Set to';
 
 String addedAs(EntryStatus status) => 'Added as ${status.label}';
 
-String autoMarked(int n) => 'Also marked $n earlier';
+String autoMarked(int count) => 'Also marked $count earlier';
 
 const reviewSavedForLater = 'Saved for later.';
 
-String removed(int n) => n == 1 ? 'Removed' : 'Removed $n';
+String removed(int count) => count == 1 ? 'Removed' : 'Removed $count';
 
 const undoLabel = 'Undo';
 const reviewLabel = 'Review';
@@ -42,13 +40,13 @@ const clearRatingLabel = 'Clear';
 const reviewHeading = 'Mark earlier titles as completed';
 const extrasHeading = 'Extras';
 const notNowLabel = 'Not now';
-String markButton(int n) => 'Mark $n';
+String markButton(int count) => 'Mark $count';
 
 const storiesHeading = 'In watch order';
 const selectAllLabel = 'All';
 const selectNoneLabel = 'None';
 const notOnListLabel = 'Not on your list';
-String selectedCount(int n, int total) => '$n of $total selected';
+String selectedCount(int count, int total) => '$count of $total selected';
 String earlierStatusLabel(String? stored) {
   if (stored == null) return notOnListLabel;
   try {

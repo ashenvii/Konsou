@@ -8,9 +8,9 @@ import '../components/app_menu.dart';
 import '../components/icon_square_button.dart';
 import '../components/page_frame.dart';
 import '../components/page_title.dart';
-import '../components/panel.dart';
 import '../components/status_mark.dart';
 import 'detail_section.dart';
+import 'gallery_panel.dart';
 import 'mal_trouble_section.dart';
 import 'motion_section.dart';
 import 'wordmark_section.dart';
@@ -46,7 +46,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             const _Note(
               'Every token and component built so far: the foundations, the '
               'controls, the parts a page is built from, then the icons. The '
-              'teal scrollbar on the right is the one every page gets.',
+              'scrollbar on the right is the one every page gets.',
             ),
             const _Section('Colors'),
             const _Colors(),
@@ -134,17 +134,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
               'Left: empty, checked, excluded. Right: two you can click, the '
               'second one cycles through excluded.',
             ),
-            const _Section('Panel'),
-            const Panel(
-              child: Text(
-                'A block on the surface color. Square, no border.',
-                style: TextStyle(
-                  fontFamily: Tokens.sans,
-                  fontSize: Tokens.text3,
-                  color: Tokens.inkSoft,
-                ),
-              ),
-            ),
             const _Section('Page header'),
             const _PageHeader(),
             const SizedBox(height: Tokens.space2),
@@ -173,7 +162,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             const _Note(
               'Straight lines on a fixed grid, only 90 and 45 degrees. '
               'Nekomimi at 20 (logo size) and 96; the score star, the one icon '
-              'off the grid, at 16 and 64; Discover at 20 on the cyan rail '
+              'off the grid, at 16 and 64; Discover at 20 on the lit rail '
               'item.',
             ),
           ],
@@ -218,7 +207,7 @@ class _PageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // the real row at desktop width, shrunk to fit a phone
-    return Panel(
+    return GalleryPanel(
       child: FittedBox(
         fit: BoxFit.scaleDown,
         alignment: Alignment.centerLeft,

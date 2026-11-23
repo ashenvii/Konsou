@@ -40,7 +40,7 @@ class EntryMenu extends StatefulWidget {
 }
 
 class _EntryMenuState extends State<EntryMenu> {
-  bool get _watching => watchingStatuses.contains(widget.row.status);
+  bool get _watching => widget.row.status.isWatching;
 
   void _run(VoidCallback action) {
     action();
@@ -51,7 +51,7 @@ class _EntryMenuState extends State<EntryMenu> {
 
   @override
   Widget build(BuildContext context) {
-    final current = EntryStatus.parse(widget.row.status);
+    final current = widget.row.status;
     final seasons = widget.row.entryIds.length;
     var firstAction = true;
     MenuEntry action(String label, VoidCallback onPressed, {String? key}) {

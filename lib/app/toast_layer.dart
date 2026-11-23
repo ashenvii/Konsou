@@ -24,8 +24,8 @@ const _reviewWords = EarlierReviewWords(
   all: selectAllLabel,
   none: selectNoneLabel,
   selected: selectedCount,
-  mediaType: typeName,
-  episodes: episodeCount,
+  mediaType: formatType,
+  episodes: formatEpisodes,
   status: earlierStatusLabel,
   setTo: reviewSetTo,
 );
@@ -109,7 +109,7 @@ class ToastLayer extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: Tokens.space2),
                               ],
-                              _toast(ref, state, shown, host),
+                              _buildToast(ref, state, shown, host),
                             ],
                           ),
                         ),
@@ -122,7 +122,7 @@ class ToastLayer extends ConsumerWidget {
     );
   }
 
-  Widget _toast(
+  Widget _buildToast(
     WidgetRef ref,
     ToastState state,
     ToastMessage shown,

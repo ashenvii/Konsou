@@ -159,7 +159,7 @@ Row _mergeEntry(Row x, Row y) {
       winner = xTime > yTime ? x : y;
     } else {
       String groupText(Row row) =>
-          jsonEncode([for (final c in columns) row[c]]);
+          jsonEncode([for (final column in columns) row[column]]);
       winner = groupText(x).compareTo(groupText(y)) >= 0 ? x : y;
     }
     merged[timeColumn] = winner[timeColumn];

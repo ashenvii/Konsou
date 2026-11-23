@@ -15,7 +15,7 @@ import 'episode_count.dart';
 /// The user's own controls for a title, under its name on the Detail page.
 /// On the list: the status menu button, the progress with minus and plus
 /// side by side at its right, and centred under the progress the count and
-/// its pencil. Off the list: a cyan "Add to list" that opens the same
+/// its pencil. Off the list: a pop "Add to list" that opens the same
 /// menu. [statusOnly] keeps just the status button, for the jump bar.
 class EntryControls extends StatelessWidget {
   const EntryControls({
@@ -123,18 +123,7 @@ class EntryControls extends StatelessWidget {
       ),
       popoverBuilder: (context, handle) => AppMenu(
         entries: [
-          for (final entry in statusEntries)
-            MenuEntry(
-              label: entry.label,
-              selected: entry.selected,
-              dividerAbove: entry.dividerAbove,
-              onPressed: entry.onPressed == null
-                  ? null
-                  : () {
-                      entry.onPressed!();
-                      handle.close();
-                    },
-            ),
+          for (final entry in statusEntries) entry.thenRun(handle.close),
         ],
       ),
     ),

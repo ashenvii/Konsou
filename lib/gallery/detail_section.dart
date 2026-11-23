@@ -19,9 +19,14 @@ import '../screens/detail/detail_top.dart';
 import '../screens/detail/entry_controls.dart';
 import '../screens/detail/jump_bar.dart';
 import '../detail/theme_song.dart';
-import '../screens/detail/detail_parts.dart';
+import '../screens/detail/detail_meta.dart';
+import '../screens/detail/music_part.dart';
+import '../screens/detail/overview_part.dart';
+import '../screens/detail/score_figure.dart';
+import '../screens/detail/stats_part.dart';
 import '../screens/detail/page_picker.dart';
-import '../screens/detail/watch_order_strip.dart';
+import '../detail/watch_order_words.dart';
+import '../screens/detail/watch_order_card.dart';
 
 const sampleDetails = TitleDetails(
   malId: 52991,

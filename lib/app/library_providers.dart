@@ -100,6 +100,17 @@ Future<EntrySearch> entrySearch(Ref ref) async {
   return search;
 }
 
+/// The search index for a one-off read. Nothing may be watching it, so it is
+/// held while it builds; otherwise it would be disposed before it is done.
+Future<EntrySearch> readEntrySearch(Ref ref) async {
+  final subscription = ref.listen(entrySearchProvider.future, (_, _) {});
+  try {
+    return await subscription.read();
+  } finally {
+    subscription.close();
+  }
+}
+
 @riverpod
 Future<Set<String>?> libraryFindMatches(Ref ref) async {
   final query = ref.watch(libraryFindChoiceProvider)?.trim() ?? '';
@@ -134,25 +145,12 @@ const _sortKey = 'library.sort';
 @Riverpod(keepAlive: true)
 class LibrarySortChoice extends _$LibrarySortChoice {
   @override
-  Future<LibrarySort> build() async {
-    try {
-      final saved = (await SharedPreferences.getInstance()).getString(_sortKey);
-      return LibrarySort.values.asNameMap()[saved] ?? LibrarySort.recent;
-    } on Exception {
-      return LibrarySort.recent;
-    }
-  }
+  Future<LibrarySort> build() =>
+      _readChoice(_sortKey, LibrarySort.values, LibrarySort.recent);
 
   Future<void> select(LibrarySort sort) async {
     state = AsyncData(sort);
-    try {
-      await (await SharedPreferences.getInstance()).setString(
-        _sortKey,
-        sort.name,
-      );
-    } on Exception {
-      // not remembered, but it still sorts
-    }
+    await _saveChoice(_sortKey, sort);
   }
 }
 
@@ -161,26 +159,32 @@ const _layoutKey = 'library.layout';
 @Riverpod(keepAlive: true)
 class LibraryLayoutChoice extends _$LibraryLayoutChoice {
   @override
-  Future<LibraryLayout> build() async {
-    try {
-      final saved = (await SharedPreferences.getInstance()).getString(
-        _layoutKey,
-      );
-      return LibraryLayout.values.asNameMap()[saved] ?? LibraryLayout.grid;
-    } on Exception {
-      return LibraryLayout.grid;
-    }
-  }
+  Future<LibraryLayout> build() =>
+      _readChoice(_layoutKey, LibraryLayout.values, LibraryLayout.grid);
 
   Future<void> select(LibraryLayout layout) async {
     state = AsyncData(layout);
-    try {
-      await (await SharedPreferences.getInstance()).setString(
-        _layoutKey,
-        layout.name,
-      );
-    } on Exception {
-      // not remembered, but it still switches
-    }
+    await _saveChoice(_layoutKey, layout);
+  }
+}
+
+Future<T> _readChoice<T extends Enum>(
+  String key,
+  List<T> values,
+  T fallback,
+) async {
+  try {
+    final saved = (await SharedPreferences.getInstance()).getString(key);
+    return values.asNameMap()[saved] ?? fallback;
+  } on Exception {
+    return fallback;
+  }
+}
+
+Future<void> _saveChoice(String key, Enum choice) async {
+  try {
+    await (await SharedPreferences.getInstance()).setString(key, choice.name);
+  } on Exception {
+    // not remembered, but it still applies
   }
 }

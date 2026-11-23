@@ -1,10 +1,3 @@
-import 'dart:async';
-import 'dart:io';
-
-import 'package:http/http.dart' as http;
-
-import '../net/request_timeout.dart';
-
 /// Google sign-in has expired or been revoked; sync stops until the user
 /// signs in again.
 class SignInNeeded implements Exception {
@@ -21,20 +14,4 @@ class DriveUnavailable implements Exception {
 
   @override
   String toString() => 'DriveUnavailable: ${statusCode ?? 'no answer'}';
-}
-
-/// Sends one request to Google, turning a dropped connection, a failed TLS
-/// handshake or any other transport failure into [DriveUnavailable].
-Future<http.Response> sendToGoogle(
-  Future<http.Response> Function() request,
-) async {
-  try {
-    return await request().timeout(requestTimeout);
-  } on TimeoutException {
-    throw DriveUnavailable();
-  } on IOException {
-    throw DriveUnavailable();
-  } on http.ClientException {
-    throw DriveUnavailable();
-  }
 }

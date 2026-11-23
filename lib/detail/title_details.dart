@@ -158,6 +158,18 @@ class TitleDetails {
       isStale(airingStatus: airingStatus, fetchedAt: fetchedAt, now: now);
 }
 
+bool isStale({
+  required String? airingStatus,
+  required int fetchedAt,
+  required DateTime now,
+}) {
+  final maxAge = changingStatuses.contains(airingStatus)
+      ? const Duration(days: 1)
+      : const Duration(days: 30);
+  return now.difference(DateTime.fromMillisecondsSinceEpoch(fetchedAt)) >
+      maxAge;
+}
+
 Future<TitleDetails?> readTitleDetails(
   Databases databases,
   int malId,

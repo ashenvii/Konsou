@@ -31,9 +31,9 @@ void log(String tag, String message) {
   final sink = _sink;
   if (sink == null) return;
   final now = DateTime.now();
-  String two(int n) => n.toString().padLeft(2, '0');
+  String padTwo(int number) => number.toString().padLeft(2, '0');
   final time =
-      '${two(now.hour)}:${two(now.minute)}:${two(now.second)}.'
+      '${padTwo(now.hour)}:${padTwo(now.minute)}:${padTwo(now.second)}.'
       '${now.millisecond.toString().padLeft(3, '0')}';
   sink.writeln('$time $tag $message');
 }

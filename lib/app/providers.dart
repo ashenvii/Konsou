@@ -9,10 +9,17 @@ import '../mal/detail_request.dart';
 import '../mal/request_gate.dart';
 import 'services.dart';
 
+export '../mal/request_gate.dart' show Lane;
+
 part 'providers.g.dart';
 
 @Riverpod(keepAlive: true)
 Services services(Ref ref) => throw UnimplementedError('override in main');
+
+/// Opens a link in the user's browser, for a screen's links out.
+@riverpod
+Future<void> Function(Uri url) openLink(Ref ref) =>
+    ref.watch(servicesProvider).openBrowser;
 
 @Riverpod(keepAlive: true)
 CoverStore? coverStore(Ref ref) => ref.watch(servicesProvider).coverStore;

@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../design/tokens.dart';
 
 /// How every scrolling area in the app scrolls. It replaces the platform's
-/// own scrollbar, so there is one scrollbar everywhere: a square teal thumb
+/// own scrollbar, so there is one scrollbar everywhere: a square muted ink thumb
 /// with no track, always in view, kept off the window's resize strip. Phones
 /// get no scrollbar, as the platform does.
 class AppScrollBehavior extends ScrollBehavior {

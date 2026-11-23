@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/library_providers.dart';
 import '../../library/entry_status.dart';
 import '../../library/library_view.dart';
+import 'edit_entry.dart';
 import 'entry_menu.dart';
 import 'row_marker.dart';
 import 'status_keys.dart';
@@ -47,14 +48,13 @@ KeyEventResult handleLibraryKey(WidgetRef ref, KeyEvent event) {
   final entryId =
       ref.read(libraryHoveredRowProvider) ?? RowMarker.ofFocus()?.entryId;
   if (entryId == null) return KeyEventResult.ignored;
-  // kept before the edit, so the reload the edit starts never drops the row
-  ref.read(libraryKeptProvider.notifier).keep(entryId);
-  final actions = ref.read(entryActionsProvider);
-  if (status != null) {
-    actions.setStatus(entryId, status);
-  } else {
-    actions.addEpisode(entryId);
-  }
+  editEntry(
+    ref.read,
+    entryId,
+    (actions) => status != null
+        ? actions.setStatus(entryId, status)
+        : actions.addEpisode(entryId),
+  );
   return KeyEventResult.handled;
 }
 

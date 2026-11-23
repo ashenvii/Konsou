@@ -13,6 +13,13 @@ import '../../library/library_row.dart';
 import '../../library/row_labels.dart';
 import 'row_tap_area.dart';
 
+// columns on the right keep their widths so the rows line up
+const _statusWidth = Tokens.space5 * 5;
+const _progressWidth = Tokens.space5 * 3;
+const _scoreWidth = Tokens.space5 * 2;
+
+const _narrow = Tokens.gridCardMinWidth * 3;
+
 class LibraryListRow extends StatefulWidget {
   const LibraryListRow({
     super.key,
@@ -35,13 +42,6 @@ class LibraryListRow extends StatefulWidget {
 
   final Widget menu;
 
-  // columns on the right keep their widths so the rows line up.
-  static const _statusWidth = Tokens.space5 * 5;
-  static const _progressWidth = Tokens.space5 * 3;
-  static const _scoreWidth = Tokens.space5 * 2;
-
-  static const _narrow = Tokens.gridCardMinWidth * 3;
-
   @override
   State<LibraryListRow> createState() => _LibraryListRowState();
 }
@@ -50,17 +50,12 @@ class _LibraryListRowState extends State<LibraryListRow> {
   // the pointer is on the checkbox: it takes the hover mark, the row gives it up
   bool _overBox = false;
 
-  static const _statusWidth = LibraryListRow._statusWidth;
-  static const _progressWidth = LibraryListRow._progressWidth;
-  static const _scoreWidth = LibraryListRow._scoreWidth;
-  static const _narrow = LibraryListRow._narrow;
-
   @override
   Widget build(BuildContext context) {
     final row = widget.row;
     final showStatus = widget.showStatus;
-    final completed = row.status == EntryStatus.completed.value;
-    final status = EntryStatus.parse(row.status).label;
+    final completed = row.status == EntryStatus.completed;
+    final status = row.status.label;
     return RowTapArea(
       onOpen: widget.onOpen,
       onContextMenu: widget.onContextMenu,
@@ -68,8 +63,8 @@ class _LibraryListRowState extends State<LibraryListRow> {
         builder: (context, constraints) {
           final narrow = constraints.maxWidth < _narrow;
           final line = [
-            typeYearLine(row),
-            seasonsText(row),
+            formatTypeYear(row.mediaType, row.startDate),
+            formatSeasons(row),
             if (showStatus && narrow) status,
           ].whereType<String>().where((part) => part.isNotEmpty).join(' · ');
           return HoverMark(
@@ -107,16 +102,11 @@ class _LibraryListRowState extends State<LibraryListRow> {
                     width: _progressWidth,
                     child: Row(
                       children: [
-                        StatusLamp(
-                          EntryStatus.parse(row.status),
-                          finished:
-                              !row.isFranchise ||
-                              row.seasonsDone == row.seasonsTotal,
-                        ),
+                        StatusLamp(row.status, finished: row.allSeasonsDone),
                         const SizedBox(width: Tokens.space2),
                         Expanded(
                           child: OneLineText(
-                            progressText(row),
+                            formatProgress(row.episodesWatched, row.episodes),
                             align: TextAlign.right,
                             style: AppText.tally(
                               Tokens.inkSoft,
@@ -153,7 +143,7 @@ class _Titles extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         OneLineText(
-          titleText(row),
+          formatTitle(row.name),
           style: AppText.label(row.name.isEmpty ? muted : Tokens.ink),
         ),
         const SizedBox(height: Tokens.space2),

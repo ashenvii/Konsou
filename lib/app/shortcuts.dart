@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../library/library_view.dart';
 import '../screens/library/library_keys.dart';
+import '../shell/app_rail.dart' show libraryPath;
 import 'library_providers.dart';
 import 'quick_search_providers.dart';
 import 'toast_host.dart';
@@ -67,14 +68,10 @@ class AppShortcuts extends ConsumerWidget {
         ref.watch(toastHostProvider.select((state) => state.reviewOpen)) ||
         ref.watch(quickSearchProvider.select((state) => state.open));
     final libraryActive = libraryOpen && !covered;
-    void goBack() {
-      final router = GoRouter.maybeOf(context);
-      if (router != null && router.canPop()) router.pop();
-    }
-
     return CallbackShortcuts(
       bindings: {
-        const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): goBack,
+        const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): () =>
+            goBack(context),
         const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () =>
             ref.read(toastHostProvider.notifier).undoNewest(),
         const SingleActivator(LogicalKeyboardKey.keyK, control: true): () =>
@@ -98,11 +95,18 @@ class AppShortcuts extends ConsumerWidget {
             : null,
         child: Listener(
           onPointerDown: (event) {
-            if (event.buttons & kBackMouseButton != 0) goBack();
+            if (event.buttons & kBackMouseButton != 0) goBack(context);
           },
           child: child,
         ),
       ),
     );
   }
+}
+
+/// Back by the router; with nothing behind, the Library.
+void goBack(BuildContext context) {
+  final router = GoRouter.maybeOf(context);
+  if (router == null) return;
+  router.canPop() ? router.pop() : router.go(libraryPath);
 }

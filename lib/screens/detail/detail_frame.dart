@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+
 import '../../components/dithered_gradient.dart';
 
 import '../../components/motion.dart';
@@ -6,6 +7,7 @@ import '../../components/page_frame.dart';
 import '../../components/smooth_scroll.dart';
 import '../../design/tokens.dart';
 import 'jump_bar.dart';
+import 'detail_back_button.dart';
 
 /// One part of the Detail page: its name in the jump bar, and what it shows.
 class DetailPart {
@@ -55,7 +57,7 @@ class _DetailFrameState extends State<DetailFrame> {
   final _controller = SmoothScrollController();
   final _topKey = GlobalKey();
   final _viewportKey = GlobalKey();
-  var _keys = <GlobalKey>[];
+  var _keys = <String, GlobalKey>{};
   var _stuck = false;
   var _active = 0;
 
@@ -74,12 +76,12 @@ class _DetailFrameState extends State<DetailFrame> {
     super.dispose();
   }
 
-  // one key per part, kept while the parts keep their names
+  // keyed by name, so a part coming or going never remounts the others
   List<GlobalKey> _keysFor(List<DetailPart> parts) {
-    if (_keys.length != parts.length) {
-      _keys = [for (final _ in parts) GlobalKey()];
-    }
-    return _keys;
+    _keys = {
+      for (final part in parts) part.label: _keys[part.label] ?? GlobalKey(),
+    };
+    return _keys.values.toList();
   }
 
   double? _topOf(GlobalKey key) {
@@ -98,7 +100,7 @@ class _DetailFrameState extends State<DetailFrame> {
       // at the very end the last part is the one in view, short or not
       active = _keys.length - 1;
     } else {
-      for (final (i, key) in _keys.indexed) {
+      for (final (i, key) in _keys.values.indexed) {
         final top = _topOf(key);
         if (top != null && top <= _reach) active = i;
       }
@@ -120,7 +122,7 @@ class _DetailFrameState extends State<DetailFrame> {
   }
 
   void _jump(int index) {
-    final top = _topOf(_keys[index]);
+    final top = _topOf(_keys.values.elementAt(index));
     if (top == null) return;
     setState(() => _active = index);
     _scrollTo(_controller.offset + top - JumpBar.height);

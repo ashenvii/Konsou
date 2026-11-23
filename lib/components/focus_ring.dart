@@ -9,10 +9,12 @@ class FocusRing extends StatelessWidget {
     required this.on,
     required this.child,
     this.color = Tokens.ink,
+    this.corners,
   });
 
   final bool on;
   final Color color;
+  final BorderRadius? corners;
   final Widget child;
 
   @override
@@ -20,6 +22,7 @@ class FocusRing extends StatelessWidget {
     return DecoratedBox(
       position: DecorationPosition.foreground,
       decoration: BoxDecoration(
+        borderRadius: corners,
         border: on ? Border.all(color: color, width: Tokens.focusRing) : null,
       ),
       child: child,

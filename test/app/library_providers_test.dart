@@ -77,7 +77,7 @@ void main() {
     await container.read(entryEditsProvider).setStatus('a', EntryStatus.onHold);
     container.invalidate(libraryRowsProvider);
     final rows = await container.read(libraryRowsProvider.future);
-    expect(rows.single.status, 'on_hold');
+    expect(rows.single.status, EntryStatus.onHold);
   });
 
   test('rows reload on their own when the background work saves', () async {

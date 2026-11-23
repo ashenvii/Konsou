@@ -38,14 +38,19 @@ class _SweepButtonState extends State<SweepButton>
   Timer? _timer;
 
   @override
-  void initState() {
-    super.initState();
-    _timer = Timer(SweepButton.firstSweep, _sweep);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _timer?.cancel();
+      _timer = null;
+    } else {
+      _timer ??= Timer(SweepButton.firstSweep, _sweep);
+    }
   }
 
   void _sweep() {
     if (!mounted) return;
-    if (!MediaQuery.disableAnimationsOf(context)) _controller.forward(from: 0);
+    _controller.forward(from: 0);
     _timer = Timer(SweepButton.gap, _sweep);
   }
 

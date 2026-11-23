@@ -10,7 +10,7 @@ import '../components/floating_panel.dart';
 import '../components/hairline.dart';
 import '../components/hover_mark.dart';
 import '../components/key_cap.dart';
-import '../components/skeleton.dart';
+import '../components/skeleton_lines.dart';
 import '../components/smooth_scroll.dart';
 import '../components/status_mark.dart';
 import '../components/sweep_button.dart';
@@ -51,7 +51,7 @@ class _QuickSearchLayerState extends ConsumerState<QuickSearchLayer> {
     super.dispose();
   }
 
-  KeyEventResult _key(FocusNode node, KeyEvent event) {
+  KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
@@ -84,7 +84,7 @@ class _QuickSearchLayerState extends ConsumerState<QuickSearchLayer> {
     return CloseOnEscape(
       onClose: search.close,
       child: Focus(
-        onKeyEvent: _key,
+        onKeyEvent: _handleKey,
         child: Stack(
           children: [
             // dims everything under the bar; a click on it closes the search

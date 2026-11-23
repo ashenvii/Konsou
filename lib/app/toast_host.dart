@@ -88,7 +88,7 @@ class ToastHost extends _$ToastHost {
   }
 
   void show(ToastMessage message) {
-    _missed();
+    _saveMissedReview();
     _replaceWith(message, message.rating);
   }
 
@@ -105,7 +105,7 @@ class ToastHost extends _$ToastHost {
   }
 
   void dismiss({bool missed = true}) {
-    if (missed) _missed();
+    if (missed) _saveMissedReview();
     time.cancel();
     state = const ToastState();
   }
@@ -113,13 +113,13 @@ class ToastHost extends _$ToastHost {
   void setPointerOver(bool over) {
     if (state.shown == null || state.pointerOver == over) return;
     state = state.copyWith(pointerOver: over);
-    _follow();
+    _followHold();
   }
 
   void setReviewOpen(bool open) {
     if (state.shown == null || state.reviewOpen == open) return;
     state = state.copyWith(reviewOpen: open);
-    _follow();
+    _followHold();
   }
 
   void rate(int? score) {
@@ -139,17 +139,17 @@ class ToastHost extends _$ToastHost {
     return true;
   }
 
-  void _missed() {
+  void _saveMissedReview() {
     final shown = state.shown;
     if (shown?.review != null) shown!.onMissed?.call();
   }
 
   void _restart(ToastMessage message) {
     time.start(message.lifetime);
-    _follow();
+    _followHold();
   }
 
-  void _follow() {
+  void _followHold() {
     if (state.shown == null) return;
     state.held ? time.pause() : time.resume();
   }

@@ -36,13 +36,17 @@ void main() {
   final folders = <Directory>[];
   final devices = <FakeDevice>[];
 
-  Future<FakeDevice> buildDevice({bool signedIn = true}) async {
+  Future<FakeDevice> buildDevice({
+    bool signedIn = true,
+    TokenStore? tokenStore,
+  }) async {
     final folder = Directory.systemTemp.createTempSync('konsou_sync_test');
     folders.add(folder);
     final databases = await openDatabases(folder);
-    final store = MemoryTokenStore();
+    final memory = MemoryTokenStore();
+    final store = tokenStore ?? memory;
     if (signedIn) {
-      store.tokens = GoogleTokens(
+      memory.tokens = GoogleTokens(
         accessToken: google.validToken,
         refreshToken: 'refresh-1',
         expiresAt: _now.add(const Duration(hours: 1)).millisecondsSinceEpoch,
@@ -290,6 +294,24 @@ void main() {
     expect(pc.sync.status.stopReason, StopReason.signInAgain);
   });
 
+  test(
+    'a key store that cannot be read stops sync for a new sign-in',
+    () async {
+      final pc = await buildDevice(tokenStore: BrokenTokenStore());
+
+      await pc.sync.run();
+
+      expect(pc.sync.status.phase, SyncPhase.stopped);
+      expect(pc.sync.status.stopReason, StopReason.signInAgain);
+      expect(google.asked, isEmpty);
+    },
+  );
+
+  test('Close never throws, even when the key store fails', () async {
+    final pc = await buildDevice(tokenStore: BrokenTokenStore());
+    await expectLater(pc.sync.runBeforeClose(), completes);
+  });
+
   test('Drive not answering waits and retries on the backoff', () async {
     final pc = await buildDevice();
     google.driveFailure = 503;
@@ -419,4 +441,15 @@ void main() {
     expect(pc.sync.status.phase, SyncPhase.synced);
     expect(google.file(recordFileName), isNotNull);
   });
+}
+
+class BrokenTokenStore implements TokenStore {
+  @override
+  Future<GoogleTokens?> read() async => throw const FormatException('broken');
+
+  @override
+  Future<void> write(GoogleTokens tokens) async {}
+
+  @override
+  Future<void> clear() async {}
 }

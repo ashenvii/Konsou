@@ -1,7 +1,9 @@
 import '../data/databases.dart';
+import '../data/start_dates.dart';
 import '../library/entry_status.dart';
 import '../library/load_library.dart';
 import '../library/title_language.dart';
+import '../mal/detail_request.dart';
 import '../mal/franchise_grouping.dart';
 import '../mal/franchise_members.dart';
 
@@ -69,15 +71,7 @@ Future<WatchOrder> loadWatchOrder(
   final FranchiseMembers(:saved, :places, :members) = franchise;
   final memberIds = [for (final title in members) title.id].join(', ');
 
-  final gone = {
-    for (final row
-        in await record
-            .customSelect(
-              "SELECT provider_id FROM details.gone_page WHERE provider = 'mal'",
-            )
-            .get())
-      row.read<int>('provider_id'),
-  };
+  final gone = await readGonePages(record, DateTime.now());
 
   // titles the members point at whose own details are not in yet: a story
   // title's sequel or prequel, and anyone's side story or summary
@@ -151,14 +145,10 @@ Future<WatchOrder> loadWatchOrder(
         episodesWatched: entries[title.id]?.read<int>('episodes_watched') ?? 0,
       ),
   };
-  final order = sortByStart([
-    for (final row in rows.values)
-      FranchiseTitle(
-        id: row.malId,
-        mediaType: row.mediaType,
-        startDate: row.startDate,
-        relations: const [],
-      ),
-  ]);
-  return WatchOrder([for (final title in order) rows[title.id]!]);
+  final order = rows.values.toList()
+    ..sort((a, b) {
+      final byDate = compareStartDates(a.startDate, b.startDate);
+      return byDate != 0 ? byDate : a.malId.compareTo(b.malId);
+    });
+  return WatchOrder(order);
 }

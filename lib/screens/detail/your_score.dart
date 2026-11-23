@@ -9,7 +9,7 @@ import '../../components/pressable.dart';
 import '../../components/star_rating.dart';
 import '../../design/tokens.dart';
 import '../../detail/title_entry.dart';
-import 'detail_scores.dart';
+import 'score_figure.dart';
 
 /// The user's own score beside MAL's, the same size. A click opens the ten
 /// stars to set or clear it.

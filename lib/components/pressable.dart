@@ -25,6 +25,7 @@ class Pressable extends StatefulWidget {
     this.label,
     this.selected,
     this.checked,
+    this.expanded,
     this.autofocus = false,
     this.cursor = SystemMouseCursors.click,
     this.focusColor = Tokens.ink,
@@ -36,6 +37,9 @@ class Pressable extends StatefulWidget {
   final String? label;
   final bool? selected;
   final bool? checked;
+
+  /// For a control that opens a menu: whether the menu is showing.
+  final bool? expanded;
   final bool autofocus;
 
   final MouseCursor cursor;
@@ -79,6 +83,7 @@ class _PressableState extends State<Pressable> {
       enabled: enabled,
       selected: widget.selected,
       checked: widget.checked,
+      expanded: widget.expanded,
       child: FocusableActionDetector(
         enabled: enabled,
         autofocus: widget.autofocus,

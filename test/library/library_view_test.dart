@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/library/library_row.dart';
 import 'package:konsou/library/library_view.dart';
 
@@ -13,7 +14,7 @@ LibraryRow row(
   current: LibraryEntry(
     entryId: id,
     name: name ?? id,
-    status: status,
+    status: EntryStatus.parse(status),
     episodesWatched: 0,
     addedAt: added,
     changedAt: changed,
@@ -38,16 +39,16 @@ void main() {
   ];
 
   test('each tab holds its status, Watching holds Rewatching too', () {
-    expect(ids(rowsInTab(rows, LibraryTab.watching)), ['a', 'b']);
-    expect(ids(rowsInTab(rows, LibraryTab.planned)), ['c']);
-    expect(ids(rowsInTab(rows, LibraryTab.completed)), ['d']);
-    expect(ids(rowsInTab(rows, LibraryTab.onHold)), ['e']);
-    expect(ids(rowsInTab(rows, LibraryTab.dropped)), ['f']);
-    expect(ids(rowsInTab(rows, LibraryTab.notInterested)), ['g']);
+    expect(ids(filterRowsByTab(rows, LibraryTab.watching)), ['a', 'b']);
+    expect(ids(filterRowsByTab(rows, LibraryTab.planned)), ['c']);
+    expect(ids(filterRowsByTab(rows, LibraryTab.completed)), ['d']);
+    expect(ids(filterRowsByTab(rows, LibraryTab.onHold)), ['e']);
+    expect(ids(filterRowsByTab(rows, LibraryTab.dropped)), ['f']);
+    expect(ids(filterRowsByTab(rows, LibraryTab.notInterested)), ['g']);
   });
 
   test('All holds everything but Not interested', () {
-    expect(ids(rowsInTab(rows, LibraryTab.all)), [
+    expect(ids(filterRowsByTab(rows, LibraryTab.all)), [
       'a',
       'b',
       'c',
@@ -94,8 +95,8 @@ void main() {
   });
 
   test('Find keeps the rows with a matching entry; null keeps all', () {
-    expect(ids(rowsMatching(rows, {'b', 'd'})), ['b', 'd']);
-    expect(ids(rowsMatching(rows, const {})), isEmpty);
-    expect(rowsMatching(rows, null), rows);
+    expect(ids(filterRowsByFind(rows, {'b', 'd'})), ['b', 'd']);
+    expect(ids(filterRowsByFind(rows, const {})), isEmpty);
+    expect(filterRowsByFind(rows, null), rows);
   });
 }

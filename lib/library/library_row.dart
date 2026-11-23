@@ -1,3 +1,5 @@
+import 'entry_status.dart';
+
 /// One entry as the Library reads it, before franchises are folded.
 class LibraryEntry {
   const LibraryEntry({
@@ -21,7 +23,7 @@ class LibraryEntry {
 
   /// The title in the user's language, else the saved name, else empty.
   final String name;
-  final String status;
+  final EntryStatus status;
   final int episodesWatched;
   final int addedAt;
   final int changedAt;
@@ -103,7 +105,7 @@ class LibraryRow {
 
   String get entryId => current.entryId;
   String get name => current.name;
-  String get status => current.status;
+  EntryStatus get status => current.status;
   int get episodesWatched => current.episodesWatched;
   int? get score => current.score;
   int? get malId => current.malId;
@@ -118,6 +120,10 @@ class LibraryRow {
   bool get isLoadingDetails => current.malId != null && !current.hasDetails;
 
   bool get isFranchise => seasonsTotal != null;
+
+  /// Always true for a single entry; a franchise only once every season on the
+  /// list is done.
+  bool get allSeasonsDone => !isFranchise || seasonsDone == seasonsTotal;
 
   @override
   bool operator ==(Object other) =>

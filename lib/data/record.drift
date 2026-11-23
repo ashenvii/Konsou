@@ -45,7 +45,7 @@ CREATE TABLE match_decline (
   PRIMARY KEY (entry_id, provider, provider_id)
 ) AS MatchDecline;
 
--- no foreign key: a finished watch stays on record after its entry is removed
+-- no foreign key; removing an entry deletes its finished watches in code
 CREATE TABLE completion (
   entry_id             TEXT NOT NULL,
   watch_number         INTEGER NOT NULL,     -- 0 first watch, 1 first rewatch

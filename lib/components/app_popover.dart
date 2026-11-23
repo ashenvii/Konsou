@@ -47,20 +47,12 @@ class _AppPopoverState extends State<AppPopover>
   @override
   bool get isOpen => portalOpen;
 
-  // the page's overlay starts below the bar and right of the rail
-  RenderBox get _overlayBox =>
-      Overlay.of(context).context.findRenderObject()! as RenderBox;
-
   @override
-  void open() {
-    final box = context.findRenderObject()! as RenderBox;
-    final topLeft = box.localToGlobal(Offset.zero, ancestor: _overlayBox);
-    _show(topLeft & box.size);
-  }
+  void open() => _show(measureAnchor());
 
   @override
   void openAt(Offset globalPosition) =>
-      _show(_overlayBox.globalToLocal(globalPosition) & Size.zero);
+      _show(overlayBox.globalToLocal(globalPosition) & Size.zero);
 
   void _show(Rect anchor) => openPortal(() => _anchor = anchor);
 

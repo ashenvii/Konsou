@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../../components/cover_image.dart';
 import '../../components/page_frame.dart';
 import '../../components/skeleton.dart';
+import '../../components/skeleton_lines.dart';
 import '../../design/tokens.dart';
 import '../../library/library_view.dart';
 import 'grid_layout.dart';
@@ -29,6 +30,7 @@ class _GridSkeleton extends StatelessWidget {
       builder: (context, constraints) {
         final layout = GridLayout.forWidth(
           constraints.maxWidth - PageFrame.content.horizontal,
+          textScaler: MediaQuery.textScalerOf(context),
         );
         return GridView.builder(
           padding: PageFrame.content,

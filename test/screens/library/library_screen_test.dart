@@ -14,7 +14,6 @@ import 'package:konsou/components/app_menu.dart';
 import 'package:konsou/components/find_field.dart';
 import 'package:konsou/components/heading_switcher.dart';
 import 'package:konsou/components/pressable.dart';
-import 'package:konsou/components/more_button.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/library/entry_edits.dart';
 import 'package:konsou/library/entry_status.dart';
@@ -35,7 +34,7 @@ LibraryRow row(
   current: LibraryEntry(
     entryId: id,
     name: name ?? 'Title $id',
-    status: status,
+    status: EntryStatus.parse(status),
     episodesWatched: 2,
     addedAt: addedAt,
     changedAt: addedAt,
@@ -111,6 +110,7 @@ void main() {
     Size size = const Size(1100, 800),
     List<LibraryRow> Function()? live,
     bool keys = false,
+    double textScale = 1,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -143,7 +143,10 @@ void main() {
         child: Directionality(
           textDirection: TextDirection.ltr,
           child: MediaQuery(
-            data: MediaQueryData(size: size),
+            data: MediaQueryData(
+              size: size,
+              textScaler: TextScaler.linear(textScale),
+            ),
             child: AppShortcuts(
               libraryOpen: keys,
               child: Overlay(
@@ -345,6 +348,16 @@ void main() {
     expect(find.text('Title 0'), findsOneWidget);
   });
 
+  testWidgets('a grid card fits its two lines of text at 150%', (tester) async {
+    for (final width in [400.0, 1100.0]) {
+      await pumpScreen(tester, sample, size: Size(width, 800), textScale: 1.5);
+      // past the fade in, so the cards are painted and an overflow reported
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.byType(LibraryGridCard), findsWidgets);
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('a status keeps only its own rows', (tester) async {
     await pumpScreen(tester, sample);
     expect(find.byType(LibraryGridCard), findsNWidgets(4));
@@ -541,7 +554,7 @@ void main() {
     await tester.tap(find.bySemanticsLabel('List view'));
     await tester.pump();
     await tester.pump();
-    await tester.tap(find.byType(MoreButton));
+    await tester.tap(find.bySemanticsLabel('More'));
     await tester.pump();
     expect(find.text('Open details'), findsOneWidget);
     await tester.tap(find.text('+ Episode'));

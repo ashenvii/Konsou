@@ -57,7 +57,7 @@ Future<void> main() async {
           ),
           openSupport: support == null || !support.hasScheme
               ? null
-              : () => launchUrl(support, mode: LaunchMode.externalApplication),
+              : () => services.openBrowser(support),
         ),
       ),
     ),

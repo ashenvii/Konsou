@@ -12,6 +12,7 @@ import 'detail_top.dart';
 import 'live_entry_controls.dart';
 import 'page_picker.dart';
 import 'picker_skeleton.dart';
+import 'readable_width.dart';
 
 /// The Detail page of an entry with no MAL page yet: its saved name, a blank
 /// cover, its controls, and the page picker where MAL's details would be.
@@ -49,30 +50,24 @@ class NotLinkedDetail extends ConsumerWidget {
           ),
           Padding(
             padding: PageFrame.content.copyWith(top: Tokens.space5),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: Tokens.detailTextWidth,
-                ),
-                child: looking && suggestions.isEmpty
-                    ? const _Looking()
-                    : PagePicker(
-                        suggestions: suggestions,
-                        results: search.results,
-                        searching: search.searching,
-                        note: _note(search, canSearch: linking != null),
-                        onPick: linking == null
-                            ? null
-                            : (page) => linking.pick(id, page.malId),
-                        onNone: linking == null
-                            ? null
-                            : () => linking.declineAll(id),
-                        onSearch: ref
-                            .read(pickerSearchProvider(id).notifier)
-                            .setQuery,
-                      ),
-              ),
+            child: ReadableWidth(
+              child: looking && suggestions.isEmpty
+                  ? const _Looking()
+                  : PagePicker(
+                      suggestions: suggestions,
+                      results: search.results,
+                      searching: search.searching,
+                      note: _note(search, canSearch: linking != null),
+                      onPick: linking == null
+                          ? null
+                          : (page) => linking.pick(id, page.malId),
+                      onNone: linking == null
+                          ? null
+                          : () => linking.declineAll(id),
+                      onSearch: ref
+                          .read(pickerSearchProvider(id).notifier)
+                          .setQuery,
+                    ),
             ),
           ),
         ],

@@ -4,18 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/date_field.dart';
 import 'package:konsou/components/entry_progress.dart';
 import 'package:konsou/design/tokens.dart';
-import 'package:konsou/detail/title_details.dart';
-import 'package:konsou/detail/watch_order.dart';
 import 'package:konsou/detail/info_labels.dart';
+import 'package:konsou/detail/title_details.dart';
 import 'package:konsou/gallery/detail_section.dart';
 import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/screens/detail/entry_controls.dart';
 import 'package:konsou/screens/detail/episode_count.dart';
-import 'package:konsou/screens/detail/detail_parts.dart';
 import 'package:konsou/screens/detail/jump_bar.dart';
-import 'package:konsou/screens/detail/watch_order_strip.dart';
+import 'package:konsou/screens/detail/overview_part.dart';
 
-import 'support/pump_widget.dart';
+import '../../support/pump_widget.dart';
 
 void main() {
   test('progress draws steps by episode count, fewer on a narrow window', () {
@@ -30,48 +28,8 @@ void main() {
     expect(EntryProgress.drawsSteps(1200, 0), isFalse);
   });
 
-  test('the watch order summary counts the list and the episodes', () {
-    expect(
-      watchOrderSummary(sampleWatchOrder),
-      '2 of 4 on your list · 16 of 40 episodes watched',
-    );
-  });
-
-  test('a card says the status with its episodes, live ones in teal', () {
-    final rows = sampleWatchOrder.rows;
-    expect(watchOrderState(rows[0]), ('Watching 4 / 28', true));
-    // a finished title says only its episodes
-    expect(watchOrderState(rows[1]), ('12 ep', false));
-    expect(watchOrderState(rows[2]), ('Not aired yet', false));
-    expect(watchOrderState(rows[3]), ('', false));
-    const planned = WatchOrderRow(
-      malId: 9,
-      name: 'x',
-      isExtra: false,
-      status: EntryStatus.planned,
-      episodes: 12,
-    );
-    expect(watchOrderState(planned), ('Planned · 12 ep', false));
-  });
-
-  test('the square is named for a screen reader', () {
-    final rows = sampleWatchOrder.rows;
-    expect(watchOrderStateLabel(rows[0]), 'Watching');
-    expect(watchOrderStateLabel(rows[1]), 'Completed');
-    expect(watchOrderStateLabel(rows[2]), 'Not aired yet');
-    expect(watchOrderStateLabel(rows[3]), 'Loading details');
-  });
-
-  test('a card has its date and type beside its number', () {
-    final rows = sampleWatchOrder.rows;
-    expect(watchOrderWhen(rows[0]), '2023');
-    expect(watchOrderMeta(rows[0]), '2023 · TV');
-    // still to air: the whole date
-    expect(watchOrderWhen(rows[2]), '16 Jan 2026');
-  });
-
   test('info rows leave out what MAL did not give', () {
-    final rows = infoRows(sampleDetails);
+    final rows = listInfoRows(sampleDetails);
     // what the top already shows is not said again
     expect(rows.map((r) => r.$1), isNot(contains('Type')));
     expect(rows.map((r) => r.$1), isNot(contains('Genres')));
@@ -81,9 +39,9 @@ void main() {
       rows.firstWhere((r) => r.$1 == 'Broadcast').$2,
       'Fridays at 23:00 JST',
     );
-    expect(dateWords('2023'), '2023');
-    expect(dateWords('2023-09'), 'Sep 2023');
-    expect(dateWords(null), isNull);
+    expect(formatMalDate('2023'), '2023');
+    expect(formatMalDate('2023-09'), 'Sep 2023');
+    expect(formatMalDate(null), isNull);
   });
 
   testWidgets('a step click sets the count', (tester) async {
@@ -281,12 +239,12 @@ void main() {
   testWidgets('names that do not fit in the jump bar go under More', (
     tester,
   ) async {
-    Widget bar(double width) => SizedBox(
+    Widget bar(double width, {int active = 0}) => SizedBox(
       width: width,
       child: JumpBar(
         title: 'Frieren',
         labels: const ['Overview', 'Watch order', 'Stats', 'Recommendations'],
-        active: 0,
+        active: active,
         stuck: false,
         onJump: (_) {},
         onBack: () {},
@@ -297,10 +255,36 @@ void main() {
     expect(find.text('Recommendations'), findsOneWidget);
     expect(find.text('More'), findsNothing);
 
-    await pumpWidget(tester, bar(400));
+    await pumpWidget(tester, bar(520));
+    expect(find.text('Overview'), findsOneWidget);
     expect(find.text('Recommendations'), findsNothing);
     expect(find.text('More'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the More tab has room for the active name it shows', (
+    tester,
+  ) async {
+    const labels = ['Overview', 'Watch order', 'Stats', 'Recommendations'];
+    await pumpWidget(
+      tester,
+      SizedBox(
+        width: 520,
+        child: JumpBar(
+          title: 'Frieren',
+          labels: labels,
+          active: 3,
+          stuck: false,
+          onJump: (_) {},
+          onBack: () {},
+          onTop: () {},
+        ),
+      ),
+    );
+    final barBox = tester.getRect(find.byType(JumpBar));
+    final shown = tester.getRect(find.text('Recommendations'));
+    expect(find.text('More'), findsNothing);
+    expect(shown.right, lessThanOrEqualTo(barBox.right));
   });
 
   group('the episode count', () {

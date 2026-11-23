@@ -1,11 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/library/library_row.dart';
 
 LibraryRow row(String id, {int episodes = 1}) => LibraryRow(
   current: LibraryEntry(
     entryId: id,
     name: 'T',
-    status: 'watching',
+    status: EntryStatus.watching,
     episodesWatched: episodes,
     addedAt: 1,
     changedAt: 1,

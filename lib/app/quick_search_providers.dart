@@ -9,7 +9,6 @@ import '../library/library_row.dart';
 import '../library/load_library.dart';
 import '../library/quick_search.dart';
 import '../library/title_language.dart';
-import '../mal/request_gate.dart';
 import '../mal/search_request.dart';
 import '../search/entry_search.dart';
 import 'library_providers.dart';
@@ -238,7 +237,7 @@ class QuickSearch extends _$QuickSearch {
     _language = await readTitleLanguage(databases.record);
     final entries = await loadLibraryEntries(databases, _language);
     _entries = {for (final entry in entries) entry.entryId: entry};
-    _search = await ref.read(entrySearchProvider.future);
+    _search = await readEntrySearch(ref);
   }
 
   Future<List<QuickRow>> _recentRows() async => [

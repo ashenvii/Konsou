@@ -41,14 +41,14 @@ class QuickRow {
 
 QuickRow quickRowFromEntry(LibraryEntry entry) {
   return QuickRow(
-    name: titleOrLoading(entry.name),
+    name: formatTitle(entry.name),
     line: [
-      typeYear(entry.mediaType, entry.startDate),
-      episodeProgress(entry.episodesWatched, entry.episodes),
+      formatTypeYear(entry.mediaType, entry.startDate),
+      formatProgress(entry.episodesWatched, entry.episodes),
     ].where((part) => part.isNotEmpty).join(' · '),
     entryId: entry.entryId,
     malId: entry.malId,
-    status: EntryStatus.parse(entry.status),
+    status: entry.status,
     episodes: entry.episodes,
   );
 }
@@ -67,7 +67,7 @@ QuickRow quickRowFromPage(Map<String, dynamic> page, TitleLanguage language) {
   final episodes = page['num_episodes'] as int?;
   return QuickRow(
     name: name,
-    line: typeYear(
+    line: formatTypeYear(
       page['media_type'] as String?,
       page['start_date'] as String?,
     ),

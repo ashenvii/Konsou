@@ -439,6 +439,17 @@ void main() {
       },
     );
 
+    test('two quick presses on Add add the title once', () async {
+      await addTitle(1, '2020-01-01');
+
+      await Future.wait([
+        actions.add(title(1), EntryStatus.watching),
+        actions.add(title(1), EntryStatus.watching),
+      ]);
+
+      expect((await onlyEntry()).status, 'watching');
+    });
+
     test('added as Completed, it offers the earlier titles', () async {
       await addTitle(1, '2019-01-01', relations: [(2, 'sequel')]);
       await addTitle(2, '2020-01-01', relations: [(1, 'prequel')]);

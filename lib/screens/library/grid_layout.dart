@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/widgets.dart';
 
 import '../../components/cover_image.dart';
+import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 
 /// How many cards fit across the Library's grid and how big each one is: as
@@ -30,7 +31,7 @@ class GridLayout {
     mainAxisExtent: cardHeight,
   );
 
-  factory GridLayout.forWidth(double width) {
+  factory GridLayout.forWidth(double width, {required TextScaler textScaler}) {
     final columns = max(
       1,
       ((width + columnGap) / (Tokens.gridCardMinWidth + columnGap)).floor(),
@@ -40,13 +41,25 @@ class GridLayout {
     final cardHeight =
         CoverImage.heightFor(cardWidth) +
         Tokens.space2 +
-        Tokens.text2 +
+        _lineHeight(AppText.label(Tokens.ink, bold: true), textScaler) +
         Tokens.space1 +
-        Tokens.text1;
+        _lineHeight(AppText.caption(Tokens.inkMuted), textScaler);
     return GridLayout(
       columns: columns,
       cardWidth: cardWidth,
       cardHeight: cardHeight,
     );
+  }
+
+  static double _lineHeight(TextStyle style, TextScaler textScaler) {
+    final painter = TextPainter(
+      text: TextSpan(text: 'Ag', style: style),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+      textScaler: textScaler,
+    )..layout();
+    final height = painter.height;
+    painter.dispose();
+    return height;
   }
 }

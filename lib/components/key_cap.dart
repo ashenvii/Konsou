@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../design/text_styles.dart';
 import '../design/tokens.dart';
 
 class KeyCaps extends StatelessWidget {
@@ -16,16 +17,11 @@ class KeyCaps extends StatelessWidget {
       children: [
         for (final (index, part) in parts.indexed) ...[
           if (index > 0)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: Tokens.space1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Tokens.space1),
               child: Text(
                 '+',
-                style: TextStyle(
-                  fontFamily: Tokens.mono,
-                  fontSize: Tokens.text1,
-                  height: 1,
-                  color: Tokens.inkMuted,
-                ),
+                style: AppText.tally(Tokens.inkMuted, size: Tokens.text1),
               ),
             ),
           _KeyCap(part),
@@ -58,12 +54,7 @@ class _KeyCap extends StatelessWidget {
               label,
               maxLines: 1,
               softWrap: false,
-              style: TextStyle(
-                fontFamily: Tokens.mono,
-                fontSize: Tokens.text1,
-                height: 1,
-                color: Tokens.inkSoft,
-              ),
+              style: AppText.tally(Tokens.inkSoft, size: Tokens.text1),
             ),
           ),
         ),

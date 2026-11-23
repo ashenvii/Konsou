@@ -488,6 +488,13 @@ void main() {
       expect(entry.linkChangedAt, _now.millisecondsSinceEpoch);
     });
 
+    test('linking an entry removed meanwhile does nothing', () async {
+      await buildMatching().linkEntry('removed', 567, lane: Lane.screen);
+
+      expect(await readMalId('removed'), isNull);
+      expect(asked, isEmpty);
+    });
+
     test('runs not-linked entries due a search, in trickle order', () async {
       await addEntry('linked', 'Linked', malId: 1);
       await addEntry('planned', 'Planned Show', updatedAt: 5);

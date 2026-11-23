@@ -27,12 +27,6 @@ const _mayImport = <String, Set<String>>{
     'icons',
     'library',
     'detail',
-    'data',
-    'import',
-    'mal',
-    'search',
-    'sync',
-    'net',
   },
 };
 

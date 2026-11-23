@@ -40,7 +40,7 @@ final class ToastHostProvider extends $NotifierProvider<ToastHost, ToastState> {
   }
 }
 
-String _$toastHostHash() => r'537cb6de8a3ca3cd43f7d41564e611ab5b50b017';
+String _$toastHostHash() => r'eb2c41d8cb6854faee08abdb9c46b91c7bf69d2e';
 
 abstract class _$ToastHost extends $Notifier<ToastState> {
   ToastState build();

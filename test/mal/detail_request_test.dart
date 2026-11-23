@@ -9,7 +9,6 @@ import 'package:konsou/mal/detail_request.dart';
 import 'package:konsou/mal/request_gate.dart';
 
 final _now = DateTime.utc(2026, 11, 8, 12);
-const _day = Duration(days: 1);
 
 void main() {
   late Directory folder;
@@ -144,49 +143,5 @@ void main() {
       expect(outcome, FetchOutcome.failed);
     }
     expect(await rows('detail'), isEmpty);
-  });
-
-  group('a title on screen is stale', () {
-    int fetchedAgo(Duration age) => _now.subtract(age).millisecondsSinceEpoch;
-
-    test('after a day when airing or upcoming', () {
-      for (final status in ['currently_airing', 'not_yet_aired']) {
-        expect(
-          isStale(
-            airingStatus: status,
-            fetchedAt: fetchedAgo(_day * 0.9),
-            now: _now,
-          ),
-          isFalse,
-        );
-        expect(
-          isStale(
-            airingStatus: status,
-            fetchedAt: fetchedAgo(_day * 1.1),
-            now: _now,
-          ),
-          isTrue,
-        );
-      }
-    });
-
-    test('after 30 days when finished', () {
-      expect(
-        isStale(
-          airingStatus: 'finished_airing',
-          fetchedAt: fetchedAgo(_day * 29),
-          now: _now,
-        ),
-        isFalse,
-      );
-      expect(
-        isStale(
-          airingStatus: 'finished_airing',
-          fetchedAt: fetchedAgo(_day * 31),
-          now: _now,
-        ),
-        isTrue,
-      );
-    });
   });
 }

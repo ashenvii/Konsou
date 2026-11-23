@@ -10,9 +10,13 @@ import '../../components/date_field.dart';
 import '../../components/hold_row.dart';
 import '../../components/notes_field.dart';
 import '../../design/text_styles.dart';
+import '../../components/hairline.dart';
 import '../../design/tokens.dart';
 import '../../detail/title_entry.dart';
 import '../../library/entry_status.dart';
+import '../../library/row_labels.dart';
+import 'detail_section.dart';
+import 'section_note.dart';
 import 'detail_block.dart';
 
 /// The user's own record of a title on the list, at the foot of the Detail
@@ -39,7 +43,7 @@ class _YourEntrySectionState extends ConsumerState<YourEntrySection> {
   final _notes = GlobalKey<NotesFieldState>();
 
   // read once: the notes are saved after the page has gone, when ref is not
-  late final _edits = ref.read(entryEditsProvider);
+  late final _actions = ref.read(entryActionsProvider);
 
   String get _id => widget.entry.entryId;
 
@@ -63,7 +67,7 @@ class _YourEntrySectionState extends ConsumerState<YourEntrySection> {
         initial: entry.notes ?? '',
         placeholder: 'Anything you want to remember about it',
         fill: Tokens.ground,
-        onSave: (text) => _edits.setNotes(_id, text),
+        onSave: (text) => _actions.setNotes(_id, text),
       ),
     );
     final dates = Column(
@@ -79,7 +83,7 @@ class _YourEntrySectionState extends ConsumerState<YourEntrySection> {
                   : DateTime.fromMillisecondsSinceEpoch(started),
               latest: DateTime.now(),
               fill: Tokens.ground,
-              onChanged: (date) => _edits.setStartedDate(_id, date),
+              onChanged: (date) => _actions.setStartedDate(_id, date),
             ),
           ),
         ),
@@ -152,10 +156,7 @@ class _YourEntrySectionState extends ConsumerState<YourEntrySection> {
                     ],
                     const SizedBox(height: Tokens.space5),
                     // the ways out of the entry, apart from the fields
-                    const ColoredBox(
-                      color: Tokens.ground,
-                      child: SizedBox(height: 1),
-                    ),
+                    const Hairline(color: Tokens.ground),
                     const SizedBox(height: Tokens.space4),
                     if (wide)
                       Row(

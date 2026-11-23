@@ -26,6 +26,7 @@ class CoverTrickle {
     _stopped = false;
     await store.forgetMissingFiles();
     final run = await drainQueue<int>(
+      tag: 'covers',
       isStopped: () => _stopped,
       next: _nextTitle,
       // a failure or a title with no picture is left alone for this run

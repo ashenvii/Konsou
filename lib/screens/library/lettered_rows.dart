@@ -64,6 +64,7 @@ class _LetteredRowsState extends ConsumerState<LetteredRows> {
       builder: (context, constraints) {
         final layout = GridLayout.forWidth(
           constraints.maxWidth - PageFrame.content.horizontal - _stripGutter,
+          textScaler: MediaQuery.textScalerOf(context),
         );
         // each group is its heading, its rows, then a gap
         double extent(int count) {
@@ -92,9 +93,9 @@ class _LetteredRowsState extends ConsumerState<LetteredRows> {
                 for (final group in groups)
                   SliverPadding(
                     // room on the right for the letter strip
-                    padding: const EdgeInsets.only(
-                      left: Tokens.space5,
-                      right: Tokens.space5 + _stripGutter,
+                    padding: EdgeInsets.only(
+                      left: PageFrame.content.left,
+                      right: PageFrame.content.right + _stripGutter,
                     ),
                     sliver: SliverMainAxisGroup(
                       slivers: [
@@ -158,7 +159,7 @@ class _Heading extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: Text(
           letter,
-          semanticsLabel: letterLabel(letter),
+          semanticsLabel: formatLetterLabel(letter),
           style: AppText.heading,
         ),
       ),
@@ -213,7 +214,7 @@ class _StripState extends State<_Strip> {
                 for (final letter in letterHeadings)
                   Semantics(
                     button: true,
-                    label: letterLabel(letter),
+                    label: formatLetterLabel(letter),
                     excludeSemantics: true,
                     onTap: widget.present.contains(letter)
                         ? () => widget.onLetter(letter)

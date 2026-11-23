@@ -5,12 +5,12 @@ import '../components/app_menu.dart';
 import '../components/app_popover.dart';
 import '../components/hover_tip.dart';
 import '../components/icon_square_button.dart';
-import '../components/panel.dart';
 import '../components/presence.dart';
 import '../components/toast_view.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import '../icons/app_icons.dart';
+import 'gallery_panel.dart';
 
 /// Things appearing and going, live: a menu, a tip and a toast.
 class MotionSection extends StatefulWidget {
@@ -28,7 +28,7 @@ class _MotionSectionState extends State<MotionSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Panel(
+        GalleryPanel(
           child: Wrap(
             spacing: Tokens.space5,
             runSpacing: Tokens.space3,

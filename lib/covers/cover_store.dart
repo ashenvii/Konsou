@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'package:http/http.dart' as http;
 
@@ -66,25 +68,11 @@ class CoverStore {
       return CoverOutcome.current;
     }
 
-    final http.Response response;
-    try {
-      response = await gate.send(
-        lane,
-        () => client.get(Uri.parse(url)),
-        wanted: wanted,
-      );
-    } on Exception {
-      return CoverOutcome.failed;
-    }
-    final isImage = (response.headers['content-type'] ?? '').startsWith(
-      'image/',
-    );
-    if (response.statusCode != 200 || !isImage || response.bodyBytes.isEmpty) {
-      return CoverOutcome.failed;
-    }
+    final bytes = await _getImage(url, lane, wanted);
+    if (bytes == null) return CoverOutcome.failed;
 
     final fileName = '$malId-${size.name}${_extension(url)}';
-    await _save(_fileOf(fileName), response.bodyBytes);
+    await _save(_fileOf(fileName), bytes);
     if (old != null && old.fileName != fileName) {
       await _deleteFile(old.fileName);
     }
@@ -98,7 +86,7 @@ class CoverStore {
             size: size.name,
             url: url,
             fileName: fileName,
-            bytes: response.bodyBytes.length,
+            bytes: bytes.length,
             fetchedAt: at,
             shownAt: at,
           ),
@@ -115,48 +103,65 @@ class CoverStore {
     String url, {
     bool Function()? wanted,
   }) async {
-    final titleFolder = Directory(
-      '${_pictures.path}${Platform.pathSeparator}$malId',
-    );
+    final separator = Platform.pathSeparator;
     final file = File(
-      '${titleFolder.path}${Platform.pathSeparator}'
-      '${url.hashCode.toRadixString(36)}${_extension(url)}',
+      '${_pictures.path}$separator$malId$separator'
+      '${sha1.convert(utf8.encode(url))}${_extension(url)}',
     );
-    if (await file.exists()) return file;
-    final http.Response response;
-    try {
-      response = await gate.send(
-        Lane.page,
-        () => client.get(Uri.parse(url)),
-        wanted: wanted,
-      );
-    } on Exception {
-      return null;
+    if (await file.exists()) {
+      await _markSeen(file);
+      return file;
     }
-    final isImage = (response.headers['content-type'] ?? '').startsWith(
-      'image/',
-    );
-    if (response.statusCode != 200 || !isImage || response.bodyBytes.isEmpty) {
-      return null;
-    }
-    await _save(file, response.bodyBytes);
-    await _keepRecentPictures();
+    final bytes = await _getImage(url, Lane.page, wanted);
+    if (bytes == null) return null;
+    await _save(file, bytes);
+    await _markSeen(file);
+    await (_trimming ??= _keepRecentPictures().whenComplete(
+      () => _trimming = null,
+    ));
     return file;
   }
 
   static const keptPictureTitles = 6;
 
+  Future<void>? _trimming;
+
   Directory get _pictures =>
       Directory('${folder.path}${Platform.pathSeparator}pictures');
 
-  // the folders of titles seen longest ago go first
+  // a picture's modified time is when it was last asked for
+  Future<void> _markSeen(File picture) async {
+    try {
+      await picture.setLastModified(_now());
+    } on FileSystemException {
+      return;
+    }
+  }
+
+  // the titles seen longest ago go first
   Future<void> _keepRecentPictures() async {
-    final titles = [
-      for (final folder in await _pictures.list().toList())
-        if (folder is Directory) (folder, (await folder.stat()).modified),
-    ]..sort((a, b) => b.$2.compareTo(a.$2));
+    final titles = <(Directory, DateTime)>[];
+    for (final title in await _pictures.list().toList()) {
+      if (title is! Directory) continue;
+      try {
+        var lastSeen = DateTime(0);
+        for (final picture in await title.list().toList()) {
+          final modified = (await picture.stat()).modified;
+          if (modified.isAfter(lastSeen)) lastSeen = modified;
+        }
+        titles.add((title, lastSeen));
+      } on FileSystemException {
+        continue;
+      }
+    }
+    titles.sort((a, b) => b.$2.compareTo(a.$2));
     for (final (old, _) in titles.skip(keptPictureTitles)) {
-      await old.delete(recursive: true);
+      try {
+        await old.delete(recursive: true);
+      } on FileSystemException {
+        // windows will not delete a picture that is still open on screen
+        continue;
+      }
     }
   }
 
@@ -237,6 +242,30 @@ class CoverStore {
         ? row.coverMediumUrl
         : row.coverLargeUrl;
     return url == null || url.isEmpty ? null : url;
+  }
+
+  Future<Uint8List?> _getImage(
+    String url,
+    Lane lane,
+    bool Function()? wanted,
+  ) async {
+    final http.Response response;
+    try {
+      response = await gate.send(
+        lane,
+        () => client.get(Uri.parse(url)),
+        wanted: wanted,
+      );
+    } on Exception {
+      return null;
+    }
+    final isImage = (response.headers['content-type'] ?? '').startsWith(
+      'image/',
+    );
+    if (response.statusCode != 200 || !isImage || response.bodyBytes.isEmpty) {
+      return null;
+    }
+    return response.bodyBytes;
   }
 
   File _fileOf(String fileName) =>

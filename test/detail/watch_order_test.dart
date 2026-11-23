@@ -163,7 +163,7 @@ void main() {
           GonePageCompanion.insert(
             provider: 'mal',
             providerId: 30,
-            checkedAt: 1,
+            checkedAt: DateTime.now().millisecondsSinceEpoch,
           ),
         );
     final order = await load(1);

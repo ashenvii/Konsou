@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/library/letters.dart';
 import 'package:konsou/library/library_row.dart';
 
@@ -6,7 +7,7 @@ LibraryRow row(String name) => LibraryRow(
   current: LibraryEntry(
     entryId: name,
     name: name,
-    status: 'completed',
+    status: EntryStatus.completed,
     episodesWatched: 0,
     addedAt: 0,
     changedAt: 0,
@@ -18,17 +19,17 @@ LibraryRow row(String name) => LibraryRow(
 
 void main() {
   test('a title sorts under its first letter, accents folded', () {
-    expect(letterOf('Frieren'), 'F');
-    expect(letterOf('frieren'), 'F');
-    expect(letterOf('Éclair'), 'E');
-    expect(letterOf('Ōkami'), 'O');
+    expect(readLetter('Frieren'), 'F');
+    expect(readLetter('frieren'), 'F');
+    expect(readLetter('Éclair'), 'E');
+    expect(readLetter('Ōkami'), 'O');
   });
 
   test('digits, symbols, other scripts and nothing go under #', () {
-    expect(letterOf('86 Eighty-Six'), '#');
-    expect(letterOf('.hack//Sign'), 'H');
-    expect(letterOf('進撃の巨人'), '#');
-    expect(letterOf(''), '#');
+    expect(readLetter('86 Eighty-Six'), '#');
+    expect(readLetter('.hack//Sign'), 'H');
+    expect(readLetter('進撃の巨人'), '#');
+    expect(readLetter(''), '#');
   });
 
   test('groups come in heading order and empty ones are left out', () {

@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/components/app_menu.dart';
 import 'package:konsou/components/hold_row.dart';
 import 'package:konsou/icons/app_icon.dart';
@@ -12,7 +13,7 @@ LibraryRow row({String status = 'watching', int seasons = 1}) => LibraryRow(
   current: LibraryEntry(
     entryId: 'a',
     name: 'Frieren',
-    status: status,
+    status: EntryStatus.parse(status),
     episodesWatched: 3,
     addedAt: 0,
     changedAt: 0,

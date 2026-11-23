@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 
 import '../../app/cover_view.dart';
+import '../../app/detail_providers.dart' show maxSuggestions;
+import '../../app/providers.dart';
 import '../../components/app_button.dart';
 import '../../components/find_field.dart';
 import '../../components/hairline.dart';
@@ -10,63 +12,7 @@ import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../detail/provider_page.dart';
 import '../../library/row_labels.dart';
-import '../../mal/matching.dart' show maxSuggestions;
-import '../../mal/request_gate.dart';
 import 'picker_skeleton.dart';
-
-/// A suggested MAL page: cover, title, type and year, episodes, and Pick.
-class _PagePickerRow extends StatelessWidget {
-  const _PagePickerRow({required this.page, required this.onPick});
-
-  final ProviderPage page;
-  final VoidCallback? onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    final count = page.episodes;
-    final episodes = count == null ? '' : episodeCount(count);
-    final line = [
-      typeYear(page.mediaType, page.startDate),
-      episodes,
-    ].where((part) => part.isNotEmpty).join(' · ');
-    return Container(
-      height: Tokens.listRowHeight,
-      padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
-      child: Row(
-        children: [
-          // a suggestion's details are not saved, so the cover fetches them
-          CoverView(
-            lane: Lane.page,
-            malId: page.malId,
-            width: Tokens.listCoverWidth,
-            loading: true,
-          ),
-          const SizedBox(width: Tokens.space3),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                OneLineText(
-                  titleOrLoading(page.name),
-                  style: AppText.label(Tokens.ink),
-                ),
-                const SizedBox(height: Tokens.space2),
-                OneLineText(line, style: AppText.caption(Tokens.inkMuted)),
-              ],
-            ),
-          ),
-          const SizedBox(width: Tokens.space3),
-          AppButton(
-            label: 'Pick',
-            kind: ButtonKind.secondary,
-            onPressed: onPick,
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 /// What an entry with no MAL page shows in place of MAL's details: up to five
 /// suggestions, "None of these", and a search box.
@@ -142,6 +88,60 @@ class PagePicker extends StatelessWidget {
         if (searching) const PickerSkeleton(),
         for (final page in results) ...[_row(page), const Hairline()],
       ],
+    );
+  }
+}
+
+/// A suggested MAL page: cover, title, type and year, episodes, and Pick.
+class _PagePickerRow extends StatelessWidget {
+  const _PagePickerRow({required this.page, required this.onPick});
+
+  final ProviderPage page;
+  final VoidCallback? onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = page.episodes;
+    final episodes = count == null ? '' : formatEpisodes(count);
+    final line = [
+      formatTypeYear(page.mediaType, page.startDate),
+      episodes,
+    ].where((part) => part.isNotEmpty).join(' · ');
+    return Container(
+      height: Tokens.listRowHeight,
+      padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
+      child: Row(
+        children: [
+          // a suggestion's details are not saved, so the cover fetches them
+          CoverView(
+            lane: Lane.page,
+            malId: page.malId,
+            width: Tokens.listCoverWidth,
+            loading: true,
+          ),
+          const SizedBox(width: Tokens.space3),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                OneLineText(
+                  formatTitle(page.name),
+                  style: AppText.label(Tokens.ink),
+                ),
+                const SizedBox(height: Tokens.space2),
+                OneLineText(line, style: AppText.caption(Tokens.inkMuted)),
+              ],
+            ),
+          ),
+          const SizedBox(width: Tokens.space3),
+          AppButton(
+            label: 'Pick',
+            kind: ButtonKind.secondary,
+            onPressed: onPick,
+          ),
+        ],
+      ),
     );
   }
 }

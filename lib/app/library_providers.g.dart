@@ -505,7 +505,7 @@ final class LibrarySortChoiceProvider
   LibrarySortChoice create() => LibrarySortChoice();
 }
 
-String _$librarySortChoiceHash() => r'620103c3a899d01b96b9680b0fe0189dde7ab2c6';
+String _$librarySortChoiceHash() => r'34bc9682cb621f0b3a1793ee8c7cde77b83bd2f1';
 
 abstract class _$LibrarySortChoice extends $AsyncNotifier<LibrarySort> {
   FutureOr<LibrarySort> build();
@@ -550,7 +550,7 @@ final class LibraryLayoutChoiceProvider
 }
 
 String _$libraryLayoutChoiceHash() =>
-    r'54b2943451e1196c95249bcc997d462867f03615';
+    r'091ca932d2592b1d6ba01f37f58e59977ff1a083';
 
 abstract class _$LibraryLayoutChoice extends $AsyncNotifier<LibraryLayout> {
   FutureOr<LibraryLayout> build();

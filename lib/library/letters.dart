@@ -32,10 +32,10 @@ const letterHeadings = [
 ];
 
 /// What a screen reader says for a heading.
-String letterLabel(String letter) =>
+String formatLetterLabel(String letter) =>
     letter == '#' ? 'Numbers and symbols' : letter;
 
-String letterOf(String name) {
+String readLetter(String name) {
   final folded = foldTitle(name);
   if (folded.isEmpty) return '#';
   final first = folded[0].toUpperCase();
@@ -47,7 +47,7 @@ List<({String letter, List<LibraryRow> rows})> groupByLetter(
 ) {
   final byLetter = <String, List<LibraryRow>>{};
   for (final row in rows) {
-    byLetter.putIfAbsent(letterOf(row.name), () => []).add(row);
+    byLetter.putIfAbsent(readLetter(row.name), () => []).add(row);
   }
   return [
     for (final letter in letterHeadings)

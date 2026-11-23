@@ -40,6 +40,16 @@ void main() {
       expect(second.deviceId, first.deviceId);
     });
 
+    test('two first calls at once leave one device row', () async {
+      final record = databases.record;
+      final devices = await Future.wait([
+        readDevice(record),
+        readDevice(record),
+      ]);
+      expect(devices[1].deviceId, devices[0].deviceId);
+      expect(await record.select(record.device).get(), hasLength(1));
+    });
+
     test(
       'the edit time reads the newest time seen from the device row',
       () async {

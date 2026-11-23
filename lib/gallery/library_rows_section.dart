@@ -2,15 +2,17 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/providers.dart';
-import '../components/more_button.dart';
+import '../components/icon_square_button.dart';
 import '../design/tokens.dart';
+import '../icons/app_icons.dart';
+import '../library/entry_status.dart';
 import '../library/library_row.dart';
 import '../screens/library/library_grid_card.dart';
 import '../screens/library/library_list_row.dart';
 
 LibraryRow _row({
   required String name,
-  required String status,
+  required EntryStatus status,
   required int watched,
   int? episodes,
   int? score,
@@ -45,7 +47,7 @@ LibraryRow _row({
 final sampleRows = [
   _row(
     name: 'Sousou no Frieren',
-    status: 'watching',
+    status: EntryStatus.watching,
     watched: 4,
     episodes: 28,
     score: 9,
@@ -54,7 +56,7 @@ final sampleRows = [
   ),
   _row(
     name: 'Kaguya-sama: Love Is War',
-    status: 'completed',
+    status: EntryStatus.completed,
     watched: 37,
     episodes: 37,
     score: 10,
@@ -65,7 +67,7 @@ final sampleRows = [
   ),
   _row(
     name: 'Mushoku Tensei',
-    status: 'completed',
+    status: EntryStatus.completed,
     watched: 11,
     episodes: 11,
     score: 8,
@@ -76,7 +78,7 @@ final sampleRows = [
   ),
   _row(
     name: 'Look Back',
-    status: 'plan_to_watch',
+    status: EntryStatus.planned,
     watched: 0,
     episodes: 1,
     mediaType: 'movie',
@@ -85,16 +87,16 @@ final sampleRows = [
   ),
   _row(
     name: 'A name that goes on for much longer than the room it is given',
-    status: 'on_hold',
+    status: EntryStatus.onHold,
     watched: 6,
     episodes: 24,
     startDate: '2018',
     malId: 5,
   ),
-  _row(name: 'Saved name only', status: 'dropped', watched: 2),
+  _row(name: 'Saved name only', status: EntryStatus.dropped, watched: 2),
   _row(
     name: '',
-    status: 'plan_to_watch',
+    status: EntryStatus.planned,
     watched: 0,
     malId: 6,
     hasDetails: false,
@@ -131,27 +133,21 @@ class LibraryRowsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: Tokens.space5),
-          for (final row in sampleRows)
-            LibraryListRow(
-              row: row,
-              showStatus: true,
-              onOpen: () {},
-              onCheck: (_) {},
-              onContextMenu: (_) {},
-              menu: MoreButton(onPressed: () {}),
-            ),
+          for (final row in sampleRows) _listRow(row, showStatus: true),
           const SizedBox(height: Tokens.space5),
           for (final row in sampleRows.take(2))
-            LibraryListRow(
-              row: row,
-              showStatus: false,
-              onOpen: () {},
-              onCheck: (_) {},
-              onContextMenu: (_) {},
-              menu: MoreButton(onPressed: () {}),
-            ),
+            _listRow(row, showStatus: false),
         ],
       ),
     );
   }
 }
+
+Widget _listRow(LibraryRow row, {required bool showStatus}) => LibraryListRow(
+  row: row,
+  showStatus: showStatus,
+  onOpen: () {},
+  onCheck: (_) {},
+  onContextMenu: (_) {},
+  menu: IconSquareButton(icon: AppIcons.more, label: 'More', onPressed: () {}),
+);

@@ -47,10 +47,10 @@ class _LoadWordmarkState extends State<LoadWordmark> {
     super.initState();
     _progress = ValueNotifier(widget.progress);
     if (widget.progress.job != null) _turnTo(_Side.count);
-    _listening = widget.updates.listen(_heard);
+    _listening = widget.updates.listen(_showProgress);
   }
 
-  void _heard(LoadProgress now) {
+  void _showProgress(LoadProgress now) {
     final wasLoading = _progress.value.job != null;
     _progress.value = now;
     if (now.job != null) {
@@ -134,12 +134,9 @@ class _LoadCount extends StatelessWidget {
   Widget build(BuildContext context) {
     final count = progress.current ?? (done: 0, total: 0);
     final digits = formatCount(count.done);
-    final color = progress.waiting ? Tokens.ink : Tokens.pop;
-    final style = AppText.tally(color).copyWith(
-      shadows: progress.waiting
-          ? null
-          : const [Shadow(color: Tokens.pop, blurRadius: Tokens.ledGlow)],
-    );
+    final style = progress.waiting
+        ? AppText.tally(Tokens.ink)
+        : AppText.led(Tokens.pop);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

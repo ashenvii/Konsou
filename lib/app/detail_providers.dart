@@ -13,11 +13,12 @@ import '../detail/watch_order.dart';
 import '../library/load_library.dart';
 import '../mal/detail_request.dart';
 import '../mal/matching.dart';
-import '../mal/request_gate.dart';
 import '../mal/search_request.dart';
 import 'library_providers.dart';
 import 'providers.dart';
 import 'quick_search_providers.dart';
+
+export '../mal/matching.dart' show maxSuggestions;
 
 part 'detail_providers.g.dart';
 
@@ -69,16 +70,24 @@ class DetailPage extends _$DetailPage {
     final wantsFetch =
         services.detailRequest != null &&
         (saved.details?.needsFetch(DateTime.now()) ?? true);
+    _fetchState = wantsFetch ? DetailFetch.running : DetailFetch.idle;
     if (!wantsFetch) return saved;
     // after this build's value is in, so the fetch's answer is not overwritten
     Future(_fetch);
     return saved.withFetch(DetailFetch.running);
   }
 
+  var _fetchState = DetailFetch.idle;
+
+  // an edit's reload and the fetch both read, and the read started last wins,
+  // so an older read never lands over a newer one
+  var _reads = 0;
+
   Future<void> retry() async {
     final shown = state.value;
     if (shown == null || shown.fetch == DetailFetch.running) return;
     if (ref.read(servicesProvider).detailRequest == null) return;
+    _fetchState = DetailFetch.running;
     state = AsyncData(shown.withFetch(DetailFetch.running));
     await _fetch();
   }
@@ -96,22 +105,20 @@ class DetailPage extends _$DetailPage {
     );
     if (!ref.mounted) return;
     if (outcome == FetchOutcome.fetched) services.notifyScreenDataChanged();
-    final saved = await _read();
-    if (!ref.mounted) return;
-    state = AsyncData(
-      saved.withFetch(switch (outcome) {
-        FetchOutcome.fetched => DetailFetch.idle,
-        FetchOutcome.gone => DetailFetch.gone,
-        FetchOutcome.offline => DetailFetch.offline,
-        FetchOutcome.failed => DetailFetch.failed,
-      }),
-    );
+    _fetchState = switch (outcome) {
+      FetchOutcome.fetched => DetailFetch.idle,
+      FetchOutcome.gone => DetailFetch.gone,
+      FetchOutcome.offline => DetailFetch.offline,
+      FetchOutcome.failed => DetailFetch.failed,
+    };
+    await _reload();
   }
 
   Future<void> _reload() async {
+    final read = ++_reads;
     final saved = await _read();
-    if (!ref.mounted) return;
-    state = AsyncData(saved.withFetch(state.value?.fetch ?? DetailFetch.idle));
+    if (!ref.mounted || read != _reads) return;
+    state = AsyncData(saved.withFetch(_fetchState));
   }
 
   Future<DetailPageData> _read() async {
@@ -138,11 +145,16 @@ Future<WatchOrder> watchOrder(Ref ref, int malId) async {
   final services = ref.watch(servicesProvider);
   final databases = services.databases;
   _reloadOnEdit(ref, databases, ref.invalidateSelf);
-  // a title fetched while the page is open may bring new relations
-  final listener = services.screenDataChanged.listen(
-    (_) => ref.invalidateSelf(),
-  );
-  ref.onDispose(listener.cancel);
+  // a title fetched while the page is open may bring new relations; every
+  // card fetched says so, so the reloads are gathered like the Library's
+  final reload = Countdown(onDone: ref.invalidateSelf);
+  final listener = services.screenDataChanged.listen((_) {
+    if (!reload.running) reload.start(libraryScreenReloadGap);
+  });
+  ref.onDispose(() {
+    reload.dispose();
+    listener.cancel();
+  });
   return loadWatchOrder(
     databases,
     malId,
@@ -286,7 +298,7 @@ class PickerSearch extends _$PickerSearch {
     final databases = services.databases;
     // the language is local, so it is read while the search is out
     final (search, language) = await (
-      ref.read(entrySearchProvider.future),
+      readEntrySearch(ref),
       readTitleLanguage(databases.record),
     ).wait;
     final found = await services.matching!.searchPages(
