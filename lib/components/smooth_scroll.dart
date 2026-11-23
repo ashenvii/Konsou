@@ -55,8 +55,9 @@ class _GlidingPosition extends ScrollPositionWithSingleContext {
   // can never hold it short of its stop
   double _snap(double offset) => (offset * _ratio).roundToDouble() / _ratio;
 
-  // a glide that has not landed by now lands anyway: while it runs the page
-  // takes no clicks, so it must always end
+  // a glide that has not landed this long after its last notch lands anyway.
+  // Counted from the last notch, never from the first: a long spin keeps
+  // moving the target, and cutting it at a fixed time stopped it mid-scroll
   static const _longest = Duration(seconds: 2);
 
   @override
@@ -76,7 +77,11 @@ class _GlidingPosition extends ScrollPositionWithSingleContext {
     final clamped = target.clamp(minScrollExtent, maxScrollExtent);
     if (clamped == from) return;
     _target = clamped;
-    if (_gliding) return;
+    if (_gliding) {
+      // restart the safety count from this notch
+      _began = null;
+      return;
+    }
     _speed = 0;
     _last = null;
     _began = null;
@@ -135,15 +140,15 @@ class _GlidingPosition extends ScrollPositionWithSingleContext {
   }
 }
 
-// counts as scrolling and lets no pointer through, as flutter's own animated
-// scrolls do: nothing under a still pointer is hit-tested or hovered each frame
+// counts as scrolling but still takes clicks, like flutter's own wheel scroll
+// and like a browser: a click lands on whatever is under the pointer
 class _GlideActivity extends ScrollActivity {
   _GlideActivity(super.delegate, this._speed);
 
   final double Function() _speed;
 
   @override
-  bool get shouldIgnorePointer => true;
+  bool get shouldIgnorePointer => false;
 
   @override
   bool get isScrolling => true;

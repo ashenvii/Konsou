@@ -77,7 +77,7 @@ void main() {
     expect(controller.offset, 100);
   });
 
-  testWidgets('a click during the glide stops it and is not a click on a row', (
+  testWidgets('a click during the glide is a click on the row', (
     tester,
   ) async {
     var tapped = 0;
@@ -100,14 +100,28 @@ void main() {
     );
     await wheel(tester, 400);
     await tester.pump(const Duration(milliseconds: 16));
+    expect(controller.position.activity?.shouldIgnorePointer, isFalse);
     await tester.tapAt(const Offset(100, 100));
     await tester.pump();
-    final stopped = controller.offset;
-    await tester.pumpAndSettle();
-    expect(tapped, 0);
-    expect(controller.offset, stopped);
-    await tester.tapAt(const Offset(100, 100));
     expect(tapped, 1);
+    // pressing down holds the glide where it is, as it does any scroll
+    final held = controller.offset;
+    await tester.pumpAndSettle();
+    expect(controller.offset, held);
+  });
+
+  testWidgets('a long spin is not cut short', (tester) async {
+    await pumpList(tester);
+    // one notch every 50 ms for 5 s, well past the safety limit
+    for (var i = 0; i < 100; i++) {
+      await wheel(tester, 20);
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    final spinning = controller.offset;
+    expect(spinning, lessThan(100 * 20 * wheelBoost));
+    await tester.pumpAndSettle();
+    expect(controller.offset, 100 * 20 * wheelBoost);
+    expect(spinning, greaterThan(100 * 20 * wheelBoost * 0.8));
   });
 
   testWidgets('every glide lands and the list takes clicks after it', (
