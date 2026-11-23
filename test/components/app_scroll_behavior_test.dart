@@ -47,4 +47,41 @@ void main() {
       debugDefaultTargetPlatformOverride = null;
     }
   });
+
+  testWidgets('a phone list bounces past its ends, android too', (
+    tester,
+  ) async {
+    for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+      debugDefaultTargetPlatformOverride = platform;
+      try {
+        await pumpList(tester);
+        final position = tester.state<ScrollableState>(find.byType(Scrollable));
+        expect(
+          position.position.physics.toString(),
+          contains('BouncingScrollPhysics'),
+        );
+        await tester.drag(find.byType(ListView), const Offset(0, 100));
+        await tester.pump();
+        expect(position.position.pixels, lessThan(0), reason: '$platform');
+        await tester.pumpAndSettle();
+        expect(position.position.pixels, 0);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    }
+  });
+
+  testWidgets('a desktop list stops at its end', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    try {
+      await pumpList(tester);
+      final state = tester.state<ScrollableState>(find.byType(Scrollable));
+      expect(
+        state.position.physics.toString(),
+        contains('ClampingScrollPhysics'),
+      );
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
 }

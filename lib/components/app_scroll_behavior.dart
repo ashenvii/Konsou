@@ -9,6 +9,32 @@ import '../design/tokens.dart';
 class AppScrollBehavior extends ScrollBehavior {
   const AppScrollBehavior();
 
+  // phones all scroll the way an iPhone does: the page rubber-bands at its
+  // ends and flings on Apple's decay. Desktop stays clamped at its ends
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    switch (getPlatform(context)) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+      case TargetPlatform.fuchsia:
+        return const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        );
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+        return const ClampingScrollPhysics();
+    }
+  }
+
+  // bouncing replaces android's glow and stretch, so none is drawn on top
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) => child;
+
   @override
   Widget buildScrollbar(
     BuildContext context,
