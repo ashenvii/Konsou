@@ -105,8 +105,12 @@ abstract final class Tokens {
   // component sizes from the comp (2026-11-08); focusRing is not in it
   static const double controlHeight = 36;
   static const double badgeSize = 16;
-  static const double checkboxSize = 20;
-  static const double checkboxBorder = 2;
+  // the checkbox is a well that lights (owner, 2026-11-23, option A): a ring
+  // in checkboxEdge when empty (3.3:1 on the row), the check at checkboxMark
+  static const double checkboxSize = 24;
+  static const Color checkboxEdge = Color(0xFF6B6569);
+  static const double checkboxRing = 1.5;
+  static const double checkboxMark = 2.5;
   static const double focusRing = 2;
   static const double hoverEdge = 2;
   static const double shadowBlur = 24;

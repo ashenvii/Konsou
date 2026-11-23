@@ -71,7 +71,8 @@ class _LibraryListRowState extends State<LibraryListRow> {
             on: (state.hovered || state.focused) && !_overBox,
             child: Container(
               height: Tokens.listRowHeight,
-              padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
+              // the checkbox's tap zone is the whole left cell, so no left padding
+              padding: const EdgeInsets.only(right: Tokens.space3),
               child: Row(
                 children: [
                   AppCheckbox(
@@ -79,8 +80,8 @@ class _LibraryListRowState extends State<LibraryListRow> {
                     onChanged: (value) =>
                         widget.onCheck(value == CheckValue.checked),
                     onHover: (over) => setState(() => _overBox = over),
+                    zone: const Size(Tokens.touchTarget, Tokens.listRowHeight),
                   ),
-                  const SizedBox(width: Tokens.space3),
                   CoverView(
                     malId: row.malId,
                     width: Tokens.listCoverWidth,

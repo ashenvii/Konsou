@@ -35,7 +35,7 @@ void main() {
       tester.getSize(find.byType(AppCheckbox)),
       const Size.square(Tokens.touchTarget),
     );
-    // 3 px in from the corner of the target, outside the 20 px box itself.
+    // 3 px in from the corner of the target, outside the box itself.
     await tester.tapAt(
       tester.getTopLeft(find.byType(AppCheckbox)) + const Offset(3, 3),
     );

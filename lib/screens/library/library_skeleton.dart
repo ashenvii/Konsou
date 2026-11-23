@@ -65,14 +65,18 @@ class _ListSkeleton extends StatelessWidget {
       itemExtent: Tokens.listRowHeight,
       itemCount: 8,
       itemBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
+        padding: const EdgeInsets.only(right: Tokens.space3),
         child: Row(
           children: [
-            const Skeleton(
-              width: Tokens.checkboxSize,
-              height: Tokens.checkboxSize,
+            const SizedBox(
+              width: Tokens.touchTarget,
+              child: Center(
+                child: Skeleton(
+                  width: Tokens.checkboxSize,
+                  height: Tokens.checkboxSize,
+                ),
+              ),
             ),
-            const SizedBox(width: Tokens.space3),
             Skeleton(
               width: Tokens.listCoverWidth,
               height: CoverImage.heightFor(Tokens.listCoverWidth),

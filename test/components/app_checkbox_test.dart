@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/app_checkbox.dart';
 import 'package:konsou/design/tokens.dart';
@@ -5,7 +6,7 @@ import 'package:konsou/design/tokens.dart';
 import '../support/pump_widget.dart';
 
 void main() {
-  testWidgets('is a 20 by 20 box', (tester) async {
+  testWidgets('is a square box of checkboxSize', (tester) async {
     await pumpWidget(
       tester,
       AppCheckbox(value: CheckValue.empty, onChanged: (_) {}),
@@ -63,6 +64,25 @@ void main() {
     expect(find.bySemanticsLabel('excluded'), findsNothing);
     expect(tester.getSemantics(find.byType(AppCheckbox)).value, 'excluded');
     handle.dispose();
+  });
+
+  testWidgets('a zone takes the tap outside the box', (tester) async {
+    var changes = 0;
+    await pumpWidget(
+      tester,
+      AppCheckbox(
+        value: CheckValue.empty,
+        onChanged: (_) => changes++,
+        zone: const Size(Tokens.touchTarget, Tokens.listRowHeight),
+      ),
+    );
+    final zone = tester.getSize(find.byType(AppCheckbox));
+    expect(zone, const Size(Tokens.touchTarget, Tokens.listRowHeight));
+    // the top corner of the zone, far from the centred box
+    await tester.tapAt(
+      tester.getTopLeft(find.byType(AppCheckbox)) + const Offset(2, 2),
+    );
+    expect(changes, 1);
   });
 
   testWidgets('disabled ignores taps', (tester) async {
