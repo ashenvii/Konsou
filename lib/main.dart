@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +18,7 @@ import 'app/services.dart';
 import 'components/app_scroll_behavior.dart';
 import 'data/databases.dart';
 import 'design/tokens.dart';
+import 'net/log.dart';
 import 'shell/maximize_button_link.dart';
 import 'shell/native_window.dart';
 import 'shell/window_config.dart';
@@ -26,8 +28,15 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isWindows) await _setUpWindow();
   final folder = await getApplicationSupportDirectory();
+  await openLog(folder);
+  _logUncaughtErrors();
+  log('app', 'start, ${Platform.operatingSystemVersion}');
+  final databases = await openDatabases(folder);
+  if (databases.detailsRebuilt) {
+    log('data', 'details.db failed its check and was rebuilt');
+  }
   final services = Services(
-    databases: await openDatabases(folder),
+    databases: databases,
     coversFolder: Directory('${folder.path}${Platform.pathSeparator}covers'),
     keys: const Keys.fromBuild(),
     client: http.Client(),
@@ -54,6 +63,18 @@ Future<void> main() async {
     ),
   );
   services.start();
+}
+
+void _logUncaughtErrors() {
+  final show = FlutterError.onError;
+  FlutterError.onError = (details) {
+    log('error', '${details.exceptionAsString()}\n${details.stack}');
+    show?.call(details);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    log('error', '$error\n$stack');
+    return false;
+  };
 }
 
 Future<void> _setUpWindow() async {

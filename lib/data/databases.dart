@@ -7,10 +7,13 @@ import 'details_database.dart';
 import 'record_database.dart';
 
 class Databases {
-  Databases(this.record, this.details);
+  Databases(this.record, this.details, {this.detailsRebuilt = false});
 
   final RecordDatabase record;
   final DetailsDatabase details;
+
+  /// details.db failed its check at open and was started again empty.
+  final bool detailsRebuilt;
 
   Future<void> close() async {
     await record.close();
@@ -25,9 +28,7 @@ Future<Databases> openDatabases(Directory folder) async {
   final recordFile = File('${folder.path}${separator}konsou.db');
   final detailsPath = '${folder.path}${separator}details.db';
 
-  if (discardBrokenDetails(detailsPath)) {
-    stderr.writeln('details.db failed its check and was rebuilt');
-  }
+  final detailsRebuilt = discardBrokenDetails(detailsPath);
   final details = DetailsDatabase(
     NativeDatabase.createInBackground(
       File(detailsPath),
@@ -53,7 +54,7 @@ Future<Databases> openDatabases(Directory folder) async {
     ),
   );
   await record.customSelect('SELECT 1').get();
-  return Databases(record, details);
+  return Databases(record, details, detailsRebuilt: detailsRebuilt);
 }
 
 /// details.db holds only what can be fetched again, so a copy that fails the

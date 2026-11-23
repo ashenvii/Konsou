@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import '../net/backoff.dart';
+import '../net/log.dart';
 import '../net/request_timeout.dart';
 
 const requestGap = Duration(milliseconds: 500);
@@ -38,6 +39,7 @@ class GateBackingOff implements Exception {
 
 class RequestGate {
   RequestGate({
+    this.name = 'mal',
     this.gap = requestGap,
     this.timeout = requestTimeout,
     DateTime Function()? now,
@@ -47,6 +49,7 @@ class RequestGate {
 
   static var trouble = MalTrouble.normal;
 
+  final String name;
   final Duration gap;
   final Duration timeout;
   final DateTime Function() _now;
@@ -67,6 +70,7 @@ class RequestGate {
   }) {
     final job = _Job(request, wanted);
     if (lane == Lane.screen && _holdsScreenTooLong()) {
+      log(name, 'screen request turned away, backing off');
       job.done.completeError(const GateBackingOff());
       return job.done.future;
     }
@@ -91,6 +95,7 @@ class RequestGate {
       try {
         final response = await _start(job).timeout(timeout);
         if (response.statusCode == 429 || response.statusCode >= 500) {
+          log(name, 'status ${response.statusCode}');
           _slowDown();
         } else {
           _backoff.reset();
@@ -98,6 +103,7 @@ class RequestGate {
         }
         job.done.complete(response);
       } catch (error, stack) {
+        log(name, 'request failed: ${error.runtimeType}');
         _slowDown();
         job.done.completeError(error, stack);
       }
@@ -130,7 +136,9 @@ class RequestGate {
 
   void _slowDown() {
     _backingOff = true;
-    _nextStart = _now().add(_backoff.next());
+    final wait = _backoff.next();
+    _nextStart = _now().add(wait);
+    log(name, 'backing off ${wait.inSeconds} s');
     if (!_holdsScreenTooLong()) return;
     while (_screen.isNotEmpty) {
       _screen.removeFirst().done.completeError(const GateBackingOff());

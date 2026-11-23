@@ -12,6 +12,7 @@ import '../mal/matching.dart';
 import '../mal/request_gate.dart';
 import '../mal/search_request.dart';
 import '../mal/trickle.dart';
+import '../net/log.dart';
 import '../sync/drive_client.dart';
 import '../sync/drive_sync.dart';
 import '../sync/google_sign_in.dart';
@@ -74,7 +75,7 @@ class Services {
         folder: coversFolder,
         client: client,
         // the image server is not the API: its own, faster gate
-        gate: _coverGate = RequestGate(gap: coverRequestGap),
+        gate: _coverGate = RequestGate(name: 'covers', gap: coverRequestGap),
         onSaved: _coverSaved.add,
       );
       // a saved cover reaches the screen through coverSaved, not a reload
@@ -122,7 +123,9 @@ class Services {
     if (_stopped) return;
     await _loadAll(redoDetails: true, redoCovers: true);
     if (_stopped) return;
+    log('scan', 'start');
     await scan?.run();
+    log('scan', 'finished');
     notifyDataChanged();
   });
 
@@ -163,10 +166,12 @@ class Services {
       _loadedAny = true;
       _showCounts(job, counts);
     }
+    log('load', '${job.name} start, ${count.done} of ${count.total} done');
     try {
       await run();
     } finally {
       _loading = null;
+      log('load', '${job.name} ended');
     }
   }
 
@@ -234,5 +239,7 @@ class Services {
     coverTrickle?.stop();
     await sync?.runBeforeClose();
     sync?.dispose();
+    log('app', 'closing');
+    await closeLog();
   }
 }
