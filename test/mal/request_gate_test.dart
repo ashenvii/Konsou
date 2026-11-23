@@ -69,6 +69,24 @@ void main() {
     expect(order, ['old', 'new', 'middle']);
   });
 
+  test('the page goes ahead of newer cards, in the order it asked', () async {
+    final order = <String>[];
+    Future<http.Response> named(String name) {
+      order.add(name);
+      return time.respond(200);
+    }
+
+    await Future.wait([
+      gate.send(Lane.trickle, () => named('trickle')),
+      gate.send(Lane.page, () => named('page 1')),
+      gate.send(Lane.screen, () => named('card 1')),
+      gate.send(Lane.screen, () => named('card 2')),
+      gate.send(Lane.page, () => named('page 2')),
+    ]);
+    // the trickle started at once; the cards, though newer, wait for the page
+    expect(order, ['trickle', 'page 1', 'page 2', 'card 2', 'card 1']);
+  });
+
   test('a request nobody wants any more is dropped, not sent', () async {
     var wanted = true;
     final sent = <String>[];

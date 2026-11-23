@@ -126,7 +126,7 @@ class CoverStore {
     final http.Response response;
     try {
       response = await gate.send(
-        Lane.screen,
+        Lane.page,
         () => client.get(Uri.parse(url)),
         wanted: wanted,
       );

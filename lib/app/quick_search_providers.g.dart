@@ -41,7 +41,7 @@ final class QuickSearchProvider
   }
 }
 
-String _$quickSearchHash() => r'9c2d488ca25e998de1fc2942a0c04967f186aec4';
+String _$quickSearchHash() => r'b7a0244b9bfa23b1041403425e21107e4906f49e';
 
 abstract class _$QuickSearch extends $Notifier<QuickState> {
   QuickState build();

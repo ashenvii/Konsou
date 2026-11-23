@@ -11,6 +11,7 @@ import '../../design/tokens.dart';
 import '../../detail/provider_page.dart';
 import '../../library/row_labels.dart';
 import '../../mal/matching.dart' show maxSuggestions;
+import '../../mal/request_gate.dart';
 import 'picker_skeleton.dart';
 
 /// A suggested MAL page: cover, title, type and year, episodes, and Pick.
@@ -35,6 +36,7 @@ class _PagePickerRow extends StatelessWidget {
         children: [
           // a suggestion's details are not saved, so the cover fetches them
           CoverView(
+            lane: Lane.page,
             malId: page.malId,
             width: Tokens.listCoverWidth,
             loading: true,

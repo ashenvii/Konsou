@@ -90,7 +90,7 @@ class DetailPage extends _$DetailPage {
     if (request == null) return;
     final outcome = await request.fetch(
       malId,
-      lane: Lane.screen,
+      lane: Lane.page,
       full: true,
       wanted: () => ref.mounted,
     );
@@ -184,7 +184,7 @@ class PageLinking {
   final void Function(String entryId, {required bool looking}) _onLooking;
 
   Future<void> pick(String entryId, int malId) async {
-    await _matching.linkEntry(entryId, malId, lane: Lane.screen, full: true);
+    await _matching.linkEntry(entryId, malId, lane: Lane.page, full: true);
     _onChanged();
   }
 
@@ -203,7 +203,7 @@ class PageLinking {
     _onLooking(entryId, looking: true);
     onUnlinked?.call();
     try {
-      await _matching.matchEntry(entryId, lane: Lane.screen);
+      await _matching.matchEntry(entryId, lane: Lane.page);
     } finally {
       _onLooking(entryId, looking: false);
     }

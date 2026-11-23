@@ -49,6 +49,7 @@ Future<File?> coverFile(
   int malId,
   CoverSize size, {
   String? pictureUrl,
+  Lane lane = Lane.screen,
 }) async {
   final store = ref.watch(coverStoreProvider);
   if (store == null) return null;
@@ -57,7 +58,7 @@ Future<File?> coverFile(
   final outcome = await store.fetchCover(
     malId,
     size,
-    lane: Lane.screen,
+    lane: lane,
     // the fetch is dropped from the queue if the card is gone by its turn
     wanted: () => ref.mounted,
     pictureUrl: pictureUrl,
@@ -77,13 +78,17 @@ Future<File?> titlePicture(Ref ref, int malId, String url) async {
 }
 
 @riverpod
-Future<void> detailOnScreen(Ref ref, int malId) async {
+Future<void> detailOnScreen(
+  Ref ref,
+  int malId, {
+  Lane lane = Lane.screen,
+}) async {
   final services = ref.watch(servicesProvider);
   final request = services.detailRequest;
   if (request == null) return;
   final outcome = await request.fetch(
     malId,
-    lane: Lane.screen,
+    lane: lane,
     full: false,
     wanted: () => ref.mounted,
   );
@@ -95,7 +100,9 @@ Future<void> detailOnScreen(Ref ref, int malId) async {
 Future<File?> largeCover(Ref ref, int malId) async {
   final kept = await ref.watch(keptCoversProvider.future);
   return kept[(malId, CoverSize.large)] ??
-      ref.watch(coverFileProvider(malId, CoverSize.large).future);
+      ref.watch(
+        coverFileProvider(malId, CoverSize.large, lane: Lane.page).future,
+      );
 }
 
 /// A picture file's size and detail per row, for cropping it to a box.

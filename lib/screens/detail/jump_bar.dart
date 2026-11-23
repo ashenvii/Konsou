@@ -15,6 +15,7 @@ import '../../components/solid_icon_button.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../icons/app_icons.dart';
+import '../../mal/request_gate.dart';
 
 /// The back button, a white key with a dark arrow. It floats over the top of
 /// the Detail page and moves into the [JumpBar] at the top, the same either
@@ -202,7 +203,11 @@ class _TitleButton extends StatelessWidget {
                   height: Tokens.controlHeight,
                   child: OverflowBox(
                     maxHeight: CoverImage.heightFor(coverWidth),
-                    child: CoverView(malId: malId, width: coverWidth),
+                    child: CoverView(
+                      malId: malId,
+                      width: coverWidth,
+                      lane: Lane.page,
+                    ),
                   ),
                 ),
                 const SizedBox(width: Tokens.space2),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../components/cover_image.dart';
 import '../covers/cover_size.dart';
+import '../mal/request_gate.dart';
 import 'providers.dart';
 
 class CoverView extends ConsumerWidget {
@@ -12,6 +13,7 @@ class CoverView extends ConsumerWidget {
     required this.width,
     this.loading = false,
     this.pictureUrl,
+    this.lane = Lane.screen,
   });
 
   final int? malId;
@@ -22,6 +24,9 @@ class CoverView extends ConsumerWidget {
   final String? pictureUrl;
 
   final bool loading;
+
+  /// [Lane.page] for covers of the open page and the titles around it.
+  final Lane lane;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,20 +48,24 @@ class CoverView extends ConsumerWidget {
     if (!listRead) return CoverImage(width: width, loading: loading);
     if (loading) {
       // without details the cover lookup came back empty, so look again later
-      ref.listen(detailOnScreenProvider(id), (_, state) {
+      ref.listen(detailOnScreenProvider(id, lane: lane), (_, state) {
         if (state is AsyncData) {
-          ref.invalidate(coverFileProvider(id, size, pictureUrl: pictureUrl));
+          ref.invalidate(
+            coverFileProvider(id, size, pictureUrl: pictureUrl, lane: lane),
+          );
         }
       });
     }
     final cover = ref.watch(
-      coverFileProvider(id, size, pictureUrl: pictureUrl),
+      coverFileProvider(id, size, pictureUrl: pictureUrl, lane: lane),
     );
     final file = cover.value;
     // a cover saved after this one was drawn blank: read it again
     ref.listen(coverSavedProvider, (_, saved) {
       if (file == null && saved.asData?.value == id) {
-        ref.invalidate(coverFileProvider(id, size, pictureUrl: pictureUrl));
+        ref.invalidate(
+          coverFileProvider(id, size, pictureUrl: pictureUrl, lane: lane),
+        );
       }
     });
     return CoverImage(

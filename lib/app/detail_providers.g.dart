@@ -50,7 +50,7 @@ final class DetailPageProvider
   }
 }
 
-String _$detailPageHash() => r'92e25f5e0cef07e232a5467dac078aecf781503a';
+String _$detailPageHash() => r'e39767be97bc41b766d6aefd3364553ebaef8190';
 
 final class DetailPageFamily extends $Family
     with

@@ -185,7 +185,7 @@ final class CoverFileProvider
     with $FutureModifier<File?>, $FutureProvider<File?> {
   CoverFileProvider._({
     required CoverFileFamily super.from,
-    required (int, CoverSize, {String? pictureUrl}) super.argument,
+    required (int, CoverSize, {String? pictureUrl, Lane lane}) super.argument,
   }) : super(
          retry: null,
          name: r'coverFileProvider',
@@ -211,12 +211,14 @@ final class CoverFileProvider
 
   @override
   FutureOr<File?> create(Ref ref) {
-    final argument = this.argument as (int, CoverSize, {String? pictureUrl});
+    final argument =
+        this.argument as (int, CoverSize, {String? pictureUrl, Lane lane});
     return coverFile(
       ref,
       argument.$1,
       argument.$2,
       pictureUrl: argument.pictureUrl,
+      lane: argument.lane,
     );
   }
 
@@ -231,13 +233,13 @@ final class CoverFileProvider
   }
 }
 
-String _$coverFileHash() => r'794905523399304314c1e96bdcc683679a061548';
+String _$coverFileHash() => r'c8f1437c78cd6f1328e6c6cc7cc33c7f6f68280f';
 
 final class CoverFileFamily extends $Family
     with
         $FunctionalFamilyOverride<
           FutureOr<File?>,
-          (int, CoverSize, {String? pictureUrl})
+          (int, CoverSize, {String? pictureUrl, Lane lane})
         > {
   CoverFileFamily._()
     : super(
@@ -248,11 +250,15 @@ final class CoverFileFamily extends $Family
         isAutoDispose: true,
       );
 
-  CoverFileProvider call(int malId, CoverSize size, {String? pictureUrl}) =>
-      CoverFileProvider._(
-        argument: (malId, size, pictureUrl: pictureUrl),
-        from: this,
-      );
+  CoverFileProvider call(
+    int malId,
+    CoverSize size, {
+    String? pictureUrl,
+    Lane lane = Lane.screen,
+  }) => CoverFileProvider._(
+    argument: (malId, size, pictureUrl: pictureUrl, lane: lane),
+    from: this,
+  );
 
   @override
   String toString() => r'coverFileProvider';
@@ -344,7 +350,7 @@ final class DetailOnScreenProvider
     with $FutureModifier<void>, $FutureProvider<void> {
   DetailOnScreenProvider._({
     required DetailOnScreenFamily super.from,
-    required int super.argument,
+    required (int, {Lane lane}) super.argument,
   }) : super(
          retry: null,
          name: r'detailOnScreenProvider',
@@ -360,7 +366,7 @@ final class DetailOnScreenProvider
   String toString() {
     return r'detailOnScreenProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -370,8 +376,8 @@ final class DetailOnScreenProvider
 
   @override
   FutureOr<void> create(Ref ref) {
-    final argument = this.argument as int;
-    return detailOnScreen(ref, argument);
+    final argument = this.argument as (int, {Lane lane});
+    return detailOnScreen(ref, argument.$1, lane: argument.lane);
   }
 
   @override
@@ -385,10 +391,10 @@ final class DetailOnScreenProvider
   }
 }
 
-String _$detailOnScreenHash() => r'5b0c266c1a3d3a71380a5e13d08679f0c7775959';
+String _$detailOnScreenHash() => r'8a83f5cc75b22cf8803adb0726bdd1abcc95f218';
 
 final class DetailOnScreenFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<void>, int> {
+    with $FunctionalFamilyOverride<FutureOr<void>, (int, {Lane lane})> {
   DetailOnScreenFamily._()
     : super(
         retry: null,
@@ -398,8 +404,8 @@ final class DetailOnScreenFamily extends $Family
         isAutoDispose: true,
       );
 
-  DetailOnScreenProvider call(int malId) =>
-      DetailOnScreenProvider._(argument: malId, from: this);
+  DetailOnScreenProvider call(int malId, {Lane lane = Lane.screen}) =>
+      DetailOnScreenProvider._(argument: (malId, lane: lane), from: this);
 
   @override
   String toString() => r'detailOnScreenProvider';
@@ -459,7 +465,7 @@ final class LargeCoverProvider
   }
 }
 
-String _$largeCoverHash() => r'cb776fbaf18b8faf0f6428738badc8b290ba7b3c';
+String _$largeCoverHash() => r'97d3ae5f373a43911bca65e4436838b83bccb1a6';
 
 /// The large cover of a title, kept or fetched.
 

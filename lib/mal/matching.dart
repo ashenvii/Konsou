@@ -229,7 +229,7 @@ class Matching {
   }) async {
     final results = await searchRequest.search(
       typed,
-      lane: Lane.screen,
+      lane: Lane.page,
       limit: limit,
     );
     if (results == null) return null;
@@ -239,7 +239,7 @@ class Matching {
     }
     final retried = await searchRequest.search(
       corrected,
-      lane: Lane.screen,
+      lane: Lane.page,
       limit: limit,
     );
     if (retried == null) return null;

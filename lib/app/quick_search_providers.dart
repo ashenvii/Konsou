@@ -197,7 +197,7 @@ class QuickSearch extends _$QuickSearch {
     } else {
       pages = await matching.searchRequest.search(
         _searched,
-        lane: Lane.screen,
+        lane: Lane.page,
         limit: quickPage,
         offset: _offset,
       );

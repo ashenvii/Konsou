@@ -15,7 +15,10 @@ const _debugBuild =
     !bool.fromEnvironment('dart.vm.product') &&
     !bool.fromEnvironment('dart.vm.profile');
 
-enum Lane { screen, trickle }
+/// Who is asking, in the order they are served: [page] is what the user just
+/// opened or typed, [screen] is what the cards and strips on show want,
+/// [trickle] is the background.
+enum Lane { page, screen, trickle }
 
 /// Fake trouble for every gate, set from the gallery to see the app's
 /// offline and waiting states. Debug builds only.
@@ -54,6 +57,7 @@ class RequestGate {
   final Duration timeout;
   final DateTime Function() _now;
   final Future<void> Function(Duration duration) _wait;
+  final _page = Queue<_Job>();
   final _screen = Queue<_Job>();
   final _trickle = Queue<_Job>();
   var _running = false;
@@ -69,12 +73,19 @@ class RequestGate {
     bool Function()? wanted,
   }) {
     final job = _Job(request, wanted);
-    if (lane == Lane.screen && _holdsScreenTooLong()) {
-      log(name, 'screen request turned away, backing off');
+    if (lane != Lane.trickle && _holdsScreenTooLong()) {
+      log(name, '${lane.name} request turned away, backing off');
       job.done.completeError(const GateBackingOff());
       return job.done.future;
     }
-    (lane == Lane.screen ? _screen : _trickle).add(job);
+    switch (lane) {
+      case Lane.page:
+        _page.add(job);
+      case Lane.screen:
+        _screen.add(job);
+      case Lane.trickle:
+        _trickle.add(job);
+    }
     _run();
     return job.done.future;
   }
@@ -82,13 +93,13 @@ class RequestGate {
   Future<void> _run() async {
     if (_running) return;
     _running = true;
-    while (_screen.isNotEmpty || _trickle.isNotEmpty) {
+    while (_page.isNotEmpty || _screen.isNotEmpty || _trickle.isNotEmpty) {
       final nextStart = _nextStart;
       if (nextStart != null) {
         final untilNext = nextStart.difference(_now());
         if (untilNext > Duration.zero) await _wait(untilNext);
       }
-      // picked after the wait, so a screen request that arrived meanwhile wins
+      // picked after the wait, so a page or screen request that arrived meanwhile wins
       final job = _next();
       if (job == null) continue;
       _nextStart = _now().add(gap);
@@ -124,8 +135,12 @@ class RequestGate {
   }
 
   _Job? _next() {
-    while (_screen.isNotEmpty || _trickle.isNotEmpty) {
-      final job = _screen.isNotEmpty
+    while (_page.isNotEmpty || _screen.isNotEmpty || _trickle.isNotEmpty) {
+      // the page's own requests keep their order; on the screen the newest
+      // card is the one being looked at
+      final job = _page.isNotEmpty
+          ? _page.removeFirst()
+          : _screen.isNotEmpty
           ? _screen.removeLast()
           : _trickle.removeFirst();
       if (job.wanted?.call() ?? true) return job;
@@ -140,8 +155,10 @@ class RequestGate {
     _nextStart = _now().add(wait);
     log(name, 'backing off ${wait.inSeconds} s');
     if (!_holdsScreenTooLong()) return;
-    while (_screen.isNotEmpty) {
-      _screen.removeFirst().done.completeError(const GateBackingOff());
+    for (final queue in [_page, _screen]) {
+      while (queue.isNotEmpty) {
+        queue.removeFirst().done.completeError(const GateBackingOff());
+      }
     }
   }
 

@@ -23,6 +23,7 @@ import '../../icons/app_icon.dart';
 import '../../icons/app_icons.dart';
 import 'detail_block.dart';
 import '../../library/count_format.dart';
+import '../../mal/request_gate.dart';
 
 /// MAL's trailers and promotional videos as pictures in a peeking row, each
 /// opening in the browser.
@@ -354,6 +355,7 @@ class RecommendationsPart extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CoverView(
+                    lane: Lane.page,
                     malId: title.malId,
                     width: width,
                     pictureUrl: title.pictureUrl,

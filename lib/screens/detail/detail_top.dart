@@ -10,6 +10,7 @@ import '../../components/picture_overlay.dart';
 import '../../components/pressable.dart';
 import '../../design/tokens.dart';
 import '../../detail/title_details.dart';
+import '../../mal/request_gate.dart';
 import 'hero_ground.dart';
 
 /// The top of the Detail page: the cover as a poster in a well at the left,
@@ -146,6 +147,7 @@ class _PosterState extends State<_Poster> with FadingPortalOwner<_Poster> {
           child: ClipRRect(
             borderRadius: Tokens.coverCorners,
             child: CoverView(
+              lane: Lane.page,
               malId: widget.malId,
               width: _coverWidth,
               loading: widget.loading,
@@ -171,6 +173,7 @@ class CoverViewer extends StatelessWidget {
       onClose: onClose,
       builder: (context, room) => Center(
         child: CoverView(
+          lane: Lane.page,
           malId: malId,
           width: math.min(
             room.maxWidth,

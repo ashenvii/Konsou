@@ -22,6 +22,7 @@ import '../../detail/watch_order.dart';
 import '../../library/earlier_titles.dart';
 import '../../library/entry_status.dart';
 import '../../library/row_labels.dart';
+import '../../mal/request_gate.dart';
 import '../library/row_tap_area.dart';
 import 'detail_block.dart';
 import 'watch_order_rail.dart';
@@ -205,7 +206,9 @@ class _OrderItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (row.isLoadingDetails) ref.watch(detailOnScreenProvider(row.malId));
+    if (row.isLoadingDetails) {
+      ref.watch(detailOnScreenProvider(row.malId, lane: Lane.page));
+    }
     final entryId = row.entryId;
     return AppPopover(
       builder: (context, handle) => RowTapArea(
@@ -358,6 +361,7 @@ class WatchOrderCard extends StatelessWidget {
                     )
                   : const BoxDecoration(),
               child: CoverView(
+                lane: Lane.page,
                 malId: row.malId,
                 width: width,
                 loading: row.isLoadingDetails,
