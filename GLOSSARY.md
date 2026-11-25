@@ -92,6 +92,10 @@ _Avoid_: Filter, search (for this box)
 The stand-in drawn where something is still loading, with a light band sweeping left to right.
 _Avoid_: Placeholder, shimmer (for the component)
 
+**Card**:
+One title drawn small: cover, name, facts line, your state, scores, always in that order. Laid out as a grid card, a row or a strip card.
+_Avoid_: Tile, item, result
+
 **Key cap**:
 A key drawn like a keyboard key, wherever a shortcut is shown.
 _Avoid_: Shortcut hint, badge

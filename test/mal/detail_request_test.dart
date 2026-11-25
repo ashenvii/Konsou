@@ -64,6 +64,33 @@ void main() {
     expect(row.titleJapanese, '葬送のフリーレン');
   });
 
+  test(
+    "a short fetch saves MAL's score, or none when MAL gives none",
+    () async {
+      final scored = jsonDecode(shortJson) as Map<String, dynamic>
+        ..['mean'] = 9.29;
+      await detailRequest(
+        (_) async => http.Response.bytes(utf8.encode(jsonEncode(scored)), 200),
+      ).fetch(52991, lane: Lane.trickle, full: false);
+      final details = databases.details;
+      expect((await details.select(details.detail).getSingle()).malScore, 9.29);
+
+      await detailRequest(
+        (_) async => http.Response.bytes(utf8.encode(shortJson), 200),
+      ).fetch(52991, lane: Lane.trickle, full: false);
+      expect(
+        (await details.select(details.detail).getSingle()).malScore,
+        isNull,
+      );
+    },
+  );
+
+  test('both field lists ask for the score once', () {
+    for (final fields in [shortDetailFields, fullDetailFields]) {
+      expect(fields.split(',').where((field) => field == 'mean'), hasLength(1));
+    }
+  });
+
   test('a full fetch asks for every field and saves a full row', () async {
     late http.Request sent;
     await detailRequest((request) async {

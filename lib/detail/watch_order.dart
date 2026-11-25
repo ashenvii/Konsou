@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import '../data/databases.dart';
 import '../data/start_dates.dart';
+import '../library/aired_episodes.dart';
+import 'strip_title.dart';
 import '../library/entry_status.dart';
 import '../library/load_library.dart';
 import '../library/title_language.dart';
@@ -7,37 +11,27 @@ import '../mal/detail_request.dart';
 import '../mal/franchise_grouping.dart';
 import '../mal/franchise_members.dart';
 
-class WatchOrderRow {
+class WatchOrderRow extends StripTitle {
   const WatchOrderRow({
-    required this.malId,
-    required this.name,
+    required super.malId,
+    required super.name,
     required this.isExtra,
     this.isOpenTitle = false,
-    this.isLoadingDetails = false,
-    this.isNotAired = false,
-    this.mediaType,
-    this.startDate,
-    this.episodes,
-    this.entryId,
-    this.status,
-    this.episodesWatched = 0,
+    super.isLoadingDetails,
+    super.isNotAired,
+    super.mediaType,
+    super.startDate,
+    super.episodes,
+    super.malScore,
+    super.airedEpisodes,
+    super.entryId,
+    super.status,
+    super.episodesWatched,
   });
 
-  final int malId;
-  final String name;
   final bool isExtra;
 
   final bool isOpenTitle;
-
-  final bool isLoadingDetails;
-  final bool isNotAired;
-  final String? mediaType;
-  final String? startDate;
-  final int? episodes;
-
-  final String? entryId;
-  final EntryStatus? status;
-  final int episodesWatched;
 
   // a finished or rewatched title counts in full, whatever its counter says
   int get episodesSeen {
@@ -71,7 +65,8 @@ Future<WatchOrder> loadWatchOrder(
   final FranchiseMembers(:saved, :places, :members) = franchise;
   final memberIds = [for (final title in members) title.id].join(', ');
 
-  final gone = await readGonePages(record, DateTime.now());
+  final now = DateTime.now();
+  final gone = await readGonePages(record, now);
 
   // titles the members point at whose own details are not in yet: a story
   // title's sequel or prequel, and anyone's side story or summary
@@ -84,6 +79,7 @@ Future<WatchOrder> loadWatchOrder(
           json_extract(relation.value, '\$.node.media_type') AS media_type,
           json_extract(relation.value, '\$.node.start_date') AS start_date,
           json_extract(relation.value, '\$.node.status') AS airing_status,
+          json_extract(relation.value, '\$.node') AS node,
           NULLIF(json_extract(relation.value, '\$.node.num_episodes'), 0)
             AS episodes
         FROM details.detail, json_each(detail.json, '\$.related_anime') AS relation
@@ -105,44 +101,35 @@ Future<WatchOrder> loadWatchOrder(
       mediaType: row.read<String?>('media_type'),
       startDate: row.read<String?>('start_date'),
       episodes: row.read<int?>('episodes'),
+      airedEpisodes: countAiredInListing(
+        jsonDecode(row.read<String>('node')) as Map<String, dynamic>,
+        now,
+      ),
     );
   }
   if (members.length + loading.length < 2) return const WatchOrder([]);
 
-  final names = await readTitleNames(record, [
-    for (final title in members) title.id,
-  ], language);
-  // the entry changed last wins where two share a page
-  final entries = {
-    for (final row in await record.customSelect('''
-          SELECT entry.entry_id, entry.status, entry.episodes_watched,
-            reference.provider_id
-          FROM entry JOIN entry_reference reference
-            ON reference.entry_id = entry.entry_id AND reference.provider = 'mal'
-          WHERE reference.provider_id IN ($memberIds)
-          ORDER BY entry.updated_at, entry.entry_id DESC
-          ''').get())
-      row.read<int>('provider_id'): row,
-  };
+  final memberList = [for (final title in members) title.id];
+  final facts = await readTitleFacts(record, memberList, language, now: now);
+  final entries = await readEntriesOnPages(record, memberList);
 
   final rows = {
     ...loading,
     for (final title in members)
       title.id: WatchOrderRow(
         malId: title.id,
-        name: names[title.id]?.name ?? '',
+        name: facts[title.id]?.name ?? '',
         isExtra: places[title.id]?.isExtra ?? false,
         isOpenTitle: title.id == malId,
         isNotAired: saved[title.id]?.airingStatus == 'not_yet_aired',
         mediaType: title.mediaType,
         startDate: title.startDate,
-        episodes: names[title.id]?.episodes,
-        entryId: entries[title.id]?.read<String>('entry_id'),
-        status: switch (entries[title.id]) {
-          final entry? => EntryStatus.parse(entry.read<String>('status')),
-          null => null,
-        },
-        episodesWatched: entries[title.id]?.read<int>('episodes_watched') ?? 0,
+        episodes: facts[title.id]?.episodes,
+        malScore: facts[title.id]?.malScore,
+        airedEpisodes: facts[title.id]?.airedEpisodes,
+        entryId: entries[title.id]?.entryId,
+        status: entries[title.id]?.status,
+        episodesWatched: entries[title.id]?.episodesWatched ?? 0,
       ),
   };
   final order = rows.values.toList()

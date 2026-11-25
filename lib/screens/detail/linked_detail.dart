@@ -78,6 +78,7 @@ class LinkedDetail extends ConsumerWidget {
     final entry = data.entry;
     final fetching = data.fetch == DetailFetch.running;
     final order = ref.watch(watchOrderProvider(malId)).value;
+    final recommended = ref.watch(recommendedTitlesProvider(malId)).value;
     final name = switch (details?.name) {
       final name? when name.isNotEmpty => name,
       _ => entry?.name ?? '',
@@ -166,11 +167,11 @@ class LinkedDetail extends ConsumerWidget {
             'Pictures',
             PicturesPart(malId: malId, pictures: details.pictures),
           ),
-        if (details != null && details.recommendations.isNotEmpty)
+        if (recommended != null && recommended.isNotEmpty)
           DetailPart(
             'Recommendations',
             RecommendationsPart(
-              titles: details.recommendations,
+              titles: recommended,
               onOpen: (id) => onOpenTitle(id),
             ),
           ),

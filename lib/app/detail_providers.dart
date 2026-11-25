@@ -9,6 +9,7 @@ import '../detail/provider_page.dart';
 import '../detail/streamer_mode.dart';
 import '../detail/title_details.dart';
 import '../detail/title_entry.dart';
+import '../detail/recommended_titles.dart';
 import '../detail/watch_order.dart';
 import '../library/load_library.dart';
 import '../mal/detail_request.dart';
@@ -17,6 +18,7 @@ import '../mal/search_request.dart';
 import 'library_providers.dart';
 import 'providers.dart';
 import 'quick_search_providers.dart';
+import 'services.dart';
 
 export '../mal/matching.dart' show maxSuggestions;
 
@@ -140,13 +142,11 @@ class DetailPage extends _$DetailPage {
   }
 }
 
-@riverpod
-Future<WatchOrder> watchOrder(Ref ref, int malId) async {
-  final services = ref.watch(servicesProvider);
-  final databases = services.databases;
-  _reloadOnEdit(ref, databases, ref.invalidateSelf);
-  // a title fetched while the page is open may bring new relations; every
-  // card fetched says so, so the reloads are gathered like the Library's
+// a title fetched while the page is open may bring new relations or fill a
+// card; every card fetched says so, so the reloads are gathered like the
+// Library's
+void _reloadOnNewData(Ref ref, Services services) {
+  _reloadOnEdit(ref, services.databases, ref.invalidateSelf);
   final reload = Countdown(onDone: ref.invalidateSelf);
   final listener = services.screenDataChanged.listen((_) {
     if (!reload.running) reload.start(libraryScreenReloadGap);
@@ -155,10 +155,34 @@ Future<WatchOrder> watchOrder(Ref ref, int malId) async {
     reload.dispose();
     listener.cancel();
   });
+}
+
+@riverpod
+Future<WatchOrder> watchOrder(Ref ref, int malId) async {
+  final services = ref.watch(servicesProvider);
+  _reloadOnNewData(ref, services);
+  final databases = services.databases;
   return loadWatchOrder(
     databases,
     malId,
     await readTitleLanguage(databases.record),
+  );
+}
+
+/// The titles MAL's users recommend after [malId], with what is saved of
+/// each; the cards fetch the rest while they show.
+@riverpod
+Future<List<RecommendedTitle>> recommendedTitles(Ref ref, int malId) async {
+  final services = ref.watch(servicesProvider);
+  _reloadOnNewData(ref, services);
+  final databases = services.databases;
+  final language = await readTitleLanguage(databases.record);
+  final details = await readTitleDetails(databases, malId, language);
+  return loadRecommendedTitles(
+    databases,
+    details?.recommendations ?? const [],
+    language,
+    now: DateTime.now(),
   );
 }
 

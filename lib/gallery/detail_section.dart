@@ -9,6 +9,8 @@ import '../components/status_menu_entries.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import '../detail/provider_page.dart';
+import '../detail/recommended_titles.dart';
+import '../detail/strip_title.dart';
 import '../detail/title_details.dart';
 import '../detail/watch_order.dart';
 import '../library/entry_status.dart';
@@ -25,6 +27,7 @@ import '../screens/detail/overview_part.dart';
 import '../screens/detail/score_figure.dart';
 import '../screens/detail/stats_part.dart';
 import '../screens/detail/page_picker.dart';
+import '../screens/detail/recommendations_part.dart';
 import '../detail/watch_order_words.dart';
 import '../screens/detail/watch_order_card.dart';
 
@@ -106,6 +109,7 @@ final sampleWatchOrder = WatchOrder([
     mediaType: 'tv',
     startDate: '2023-09-29',
     episodes: 28,
+    malScore: 9.29,
     entryId: 'a',
     status: EntryStatus.watching,
     episodesWatched: 4,
@@ -117,8 +121,10 @@ final sampleWatchOrder = WatchOrder([
     mediaType: 'ona',
     startDate: '2024-01-12',
     episodes: 12,
+    malScore: 7.81,
     entryId: 'b',
     status: EntryStatus.completed,
+    episodesWatched: 12,
   ),
   const WatchOrderRow(
     malId: 3,
@@ -136,6 +142,48 @@ final sampleWatchOrder = WatchOrder([
     mediaType: 'special',
   ),
 ]);
+
+/// Recommendations as the strip cards draw them: one on the list, one airing
+/// and one finished off the list.
+const sampleRecommended = [
+  RecommendedTitle(
+    title: StripTitle(
+      malId: 11,
+      name: 'Mushoku Tensei: Jobless Reincarnation',
+      mediaType: 'tv',
+      startDate: '2021-01-11',
+      episodes: 11,
+      malScore: 8.36,
+      entryId: 'c',
+      status: EntryStatus.completed,
+      episodesWatched: 11,
+    ),
+    note: '412 users',
+  ),
+  RecommendedTitle(
+    title: StripTitle(
+      malId: 12,
+      name: 'Dungeon Meshi',
+      mediaType: 'tv',
+      startDate: '2024-01-04',
+      episodes: 24,
+      malScore: 8.6,
+      airedEpisodes: 8,
+    ),
+    note: '96 users',
+  ),
+  RecommendedTitle(
+    title: StripTitle(
+      malId: 13,
+      name: 'Mahoutsukai no Yome',
+      mediaType: 'tv',
+      startDate: '2017-10-08',
+      episodes: 24,
+      malScore: 8.07,
+    ),
+    note: '12 users',
+  ),
+];
 
 const _suggestions = [
   ProviderPage(
@@ -306,6 +354,8 @@ class _DetailSectionState extends State<DetailSection> {
               hasNext: i < sampleWatchOrder.rows.length - 1,
             ),
           ),
+          _label('Recommendations'),
+          RecommendationsPart(titles: sampleRecommended, onOpen: (_) {}),
           _label('Page picker'),
           PagePicker(
             suggestions: _suggestions,

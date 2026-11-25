@@ -75,4 +75,30 @@ void main() {
       expect(row.read<String>('l'), 'l.jpg');
     },
   );
+
+  test('a version 3 details file gets the MAL score column', () async {
+    final folder = Directory.systemTemp.createTempSync('konsou_upgrade');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final file = File('${folder.path}${Platform.pathSeparator}details.db');
+    sqlite3.open(file.path)
+      ..execute('''
+        CREATE TABLE detail (
+          provider TEXT NOT NULL, provider_id INTEGER NOT NULL,
+          fetched_at INTEGER NOT NULL, json TEXT NOT NULL,
+          is_full BOOLEAN NOT NULL DEFAULT FALSE,
+          PRIMARY KEY (provider, provider_id))''')
+      ..execute(
+        "INSERT INTO detail (provider, provider_id, fetched_at, json) "
+        "VALUES ('mal', 5, 1, '{\"mean\": 7.5}')",
+      )
+      ..execute('PRAGMA user_version = 3')
+      ..close();
+
+    final details = DetailsDatabase(NativeDatabase(file));
+    addTearDown(details.close);
+    final row = await details
+        .customSelect('SELECT mal_score FROM detail')
+        .getSingle();
+    expect(row.read<double>('mal_score'), 7.5);
+  });
 }

@@ -1,15 +1,21 @@
 import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
-import 'motion.dart';
 
 /// A cover sunk into the console: a near-black well around it, shaded at the
-/// top, with a faint lit lip under it. [lit] (hover or focus) rings the well in
-/// pop and lifts the cover a little.
+/// top, with a faint lit lip under it. [lit] (hover or focus) rings the well
+/// in pop. A [foot] sits in the well under the cover, which then has no
+/// padding below it.
 class CoverWell extends StatelessWidget {
-  const CoverWell({super.key, required this.child, this.lit = false});
+  const CoverWell({
+    super.key,
+    required this.child,
+    this.foot,
+    this.lit = false,
+  });
 
   final Widget child;
+  final Widget? foot;
   final bool lit;
 
   /// How much narrower the cover is than the well.
@@ -17,6 +23,7 @@ class CoverWell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final foot = this.foot;
     return DecoratedBox(
       decoration: const BoxDecoration(
         color: Tokens.wellFill,
@@ -25,20 +32,24 @@ class CoverWell extends StatelessWidget {
       ),
       position: DecorationPosition.background,
       child: Container(
-        padding: const EdgeInsets.all(Tokens.wellPad),
+        padding: EdgeInsets.fromLTRB(
+          Tokens.wellPad,
+          Tokens.wellPad,
+          Tokens.wellPad,
+          foot == null ? Tokens.wellPad : 0,
+        ),
         foregroundDecoration: BoxDecoration(
           borderRadius: Tokens.wellCorners,
           border: Border.all(
             color: Tokens.pop.withValues(alpha: lit ? 0.6 : 0),
           ),
         ),
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(end: lit ? -Tokens.hoverEdge : 0),
-          duration: chooseMotionDuration(context, Tokens.motionQuick),
-          curve: Curves.easeOut,
-          child: ClipRRect(borderRadius: Tokens.coverCorners, child: child),
-          builder: (context, dy, child) =>
-              Transform.translate(offset: Offset(0, dy), child: child),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(borderRadius: Tokens.coverCorners, child: child),
+            ?foot,
+          ],
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../../components/pressable.dart';
 import '../../components/skeleton_lines.dart';
 import '../../design/text_styles.dart';
+import '../../components/fact_row.dart';
 import '../../components/hairline.dart';
 import '../../design/tokens.dart';
 import '../../detail/info_labels.dart';
@@ -150,8 +151,6 @@ class _Facts extends StatelessWidget {
 
   final TitleDetails details;
 
-  static const _labelWidth = Tokens.space5 * 4;
-
   @override
   Widget build(BuildContext context) {
     final names = details.otherNames;
@@ -162,28 +161,7 @@ class _Facts extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (final (label, value) in rows)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: Tokens.space1),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: _labelWidth,
-                        child: Text(
-                          label,
-                          style: AppText.paragraph(Tokens.inkMuted),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          value,
-                          style: AppText.paragraph(Tokens.inkSoft),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              for (final (label, value) in rows) FactRow(label, value: value),
             ],
           ),
         ),

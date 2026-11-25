@@ -1,3 +1,4 @@
+import 'aired_episodes.dart';
 import 'entry_status.dart';
 import 'library_row.dart';
 import 'row_labels.dart';
@@ -12,17 +13,23 @@ class QuickRow {
   const QuickRow({
     required this.name,
     required this.line,
+    required this.count,
     this.entryId,
     this.malId,
     this.status,
     this.episodes,
+    this.malScore,
     this.airing,
+    this.isLoadingDetails = false,
   });
 
   final String name;
 
   /// The small line under the name.
   final String line;
+
+  /// The episode column's count.
+  final String count;
 
   /// Set for a title on the list.
   final String? entryId;
@@ -31,30 +38,52 @@ class QuickRow {
   /// Set for a title on the list.
   final EntryStatus? status;
   final int? episodes;
+  final double? malScore;
 
   /// MAL's airing status of a title found online.
   final String? airing;
 
+  /// On the list with a MAL page whose details have not come in yet.
+  final bool isLoadingDetails;
+
   bool get onList => entryId != null;
   bool get completed => status == EntryStatus.completed;
+
+  /// On the list with no MAL page found yet.
+  bool get isNotLinked => onList && malId == null;
 }
 
 QuickRow quickRowFromEntry(LibraryEntry entry) {
   return QuickRow(
     name: formatTitle(entry.name),
-    line: [
-      formatTypeYear(entry.mediaType, entry.startDate),
-      formatProgress(entry.episodesWatched, entry.episodes),
-    ].where((part) => part.isNotEmpty).join(' · '),
+    line: entry.malId == null
+        ? 'Not linked'
+        : formatTypeWhen(
+            entry.mediaType,
+            entry.startDate,
+            notAired: entry.isNotAired,
+          ),
+    count: formatCardCount(
+      onList: true,
+      watched: entry.episodesWatched,
+      total: entry.episodes,
+    ),
     entryId: entry.entryId,
     malId: entry.malId,
     status: entry.status,
     episodes: entry.episodes,
+    malScore: entry.malScore,
+    isLoadingDetails: entry.malId != null && !entry.hasDetails,
   );
 }
 
-/// A title MAL found, as a row for a title not on the list.
-QuickRow quickRowFromPage(Map<String, dynamic> page, TitleLanguage language) {
+/// A title MAL found, as a row for a title not on the list. [now] counts the
+/// episodes out so far of a series still airing.
+QuickRow quickRowFromPage(
+  Map<String, dynamic> page,
+  TitleLanguage language, {
+  required DateTime now,
+}) {
   final alternatives = page['alternative_titles'] as Map?;
   final name =
       orderTitles(
@@ -64,16 +93,28 @@ QuickRow quickRowFromPage(Map<String, dynamic> page, TitleLanguage language) {
         japanese: alternatives?['ja'] as String?,
       ).firstOrNull ??
       '';
-  final episodes = page['num_episodes'] as int?;
+  final given = page['num_episodes'] as int?;
+  final episodes = given != null && given > 0 ? given : null;
+  final mediaType = page['media_type'] as String?;
+  final startDate = page['start_date'] as String?;
+  final airing = page['status'] as String?;
   return QuickRow(
     name: name,
-    line: formatTypeYear(
-      page['media_type'] as String?,
-      page['start_date'] as String?,
+    line: formatTypeWhen(
+      mediaType,
+      startDate,
+      notAired: airing == 'not_yet_aired',
+    ),
+    count: formatCardCount(
+      onList: false,
+      total: episodes,
+      // search answers carry no broadcast time, so the day's start stands in
+      aired: countAiredInListing(page, now),
     ),
     malId: page['id'] as int,
-    episodes: episodes != null && episodes > 0 ? episodes : null,
-    airing: page['status'] as String?,
+    episodes: episodes,
+    malScore: (page['mean'] as num?)?.toDouble(),
+    airing: airing,
   );
 }
 

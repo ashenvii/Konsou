@@ -75,6 +75,46 @@ void main() {
     expect(order.rows[0].startDate, '2019-01-01');
   });
 
+  test("carries MAL's score, none where MAL gives none", () async {
+    await addTitle(
+      databases,
+      1,
+      '2019-01-01',
+      score: 8.5,
+      relations: [relate(2, 'sequel')],
+    );
+    await addTitle(
+      databases,
+      2,
+      '2020-01-01',
+      relations: [relate(1, 'prequel')],
+    );
+    final order = await load(1);
+
+    expect([for (final row in order.rows) row.malScore], [8.5, null]);
+  });
+
+  test('a series on the air counts the episodes out so far', () async {
+    await addTitle(
+      databases,
+      1,
+      '2019-01-04',
+      relations: [relate(2, 'sequel')],
+    );
+    await addTitle(
+      databases,
+      2,
+      '2020-01-03',
+      airing: 'currently_airing',
+      episodes: 24,
+      relations: [relate(1, 'prequel')],
+    );
+    final order = await load(1);
+
+    // weekly since 2020, so every episode is out by now
+    expect([for (final row in order.rows) row.airedEpisodes], [null, 24]);
+  });
+
   test('a title not aired yet says so and has no episode count', () async {
     await addChain();
     final upcoming = (await load(1)).rows.last;

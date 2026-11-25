@@ -156,7 +156,7 @@ final class WatchOrderProvider
   }
 }
 
-String _$watchOrderHash() => r'69fec043342f21c6155243ea2c47e5dd715e42f5';
+String _$watchOrderHash() => r'8f06ed4f8664a2e7fd4f7b36c2c0da8fc6cb1ef5';
 
 final class WatchOrderFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<WatchOrder>, int> {
@@ -174,6 +174,97 @@ final class WatchOrderFamily extends $Family
 
   @override
   String toString() => r'watchOrderProvider';
+}
+
+/// The titles MAL's users recommend after [malId], with what is saved of
+/// each; the cards fetch the rest while they show.
+
+@ProviderFor(recommendedTitles)
+final recommendedTitlesProvider = RecommendedTitlesFamily._();
+
+/// The titles MAL's users recommend after [malId], with what is saved of
+/// each; the cards fetch the rest while they show.
+
+final class RecommendedTitlesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<RecommendedTitle>>,
+          List<RecommendedTitle>,
+          FutureOr<List<RecommendedTitle>>
+        >
+    with
+        $FutureModifier<List<RecommendedTitle>>,
+        $FutureProvider<List<RecommendedTitle>> {
+  /// The titles MAL's users recommend after [malId], with what is saved of
+  /// each; the cards fetch the rest while they show.
+  RecommendedTitlesProvider._({
+    required RecommendedTitlesFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'recommendedTitlesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$recommendedTitlesHash();
+
+  @override
+  String toString() {
+    return r'recommendedTitlesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<RecommendedTitle>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<RecommendedTitle>> create(Ref ref) {
+    final argument = this.argument as int;
+    return recommendedTitles(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is RecommendedTitlesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$recommendedTitlesHash() => r'4a24649388814d7f284cfab4cf2815ffd10e247f';
+
+/// The titles MAL's users recommend after [malId], with what is saved of
+/// each; the cards fetch the rest while they show.
+
+final class RecommendedTitlesFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<RecommendedTitle>>, int> {
+  RecommendedTitlesFamily._()
+    : super(
+        retry: null,
+        name: r'recommendedTitlesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The titles MAL's users recommend after [malId], with what is saved of
+  /// each; the cards fetch the rest while they show.
+
+  RecommendedTitlesProvider call(int malId) =>
+      RecommendedTitlesProvider._(argument: malId, from: this);
+
+  @override
+  String toString() => r'recommendedTitlesProvider';
 }
 
 @ProviderFor(notLinkedPage)

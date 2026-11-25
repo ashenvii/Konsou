@@ -2,17 +2,31 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:konsou/screens/library/card_details.dart';
+import 'package:konsou/detail/title_details.dart';
+import 'package:konsou/components/touch_target.dart';
+import 'package:konsou/app/detail_providers.dart';
+import 'package:konsou/components/card_foot.dart';
 import 'package:konsou/components/cover_well.dart';
 import 'package:konsou/components/app_checkbox.dart';
 import 'package:konsou/components/cover_image.dart';
+import 'package:konsou/components/key_cap.dart';
+import 'package:konsou/components/mal_score_line.dart';
+import 'package:konsou/components/skeleton.dart';
+import 'package:konsou/components/status_lamp.dart';
 import 'package:konsou/components/status_mark.dart';
+import 'package:konsou/components/value_column.dart';
+import 'package:konsou/components/skeleton_lines.dart';
+import 'package:konsou/components/row_small_line.dart';
+import 'package:konsou/components/mal_column.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/icons/app_icon.dart';
-import 'package:konsou/icons/score_star.dart';
 import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/library/library_row.dart';
 import 'package:konsou/screens/library/library_grid_card.dart';
 import 'package:konsou/screens/library/library_list_row.dart';
+
+import '../../support/render_png.dart';
 
 LibraryRow row({
   String name = 'Frieren',
@@ -24,6 +38,10 @@ LibraryRow row({
   bool hasDetails = true,
   int? seasonsDone,
   int? seasonsTotal,
+  double? malScore,
+  String? mediaType = 'tv',
+  String? startDate = '2023-09-29',
+  bool isNotAired = false,
 }) {
   return LibraryRow(
     current: LibraryEntry(
@@ -34,11 +52,13 @@ LibraryRow row({
       addedAt: 0,
       changedAt: 0,
       score: score,
+      malScore: malScore,
       malId: malId,
       hasDetails: hasDetails,
       episodes: episodes,
-      mediaType: 'tv',
-      startDate: '2023-09-29',
+      mediaType: mediaType,
+      startDate: startDate,
+      isNotAired: isNotAired,
     ),
     entryIds: const ['a'],
     addedAt: 0,
@@ -48,14 +68,22 @@ LibraryRow row({
   );
 }
 
-Future<void> pump(WidgetTester tester, Widget child, {double width = 800}) {
+Future<void> pump(
+  WidgetTester tester,
+  Widget child, {
+  double width = 800,
+  bool still = false,
+}) {
   if (child is LibraryListRow) child = SizedBox(width: width, child: child);
   return tester.pumpWidget(
     ProviderScope(
       child: Directionality(
         textDirection: TextDirection.ltr,
         child: MediaQuery(
-          data: MediaQueryData(size: Size(width, 600)),
+          data: MediaQueryData(
+            size: Size(width, 600),
+            disableAnimations: still,
+          ),
           child: Align(alignment: Alignment.topLeft, child: child),
         ),
       ),
@@ -94,44 +122,102 @@ void main() {
       );
     });
 
-    testWidgets('shows the title, the type and year, progress and score', (
+    testWidgets('the name over its type and year, then the columns', (
       tester,
     ) async {
-      await pump(tester, listRow(row()));
+      await pump(tester, listRow(row(malId: 1, malScore: 9.29)));
       expect(find.text('Frieren'), findsOneWidget);
       expect(find.text('TV · 2023'), findsOneWidget);
       expect(find.text('4 / 12'), findsOneWidget);
+      expect(find.text('9.29'), findsOneWidget);
+      expect(find.text('MAL'), findsOneWidget);
       expect(find.text('9'), findsOneWidget);
-      expect(find.byType(ScoreStar), findsOneWidget);
+      expect(find.text('Your score'), findsOneWidget);
       expect(find.byKey(const Key('menu')), findsOneWidget);
     });
 
-    testWidgets('the status word shows only when asked to', (tester) async {
-      await pump(tester, listRow(row(), showStatus: true));
-      expect(find.text('Watching'), findsOneWidget);
-      await pump(tester, listRow(row()));
-      expect(find.text('Watching'), findsNothing);
+    testWidgets('your score is the pop LED, MAL\'s is ink', (tester) async {
+      await pump(tester, listRow(row(malId: 1, malScore: 9.29)));
+      expect(tester.widget<Text>(find.text('9')).style?.color, Tokens.pop);
+      expect(tester.widget<Text>(find.text('9.29')).style?.color, Tokens.ink);
     });
 
-    testWidgets('in a narrow row the status word joins the small line', (
+    testWidgets('the Your score column is as wide as its label', (
       tester,
     ) async {
-      await pump(tester, listRow(row(), showStatus: true), width: 360);
-      expect(find.text('TV · 2023 · Watching'), findsOneWidget);
+      await pump(tester, listRow(row(malId: 1)));
+      final column = find.ancestor(
+        of: find.text('Your score'),
+        matching: find.byType(ValueColumn),
+      );
+      expect(
+        tester.getSize(column).width,
+        tester.getSize(find.text('Your score')).width.ceilToDouble(),
+      );
+    });
+
+    testWidgets('no score of yours leaves its place empty', (tester) async {
+      await pump(tester, listRow(row(malId: 1, score: null)));
+      expect(find.text('Your score'), findsOneWidget);
+      expect(find.text('9'), findsNothing);
+    });
+
+    testWidgets('no score from MAL is a question mark', (tester) async {
+      await pump(tester, listRow(row(malId: 1)));
+      expect(find.text('?'), findsOneWidget);
+    });
+
+    testWidgets('on a mixed tab the episode column names the status', (
+      tester,
+    ) async {
+      await pump(tester, listRow(row(malId: 1), showStatus: true));
+      expect(find.text('Watching'), findsOneWidget);
+      expect(find.byType(StatusLamp), findsOneWidget);
+    });
+
+    testWidgets('on a tab of one status the lamp stands alone', (tester) async {
+      await pump(tester, listRow(row(malId: 1)));
       expect(find.text('Watching'), findsNothing);
+      expect(find.byType(StatusMark), findsNothing);
+      expect(find.byType(StatusLamp), findsOneWidget);
+    });
+
+    testWidgets('a narrow row: the mark for the word, MAL in the small line, '
+        'no Your score', (tester) async {
+      await pump(
+        tester,
+        listRow(row(malId: 1, malScore: 9.29), showStatus: true),
+        width: 360,
+      );
+      expect(find.text('Watching'), findsNothing);
+      expect(find.byType(StatusMark), findsOneWidget);
+      expect(find.byType(MalColumn), findsNothing);
+      expect(find.text('Your score'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(RowSmallLine),
+          matching: find.textContaining('9.29', findRichText: true),
+        ),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('no score leaves no star', (tester) async {
-      await pump(tester, listRow(row(score: null)));
-      expect(find.byType(ScoreStar), findsNothing);
+    testWidgets('a franchise counts its seasons', (tester) async {
+      await pump(
+        tester,
+        listRow(row(malId: 1, seasonsDone: 1, seasonsTotal: 2)),
+      );
+      expect(find.text('1 / 2 seasons'), findsOneWidget);
+      expect(find.text('TV · 2023'), findsOneWidget);
     });
 
-    testWidgets('a franchise shows its season count under the title', (
-      tester,
-    ) async {
-      await pump(tester, listRow(row(seasonsDone: 1, seasonsTotal: 2)));
-      expect(find.text('TV · 2023 · 1/2 seasons'), findsOneWidget);
+    testWidgets('a title not aired yet gives its whole date', (tester) async {
+      await pump(
+        tester,
+        listRow(row(malId: 1, startDate: '2027-01-12', isNotAired: true)),
+      );
+      expect(find.text('TV · 12 Jan 2027'), findsOneWidget);
     });
 
     testWidgets('the box is checked for Completed, and ticking asks to '
@@ -172,16 +258,38 @@ void main() {
       expect(asked, hasLength(1));
     });
 
-    testWidgets('an entry with no details says so', (tester) async {
-      await pump(tester, listRow(row(name: '', malId: 1, hasDetails: false)));
-      expect(find.text('Loading details'), findsOneWidget);
+    testWidgets('loading details: skeletons for the name and MAL, the count '
+        'stays', (tester) async {
+      await pump(
+        tester,
+        listRow(row(name: '', malId: 1, hasDetails: false, episodes: null)),
+      );
+      expect(find.byType(SkeletonLines), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(MalColumn),
+          matching: find.byType(Skeleton),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('?'), findsNothing);
+      expect(find.text('4 / ?'), findsOneWidget);
     });
 
-    testWidgets('a not-linked entry has a small mark', (tester) async {
-      await pump(tester, listRow(row()));
+    testWidgets('not linked: the saved name, "Not linked", no MAL score', (
+      tester,
+    ) async {
+      await pump(tester, listRow(row(name: 'Saved name')));
+      expect(find.text('Saved name'), findsOneWidget);
       expect(find.text('Not linked'), findsOneWidget);
-      await pump(tester, listRow(row(malId: 7)));
-      expect(find.text('Not linked'), findsNothing);
+      expect(
+        tester
+            .widget<Opacity>(
+              find.ancestor(of: find.text('?'), matching: find.byType(Opacity)),
+            )
+            .opacity,
+        0,
+      );
     });
 
     testWidgets('a long title ends in an ellipsis, not an overflow', (
@@ -202,75 +310,156 @@ void main() {
       bool showStatus = false,
       VoidCallback? onOpen,
       ValueChanged<Offset>? onContextMenu,
-    }) => LibraryGridCard(
-      row: row,
-      showStatus: showStatus,
-      onOpen: onOpen ?? () {},
-      onContextMenu: onContextMenu ?? (_) {},
+    }) => SizedBox(
+      width: Tokens.gridCardMinWidth,
+      child: LibraryGridCard(
+        row: row,
+        showStatus: showStatus,
+        onOpen: onOpen ?? () {},
+        onContextMenu: onContextMenu ?? (_) {},
+      ),
     );
 
-    testWidgets('a cover, a bold title and the type and year line', (
+    // the real fonts, so the footer measures what fits as the window does
+    Future<void> pumpCard(
+      WidgetTester tester,
+      Widget card, {
+      bool still = false,
+    }) async {
+      await loadAppFonts();
+      await pump(tester, card, still: still);
+    }
+
+    Future<TestGesture> hover(WidgetTester tester) async {
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(tester.getCenter(find.byType(CoverWell)));
+      await tester.pumpAndSettle();
+      return mouse;
+    }
+
+    testWidgets('a cover, the type tag, a bold name and the score line', (
       tester,
     ) async {
-      await pump(tester, SizedBox(width: 168, child: card(row())));
+      await pumpCard(tester, card(row(malId: 1, malScore: 9.29)));
       expect(find.byType(CoverImage), findsOneWidget);
+      expect(find.byType(KeyCaps), findsOneWidget);
+      expect(find.text('TV'), findsOneWidget);
       expect(find.text('Frieren'), findsOneWidget);
-      expect(find.text('TV · 2023'), findsOneWidget);
       expect(
         tester.widget<Text>(find.text('Frieren')).style!.fontWeight,
         FontWeight.w600,
       );
+      expect(find.text('9.29'), findsOneWidget);
+      expect(find.text('2023'), findsOneWidget);
+      expect(find.byKey(const Key('card-chip')), findsNothing);
+    });
+
+    testWidgets('no score from MAL is a question mark', (tester) async {
+      await pumpCard(tester, card(row(malId: 1)));
+      expect(find.text('?'), findsOneWidget);
+    });
+
+    testWidgets('a title not aired yet gives its whole date', (tester) async {
+      await pumpCard(
+        tester,
+        card(row(malId: 1, startDate: '2027-01-12', isNotAired: true)),
+      );
+      expect(find.text('12 Jan 2027'), findsOneWidget);
     });
 
     testWidgets('the cover fills the card width inside its well', (
       tester,
     ) async {
-      await pump(tester, SizedBox(width: 168, child: card(row())));
+      await pumpCard(tester, card(row(malId: 1)));
       expect(
         tester.getSize(find.byType(CoverImage)).width,
-        168 - CoverWell.inset,
+        Tokens.gridCardMinWidth - CoverWell.inset,
       );
     });
 
-    testWidgets('on All the chip shows the status mark and the count', (
+    testWidgets('the footer sits in the well under the cover', (tester) async {
+      await pumpCard(tester, card(row(malId: 1)));
+      final cover = tester.getRect(find.byType(CoverImage));
+      final foot = tester.getRect(find.byType(CardFoot));
+      expect(foot.top, cover.bottom);
+      expect(foot.height, Tokens.cardFootHeight);
+      expect(
+        find.descendant(
+          of: find.byType(CoverWell),
+          matching: find.byType(CardFoot),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('it takes exactly the height the grid sets aside', (
       tester,
     ) async {
-      await pump(
-        tester,
-        SizedBox(width: 168, child: card(row(), showStatus: true)),
+      await pumpCard(tester, card(row(malId: 1, malScore: 9.29)));
+      expect(
+        tester.getSize(find.byType(LibraryGridCard)).height,
+        closeTo(
+          LibraryGridCard.heightFor(
+            Tokens.gridCardMinWidth,
+            TextScaler.noScaling,
+          ),
+          0.01,
+        ),
       );
-      expect(find.byType(StatusMark), findsOneWidget);
+    });
+
+    testWidgets('a long name and a short one take the same height', (
+      tester,
+    ) async {
+      await pumpCard(tester, card(row(malId: 1)));
+      final short = tester.getSize(find.byType(LibraryGridCard)).height;
+      await pumpCard(
+        tester,
+        card(
+          row(
+            malId: 1,
+            name: "Frieren: Beyond Journey's End, a very long name indeed",
+          ),
+        ),
+      );
+      expect(tester.getSize(find.byType(LibraryGridCard)).height, short);
+    });
+
+    testWidgets('on a mixed tab the footer shows the mark and the count', (
+      tester,
+    ) async {
+      await pumpCard(tester, card(row(malId: 1), showStatus: true));
       expect(
         tester.widget<StatusMark>(find.byType(StatusMark)).status,
         EntryStatus.watching,
       );
-      expect(find.text('4/12'), findsOneWidget);
+      expect(find.text('4 / 12'), findsOneWidget);
     });
 
-    testWidgets('on another tab the chip is only the count', (tester) async {
-      await pump(tester, SizedBox(width: 168, child: card(row())));
-      expect(find.byType(StatusMark), findsNothing);
-      expect(find.text('4/12'), findsOneWidget);
-    });
-
-    testWidgets('a franchise shows its season progress in the chip', (
+    testWidgets('on another tab the footer is the lamp and the count', (
       tester,
     ) async {
-      await pump(
+      await pumpCard(tester, card(row(malId: 1)));
+      expect(find.byType(StatusLamp), findsOneWidget);
+      expect(find.byType(StatusMark), findsNothing);
+      expect(find.text('4 / 12'), findsOneWidget);
+    });
+
+    testWidgets('a franchise counts its seasons', (tester) async {
+      await pumpCard(
         tester,
-        SizedBox(width: 168, child: card(row(seasonsDone: 1, seasonsTotal: 2))),
+        card(row(malId: 1, seasonsDone: 1, seasonsTotal: 2)),
       );
-      expect(find.text('1/2'), findsOneWidget);
-      expect(find.text('4/12'), findsNothing);
+      expect(find.text('1 / 2 seasons'), findsOneWidget);
+      expect(find.text('4 / 12'), findsNothing);
     });
 
     testWidgets('a finished single title is the green check', (tester) async {
-      await pump(
+      await pumpCard(
         tester,
-        SizedBox(
-          width: 168,
-          child: card(row(status: 'completed', watched: 12), showStatus: true),
-        ),
+        card(row(malId: 1, status: 'completed', watched: 12), showStatus: true),
       );
       final icon = tester.widget<AppIcon>(
         find.descendant(
@@ -282,14 +471,11 @@ void main() {
     });
 
     testWidgets('a franchise with a season left is not green', (tester) async {
-      await pump(
+      await pumpCard(
         tester,
-        SizedBox(
-          width: 168,
-          child: card(
-            row(status: 'completed', seasonsDone: 1, seasonsTotal: 2),
-            showStatus: true,
-          ),
+        card(
+          row(malId: 1, status: 'completed', seasonsDone: 1, seasonsTotal: 2),
+          showStatus: true,
         ),
       );
       final icon = tester.widget<AppIcon>(
@@ -301,15 +487,135 @@ void main() {
       expect(icon.color, Tokens.inkMuted);
     });
 
-    testWidgets('nothing to count leaves no chip text', (tester) async {
-      await pump(
+    testWidgets('hover lights the well, lifts the card and adds the word', (
+      tester,
+    ) async {
+      await pumpCard(tester, card(row(malId: 1)));
+      final rest = tester.getTopLeft(find.byType(CoverWell));
+      expect(find.text('Watching'), findsNothing);
+      await hover(tester);
+      expect(tester.widget<CoverWell>(find.byType(CoverWell)).lit, isTrue);
+      expect(
+        tester.getTopLeft(find.byType(CoverWell)),
+        rest - const Offset(0, Tokens.cardLift),
+      );
+      expect(find.text('Watching'), findsOneWidget);
+    });
+
+    testWidgets('under reduced motion hover lights without the lift', (
+      tester,
+    ) async {
+      await pumpCard(tester, card(row(malId: 1)), still: true);
+      final rest = tester.getTopLeft(find.byType(CoverWell));
+      await hover(tester);
+      expect(tester.widget<CoverWell>(find.byType(CoverWell)).lit, isTrue);
+      expect(tester.getTopLeft(find.byType(CoverWell)), rest);
+    });
+
+    testWidgets('loading details: skeletons, no tag, the footer stays real', (
+      tester,
+    ) async {
+      await pumpCard(
         tester,
-        SizedBox(
-          width: 168,
-          child: card(row(watched: 0, episodes: null), showStatus: false),
+        card(row(name: '', malId: 1, hasDetails: false, episodes: null)),
+      );
+      expect(find.byType(KeyCaps), findsNothing);
+      expect(find.byType(MalScoreLine), findsNothing);
+      expect(find.byType(Skeleton), findsWidgets);
+      final semantics = tester.ensureSemantics();
+      await tester.pump();
+      expect(find.bySemanticsLabel(RegExp('Loading details')), findsOneWidget);
+      semantics.dispose();
+      expect(find.text('4 / ?'), findsOneWidget);
+    });
+
+    testWidgets('loading takes the same height as a loaded card', (
+      tester,
+    ) async {
+      await pumpCard(tester, card(row(malId: 1)));
+      final loaded = tester.getSize(find.byType(LibraryGridCard)).height;
+      await pumpCard(tester, card(row(name: '', malId: 1, hasDetails: false)));
+      expect(tester.getSize(find.byType(LibraryGridCard)).height, loaded);
+    });
+
+    testWidgets('not linked: the saved name, "Not linked", no tag or score', (
+      tester,
+    ) async {
+      await pumpCard(tester, card(row(name: 'Saved name')));
+      expect(find.text('Saved name'), findsOneWidget);
+      expect(find.text('Not linked'), findsOneWidget);
+      expect(find.byType(KeyCaps), findsNothing);
+      expect(find.byType(MalScoreLine), findsNothing);
+      expect(find.text('4 / 12'), findsOneWidget);
+    });
+
+    Future<void> rest(WidgetTester tester, Widget card) async {
+      await loadAppFonts();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            detailPageProvider(1, entryId: 'a').overrideWithBuild(
+              (ref, notifier) => const DetailPageData(
+                details: TitleDetails(
+                  malId: 1,
+                  name: 'Sousou no Frieren',
+                  isFull: true,
+                  fetchedAt: 0,
+                  synopsis: 'The party goes home.',
+                ),
+              ),
+            ),
+          ],
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: MediaQuery(
+              data: const MediaQueryData(size: Size(800, 600)),
+              child: Overlay(
+                initialEntries: [
+                  OverlayEntry(
+                    builder: (_) =>
+                        Align(alignment: Alignment.topLeft, child: card),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       );
-      expect(find.byKey(const Key('card-chip')), findsNothing);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(tester.getCenter(find.byType(CoverWell)));
+      await tester.pump(Tokens.tipDelay);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('resting on a card opens its details beside it', (
+      tester,
+    ) async {
+      await rest(tester, card(row(malId: 1)));
+      expect(find.byType(CardDetails), findsOneWidget);
+      expect(find.text('The party goes home.'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.byType(CardDetails)).dx,
+        greaterThan(tester.getTopRight(find.byType(LibraryGridCard)).dx),
+      );
+    });
+
+    testWidgets('a card with no MAL page has no details popover', (
+      tester,
+    ) async {
+      await rest(tester, card(row(name: 'Saved name')));
+      expect(find.byType(CardDetails), findsNothing);
+    });
+
+    testWidgets('on a touch screen there is no details popover', (
+      tester,
+    ) async {
+      TouchTarget.debugForce = true;
+      addTearDown(() => TouchTarget.debugForce = null);
+      await rest(tester, card(row(malId: 1)));
+      expect(find.byType(CardDetails), findsNothing);
     });
 
     testWidgets('a tap opens and a right click asks for the menu', (
@@ -317,12 +623,9 @@ void main() {
     ) async {
       var opened = 0;
       final asked = <Offset>[];
-      await pump(
+      await pumpCard(
         tester,
-        SizedBox(
-          width: 168,
-          child: card(row(), onOpen: () => opened++, onContextMenu: asked.add),
-        ),
+        card(row(malId: 1), onOpen: () => opened++, onContextMenu: asked.add),
       );
       await tester.tap(find.text('Frieren'));
       expect(opened, 1);

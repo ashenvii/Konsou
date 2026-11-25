@@ -1,18 +1,6 @@
 import '../library/row_labels.dart';
 import 'title_details.dart';
 
-/// A date as MAL gives it ("2023", "2023-09", "2023-09-29") in words.
-String? formatMalDate(String? date) {
-  if (date == null || date.length < 4) return null;
-  final parts = date.split('-');
-  final year = parts[0];
-  final month = parts.length > 1 ? int.tryParse(parts[1]) : null;
-  final day = parts.length > 2 ? int.tryParse(parts[2]) : null;
-  if (month == null || month < 1 || month > 12) return year;
-  final name = formatMonth(month, short: true);
-  return day == null ? '$name $year' : '$day $name $year';
-}
-
 /// "29 Sep 2023 to 22 Mar 2024", "29 Sep 2023 to ?" while it airs, or the one
 /// date for a title that has no end.
 String? formatAired(TitleDetails details) {

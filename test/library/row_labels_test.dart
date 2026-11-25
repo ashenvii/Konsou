@@ -75,31 +75,82 @@ void main() {
       expect(_progress(row()), '4 / 12');
     });
 
-    test('an unknown total shows only what is watched', () {
-      expect(_progress(row(episodes: null)), '4');
-      expect(_progress(row(episodes: 0)), '4');
-    });
-
-    test('nothing watched and no details yet is empty', () {
-      expect(_progress(row(watched: 0, episodes: null)), '');
+    test('an unknown total is a question mark', () {
+      expect(_progress(row(episodes: null)), '4 / ?');
+      expect(_progress(row(episodes: 0)), '4 / ?');
+      expect(_progress(row(watched: 0, episodes: null)), '0 / ?');
     });
   });
 
-  group('seasons', () {
-    test('only for a franchise with several seasons', () {
-      expect(formatSeasons(row()), isNull);
+  group('type and when', () {
+    test('the type and the year, ? with no date', () {
+      expect(formatTypeWhen('tv', '2023-09-29', notAired: false), 'TV · 2023');
+      expect(formatTypeWhen('tv', null, notAired: false), 'TV · ?');
+      expect(formatTypeWhen(null, '2019', notAired: false), '2019');
+    });
+
+    test('a title not aired yet gives its whole date', () {
       expect(
-        formatSeasons(row(seasonsDone: 1, seasonsTotal: 2)),
-        '1/2 seasons',
+        formatTypeWhen('movie', '2027-01-12', notAired: true),
+        'Movie · 12 Jan 2027',
       );
     });
   });
 
-  group('chip count', () {
-    test('episodes without spaces, or seasons for a franchise', () {
-      expect(formatChipCount(row()), '4/12');
-      expect(formatChipCount(row(seasonsDone: 1, seasonsTotal: 2)), '1/2');
-      expect(formatChipCount(row(watched: 0, episodes: null)), '');
+  group('card count', () {
+    test('on your list: watched out of the total, ? while it is unknown', () {
+      expect(formatCardCount(onList: true, watched: 9, total: 28), '9 / 28');
+      expect(formatCardCount(onList: true, watched: 3), '3 / ?');
+    });
+
+    test('airing and not on your list: the episodes out so far', () {
+      expect(formatCardCount(onList: false, total: 12, aired: 8), 'Ep 8 / 12');
+      expect(formatCardCount(onList: false, aired: 8), 'Ep 8 / ?');
+    });
+
+    test('otherwise the total, ? when MAL has none', () {
+      expect(formatCardCount(onList: false, total: 12), '12 ep');
+      expect(formatCardCount(onList: false), '? ep');
+    });
+
+    test('on your list, an airing title still shows your progress', () {
+      expect(
+        formatCardCount(onList: true, watched: 5, total: 12, aired: 8),
+        '5 / 12',
+      );
+    });
+
+    test('a franchise counts seasons', () {
+      expect(
+        formatCardCount(
+          onList: true,
+          watched: 4,
+          total: 12,
+          seasonsDone: 2,
+          seasonsTotal: 4,
+        ),
+        '2 / 4 seasons',
+      );
+    });
+  });
+
+  group('MAL score and when', () {
+    test('the score with two decimals, ? when MAL has none', () {
+      expect(formatMalScore(9.29), '9.29');
+      expect(formatMalScore(8), '8.00');
+      expect(formatMalScore(null), '?');
+    });
+
+    test('the year, ? when there is no date', () {
+      expect(formatCardWhen('2023-09-29', notAired: false), '2023');
+      expect(formatCardWhen('2019', notAired: false), '2019');
+      expect(formatCardWhen(null, notAired: false), '?');
+    });
+
+    test('a title not aired yet gives as much of its date as MAL has', () {
+      expect(formatCardWhen('2027-01-12', notAired: true), '12 Jan 2027');
+      expect(formatCardWhen('2027-01', notAired: true), 'Jan 2027');
+      expect(formatCardWhen(null, notAired: true), '?');
     });
   });
 

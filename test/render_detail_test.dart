@@ -24,7 +24,7 @@ void main() {
     await loadAppFonts();
     await renderPng(
       tester,
-      size: const Size(1000, 2050),
+      size: const Size(1000, 3500),
       path: '$folder/detail_widgets.png',
       child: Directionality(
         textDirection: TextDirection.ltr,
@@ -89,10 +89,12 @@ void main() {
       );
       await tester.pump(WindowConfig.restoreSettle);
       router.push(path);
-      await tester.pumpAndSettle();
+      // a loading skeleton sweeps for as long as it shows, so nothing settles
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
       if (scroll > 0) {
-        await tester.drag(find.byType(ListView).first, Offset(0, -scroll));
-        await tester.pumpAndSettle();
+        await tester.drag(find.byType(Scrollable).first, Offset(0, -scroll));
+        await tester.pump(const Duration(seconds: 1));
       }
       await capturePng(tester, key, '$folder/detail_$name.png');
       await tester.pumpWidget(const SizedBox.shrink());

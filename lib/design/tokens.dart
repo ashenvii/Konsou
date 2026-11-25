@@ -126,6 +126,12 @@ abstract final class Tokens {
   static const double listRowHeight = 72;
   static const double listCoverWidth = 40;
 
+  // the card (DECISIONS "Card, round 6", owner, 2026-11-25): the footer
+  // under the cover, how far a hovered card rises, the details popover's width
+  static const double cardFootHeight = 28;
+  static const double cardLift = 2;
+  static const double popoverWidth = 360;
+
   // the toast, a first guess the owner agreed to (2026-11-12).
   static const double toastMaxWidth = 480;
   // the bar on a toast that shows its time left.

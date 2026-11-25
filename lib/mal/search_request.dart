@@ -7,7 +7,7 @@ import 'request_gate.dart';
 /// Enough to show a result and to judge it as a match.
 const searchFields =
     'id,title,main_picture,alternative_titles,media_type,status,num_episodes,'
-    'start_date';
+    'start_date,mean';
 
 /// MAL refuses a query outside these lengths with a 400.
 const minQueryLength = 3;

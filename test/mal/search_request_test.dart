@@ -38,6 +38,10 @@ void main() {
     expect(asked.single.queryParameters['fields'], searchFields);
   });
 
+  test("asks for MAL's score with each result", () {
+    expect(searchFields.split(','), contains('mean'));
+  });
+
   test('nothing found is an empty list, a failure is null', () async {
     expect(
       await searchAnswering(() => readSample('search_nothing'))

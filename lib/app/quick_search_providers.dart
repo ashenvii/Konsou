@@ -217,13 +217,14 @@ class QuickSearch extends _$QuickSearch {
     if (run != _run) return;
     _searched = used;
     _offset += pages.length;
+    final now = DateTime.now();
     state = state.copyWith(
       online: [
         // the first page replaces the rows of the old word
         if (_offset > pages.length) ...state.online,
         for (final page in pages)
           if (unlisted.contains(page['id'] as int))
-            quickRowFromPage(page, _language),
+            quickRowFromPage(page, _language, now: now),
       ],
       onlineMore: pages.length >= quickPage,
       searching: false,

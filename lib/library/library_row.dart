@@ -10,6 +10,7 @@ class LibraryEntry {
     required this.addedAt,
     required this.changedAt,
     this.score,
+    this.malScore,
     this.malId,
     this.hasDetails = false,
     this.episodes,
@@ -17,6 +18,7 @@ class LibraryEntry {
     this.startDate,
     this.franchiseId,
     this.isExtra = false,
+    this.isNotAired = false,
   });
 
   final String entryId;
@@ -28,6 +30,9 @@ class LibraryEntry {
   final int addedAt;
   final int changedAt;
   final int? score;
+
+  /// MAL's mean score, or null when too few users have scored the title.
+  final double? malScore;
   final int? malId;
   final bool hasDetails;
   final int? episodes;
@@ -40,6 +45,7 @@ class LibraryEntry {
   /// the entry yet.
   final int? franchiseId;
   final bool isExtra;
+  final bool isNotAired;
 
   @override
   bool operator ==(Object other) =>
@@ -51,13 +57,15 @@ class LibraryEntry {
       other.addedAt == addedAt &&
       other.changedAt == changedAt &&
       other.score == score &&
+      other.malScore == malScore &&
       other.malId == malId &&
       other.hasDetails == hasDetails &&
       other.episodes == episodes &&
       other.mediaType == mediaType &&
       other.startDate == startDate &&
       other.franchiseId == franchiseId &&
-      other.isExtra == isExtra;
+      other.isExtra == isExtra &&
+      other.isNotAired == isNotAired;
 
   @override
   int get hashCode => Object.hash(
@@ -68,6 +76,7 @@ class LibraryEntry {
     addedAt,
     changedAt,
     score,
+    malScore,
     malId,
     hasDetails,
     episodes,
@@ -75,6 +84,7 @@ class LibraryEntry {
     startDate,
     franchiseId,
     isExtra,
+    isNotAired,
   );
 }
 
@@ -108,10 +118,12 @@ class LibraryRow {
   EntryStatus get status => current.status;
   int get episodesWatched => current.episodesWatched;
   int? get score => current.score;
+  double? get malScore => current.malScore;
   int? get malId => current.malId;
   int? get episodes => current.episodes;
   String? get mediaType => current.mediaType;
   String? get startDate => current.startDate;
+  bool get isNotAired => current.isNotAired;
 
   /// No MAL page: Konsou has not found one yet.
   bool get isNotLinked => current.malId == null;

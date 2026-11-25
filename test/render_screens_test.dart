@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/gallery/gallery_screen.dart';
+import 'package:konsou/gallery/card_pieces_section.dart';
 import 'package:konsou/gallery/library_rows_section.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:konsou/app/library_providers.dart';
@@ -90,7 +91,7 @@ void main() {
     await renderPng(
       tester,
       child: const MediaQuery(
-        data: MediaQueryData(size: Size(1100, 1400)),
+        data: MediaQueryData(size: Size(1100, 1500)),
         child: Directionality(
           textDirection: TextDirection.ltr,
           child: DefaultTextStyle(
@@ -105,8 +106,33 @@ void main() {
           ),
         ),
       ),
-      size: const Size(1100, 1400),
+      size: const Size(1100, 1500),
       path: '$folder/library_rows.png',
+    );
+  }, skip: folder == null);
+
+  testWidgets('render the card pieces', (tester) async {
+    await loadAppFonts();
+    await renderPng(
+      tester,
+      child: const MediaQuery(
+        data: MediaQueryData(size: Size(1100, 960)),
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: DefaultTextStyle(
+            style: TextStyle(fontFamily: Tokens.sans, color: Tokens.ink),
+            child: ColoredBox(
+              color: Tokens.ground,
+              child: Padding(
+                padding: EdgeInsets.all(Tokens.space5),
+                child: CardPiecesSection(),
+              ),
+            ),
+          ),
+        ),
+      ),
+      size: const Size(1100, 960),
+      path: '$folder/card_pieces.png',
     );
   }, skip: folder == null);
 

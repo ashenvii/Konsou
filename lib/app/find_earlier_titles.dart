@@ -42,9 +42,12 @@ Future<List<EarlierTitle>> findEarlierTitles(
   };
 
   final before = members.sublist(0, position);
-  final names = await readTitleNames(record, [
-    for (final title in before) title.id,
-  ], language);
+  final names = await readTitleFacts(
+    record,
+    [for (final title in before) title.id],
+    language,
+    now: DateTime.now(),
+  );
 
   final earlier = <EarlierTitle>[];
   for (final title in before) {

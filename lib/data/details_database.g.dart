@@ -217,6 +217,22 @@ class DetailTable extends Table with TableInfo<DetailTable, Detail> {
     $customConstraints:
         'GENERATED ALWAYS AS (json_extract(json, \'\$.nsfw\')) VIRTUAL',
   );
+  static const VerificationMeta _malScoreMeta = const VerificationMeta(
+    'malScore',
+  );
+  late final GeneratedColumn<double> malScore = GeneratedColumn<double>(
+    'mal_score',
+    aliasedName,
+    true,
+    generatedAs: GeneratedAs(
+      const CustomExpression('json_extract(json, \'\$.mean\')'),
+      false,
+    ),
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'GENERATED ALWAYS AS (json_extract(json, \'\$.mean\')) VIRTUAL',
+  );
   @override
   List<GeneratedColumn> get $columns => [
     provider,
@@ -234,6 +250,7 @@ class DetailTable extends Table with TableInfo<DetailTable, Detail> {
     coverMediumUrl,
     coverLargeUrl,
     nsfw,
+    malScore,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -360,6 +377,12 @@ class DetailTable extends Table with TableInfo<DetailTable, Detail> {
         nsfw.isAcceptableOrUnknown(data['nsfw']!, _nsfwMeta),
       );
     }
+    if (data.containsKey('mal_score')) {
+      context.handle(
+        _malScoreMeta,
+        malScore.isAcceptableOrUnknown(data['mal_score']!, _malScoreMeta),
+      );
+    }
     return context;
   }
 
@@ -429,6 +452,10 @@ class DetailTable extends Table with TableInfo<DetailTable, Detail> {
         DriftSqlType.string,
         data['${effectivePrefix}nsfw'],
       ),
+      malScore: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}mal_score'],
+      ),
     );
   }
 
@@ -465,6 +492,9 @@ class Detail extends DataClass implements Insertable<Detail> {
   final String? coverMediumUrl;
   final String? coverLargeUrl;
   final String? nsfw;
+
+  /// mal leaves mean out when too few users have scored the title
+  final double? malScore;
   const Detail({
     required this.provider,
     required this.providerId,
@@ -481,6 +511,7 @@ class Detail extends DataClass implements Insertable<Detail> {
     this.coverMediumUrl,
     this.coverLargeUrl,
     this.nsfw,
+    this.malScore,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -524,6 +555,7 @@ class Detail extends DataClass implements Insertable<Detail> {
       coverMediumUrl: serializer.fromJson<String?>(json['cover_medium_url']),
       coverLargeUrl: serializer.fromJson<String?>(json['cover_large_url']),
       nsfw: serializer.fromJson<String?>(json['nsfw']),
+      malScore: serializer.fromJson<double?>(json['mal_score']),
     );
   }
   @override
@@ -545,6 +577,7 @@ class Detail extends DataClass implements Insertable<Detail> {
       'cover_medium_url': serializer.toJson<String?>(coverMediumUrl),
       'cover_large_url': serializer.toJson<String?>(coverLargeUrl),
       'nsfw': serializer.toJson<String?>(nsfw),
+      'mal_score': serializer.toJson<double?>(malScore),
     };
   }
 
@@ -564,6 +597,7 @@ class Detail extends DataClass implements Insertable<Detail> {
     Value<String?> coverMediumUrl = const Value.absent(),
     Value<String?> coverLargeUrl = const Value.absent(),
     Value<String?> nsfw = const Value.absent(),
+    Value<double?> malScore = const Value.absent(),
   }) => Detail(
     provider: provider ?? this.provider,
     providerId: providerId ?? this.providerId,
@@ -586,6 +620,7 @@ class Detail extends DataClass implements Insertable<Detail> {
         ? coverLargeUrl.value
         : this.coverLargeUrl,
     nsfw: nsfw.present ? nsfw.value : this.nsfw,
+    malScore: malScore.present ? malScore.value : this.malScore,
   );
   @override
   String toString() {
@@ -604,7 +639,8 @@ class Detail extends DataClass implements Insertable<Detail> {
           ..write('startDate: $startDate, ')
           ..write('coverMediumUrl: $coverMediumUrl, ')
           ..write('coverLargeUrl: $coverLargeUrl, ')
-          ..write('nsfw: $nsfw')
+          ..write('nsfw: $nsfw, ')
+          ..write('malScore: $malScore')
           ..write(')'))
         .toString();
   }
@@ -626,6 +662,7 @@ class Detail extends DataClass implements Insertable<Detail> {
     coverMediumUrl,
     coverLargeUrl,
     nsfw,
+    malScore,
   );
   @override
   bool operator ==(Object other) =>
@@ -645,7 +682,8 @@ class Detail extends DataClass implements Insertable<Detail> {
           other.startDate == this.startDate &&
           other.coverMediumUrl == this.coverMediumUrl &&
           other.coverLargeUrl == this.coverLargeUrl &&
-          other.nsfw == this.nsfw);
+          other.nsfw == this.nsfw &&
+          other.malScore == this.malScore);
 }
 
 class DetailCompanion extends UpdateCompanion<Detail> {
@@ -3428,6 +3466,11 @@ class $DetailTableFilterComposer
     column: $table.nsfw,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<double> get malScore => $composableBuilder(
+    column: $table.malScore,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $DetailTableOrderingComposer
@@ -3513,6 +3556,11 @@ class $DetailTableOrderingComposer
     column: $table.nsfw,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<double> get malScore => $composableBuilder(
+    column: $table.malScore,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $DetailTableAnnotationComposer
@@ -3580,6 +3628,9 @@ class $DetailTableAnnotationComposer
 
   GeneratedColumn<String> get nsfw =>
       $composableBuilder(column: $table.nsfw, builder: (column) => column);
+
+  GeneratedColumn<double> get malScore =>
+      $composableBuilder(column: $table.malScore, builder: (column) => column);
 }
 
 class $DetailTableTableManager

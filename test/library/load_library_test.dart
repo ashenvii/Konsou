@@ -107,6 +107,39 @@ void main() {
     expect((other.name, other.isNotLinked), ('Saved name', true));
   });
 
+  test("carries MAL's score, none where MAL gives none", () async {
+    await addEntry(
+      'scored',
+      'watching',
+      malId: 1,
+      json: '{"title": "Scored", "mean": 9.29}',
+    );
+    await addEntry('unscored', 'watching', malId: 2, json: '{"title": "New"}');
+    final rows = await loadLibraryRows(databases, TitleLanguage.romaji);
+    final scores = {for (final row in rows) row.entryId: row.malScore};
+
+    expect(scores, {'scored': 9.29, 'unscored': null});
+  });
+
+  test('a title not aired yet says so', () async {
+    await addEntry(
+      'upcoming',
+      'plan_to_watch',
+      malId: 1,
+      json: '{"title": "Soon", "status": "not_yet_aired"}',
+    );
+    await addEntry(
+      'airing',
+      'watching',
+      malId: 2,
+      json: '{"title": "Now", "status": "currently_airing"}',
+    );
+    final rows = await loadLibraryRows(databases, TitleLanguage.romaji);
+    final notAired = {for (final row in rows) row.entryId: row.isNotAired};
+
+    expect(notAired, {'upcoming': true, 'airing': false});
+  });
+
   test('a placeholder link is ignored until the scan rebuilds it', () async {
     await addEntry(
       'a',

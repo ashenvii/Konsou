@@ -9,6 +9,7 @@ import '../components/icon_square_button.dart';
 import '../components/page_frame.dart';
 import '../components/page_title.dart';
 import '../components/status_mark.dart';
+import 'card_pieces_section.dart';
 import 'detail_section.dart';
 import 'gallery_panel.dart';
 import 'mal_trouble_section.dart';
@@ -152,6 +153,14 @@ class _GalleryScreenState extends State<GalleryScreen> {
             const MalTroubleSection(),
             const _Section('Library rows and cards'),
             const LibraryRowsSection(),
+            const _Section('Card pieces'),
+            const CardPiecesSection(),
+            const SizedBox(height: Tokens.space2),
+            const _Note(
+              'The footer in the well under a cover, the type tag (the key '
+              'cap) and the MAL score line, with the year or the whole date '
+              'for a title not aired yet; the last line is as the strip card has it.',
+            ),
             const _Section('Detail page'),
             const DetailSection(),
             const _Section('Icons'),

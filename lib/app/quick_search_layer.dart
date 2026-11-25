@@ -6,14 +6,16 @@ import '../components/app_button.dart';
 import '../components/app_checkbox.dart';
 import '../components/close_on_escape.dart';
 import '../components/cover_image.dart';
+import '../components/episode_column.dart';
 import '../components/floating_panel.dart';
 import '../components/hairline.dart';
 import '../components/hover_mark.dart';
 import '../components/key_cap.dart';
 import '../components/skeleton_lines.dart';
+import '../components/row_small_line.dart';
 import '../components/smooth_scroll.dart';
-import '../components/status_mark.dart';
 import '../components/sweep_button.dart';
+import '../components/title_columns.dart';
 import '../components/field_text.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
@@ -406,22 +408,34 @@ class _ResultRowState extends State<_ResultRow> with _KeepsInView<_ResultRow> {
               horizontal: Tokens.space4,
               vertical: Tokens.space1,
             ),
-            child: Row(
-              children: [
-                AppCheckbox(
-                  value: row.completed ? CheckValue.checked : CheckValue.empty,
-                  onChanged: (_) => widget.onTick(),
-                  onHover: (over) => setState(() => _overBox = over),
-                ),
-                const SizedBox(width: Tokens.space3),
-                CoverView(malId: row.malId, width: Tokens.quickCoverWidth),
-                const SizedBox(width: Tokens.space3),
-                Expanded(child: _NameAndLine(row)),
-                if (row.status != null && !row.completed) ...[
-                  const SizedBox(width: Tokens.space3),
-                  StatusMark(row.status!, color: Tokens.inkMuted, green: false),
-                ],
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final narrow = constraints.maxWidth < EpisodeColumn.narrowBelow;
+                return Row(
+                  children: [
+                    AppCheckbox(
+                      value: row.completed
+                          ? CheckValue.checked
+                          : CheckValue.empty,
+                      onChanged: (_) => widget.onTick(),
+                      onHover: (over) => setState(() => _overBox = over),
+                    ),
+                    const SizedBox(width: Tokens.space3),
+                    CoverView(malId: row.malId, width: Tokens.quickCoverWidth),
+                    const SizedBox(width: Tokens.space3),
+                    Expanded(child: _NameAndLine(row, narrow: narrow)),
+                    const SizedBox(width: Tokens.space3),
+                    TitleColumns(
+                      count: row.count,
+                      malScore: row.malScore,
+                      narrow: narrow,
+                      status: row.status,
+                      loadingDetails: row.isLoadingDetails,
+                      notLinked: row.isNotLinked,
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -431,9 +445,10 @@ class _ResultRowState extends State<_ResultRow> with _KeepsInView<_ResultRow> {
 }
 
 class _NameAndLine extends StatelessWidget {
-  const _NameAndLine(this.row);
+  const _NameAndLine(this.row, {required this.narrow});
 
   final QuickRow row;
+  final bool narrow;
 
   @override
   Widget build(BuildContext context) {
@@ -448,11 +463,10 @@ class _NameAndLine extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: Tokens.space1),
-        Text(
+        RowSmallLine(
           row.line,
-          style: AppText.caption(Tokens.inkMuted),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          withScore: narrow && !row.isNotLinked && !row.isLoadingDetails,
+          malScore: row.malScore,
         ),
       ],
     );

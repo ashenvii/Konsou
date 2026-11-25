@@ -6,6 +6,7 @@ import 'package:konsou/app/library_providers.dart';
 import 'package:konsou/app/providers.dart';
 import 'package:konsou/detail/title_details.dart';
 import 'package:konsou/detail/title_entry.dart';
+import 'package:konsou/detail/recommended_titles.dart';
 import 'package:konsou/detail/watch_order.dart';
 import 'package:konsou/gallery/detail_section.dart';
 import 'package:konsou/library/entry_status.dart';
@@ -93,6 +94,8 @@ Widget detailApp(
       (ref, notifier) => page ?? DetailPageData(details: frierenDetails()),
     ),
     watchOrderProvider(frierenId).overrideWith((ref) async => order),
+    recommendedTitlesProvider(frierenId)
+        .overrideWith((ref) async => const <RecommendedTitle>[]),
     notLinkedPageProvider('n').overrideWith(
       (ref) async =>
           const NotLinkedPage(entry: notLinkedEntry, suggestions: []),
