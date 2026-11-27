@@ -77,7 +77,7 @@ class RequestGate {
     bool Function()? wanted,
   }) {
     final job = _Job(request, wanted);
-    if (lane != Lane.trickle && _holdsScreenTooLong()) {
+    if (lane != Lane.trickle && isBackingOffLong) {
       log(name, '${lane.name} request turned away, backing off');
       job.done.completeError(const GateBackingOff());
       return job.done.future;
@@ -158,7 +158,7 @@ class RequestGate {
     final wait = _backoff.next();
     _nextStart = _now().add(wait);
     log(name, 'backing off ${wait.inSeconds} s');
-    if (!_holdsScreenTooLong()) return;
+    if (!isBackingOffLong) return;
     for (final queue in [_page, _screen]) {
       while (queue.isNotEmpty) {
         queue.removeFirst().done.completeError(const GateBackingOff());
@@ -166,8 +166,9 @@ class RequestGate {
     }
   }
 
-  // the first step is short enough to wait out; anything longer is turned away
-  bool _holdsScreenTooLong() {
+  /// Backing off past the first step, which is short enough to wait out: a
+  /// screen's request is turned away and the scan stops.
+  bool get isBackingOffLong {
     final nextStart = _nextStart;
     return _backingOff &&
         nextStart != null &&

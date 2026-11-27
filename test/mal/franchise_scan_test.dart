@@ -55,6 +55,7 @@ void main() {
   FranchiseScan scanAnswering(
     Map<int, String> answers, {
     int maxChecks = checksPerRun,
+    bool offline = false,
   }) => FranchiseScan(
     maxChecks: maxChecks,
     databases: databases,
@@ -63,6 +64,7 @@ void main() {
       client: MockClient((request) async {
         final malId = int.parse(request.url.pathSegments.last);
         asked.add(malId);
+        if (offline) throw const SocketException('offline');
         final answer = answers[malId];
         return answer == null
             ? http.Response('', 404)
@@ -365,6 +367,58 @@ void main() {
         daysFrom(_now, await readSchedule()),
         inInclusiveRange(7, 7 * 1.2),
       );
+    },
+  );
+
+  group(
+    'offline, the scan stops once the gate backs off past its first step',
+    () {
+      // three titles of their own, fetched long ago, each naming a sequel MAL
+      // has not been asked for when [sequels]
+      Future<Map<int, String>> saveStandalones({required bool sequels}) async {
+        final answers = {
+          for (final malId in [1, 2, 3])
+            malId: jsonEncode({
+              'id': malId,
+              'title': 'Title $malId',
+              'media_type': 'tv',
+              'status': 'finished_airing',
+              'start_date': '2010-01-01',
+              'related_anime': [
+                if (sequels)
+                  {
+                    'node': {'id': malId + 100, 'title': 'Sequel'},
+                    'relation_type': 'sequel',
+                  },
+              ],
+            }),
+        };
+        for (final malId in answers.keys) {
+          await addEntry('entry $malId', malId);
+          await saveDetail(answers, malId, fetchedAgo: _day * 400);
+        }
+        return answers;
+      }
+
+      test('in the walk', () async {
+        final answers = await saveStandalones(sequels: true);
+
+        await scanAnswering(answers, offline: true).run();
+
+        // the second failure in a row doubles the gate's wait
+        expect(asked, [101, 102]);
+      });
+
+      test('in the checks', () async {
+        final answers = await saveStandalones(sequels: false);
+        for (final malId in answers.keys) {
+          await scheduleCheck(malId, _now);
+        }
+
+        await scanAnswering(answers, offline: true).run();
+
+        expect(asked, [1, 2]);
+      });
     },
   );
 

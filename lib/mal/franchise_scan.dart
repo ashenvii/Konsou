@@ -84,6 +84,7 @@ class FranchiseScan {
           );
       if (missing.isEmpty) return state;
       for (final malId in missing) {
+        if (detailRequest.gate.isBackingOffLong) return state;
         final outcome = await detailRequest.fetch(
           malId,
           lane: Lane.trickle,
@@ -120,7 +121,7 @@ class FranchiseScan {
         await _writeSchedule(franchiseId, last);
         continue;
       }
-      if (checks == maxChecks) break;
+      if (checks == maxChecks || detailRequest.gate.isBackingOffLong) break;
       checks++;
       final outcome = await detailRequest.fetch(
         newest,
