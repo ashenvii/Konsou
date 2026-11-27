@@ -262,6 +262,28 @@ abstract final class AppIcons {
     lines: [((5, 3), (10, 8)), ((10, 8), (5, 13)), ((5, 13), (5, 3))],
   );
 
+  // a card's counts: the flag is where you are, the stack is the total
+  static const flag = IconDef(
+    lines: [
+      ((4, 2), (4, 14)),
+      ((4, 2), (12, 2)),
+      ((12, 2), (10, 4)),
+      ((10, 4), (12, 6)),
+      ((12, 6), (4, 6)),
+    ],
+  );
+
+  static const stack = IconDef(
+    lines: [
+      ((5, 2), (14, 2)),
+      ((14, 2), (14, 11)),
+      ((2, 5), (11, 5)),
+      ((11, 5), (11, 14)),
+      ((11, 14), (2, 14)),
+      ((2, 14), (2, 5)),
+    ],
+  );
+
   static const plus = IconDef(lines: [((3, 8), (13, 8)), ((8, 3), (8, 13))]);
 
   static const minus = IconDef(lines: [((3, 8), (13, 8))]);
@@ -386,6 +408,8 @@ abstract final class AppIcons {
     'play': play,
     'chevronLeft': chevronLeft,
     'chevronRight': chevronRight,
+    'flag': flag,
+    'stack': stack,
     'plus': plus,
     'minus': minus,
     'people': people,

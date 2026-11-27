@@ -21,6 +21,7 @@ class QuickRow {
     this.malScore,
     this.airing,
     this.isLoadingDetails = false,
+    this.isScorePending = false,
   });
 
   final String name;
@@ -29,7 +30,7 @@ class QuickRow {
   final String line;
 
   /// The episode column's count.
-  final String count;
+  final CardCount count;
 
   /// Set for a title on the list.
   final String? entryId;
@@ -45,6 +46,9 @@ class QuickRow {
 
   /// On the list with a MAL page whose details have not come in yet.
   final bool isLoadingDetails;
+
+  /// Details saved, but MAL's score not asked for yet.
+  final bool isScorePending;
 
   bool get onList => entryId != null;
   bool get completed => status == EntryStatus.completed;
@@ -63,7 +67,7 @@ QuickRow quickRowFromEntry(LibraryEntry entry) {
             entry.startDate,
             notAired: entry.isNotAired,
           ),
-    count: formatCardCount(
+    count: countCard(
       onList: true,
       watched: entry.episodesWatched,
       total: entry.episodes,
@@ -74,6 +78,7 @@ QuickRow quickRowFromEntry(LibraryEntry entry) {
     episodes: entry.episodes,
     malScore: entry.malScore,
     isLoadingDetails: entry.malId != null && !entry.hasDetails,
+    isScorePending: entry.scorePending,
   );
 }
 
@@ -105,7 +110,7 @@ QuickRow quickRowFromPage(
       startDate,
       notAired: airing == 'not_yet_aired',
     ),
-    count: formatCardCount(
+    count: countCard(
       onList: false,
       total: episodes,
       // search answers carry no broadcast time, so the day's start stands in

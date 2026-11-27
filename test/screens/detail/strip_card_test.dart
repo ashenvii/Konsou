@@ -4,11 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/app/providers.dart';
 import 'package:konsou/components/card_foot.dart';
 import 'package:konsou/components/cover_image.dart';
+import 'package:konsou/components/count_display.dart';
 import 'package:konsou/components/cover_well.dart';
 import 'package:konsou/components/key_cap.dart';
 import 'package:konsou/components/mal_score_line.dart';
 import 'package:konsou/components/skeleton.dart';
-import 'package:konsou/components/status_lamp.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/detail/watch_order.dart';
 import 'package:konsou/gallery/detail_section.dart';
@@ -65,7 +65,7 @@ void main() {
       expect(find.text('4'), findsOneWidget);
       expect(find.text('TV'), findsOneWidget);
       expect(find.text('2023'), findsOneWidget);
-      expect(find.text('6 / 13'), findsOneWidget);
+      expect(find.bySemanticsLabel('6 of 13 episodes'), findsOneWidget);
       expect(find.text('8.00'), findsOneWidget);
       expect(find.text('Watching'), findsOneWidget);
       expect(find.text('Mushoku Tensei II'), findsOneWidget);
@@ -86,7 +86,7 @@ void main() {
       );
     });
 
-    testWidgets('not on the list: no lamp, the total, the word', (
+    testWidgets('not on the list: no status icon, the total, the word', (
       tester,
     ) async {
       await pump(
@@ -102,8 +102,8 @@ void main() {
           ),
         ),
       );
-      expect(find.byType(StatusLamp), findsNothing);
-      expect(find.text('12 ep'), findsOneWidget);
+      expect(find.text('Watching'), findsNothing);
+      expect(find.bySemanticsLabel('12 ep'), findsOneWidget);
       expect(find.text('Not on your list'), findsOneWidget);
     });
 
@@ -122,7 +122,7 @@ void main() {
           ),
         ),
       );
-      expect(find.text('Ep 8 / 12'), findsOneWidget);
+      expect(find.bySemanticsLabel('8 of 12 aired'), findsOneWidget);
     });
 
     testWidgets('a title not aired yet gives its whole date', (tester) async {
@@ -255,8 +255,12 @@ void main() {
       expect(find.byType(StripCard), findsNWidgets(3));
       expect(find.text('Completed'), findsOneWidget);
       expect(find.text('96 users'), findsOneWidget);
-      expect(find.text('Ep 8 / 24'), findsOneWidget);
-      expect(find.text('24 ep'), findsOneWidget);
+      expect(
+        tester
+            .widgetList<CountDisplay>(find.byType(CountDisplay))
+            .map((display) => (display.done, display.total)),
+        [('11', '11'), ('8', '24'), (null, '24')],
+      );
       expect(find.text('8.36'), findsOneWidget);
     });
   });

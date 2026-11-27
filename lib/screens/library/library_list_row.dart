@@ -2,37 +2,47 @@ import 'package:flutter/widgets.dart';
 
 import '../../app/cover_view.dart';
 import '../../components/app_checkbox.dart';
-import '../../components/episode_column.dart';
+import '../../components/count_display.dart';
+import '../../components/faded.dart';
+import '../../components/season_cap.dart';
 import '../../components/hover_mark.dart';
 import '../../components/one_line_text.dart';
 import '../../components/row_small_line.dart';
 import '../../components/skeleton_lines.dart';
-import '../../components/title_columns.dart';
-import '../../components/value_column.dart';
+import '../../components/skeleton.dart';
+import '../../components/touch_target.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../library/entry_status.dart';
 import '../../library/library_row.dart';
+import '../../icons/score_star.dart';
 import '../../library/row_labels.dart';
+import 'list_columns.dart';
 import 'row_tap_area.dart';
 
-/// A Library title as a row: the checkbox, the cover, the name over its type
-/// and year, then the episode, MAL and Your score columns and the menu.
+/// A Library title as a row: the checkbox, the cover, the name over its type,
+/// then the status word, the episode display, MAL and Your score, and the
+/// three dots (shown on hover). The
+/// header bar over the list names the columns (`LibraryListHeader`), so the
+/// row carries no labels of its own.
 class LibraryListRow extends StatefulWidget {
   const LibraryListRow({
     super.key,
     required this.row,
-    required this.showStatus,
     required this.onOpen,
     required this.onCheck,
     required this.onContextMenu,
     required this.menu,
+    this.menuShown = false,
+    this.showStatus = true,
+    this.faded = false,
   });
+
+  /// The cover is grey, as while another title's quick panel is open.
+  final bool faded;
 
   final LibraryRow row;
 
-  /// A tab that mixes statuses, so the episode column names the status.
-  final bool showStatus;
   final VoidCallback onOpen;
 
   final ValueChanged<bool> onCheck;
@@ -40,6 +50,12 @@ class LibraryListRow extends StatefulWidget {
   final ValueChanged<Offset> onContextMenu;
 
   final Widget menu;
+
+  /// Keeps the three dots showing, as while the quick panel is open.
+  final bool menuShown;
+
+  /// Off on a tab of one status, which already names it: no Status column.
+  final bool showStatus;
 
   @override
   State<LibraryListRow> createState() => _LibraryListRowState();
@@ -59,9 +75,11 @@ class _LibraryListRowState extends State<LibraryListRow> {
       builder: (context, state) => LayoutBuilder(
         builder: (context, constraints) {
           // a narrow row also drops Your score
-          final narrow = constraints.maxWidth < EpisodeColumn.narrowBelow;
+          final narrow = ListColumns.isNarrow(constraints.maxWidth);
           return HoverMark(
-            on: (state.hovered || state.focused) && !_overBox,
+            on:
+                widget.menuShown ||
+                ((state.hovered || state.focused) && !_overBox),
             child: Container(
               height: Tokens.listRowHeight,
               // the checkbox's tap zone is the whole left cell, so no left padding
@@ -75,27 +93,63 @@ class _LibraryListRowState extends State<LibraryListRow> {
                     onHover: (over) => setState(() => _overBox = over),
                     zone: const Size(Tokens.touchTarget, Tokens.listRowHeight),
                   ),
-                  CoverView(
-                    malId: row.malId,
-                    width: Tokens.listCoverWidth,
-                    loading: row.isLoadingDetails,
+                  Faded(
+                    on: widget.faded,
+                    child: CoverView(
+                      malId: row.malId,
+                      width: Tokens.listCoverWidth,
+                      loading: row.isLoadingDetails,
+                    ),
                   ),
                   const SizedBox(width: Tokens.space3),
-                  Expanded(child: _Titles(row, narrow: narrow)),
-                  const SizedBox(width: Tokens.space3),
-                  TitleColumns(
-                    count: formatLibraryCount(row),
-                    malScore: row.malScore,
-                    narrow: narrow,
-                    status: row.status,
-                    finished: row.allSeasonsDone,
-                    showStatus: widget.showStatus,
-                    loadingDetails: row.isLoadingDetails,
-                    notLinked: row.isNotLinked,
+                  Expanded(
+                    child: _Titles(
+                      row,
+                      narrow: narrow,
+                      showStatus: widget.showStatus,
+                    ),
                   ),
-                  if (!narrow) _YourScore(row.score),
+                  const SizedBox(width: Tokens.space3),
+                  // a narrow row has no status column: the word joins the
+                  // small line under the name instead
+                  if (!narrow && widget.showStatus)
+                    SizedBox(
+                      width: ListColumns.status,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: OneLineText(
+                          row.status.label,
+                          style: AppText.label(Tokens.inkSoft),
+                        ),
+                      ),
+                    ),
+                  _EpisodeCell(row),
+                  if (!narrow) ...[
+                    _MalCell(row),
+                    SizedBox(
+                      width: ListColumns.yourScore(context),
+                      // centred under its caption
+                      child: Align(
+                        child: row.score == null
+                            ? null
+                            : CountDisplay(total: '${row.score}'),
+                      ),
+                    ),
+                  ],
                   const SizedBox(width: Tokens.space2),
-                  widget.menu,
+                  // the three dots show only while the row is hovered or
+                  // focused (always on touch); right click does the same
+                  Visibility(
+                    visible:
+                        widget.menuShown ||
+                        state.hovered ||
+                        state.focused ||
+                        TouchTarget.active,
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    child: widget.menu,
+                  ),
                 ],
               ),
             ),
@@ -107,10 +161,11 @@ class _LibraryListRowState extends State<LibraryListRow> {
 }
 
 class _Titles extends StatelessWidget {
-  const _Titles(this.row, {required this.narrow});
+  const _Titles(this.row, {required this.narrow, required this.showStatus});
 
   final LibraryRow row;
   final bool narrow;
+  final bool showStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -130,12 +185,13 @@ class _Titles extends StatelessWidget {
           OneLineText('Not linked', style: AppText.caption(Tokens.inkMuted))
         else
           RowSmallLine(
-            formatTypeWhen(
-              row.mediaType,
-              row.startDate,
-              notAired: row.isNotAired,
-            ),
-            withScore: narrow,
+            [
+              if (row.mediaType case final type? when type.isNotEmpty)
+                formatType(type),
+              // a narrow row has no status column
+              if (narrow && showStatus) row.status.label,
+            ].join(' · '),
+            withScore: narrow && !row.isScorePending,
             malScore: row.malScore,
           ),
       ],
@@ -143,35 +199,85 @@ class _Titles extends StatelessWidget {
   }
 }
 
-/// Your own score, the LED number over its label, empty when not scored. As
-/// wide as its label at the current text size.
-class _YourScore extends StatelessWidget {
-  const _YourScore(this.score);
+/// The count with its slashes in the column's one place, and a franchise's
+/// season cap hung in the slot in front of it.
+class _EpisodeCell extends StatelessWidget {
+  const _EpisodeCell(this.row);
 
-  final int? score;
-
-  static const _label = 'Your score';
+  final LibraryRow row;
 
   @override
   Widget build(BuildContext context) {
-    final labelStyle = AppText.caption(Tokens.inkMuted);
-    final painter = TextPainter(
-      text: TextSpan(text: _label, style: labelStyle),
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
-      maxLines: 1,
-    )..layout();
-    final width = painter.width.ceilToDouble();
-    painter.dispose();
-    final score = this.score;
-    return ValueColumn(
-      width: width,
-      value: Text(
-        score == null ? '' : '$score',
-        maxLines: 1,
-        style: AppText.led(Tokens.pop, size: Tokens.text2),
+    final season = row.seasonNumber;
+    return SizedBox(
+      width: ListColumns.episodes,
+      child: Row(
+        children: [
+          SizedBox(
+            width: ListColumns.seasonSlot,
+            child: season == null
+                ? null
+                : Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: Tokens.space2),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: SeasonCap(season),
+                      ),
+                    ),
+                  ),
+          ),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: CountDisplay.of(
+                countLibraryRow(row),
+                digits: ListColumns.countDigits,
+              ),
+            ),
+          ),
+        ],
       ),
-      label: Text(_label, maxLines: 1, softWrap: false, style: labelStyle),
+    );
+  }
+}
+
+/// MAL's score with the gold star, "?" where MAL has none; a skeleton while
+/// the details load, empty for a title with no MAL page.
+class _MalCell extends StatelessWidget {
+  const _MalCell(this.row);
+
+  final LibraryRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget? value;
+    if (row.isLoadingDetails || row.isScorePending) {
+      value = const FractionallySizedBox(
+        widthFactor: 0.6,
+        child: Skeleton(height: Tokens.text2),
+      );
+    } else if (row.isNotLinked) {
+      value = null;
+    } else {
+      value = Row(
+        children: [
+          const ScoreStar(size: Tokens.text1, color: Tokens.star),
+          const SizedBox(width: Tokens.space1),
+          Flexible(
+            child: OneLineText(
+              formatMalScore(row.malScore),
+              style: AppText.tally(Tokens.ink, size: Tokens.text2),
+            ),
+          ),
+        ],
+      );
+    }
+    return SizedBox(
+      width: ListColumns.mal,
+      child: Align(alignment: Alignment.centerLeft, child: value),
     );
   }
 }

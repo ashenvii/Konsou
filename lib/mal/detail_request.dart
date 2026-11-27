@@ -10,11 +10,12 @@ import 'request_gate.dart';
 const shortDetailFields =
     'id,title,main_picture,alternative_titles,start_date,end_date,nsfw,'
     'media_type,status,num_episodes,average_episode_duration,start_season,'
-    'broadcast,mean,related_anime{media_type,status,start_date,num_episodes}';
+    'broadcast,mean,num_scoring_users,'
+    'related_anime{media_type,status,start_date,num_episodes}';
 
 const fullDetailFields =
     '$shortDetailFields,synopsis,rank,popularity,num_list_users,'
-    'num_scoring_users,genres,created_at,updated_at,source,rating,pictures,'
+    'genres,created_at,updated_at,source,rating,pictures,'
     'background,related_manga,recommendations,studios,statistics,videos,'
     'opening_themes,ending_themes';
 

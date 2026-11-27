@@ -1,4 +1,5 @@
 import 'count_format.dart';
+import 'entry_status.dart';
 import 'library_row.dart';
 
 /// The word for a MAL media type: "TV", "Movie", "TV Special".
@@ -80,31 +81,26 @@ String? formatMalDate(String? date) {
 String formatProgress(int watched, int? total) =>
     '$watched / ${total != null && total > 0 ? total : '?'}';
 
-/// The count in a card's footer. Seasons for a franchise; your progress for a
-/// title on your list; the episodes out so far for one still airing that is
-/// not ([aired], from `countAiredEpisodes`); otherwise the total.
-String formatCardCount({
+/// What a count display reads: [done] out of [total] ("?" while MAL has
+/// none), then [unit]: none for your episodes, "aired" for the episodes out so far of a title airing that is not on your
+/// list (`countAiredEpisodes`), "ep" for a total alone.
+typedef CardCount = ({String? done, String total, String? unit});
+
+CardCount countCard({
   required bool onList,
   int watched = 0,
   int? total,
   int? aired,
-  int? seasonsDone,
-  int? seasonsTotal,
 }) {
-  if (seasonsTotal != null) return '$seasonsDone / $seasonsTotal seasons';
-  if (onList) return formatProgress(watched, total);
-  if (aired != null) return 'Ep $aired / ${total ?? '?'}';
-  return '${total ?? '?'} ep';
+  final known = total != null && total > 0 ? '$total' : '?';
+  if (onList) return (done: '$watched', total: known, unit: null);
+  if (aired != null) return (done: '$aired', total: known, unit: 'aired');
+  return (done: null, total: known, unit: 'ep');
 }
 
-/// A Library row's count: its seasons for a franchise, else your progress.
-String formatLibraryCount(LibraryRow row) => formatCardCount(
-  onList: true,
-  watched: row.episodesWatched,
-  total: row.episodes,
-  seasonsDone: row.seasonsDone,
-  seasonsTotal: row.seasonsTotal,
-);
+/// A Library row's count: your episodes of the season it stands for.
+CardCount countLibraryRow(LibraryRow row) =>
+    countCard(onList: true, watched: row.episodesWatched, total: row.episodes);
 
 /// MAL's score as MAL writes it, "?" when too few users have scored it.
 String formatMalScore(double? score) => score?.toStringAsFixed(2) ?? '?';
@@ -120,3 +116,26 @@ String formatCardWhen(String? startDate, {required bool notAired}) {
 
 /// The title to draw. An entry whose name has not come in yet says so.
 String formatTitle(String name) => name.isEmpty ? 'Loading details' : name;
+
+/// Your progress on a Library row in words, for its quick panel: "Episode 4
+/// of 28", "All 12 episodes", "28 episodes" before you start; a franchise
+/// names the season the row stands for among those on your list, "Season 2
+/// of 3", or "All 3 seasons" once all are done.
+String formatPanelProgress(LibraryRow row) {
+  final season = row.seasonNumber;
+  final seasons = row.seasonsTotal;
+  if (season != null && seasons != null) {
+    return row.allSeasonsDone
+        ? 'All $seasons seasons'
+        : 'Season $season of $seasons';
+  }
+  final total = row.episodes;
+  final known = total != null && total > 0;
+  if (row.status == EntryStatus.completed) {
+    return known ? 'All $total episodes' : EntryStatus.completed.label;
+  }
+  if (row.episodesWatched == 0 && row.status == EntryStatus.planned) {
+    return known ? '$total episodes' : '? episodes';
+  }
+  return 'Episode ${row.episodesWatched} of ${known ? total : '?'}';
+}

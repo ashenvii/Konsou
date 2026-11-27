@@ -1,10 +1,13 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/gallery/gallery_screen.dart';
+import 'package:konsou/screens/library/library_grid_card.dart';
+import 'package:konsou/screens/library/library_list_row.dart';
 import 'package:konsou/gallery/card_pieces_section.dart';
 import 'package:konsou/gallery/library_rows_section.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -116,7 +119,7 @@ void main() {
     await renderPng(
       tester,
       child: const MediaQuery(
-        data: MediaQueryData(size: Size(1100, 960)),
+        data: MediaQueryData(size: Size(1600, 1100)),
         child: Directionality(
           textDirection: TextDirection.ltr,
           child: DefaultTextStyle(
@@ -131,13 +134,13 @@ void main() {
           ),
         ),
       ),
-      size: const Size(1100, 960),
+      size: const Size(1600, 1100),
       path: '$folder/card_pieces.png',
     );
   }, skip: folder == null);
 
   for (final layout in ['grid', 'list']) {
-    testWidgets('render the library in $layout', (tester) async {
+    testWidgets('render the library in $layout, then scrolled', (tester) async {
       SharedPreferences.setMockInitialValues({'library.layout': layout});
       await loadAppFonts();
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -155,7 +158,7 @@ void main() {
           );
       final router = buildRouter();
       addTearDown(router.dispose);
-      await renderPng(
+      final key = await renderPng(
         tester,
         child: ProviderScope(
           overrides: _pageOverrides,
@@ -164,6 +167,24 @@ void main() {
         size: const Size(1100, 700),
         path: '$folder/library_$layout.png',
       );
+      // the quick panel on the second title, the page dimmed under it
+      await tester.tap(
+        find.byType(layout == 'grid' ? LibraryGridCard : LibraryListRow).at(1),
+        buttons: kSecondaryButton,
+      );
+      // the portal shows a frame later, then fades in
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      await capturePng(tester, key, '$folder/library_${layout}_panel.png');
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+      // a short window, so the sample rows scroll and the top folds
+      tester.view.physicalSize = const Size(1100, 420);
+      await tester.pump();
+      await tester.drag(find.byType(Scrollable).last, const Offset(0, -160));
+      await tester.pump(const Duration(milliseconds: 500));
+      await capturePng(tester, key, '$folder/library_${layout}_scrolled.png');
       await tester.pump(WindowConfig.restoreSettle);
     }, skip: folder == null);
   }

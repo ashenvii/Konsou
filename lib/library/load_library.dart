@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show QueryRow;
 
 import '../data/databases.dart';
 import '../data/record_database.dart';
+import '../data/score_checked.dart';
 import 'aired_episodes.dart';
 import 'entry_status.dart';
 import 'fold_franchises.dart';
@@ -17,6 +18,7 @@ Future<List<LibraryEntry>> loadLibraryEntries(
       entry.score, entry.added_at, entry.updated_at,
       reference.provider_id AS mal_id,
       detail.provider_id IS NOT NULL AS has_details,
+      detail.provider_id IS NOT NULL AND NOT ($scoreCheckedSql) AS score_pending,
       detail.title, detail.title_english, detail.title_japanese,
       detail.media_type, detail.start_date, detail.episodes, detail.mal_score,
       detail.airing_status = 'not_yet_aired' AS not_aired,
@@ -42,6 +44,7 @@ Future<List<LibraryEntry>> loadLibraryEntries(
         malScore: row.read<double?>('mal_score'),
         malId: row.read<int?>('mal_id'),
         hasDetails: row.read<bool>('has_details'),
+        scorePending: row.read<bool>('score_pending'),
         episodes: row.read<int?>('episodes'),
         mediaType: row.read<String?>('media_type'),
         startDate: row.read<String?>('start_date'),
@@ -79,6 +82,7 @@ typedef TitleFacts = ({
   String? startDate,
   int? episodes,
   double? malScore,
+  bool scorePending,
   String? airingStatus,
   int? airedEpisodes,
 });
@@ -93,6 +97,7 @@ Future<Map<int, TitleFacts>> readTitleFacts(
   for (final row in await record.customSelect('''
     SELECT provider_id, title, title_english, title_japanese, media_type,
       start_date, episodes, mal_score, airing_status,
+      NOT ($scoreCheckedSql) AS score_pending,
       json_extract(json, '\$.broadcast.start_time') AS broadcast_time,
       NULL AS name
     FROM details.detail
@@ -104,6 +109,7 @@ Future<Map<int, TitleFacts>> readTitleFacts(
       startDate: row.read<String?>('start_date'),
       episodes: row.read<int?>('episodes'),
       malScore: row.read<double?>('mal_score'),
+      scorePending: row.read<bool>('score_pending'),
       airingStatus: row.read<String?>('airing_status'),
       airedEpisodes: countAiredEpisodes(
         airingStatus: row.read<String?>('airing_status'),

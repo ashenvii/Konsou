@@ -13,12 +13,14 @@ LibraryRow row({
   bool hasDetails = true,
   int? seasonsDone,
   int? seasonsTotal,
+  int? seasonNumber,
+  EntryStatus status = EntryStatus.watching,
 }) {
   return LibraryRow(
     current: LibraryEntry(
       entryId: 'a',
       name: name,
-      status: EntryStatus.watching,
+      status: status,
       episodesWatched: watched,
       addedAt: 0,
       changedAt: 0,
@@ -33,6 +35,7 @@ LibraryRow row({
     changedAt: 0,
     seasonsDone: seasonsDone,
     seasonsTotal: seasonsTotal,
+    seasonNumber: seasonNumber,
   );
 }
 
@@ -99,37 +102,104 @@ void main() {
 
   group('card count', () {
     test('on your list: watched out of the total, ? while it is unknown', () {
-      expect(formatCardCount(onList: true, watched: 9, total: 28), '9 / 28');
-      expect(formatCardCount(onList: true, watched: 3), '3 / ?');
+      expect(countCard(onList: true, watched: 9, total: 28), (
+        done: '9',
+        total: '28',
+        unit: null,
+      ));
+      expect(countCard(onList: true, watched: 3), (
+        done: '3',
+        total: '?',
+        unit: null,
+      ));
     });
 
     test('airing and not on your list: the episodes out so far', () {
-      expect(formatCardCount(onList: false, total: 12, aired: 8), 'Ep 8 / 12');
-      expect(formatCardCount(onList: false, aired: 8), 'Ep 8 / ?');
+      expect(countCard(onList: false, total: 12, aired: 8), (
+        done: '8',
+        total: '12',
+        unit: 'aired',
+      ));
+      expect(countCard(onList: false, aired: 8), (
+        done: '8',
+        total: '?',
+        unit: 'aired',
+      ));
     });
 
     test('otherwise the total, ? when MAL has none', () {
-      expect(formatCardCount(onList: false, total: 12), '12 ep');
-      expect(formatCardCount(onList: false), '? ep');
+      expect(countCard(onList: false, total: 12), (
+        done: null,
+        total: '12',
+        unit: 'ep',
+      ));
+      expect(countCard(onList: false), (done: null, total: '?', unit: 'ep'));
     });
 
     test('on your list, an airing title still shows your progress', () {
+      expect(countCard(onList: true, watched: 5, total: 12, aired: 8), (
+        done: '5',
+        total: '12',
+        unit: null,
+      ));
+    });
+
+    test('a franchise row counts the episodes of its season', () {
       expect(
-        formatCardCount(onList: true, watched: 5, total: 12, aired: 8),
-        '5 / 12',
+        countLibraryRow(
+          row(
+            watched: 4,
+            episodes: 12,
+            seasonsDone: 1,
+            seasonsTotal: 3,
+            seasonNumber: 2,
+          ),
+        ),
+        (done: '4', total: '12', unit: null),
+      );
+    });
+  });
+
+  group('panel progress', () {
+    test('your episodes, in words', () {
+      expect(
+        formatPanelProgress(row(watched: 4, episodes: 12)),
+        'Episode 4 of 12',
+      );
+      expect(
+        formatPanelProgress(row(watched: 4, episodes: null)),
+        'Episode 4 of ?',
       );
     });
 
-    test('a franchise counts seasons', () {
+    test('before you start, the total; once done, all of it', () {
       expect(
-        formatCardCount(
-          onList: true,
-          watched: 4,
-          total: 12,
-          seasonsDone: 2,
-          seasonsTotal: 4,
+        formatPanelProgress(row(watched: 0, status: EntryStatus.planned)),
+        '12 episodes',
+      );
+      expect(
+        formatPanelProgress(row(watched: 12, status: EntryStatus.completed)),
+        'All 12 episodes',
+      );
+    });
+
+    test('a franchise names its season among those on your list', () {
+      expect(
+        formatPanelProgress(
+          row(seasonsDone: 1, seasonsTotal: 3, seasonNumber: 2),
         ),
-        '2 / 4 seasons',
+        'Season 2 of 3',
+      );
+      expect(
+        formatPanelProgress(
+          row(
+            status: EntryStatus.completed,
+            seasonsDone: 3,
+            seasonsTotal: 3,
+            seasonNumber: 3,
+          ),
+        ),
+        'All 3 seasons',
       );
     });
   });

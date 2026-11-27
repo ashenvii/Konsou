@@ -505,7 +505,7 @@ final class LibrarySortChoiceProvider
   LibrarySortChoice create() => LibrarySortChoice();
 }
 
-String _$librarySortChoiceHash() => r'34bc9682cb621f0b3a1793ee8c7cde77b83bd2f1';
+String _$librarySortChoiceHash() => r'dc95aaf7ce05cdf634529799848300a9101db2fb';
 
 abstract class _$LibrarySortChoice extends $AsyncNotifier<LibrarySort> {
   FutureOr<LibrarySort> build();
@@ -518,6 +518,135 @@ abstract class _$LibrarySortChoice extends $AsyncNotifier<LibrarySort> {
             as $ClassProviderElement<
               AnyNotifier<AsyncValue<LibrarySort>, LibrarySort>,
               AsyncValue<LibrarySort>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// How many quick panels are open. While one is, the Library keeps its rows
+/// in the order they had, so an edit made in the panel does not move the row
+/// out from under it.
+
+@ProviderFor(LibraryPanelOpen)
+final libraryPanelOpenProvider = LibraryPanelOpenProvider._();
+
+/// How many quick panels are open. While one is, the Library keeps its rows
+/// in the order they had, so an edit made in the panel does not move the row
+/// out from under it.
+final class LibraryPanelOpenProvider
+    extends $NotifierProvider<LibraryPanelOpen, int> {
+  /// How many quick panels are open. While one is, the Library keeps its rows
+  /// in the order they had, so an edit made in the panel does not move the row
+  /// out from under it.
+  LibraryPanelOpenProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'libraryPanelOpenProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$libraryPanelOpenHash();
+
+  @$internal
+  @override
+  LibraryPanelOpen create() => LibraryPanelOpen();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$libraryPanelOpenHash() => r'dc9b6060ec5db7ad43b24070035564be660e8695';
+
+/// How many quick panels are open. While one is, the Library keeps its rows
+/// in the order they had, so an edit made in the panel does not move the row
+/// out from under it.
+
+abstract class _$LibraryPanelOpen extends $Notifier<int> {
+  int build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// The list header bar's sort, over the menu's while set. Not saved: a new
+/// start shows the menu's sort.
+
+@ProviderFor(LibraryColumnSortChoice)
+final libraryColumnSortChoiceProvider = LibraryColumnSortChoiceProvider._();
+
+/// The list header bar's sort, over the menu's while set. Not saved: a new
+/// start shows the menu's sort.
+final class LibraryColumnSortChoiceProvider
+    extends $NotifierProvider<LibraryColumnSortChoice, ColumnSort?> {
+  /// The list header bar's sort, over the menu's while set. Not saved: a new
+  /// start shows the menu's sort.
+  LibraryColumnSortChoiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'libraryColumnSortChoiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$libraryColumnSortChoiceHash();
+
+  @$internal
+  @override
+  LibraryColumnSortChoice create() => LibraryColumnSortChoice();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ColumnSort? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ColumnSort?>(value),
+    );
+  }
+}
+
+String _$libraryColumnSortChoiceHash() =>
+    r'efd26241c73a90bd1c7470504a0a3959b02fa840';
+
+/// The list header bar's sort, over the menu's while set. Not saved: a new
+/// start shows the menu's sort.
+
+abstract class _$LibraryColumnSortChoice extends $Notifier<ColumnSort?> {
+  ColumnSort? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<ColumnSort?, ColumnSort?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ColumnSort?, ColumnSort?>,
+              ColumnSort?,
               Object?,
               Object?
             >;

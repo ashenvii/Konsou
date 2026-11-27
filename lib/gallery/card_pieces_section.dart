@@ -2,15 +2,16 @@ import 'package:flutter/widgets.dart';
 
 import '../app/detail_providers.dart';
 import '../components/card_foot.dart';
-import '../components/details_panel.dart';
 import '../components/key_cap.dart';
 import '../components/mal_score_line.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import '../library/entry_status.dart';
+import '../library/library_row.dart';
 import '../detail/title_details.dart';
 import '../library/row_labels.dart';
 import '../screens/library/card_details.dart';
+import '../screens/library/quick_panel.dart';
 
 const _types = [
   'tv',
@@ -35,75 +36,51 @@ class CardPiecesSection extends StatelessWidget {
     children: [
       _samples(Tokens.space4, [
         _foot(
-          'Hovered, mixed tab',
+          'Watching',
           CardFoot(
             status: EntryStatus.watching,
-            count: formatCardCount(onList: true, watched: 9, total: 28),
-            showMark: true,
-            showWord: true,
+            count: countCard(onList: true, watched: 9, total: 28),
           ),
         ),
         _foot(
-          'Mixed tab',
+          'Franchise, done',
           CardFoot(
             status: EntryStatus.completed,
-            count: formatCardCount(
-              onList: true,
-              seasonsDone: 4,
-              seasonsTotal: 4,
-            ),
-            showMark: true,
+            count: countCard(onList: true, watched: 13, total: 13),
+            season: 4,
           ),
         ),
         _foot(
-          'Franchise, a season left',
+          'Franchise, season 2',
           CardFoot(
-            status: EntryStatus.completed,
-            finished: false,
-            count: formatCardCount(
-              onList: true,
-              seasonsDone: 1,
-              seasonsTotal: 2,
-            ),
-            showMark: true,
+            status: EntryStatus.watching,
+            count: countCard(onList: true, watched: 3, total: 12),
+            season: 2,
           ),
         ),
         _foot(
           'No total yet',
-          CardFoot(
-            status: EntryStatus.planned,
-            count: formatCardCount(onList: true),
-            showMark: true,
-          ),
+          CardFoot(status: EntryStatus.planned, count: countCard(onList: true)),
         ),
         _foot(
-          'One-status tab',
+          'On hold',
           CardFoot(
             status: EntryStatus.onHold,
-            count: formatCardCount(onList: true, watched: 3, total: 12),
+            count: countCard(onList: true, watched: 3, total: 12),
           ),
         ),
         _foot(
-          'Hovered, no room for the word',
+          'Long counts',
           CardFoot(
             status: EntryStatus.rewatching,
-            count: formatCardCount(onList: true, watched: 1071, total: 1100),
-            showMark: true,
-            showWord: true,
+            count: countCard(onList: true, watched: 1071, total: 1100),
           ),
-        ),
-        _foot(
-          'Airing, not on your list',
-          CardFoot(count: formatCardCount(onList: false, total: 12, aired: 8)),
         ),
         _foot(
           'Not on your list',
-          CardFoot(count: formatCardCount(onList: false, total: 12)),
+          CardFoot(count: countCard(onList: false, total: 12)),
         ),
-        _foot(
-          'No total from MAL',
-          CardFoot(count: formatCardCount(onList: false)),
-        ),
+        _foot('No total from MAL', CardFoot(count: countCard(onList: false))),
       ]),
       const SizedBox(height: Tokens.space5),
       _samples(Tokens.space3, [
@@ -111,16 +88,8 @@ class CardPiecesSection extends StatelessWidget {
       ]),
       const SizedBox(height: Tokens.space5),
       _samples(Tokens.space5, [
-        MalScoreLine(
-          score: 9.29,
-          when: formatCardWhen('2023-09-29', notAired: false),
-        ),
-        MalScoreLine(score: null, when: formatCardWhen(null, notAired: false)),
-        MalScoreLine(
-          score: null,
-          when: formatCardWhen('2027-01-12', notAired: true),
-        ),
-        const MalScoreLine(score: 8.4),
+        const MalScoreLine(score: 9.29),
+        const MalScoreLine(score: null),
       ]),
       const SizedBox(height: Tokens.space5),
       _popovers(),
@@ -150,22 +119,80 @@ TitleDetails _sampleDetails({required bool full}) => TitleDetails(
   genres: full ? const ['Adventure', 'Drama', 'Fantasy'] : const [],
 );
 
-/// The card's details popover: full, while the full fetch runs, and offline
-/// with no full fetch stored.
+/// The quick panel, one height in every state: watching with the full fetch
+/// in, a franchise while the full fetch runs, planned offline with no full
+/// fetch stored, dropped (a worded status), and a title with no MAL page.
 Widget _popovers() => _samples(Tokens.space4, [
-  for (final (details, fetch) in [
-    (_sampleDetails(full: true), DetailFetch.idle),
-    (_sampleDetails(full: false), DetailFetch.running),
-    (_sampleDetails(full: false), DetailFetch.offline),
+  for (final (status, details, fetch, seasons, notLinked) in [
+    (
+      EntryStatus.watching,
+      _sampleDetails(full: true),
+      DetailFetch.idle,
+      1,
+      false,
+    ),
+    (
+      EntryStatus.completed,
+      _sampleDetails(full: false),
+      DetailFetch.running,
+      3,
+      false,
+    ),
+    (
+      EntryStatus.planned,
+      _sampleDetails(full: false),
+      DetailFetch.offline,
+      1,
+      false,
+    ),
+    (
+      EntryStatus.dropped,
+      _sampleDetails(full: true),
+      DetailFetch.idle,
+      1,
+      false,
+    ),
+    (EntryStatus.onHold, null, DetailFetch.idle, 1, true),
   ])
-    DetailsPanel(
-      child: CardDetails(
-        name: details.name,
-        details: details,
-        fetch: fetch,
-        status: EntryStatus.watching,
-        onStatusMenu: (_) {},
-      ),
+    Builder(
+      builder: (context) {
+        final row = LibraryRow(
+          current: LibraryEntry(
+            entryId: 'gallery',
+            name: details?.name ?? 'Saved name only',
+            status: status,
+            episodesWatched: status == EntryStatus.planned ? 0 : 9,
+            episodes: 28,
+            malScore: notLinked ? null : 9.29,
+            malId: notLinked ? null : 52991,
+            hasDetails: !notLinked,
+            addedAt: 0,
+            changedAt: 0,
+          ),
+          entryIds: [for (var i = 0; i < seasons; i++) 'gallery $i'],
+          addedAt: 0,
+          changedAt: 0,
+          seasonsDone: seasons > 1 ? seasons : null,
+          seasonsTotal: seasons > 1 ? seasons : null,
+          seasonNumber: seasons > 1 ? seasons : null,
+        );
+        return QuickPanel(
+          row: row,
+          details: CardDetails(
+            name: row.name,
+            details: details,
+            fetch: fetch,
+            malScore: row.malScore,
+            notLinked: row.isNotLinked,
+            progress: formatPanelProgress(row),
+            trailingRoom: QuickPanel.cornerRoom,
+          ),
+          onStatus: (_) {},
+          onOpen: () {},
+          onRemove: () {},
+          onClose: () {},
+        );
+      },
     ),
 ]);
 

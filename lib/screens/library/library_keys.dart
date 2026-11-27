@@ -6,7 +6,7 @@ import '../../app/library_providers.dart';
 import '../../library/entry_status.dart';
 import '../../library/library_view.dart';
 import 'edit_entry.dart';
-import 'entry_menu.dart';
+import 'quick_panel.dart';
 import 'row_marker.dart';
 import 'status_keys.dart';
 
@@ -61,5 +61,5 @@ KeyEventResult handleLibraryKey(WidgetRef ref, KeyEvent event) {
 EntryStatus? _statusFor(LogicalKeyboardKey key) {
   final digit = digitKeys.indexOf(key);
   final index = digit >= 0 ? digit : numpadKeys.indexOf(key);
-  return index < 0 ? null : EntryMenu.keyed[index];
+  return index < 0 ? null : QuickPanel.keyed[index];
 }

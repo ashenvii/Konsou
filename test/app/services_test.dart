@@ -142,7 +142,7 @@ void main() {
             providerId: malId,
             fetchedAt: 1,
             json:
-                '{"main_picture": {"medium": '
+                '{"num_scoring_users": 0, "main_picture": {"medium": '
                 '"https://cdn.myanimelist.net/images/anime/1/$malId.webp"}}',
           ),
         );

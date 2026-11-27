@@ -13,7 +13,11 @@ import 'package:konsou/components/app_checkbox.dart';
 import 'package:konsou/components/app_menu.dart';
 import 'package:konsou/components/find_field.dart';
 import 'package:konsou/components/heading_switcher.dart';
+import 'package:konsou/components/cover_image.dart';
+import 'package:konsou/components/page_dim.dart';
+import 'package:konsou/components/popover_placement.dart';
 import 'package:konsou/components/pressable.dart';
+import 'package:konsou/components/remove_key.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/library/entry_edits.dart';
 import 'package:konsou/library/entry_status.dart';
@@ -21,6 +25,10 @@ import 'package:konsou/library/library_row.dart';
 import 'package:konsou/screens/library/library_grid_card.dart';
 import 'package:konsou/screens/library/library_list_row.dart';
 import 'package:konsou/screens/library/library_screen.dart';
+import 'package:konsou/screens/library/library_status_switcher.dart';
+import 'package:konsou/screens/library/library_top.dart';
+import 'package:konsou/screens/library/list_columns.dart';
+import 'package:konsou/screens/library/quick_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 LibraryRow row(
@@ -191,6 +199,19 @@ void main() {
   );
   final menu = find.byType(AppMenu);
 
+  // a status key in the quick panel
+  Finder statusKey(String label) => find
+      .byWidgetPredicate(
+        (widget) => widget is Pressable && widget.label == label,
+      )
+      .last;
+
+  Future<void> showList(WidgetTester tester) async {
+    await tester.tap(find.bySemanticsLabel('List view'));
+    await tester.pump();
+    await tester.pump();
+  }
+
   Future<void> choose(WidgetTester tester, String name) async {
     await tester.tap(switcherButton);
     await tester.pump();
@@ -335,15 +356,89 @@ void main() {
     expect(find.byType(FindField), findsNothing);
   });
 
+  testWidgets(
+    'scrolling folds the list heading into its header bar, and back',
+    (tester) async {
+      final many = [
+        for (var i = 0; i < 60; i++) row('r$i', 'watching', name: 'Title $i'),
+      ];
+      await pumpScreen(tester, many);
+      await showList(tester);
+      final short = find.byWidgetPredicate(
+        (widget) => widget is LibraryStatusSwitcher && widget.compact,
+      );
+      final top = find.byType(LibraryTop);
+      expect(short, findsNothing);
+      final rest = tester.getSize(top).height;
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
+      await tester.pump();
+      expect(short, findsOneWidget);
+      expect(tester.getSize(top).height, LibraryTop.pinnedHeight(list: true));
+      expect(tester.getSize(top).height, lessThan(rest));
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 2000));
+      await tester.pump();
+      expect(short, findsNothing);
+      expect(tester.getSize(top).height, rest);
+    },
+  );
+
+  testWidgets('Find unfolds the top, so its field is never hidden', (
+    tester,
+  ) async {
+    final many = [
+      for (var i = 0; i < 60; i++) row('r$i', 'watching', name: 'Title $i'),
+    ];
+    await pumpScreen(tester, many, keys: true);
+    await showList(tester);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
+    await tester.pump();
+    final top = find.byType(LibraryTop);
+    expect(tester.widget<LibraryTop>(top).fold, 1);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    expect(tester.widget<LibraryTop>(top).fold, 0);
+    expect(tester.widget<LibraryTop>(top).covering, isTrue);
+  });
+
+  testWidgets('the grid heading never folds', (tester) async {
+    final many = [
+      for (var i = 0; i < 60; i++) row('r$i', 'watching', name: 'Title $i'),
+    ];
+    await pumpScreen(tester, many);
+    final top = find.byType(LibraryTop);
+    final rest = tester.getSize(top).height;
+    await tester.drag(find.byType(GridView), const Offset(0, -600));
+    await tester.pump();
+    expect(tester.widget<LibraryTop>(top).fold, 0);
+    expect(tester.widget<LibraryTop>(top).covering, isTrue);
+    expect(tester.getSize(top).height, rest);
+  });
+
   testWidgets('a new status starts the list at the top', (tester) async {
     final many = [
       for (var i = 0; i < 60; i++) row('r$i', 'watching', name: 'Title $i'),
     ];
     await pumpScreen(tester, many);
-    await tester.drag(find.byType(GridView), const Offset(0, -2000));
+    await showList(tester);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
     await tester.pump();
     expect(find.text('Title 0'), findsNothing);
-    await choose(tester, 'Watching');
+    // the heading has folded; its short title opens the same menu
+    await tester.tap(
+      find.descendant(
+        of: find.byWidgetPredicate(
+          (widget) => widget is LibraryStatusSwitcher && widget.compact,
+        ),
+        matching: find.byType(Pressable),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(
+      find.descendant(of: menu, matching: find.text('Watching')),
+    );
+    await tester.pump();
     await tester.pump();
     expect(find.text('Title 0'), findsOneWidget);
   });
@@ -374,19 +469,38 @@ void main() {
     expect(find.byType(LibraryGridCard), findsOneWidget);
   });
 
-  testWidgets('the status shows on the All tab only', (tester) async {
-    await pumpScreen(tester, sample);
-    expect(
-      tester
-          .widgetList<LibraryGridCard>(find.byType(LibraryGridCard))
-          .every((card) => card.showStatus),
-      isTrue,
-    );
-    await choose(tester, 'Watching');
-    expect(
-      tester.widget<LibraryGridCard>(find.byType(LibraryGridCard)).showStatus,
-      isFalse,
-    );
+  testWidgets('the list view names its columns on one bar; a caption sorts '
+      'up, down, then back to the menu', (tester) async {
+    await pumpScreen(tester, [
+      row('a', 'watching', name: 'Alpha', addedAt: 1, score: 5),
+      row('b', 'watching', name: 'Bravo', addedAt: 3, score: 9),
+      row('c', 'watching', name: 'Charlie', addedAt: 2),
+    ]);
+    await tester.tap(find.bySemanticsLabel('List view'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(LibraryListHeader), findsOneWidget);
+    List<String> names() => [
+      for (final r in tester.widgetList<LibraryListRow>(
+        find.byType(LibraryListRow),
+      ))
+        r.row.name,
+    ];
+    // Recent
+    expect(names(), ['Bravo', 'Charlie', 'Alpha']);
+    Future<void> click(String caption) async {
+      await tester.tap(find.text(caption));
+      await tester.pump();
+      await tester.pump();
+    }
+
+    await click('Your score');
+    expect(names(), ['Alpha', 'Bravo', 'Charlie']);
+    await click('Your score');
+    // not scored goes last either way
+    expect(names(), ['Bravo', 'Alpha', 'Charlie']);
+    await click('Your score');
+    expect(names(), ['Bravo', 'Charlie', 'Alpha']);
   });
 
   testWidgets('the sort offers Recent and A to Z only', (tester) async {
@@ -495,11 +609,58 @@ void main() {
     await pumpScreen(tester, [row('a', 'watching', name: 'Alpha')]);
     await tester.tap(find.text('Alpha'), buttons: kSecondaryButton);
     await tester.pump();
-    await tester.tap(find.text('On hold'));
+    await tester.pump();
+    // the page is dimmed and the card drawn again above the dim, besides
+    // the panel's own heading
+    expect(find.byType(PageDim), findsOneWidget);
+    expect(find.text('Alpha'), findsNWidgets(3));
+    await tester.tap(statusKey('On hold'));
     await tester.pump();
     expect(edits.calls, ['status a onHold']);
-    // the menu closed
+    // the panel stays, so the change shows in it; Escape closes it
+    expect(find.text('Open details'), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Open details'), findsNothing);
+    expect(find.byType(PageDim), findsNothing);
+  });
+
+  testWidgets('a click on the dim or a turn of the wheel closes the panel', (
+    tester,
+  ) async {
+    await pumpScreen(tester, [row('a', 'watching', name: 'Alpha')]);
+    await tester.tap(find.text('Alpha'), buttons: kSecondaryButton);
+    await tester.pump();
+    await tester.pump();
+    await tester.tapAt(const Offset(1000, 700));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Open details'), findsNothing);
+    await tester.tap(find.text('Alpha'), buttons: kSecondaryButton);
+    await tester.pump();
+    await tester.pump();
+    final mouse = TestPointer(1, PointerDeviceKind.mouse);
+    await tester.sendEventToBinding(mouse.hover(const Offset(1000, 700)));
+    await tester.sendEventToBinding(mouse.scroll(const Offset(0, 120)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Open details'), findsNothing);
+  });
+
+  testWidgets('the panel opens beside the cover, 20% down it, wherever the '
+      'click was', (tester) async {
+    await pumpScreen(tester, [row('a', 'watching', name: 'Alpha')]);
+    final cover = tester.getRect(find.byType(CoverImage));
+    await tester.tapAt(
+      cover.bottomRight - const Offset(10, 10),
+      buttons: kSecondaryButton,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final panel = tester.getRect(find.byType(QuickPanel));
+    expect(panel.left, cover.right + Tokens.besideGap);
+    expect(panel.top, closeTo(cover.top + cover.height * coverDrop, 0.5));
   });
 
   testWidgets('an edited row stays in its tab until the tab changes', (
@@ -517,11 +678,15 @@ void main() {
     rows = [rows.first, row('b', 'completed', name: 'Bravo')];
     await tester.tap(find.text('Bravo'), buttons: kSecondaryButton);
     await tester.pump();
-    await tester.tap(find.text('Completed').last);
+    await tester.pump();
+    await tester.tap(statusKey('Completed'));
     await tester.pump();
     await tester.pump();
     await tester.pump();
     expect(edits.calls, ['status b completed']);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Bravo'), findsOneWidget);
     // leaving the tab lets it go
     await choose(tester, 'Watching');
@@ -547,27 +712,39 @@ void main() {
     expect(edits.calls, ['status a completed', 'uncheck b']);
   });
 
-  testWidgets('the three dots open the same menu, under the button', (
+  testWidgets('the three dots open the same panel, under the row', (
     tester,
   ) async {
     await pumpScreen(tester, [row('a', 'watching', name: 'Alpha')]);
     await tester.tap(find.bySemanticsLabel('List view'));
     await tester.pump();
     await tester.pump();
+    // the three dots show only on hover
+    expect(find.bySemanticsLabel('More'), findsNothing);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: tester.getCenter(find.text('Alpha')));
+    addTearDown(mouse.removePointer);
+    await tester.pump();
+    final rowRect = tester.getRect(find.byType(LibraryListRow));
     await tester.tap(find.bySemanticsLabel('More'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Open details'), findsOneWidget);
-    await tester.tap(find.text('+ Episode'));
+    final panel = tester.getRect(find.byType(QuickPanel));
+    expect(panel.left, rowRect.left + ListColumns.lead);
+    expect(panel.top, rowRect.bottom + Tokens.space1);
+    await tester.tap(statusKey('Completed'));
     await tester.pump();
-    expect(edits.calls, ['episode a']);
+    expect(edits.calls, ['status a completed']);
   });
 
   testWidgets('removing asks first, then removes every season', (tester) async {
     await pumpScreen(tester, [row('a', 'watching', name: 'Alpha', seasons: 2)]);
     await tester.tap(find.text('Alpha'), buttons: kSecondaryButton);
     await tester.pump();
+    await tester.pump();
     final hold = await tester.startGesture(
-      tester.getCenter(find.text('Hold to remove all 2').first),
+      tester.getCenter(find.byType(RemoveKey)),
     );
     await tester.pump(); // the fill starts timing on this frame
     await tester.pump(const Duration(milliseconds: 500));

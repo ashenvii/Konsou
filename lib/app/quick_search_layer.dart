@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../components/page_dim.dart';
 import '../components/app_button.dart';
 import '../components/app_checkbox.dart';
 import '../components/close_on_escape.dart';
@@ -90,15 +91,7 @@ class _QuickSearchLayerState extends ConsumerState<QuickSearchLayer> {
         child: Stack(
           children: [
             // dims everything under the bar; a click on it closes the search
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: search.close,
-                child: ColoredBox(
-                  color: Tokens.wellEdge.withValues(alpha: 0.78),
-                ),
-              ),
-            ),
+            Positioned.fill(child: PageDim(onClose: search.close)),
             Align(
               alignment: Alignment.topCenter,
               child: LayoutBuilder(
@@ -430,7 +423,8 @@ class _ResultRowState extends State<_ResultRow> with _KeepsInView<_ResultRow> {
                       malScore: row.malScore,
                       narrow: narrow,
                       status: row.status,
-                      loadingDetails: row.isLoadingDetails,
+                      loadingDetails:
+                          row.isLoadingDetails || row.isScorePending,
                       notLinked: row.isNotLinked,
                     ),
                   ],
@@ -465,7 +459,11 @@ class _NameAndLine extends StatelessWidget {
         const SizedBox(height: Tokens.space1),
         RowSmallLine(
           row.line,
-          withScore: narrow && !row.isNotLinked && !row.isLoadingDetails,
+          withScore:
+              narrow &&
+              !row.isNotLinked &&
+              !row.isLoadingDetails &&
+              !row.isScorePending,
           malScore: row.malScore,
         ),
       ],

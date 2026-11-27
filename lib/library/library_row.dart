@@ -13,6 +13,7 @@ class LibraryEntry {
     this.malScore,
     this.malId,
     this.hasDetails = false,
+    this.scorePending = false,
     this.episodes,
     this.mediaType,
     this.startDate,
@@ -35,6 +36,9 @@ class LibraryEntry {
   final double? malScore;
   final int? malId;
   final bool hasDetails;
+
+  /// Details saved, but MAL's score not asked for yet.
+  final bool scorePending;
   final int? episodes;
   final String? mediaType;
 
@@ -60,6 +64,7 @@ class LibraryEntry {
       other.malScore == malScore &&
       other.malId == malId &&
       other.hasDetails == hasDetails &&
+      other.scorePending == scorePending &&
       other.episodes == episodes &&
       other.mediaType == mediaType &&
       other.startDate == startDate &&
@@ -79,6 +84,7 @@ class LibraryEntry {
     malScore,
     malId,
     hasDetails,
+    scorePending,
     episodes,
     mediaType,
     startDate,
@@ -98,6 +104,7 @@ class LibraryRow {
     required this.changedAt,
     this.seasonsDone,
     this.seasonsTotal,
+    this.seasonNumber,
   });
 
   final LibraryEntry current;
@@ -112,6 +119,10 @@ class LibraryRow {
   /// than one season on the list.
   final int? seasonsDone;
   final int? seasonsTotal;
+
+  /// The season the row stands for, counted among the seasons on the list in
+  /// release order (2 for the second you have), only for a franchise.
+  final int? seasonNumber;
 
   String get entryId => current.entryId;
   String get name => current.name;
@@ -129,6 +140,9 @@ class LibraryRow {
   bool get isNotLinked => current.malId == null;
 
   /// A MAL page, but its details have not come in yet.
+  /// MAL's score is still on its way: a skeleton, not a "?".
+  bool get isScorePending => current.scorePending;
+
   bool get isLoadingDetails => current.malId != null && !current.hasDetails;
 
   bool get isFranchise => seasonsTotal != null;
@@ -145,7 +159,8 @@ class LibraryRow {
       other.addedAt == addedAt &&
       other.changedAt == changedAt &&
       other.seasonsDone == seasonsDone &&
-      other.seasonsTotal == seasonsTotal;
+      other.seasonsTotal == seasonsTotal &&
+      other.seasonNumber == seasonNumber;
 
   @override
   int get hashCode => Object.hash(
@@ -155,6 +170,7 @@ class LibraryRow {
     changedAt,
     seasonsDone,
     seasonsTotal,
+    seasonNumber,
   );
 }
 

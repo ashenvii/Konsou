@@ -13,7 +13,7 @@ import '../../library/library_row.dart';
 import '../../library/library_view.dart';
 import 'grid_layout.dart';
 
-const _stripGutter = Tokens.space5 + Tokens.space2;
+const _stripGutter = LetteredRows.stripGutter;
 
 class LetteredRows extends ConsumerStatefulWidget {
   const LetteredRows({
@@ -21,11 +21,21 @@ class LetteredRows extends ConsumerStatefulWidget {
     required this.rows,
     required this.layout,
     required this.itemBuilder,
+    this.topInset = 0,
+    this.pinned = 0,
   });
+
+  /// Room the letter strip takes at the right of the rows.
+  static const stripGutter = Tokens.space5 + Tokens.space2;
 
   final List<LibraryRow> rows;
   final LibraryLayout layout;
   final Widget Function(BuildContext context, LibraryRow row) itemBuilder;
+
+  /// Room above the first heading for the page's top, which folds to
+  /// [pinned] high as the rows scroll under it.
+  final double topInset;
+  final double pinned;
 
   @override
   ConsumerState<LetteredRows> createState() => _LetteredRowsState();
@@ -48,8 +58,12 @@ class _LetteredRowsState extends ConsumerState<LetteredRows> {
     final target = letterHeadings
         .skip(from < 0 ? 0 : from)
         .firstWhere(_offsets.containsKey, orElse: () => _offsets.keys.last);
+    // the letter lands just under the folded top
     _controller.jumpTo(
-      min(_offsets[target]!, _controller.position.maxScrollExtent),
+      min(
+        _offsets[target]! + widget.topInset - widget.pinned,
+        _controller.position.maxScrollExtent,
+      ),
     );
   }
 
@@ -90,6 +104,7 @@ class _LetteredRowsState extends ConsumerState<LetteredRows> {
               // rows a screen either side are built, so they load ahead
               scrollCacheExtent: const ScrollCacheExtent.viewport(1),
               slivers: [
+                SliverToBoxAdapter(child: SizedBox(height: widget.topInset)),
                 for (final group in groups)
                   SliverPadding(
                     // room on the right for the letter strip
@@ -123,7 +138,7 @@ class _LetteredRowsState extends ConsumerState<LetteredRows> {
               ],
             ),
             Positioned(
-              top: 0,
+              top: widget.topInset,
               bottom: Tokens.space2,
               // left of the scrollbar, which sits against the window edge
               right: Tokens.scrollbarWidth + Tokens.space1,

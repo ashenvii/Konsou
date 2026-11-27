@@ -77,9 +77,7 @@ void main() {
     expect(controller.offset, 100);
   });
 
-  testWidgets('a click during the glide is a click on the row', (
-    tester,
-  ) async {
+  testWidgets('a click during the glide is a click on the row', (tester) async {
     var tapped = 0;
     controller = SmoothScrollController();
     addTearDown(controller.dispose);

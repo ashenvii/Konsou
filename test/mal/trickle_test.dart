@@ -128,7 +128,7 @@ void main() {
             provider: 'mal',
             providerId: 5,
             fetchedAt: 1,
-            json: '{"id": 5}',
+            json: '{"id": 5, "num_scoring_users": 0}',
           ),
         );
     await markGone(6, const Duration(days: 10));
@@ -139,7 +139,7 @@ void main() {
       asked,
       (malId) => malId == 9
           ? http.Response('', 403)
-          : http.Response('{"id": $malId}', 200),
+          : http.Response('{"id": $malId, "num_scoring_users": 0}', 200),
     ).run();
 
     // watching and rewatching share the first tier, most recently changed first
@@ -175,7 +175,7 @@ void main() {
 
     await trickleAnswering(
       asked,
-      (malId) => http.Response('{"id": $malId}', 200),
+      (malId) => http.Response('{"id": $malId, "num_scoring_users": 0}', 200),
     ).run();
 
     expect(asked, [1]);
@@ -183,4 +183,35 @@ void main() {
     final attempts = await details.select(details.matchAttempt).get();
     expect(attempts.single.entryId, 'not linked');
   });
+
+  test(
+    'asks again for a saved title that was never asked for its score',
+    () async {
+      await addEntry('old row', 'completed', 1, malId: 1);
+      final details = databases.details;
+      await details
+          .into(details.detail)
+          .insert(
+            DetailCompanion.insert(
+              provider: 'mal',
+              providerId: 1,
+              fetchedAt: 1,
+              json: '{"id": 1}',
+            ),
+          );
+      final asked = <int>[];
+
+      await trickleAnswering(
+        asked,
+        (malId) => http.Response(
+          '{"id": $malId, "mean": 8.5, "num_scoring_users": 10}',
+          200,
+        ),
+      ).run();
+
+      expect(asked, [1]);
+      final saved = await details.select(details.detail).getSingle();
+      expect(saved.malScore, 8.5);
+    },
+  );
 }

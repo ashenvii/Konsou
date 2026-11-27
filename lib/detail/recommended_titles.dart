@@ -43,6 +43,7 @@ Future<List<RecommendedTitle>> loadRecommendedTitles(
         startDate: saved?.startDate,
         episodes: saved?.episodes,
         malScore: saved?.malScore,
+        isScorePending: saved?.scorePending ?? false,
         airedEpisodes: saved?.airedEpisodes,
         entryId: entry?.entryId,
         status: entry?.status,

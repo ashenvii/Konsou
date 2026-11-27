@@ -9,6 +9,7 @@ import '../library/entry_status.dart';
 import '../library/library_row.dart';
 import '../screens/library/library_grid_card.dart';
 import '../screens/library/library_list_row.dart';
+import '../screens/library/list_columns.dart';
 
 LibraryRow _row({
   required String name,
@@ -23,6 +24,7 @@ LibraryRow _row({
   bool hasDetails = true,
   int? seasonsDone,
   int? seasonsTotal,
+  int? seasonNumber,
 }) => LibraryRow(
   current: LibraryEntry(
     entryId: name,
@@ -44,6 +46,7 @@ LibraryRow _row({
   changedAt: 0,
   seasonsDone: seasonsDone,
   seasonsTotal: seasonsTotal,
+  seasonNumber: seasonNumber,
 );
 
 final sampleRows = [
@@ -60,26 +63,28 @@ final sampleRows = [
   _row(
     name: 'Kaguya-sama: Love Is War',
     status: EntryStatus.completed,
-    watched: 37,
-    episodes: 37,
+    watched: 13,
+    episodes: 13,
     score: 10,
     malScore: 8.4,
     startDate: '2019-01-12',
     malId: 2,
     seasonsDone: 3,
     seasonsTotal: 3,
+    seasonNumber: 3,
   ),
   _row(
     name: 'Mushoku Tensei',
-    status: EntryStatus.completed,
-    watched: 11,
-    episodes: 11,
+    status: EntryStatus.watching,
+    watched: 3,
+    episodes: 12,
     score: 8,
     malScore: 8.36,
     startDate: '2021-01-11',
     malId: 3,
     seasonsDone: 1,
     seasonsTotal: 2,
+    seasonNumber: 2,
   ),
   _row(
     name: 'Look Back',
@@ -131,7 +136,6 @@ class LibraryRowsSection extends StatelessWidget {
                   width: Tokens.gridCardMinWidth,
                   child: LibraryGridCard(
                     row: row,
-                    showStatus: true,
                     onOpen: () {},
                     onContextMenu: (_) {},
                   ),
@@ -139,19 +143,16 @@ class LibraryRowsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: Tokens.space5),
-          for (final row in sampleRows) _listRow(row, showStatus: true),
-          const SizedBox(height: Tokens.space5),
-          for (final row in sampleRows.take(2))
-            _listRow(row, showStatus: false),
+          LibraryListHeader(shown: null, onPick: (_) {}),
+          for (final row in sampleRows) _listRow(row),
         ],
       ),
     );
   }
 }
 
-Widget _listRow(LibraryRow row, {required bool showStatus}) => LibraryListRow(
+Widget _listRow(LibraryRow row) => LibraryListRow(
   row: row,
-  showStatus: showStatus,
   onOpen: () {},
   onCheck: (_) {},
   onContextMenu: (_) {},

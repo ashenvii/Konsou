@@ -8,6 +8,7 @@ class StripTitle {
     required this.malId,
     required this.name,
     this.isLoadingDetails = false,
+    this.isScorePending = false,
     this.isNotAired = false,
     this.mediaType,
     this.startDate,
@@ -24,6 +25,9 @@ class StripTitle {
 
   /// No details saved yet, so they are fetched while it shows.
   final bool isLoadingDetails;
+
+  /// Details saved, but MAL's score not asked for yet.
+  final bool isScorePending;
   final bool isNotAired;
   final String? mediaType;
   final String? startDate;
@@ -38,8 +42,8 @@ class StripTitle {
   final EntryStatus? status;
   final int episodesWatched;
 
-  /// The count in its card's footer.
-  String get count => formatCardCount(
+  /// The cells in its card's footer.
+  CardCount get count => countCard(
     onList: entryId != null,
     watched: episodesWatched,
     total: episodes,

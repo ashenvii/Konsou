@@ -3,7 +3,8 @@ import 'package:flutter/foundation.dart' show ValueChanged;
 import '../library/entry_status.dart';
 import 'app_menu.dart';
 
-const _menuStatuses = [
+/// Every status a title on the list can take, in the menu's order.
+const menuStatuses = [
   EntryStatus.watching,
   EntryStatus.planned,
   EntryStatus.completed,
@@ -20,7 +21,7 @@ List<MenuEntry> statusMenuEntries({
   required ValueChanged<EntryStatus> onPick,
   List<EntryStatus> keyed = const [],
 }) => [
-  for (final status in _menuStatuses)
+  for (final status in menuStatuses)
     MenuEntry(
       label: status.label,
       shortcut: keyed.contains(status) ? '${keyed.indexOf(status) + 1}' : null,

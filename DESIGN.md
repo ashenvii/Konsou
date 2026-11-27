@@ -163,6 +163,7 @@ Radius is 0 everywhere. No pills, no circles except the mascot's own geometry. I
 
 ### Menus and popovers
 - **Style:** Raised Slate, status names left, counts or shortcut keys right, a divider between groups, an optional footnote. One `AppMenu` serves every dropdown, including the sort and the status switcher.
+- **Quick panel:** 290 wide on Raised Slate with the soft shadow, opened by right click, the three dots or the Menu key, never by hover. The title's details on top, a hairline, the statuses as keys (the current one primary), progress with a +1 key while watching, a hairline, Open details and Hold to remove.
 
 ### Inputs / Fields
 - **Style:** Panel Slate, 36 tall, Soft Ink icon, an Esc hint. The top search is a sunk well: Well Fill, rounded 5, shaded at the top, a faint lit lip below, centred, with key caps.

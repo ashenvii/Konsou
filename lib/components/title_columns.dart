@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../library/entry_status.dart';
+import '../library/row_labels.dart';
 import 'episode_column.dart';
 import 'mal_column.dart';
 
@@ -13,18 +14,14 @@ class TitleColumns extends StatelessWidget {
     required this.malScore,
     required this.narrow,
     this.status,
-    this.finished = true,
-    this.showStatus = true,
     this.loadingDetails = false,
     this.notLinked = false,
   });
 
-  final String count;
+  final CardCount count;
   final double? malScore;
   final bool narrow;
   final EntryStatus? status;
-  final bool finished;
-  final bool showStatus;
   final bool loadingDetails;
   final bool notLinked;
 
@@ -32,13 +29,7 @@ class TitleColumns extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      EpisodeColumn(
-        count: count,
-        status: status,
-        finished: finished,
-        showStatus: showStatus,
-        narrow: narrow,
-      ),
+      EpisodeColumn(count: count, status: status),
       if (!narrow)
         MalColumn(score: malScore, loading: loadingDetails, blank: notLinked),
     ],

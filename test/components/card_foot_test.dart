@@ -1,10 +1,12 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/card_foot.dart';
-import 'package:konsou/components/status_lamp.dart';
+import 'package:konsou/components/count_display.dart';
+import 'package:konsou/components/season_cap.dart';
 import 'package:konsou/components/status_mark.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/library/entry_status.dart';
+import 'package:konsou/library/row_labels.dart';
 
 import '../support/pump_widget.dart';
 import '../support/render_png.dart';
@@ -20,145 +22,114 @@ void main() {
     await pumpWidget(tester, SizedBox(width: width, child: foot));
   }
 
-  Color? countColor(WidgetTester tester, String count) =>
-      tester.widget<Text>(find.text(count)).style?.color;
+  String spoken(WidgetTester tester) =>
+      tester.getSemantics(find.byType(CountDisplay)).label;
 
   testWidgets('it is the footer height', (tester) async {
-    await pumpFoot(tester, const CardFoot(count: '12 ep'));
+    await pumpFoot(
+      tester,
+      CardFoot(count: countCard(onList: false, total: 12)),
+    );
     expect(tester.getSize(find.byType(CardFoot)).height, Tokens.cardFootHeight);
   });
 
-  testWidgets('the count sits at the right edge', (tester) async {
-    await pumpFoot(
-      tester,
-      const CardFoot(status: EntryStatus.watching, count: '9 / 28'),
-    );
-    expect(
-      tester.getTopRight(find.text('9 / 28')).dx,
-      tester.getTopRight(find.byType(CardFoot)).dx - Tokens.space1,
-    );
-    expect(
-      tester.getTopLeft(find.text('9 / 28')).dx,
-      greaterThan(tester.getTopRight(find.byType(StatusLamp)).dx),
-    );
-  });
-
-  testWidgets('a title not on your list has no lamp, no mark, soft count', (
-    tester,
-  ) async {
-    await pumpFoot(tester, const CardFoot(count: 'Ep 8 / 12', showMark: true));
-    expect(find.byType(StatusLamp), findsNothing);
-    expect(find.byType(StatusMark), findsNothing);
-    expect(countColor(tester, 'Ep 8 / 12'), Tokens.inkSoft);
-  });
-
-  testWidgets('watching lights the count, any other status is ink', (
+  testWidgets('the status icon at the left, one display at the right', (
     tester,
   ) async {
     await pumpFoot(
       tester,
-      const CardFoot(status: EntryStatus.watching, count: '9 / 28'),
-    );
-    final lit = tester.widget<Text>(find.text('9 / 28')).style!;
-    expect(lit.color, Tokens.pop);
-    expect(lit.shadows, isNotEmpty);
-
-    await pumpFoot(
-      tester,
-      const CardFoot(status: EntryStatus.onHold, count: '3 / 12'),
-    );
-    expect(countColor(tester, '3 / 12'), Tokens.ink);
-  });
-
-  testWidgets('the mark shows only on a tab that mixes statuses', (
-    tester,
-  ) async {
-    await pumpFoot(
-      tester,
-      const CardFoot(status: EntryStatus.planned, count: '0 / ?'),
-    );
-    expect(find.byType(StatusLamp), findsOneWidget);
-    expect(find.byType(StatusMark), findsNothing);
-
-    await pumpFoot(
-      tester,
-      const CardFoot(
-        status: EntryStatus.planned,
-        count: '0 / ?',
-        showMark: true,
-      ),
-    );
-    expect(find.byType(StatusMark), findsOneWidget);
-  });
-
-  testWidgets('the status word shows on hover where it fits', (tester) async {
-    await pumpFoot(
-      tester,
-      const CardFoot(status: EntryStatus.watching, count: '9 / 28'),
-    );
-    expect(find.text('Watching'), findsNothing);
-
-    await pumpFoot(
-      tester,
-      const CardFoot(
+      CardFoot(
         status: EntryStatus.watching,
-        count: '9 / 28',
-        showMark: true,
-        showWord: true,
+        count: countCard(onList: true, watched: 9, total: 28),
       ),
     );
-    expect(find.text('Watching'), findsOneWidget);
+    final foot = tester.getRect(find.byType(CardFoot));
+    expect(tester.getTopLeft(find.byType(StatusMark)).dx, foot.left);
+    expect(find.text('Watching'), findsNothing);
+    expect(find.bySemanticsLabel('Watching'), findsOneWidget);
+    expect(tester.getTopRight(find.byType(CountDisplay)).dx, foot.right);
+    expect(find.byType(CountDisplay), findsOneWidget);
+    expect(spoken(tester), '9 of 28 episodes');
   });
 
-  testWidgets('with no room the word goes and the count stays whole', (
+  testWidgets('the numbers are 16, plain ink, no glow', (tester) async {
+    await pumpFoot(
+      tester,
+      CardFoot(
+        status: EntryStatus.watching,
+        count: countCard(onList: true, watched: 9, total: 28),
+      ),
+    );
+    final text = tester.widget<RichText>(
+      find.descendant(
+        of: find.byType(CountDisplay),
+        matching: find.byType(RichText),
+      ),
+    );
+    TextSpan? first;
+    text.text.visitChildren((span) {
+      if (span is TextSpan && span.text != null) {
+        first = span;
+        return false;
+      }
+      return true;
+    });
+    expect(first!.text, '9');
+    expect(first!.style?.fontSize, Tokens.text2);
+    expect(first!.style?.color, Tokens.ink);
+    expect(first!.style?.shadows, isNull);
+  });
+
+  testWidgets('not on your list: no word, the total in episodes', (
     tester,
   ) async {
     await pumpFoot(
       tester,
-      const CardFoot(
+      CardFoot(count: countCard(onList: false, total: 12)),
+    );
+    expect(spoken(tester), '12 ep');
+  });
+
+  testWidgets('no total from MAL reads "?"', (tester) async {
+    await pumpFoot(
+      tester,
+      CardFoot(status: EntryStatus.planned, count: countCard(onList: true)),
+    );
+    expect(spoken(tester), '0 of ? episodes');
+  });
+
+  testWidgets('a franchise puts its season cap in front of the count', (
+    tester,
+  ) async {
+    await pumpFoot(
+      tester,
+      CardFoot(
+        status: EntryStatus.watching,
+        count: countCard(onList: true, watched: 3, total: 12),
+        season: 2,
+      ),
+    );
+    expect(spoken(tester), '3 of 12 episodes');
+    expect(find.text('S2'), findsOneWidget);
+    expect(
+      tester.getRect(find.byType(SeasonCap)).right,
+      lessThan(tester.getRect(find.byType(CountDisplay)).left),
+    );
+  });
+
+  testWidgets('long counts stay whole, never overflow', (tester) async {
+    await pumpFoot(
+      tester,
+      CardFoot(
         status: EntryStatus.notInterested,
-        count: '12 / 24 seasons',
-        showMark: true,
-        showWord: true,
+        count: countCard(onList: true, watched: 1071, total: 1100),
       ),
-      width: 150,
+      width: Tokens.gridCardMinWidth - Tokens.space5,
     );
-    expect(find.text('Not interested'), findsNothing);
-    expect(find.text('12 / 24 seasons'), findsOneWidget);
     expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('with less room still the mark goes, then the lamp', (
-    tester,
-  ) async {
-    const foot = CardFoot(
-      status: EntryStatus.completed,
-      count: '12 / 24 seasons',
-      showMark: true,
+    expect(
+      tester.getRect(find.byType(CountDisplay)).right,
+      lessThanOrEqualTo(tester.getRect(find.byType(CardFoot)).right),
     );
-    await pumpFoot(tester, foot, width: 130);
-    expect(find.byType(StatusMark), findsNothing);
-    expect(find.byType(StatusLamp), findsOneWidget);
-
-    await pumpFoot(tester, foot, width: 110);
-    expect(find.byType(StatusLamp), findsNothing);
-    expect(find.text('12 / 24 seasons'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('a completed franchise with a season left stays unlit', (
-    tester,
-  ) async {
-    await pumpFoot(
-      tester,
-      const CardFoot(
-        status: EntryStatus.completed,
-        finished: false,
-        count: '1 / 2 seasons',
-        showMark: true,
-      ),
-    );
-    expect(tester.widget<StatusLamp>(find.byType(StatusLamp)).finished, false);
-    expect(tester.widget<StatusMark>(find.byType(StatusMark)).green, false);
   });
 }

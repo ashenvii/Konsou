@@ -9,11 +9,18 @@ import 'fading_portal.dart';
 
 /// Says in words what an icon does, beside it, after a short hover. It never
 /// takes a click: the pointer goes straight through to what is underneath.
+/// Each time [reveal] fires it shows at once, without the wait.
 class HoverTip extends StatefulWidget {
-  const HoverTip({super.key, required this.label, required this.child});
+  const HoverTip({
+    super.key,
+    required this.label,
+    required this.child,
+    this.reveal,
+  });
 
   final String label;
   final Widget child;
+  final Listenable? reveal;
 
   @override
   State<HoverTip> createState() => _HoverTipState();
@@ -34,6 +41,27 @@ class _HoverTipState extends State<HoverTip>
 
   @override
   void hoverClose() => closePortal();
+
+  @override
+  void initState() {
+    super.initState();
+    widget.reveal?.addListener(hoverOpen);
+  }
+
+  @override
+  void didUpdateWidget(HoverTip old) {
+    super.didUpdateWidget(old);
+    if (old.reveal != widget.reveal) {
+      old.reveal?.removeListener(hoverOpen);
+      widget.reveal?.addListener(hoverOpen);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.reveal?.removeListener(hoverOpen);
+    super.dispose();
+  }
 
   void _stop() {
     hoverDelays.left(isOpen: false);

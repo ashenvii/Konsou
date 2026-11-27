@@ -126,11 +126,18 @@ abstract final class Tokens {
   static const double listRowHeight = 72;
   static const double listCoverWidth = 40;
 
-  // the card (DECISIONS "Card, round 6", owner, 2026-11-25): the footer
-  // under the cover, how far a hovered card rises, the details popover's width
+  // the card (DECISIONS "Card, round 6" to "round 9", owner, 2026-11-25):
+  // the footer under the cover, how far a hovered card rises, the quick
+  // panel's width
   static const double cardFootHeight = 28;
   static const double cardLift = 2;
-  static const double popoverWidth = 360;
+  static const double popoverWidth = 290;
+
+  // the quick panel's place and the page under it (DECISIONS "Library fixes
+  // and quick panel, round 10", owner, 2026-11-26): the gap between a card and
+  // its panel, and Quick search's dim, shared by both
+  static const double besideGap = 6;
+  static const double dimAlpha = 0.78;
 
   // the toast, a first guess the owner agreed to (2026-11-12).
   static const double toastMaxWidth = 480;

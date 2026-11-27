@@ -32,7 +32,9 @@ Future<void> loadAppFonts() async {
 
 /// Draws [child] at [size] and saves it as a PNG at [path]. For screens the
 /// owner looks at on a phone.
-Future<void> renderPng(
+/// Renders [child] at [size] and saves it at [path]. Returns the repaint
+/// boundary's key, so a later state can be captured too (`capturePng`).
+Future<GlobalKey> renderPng(
   WidgetTester tester, {
   required Widget child,
   required Size size,
@@ -49,6 +51,7 @@ Future<void> renderPng(
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 500));
   await capturePng(tester, key, path);
+  return key;
 }
 
 /// Saves what the repaint boundary under [key] shows as a PNG at [path].

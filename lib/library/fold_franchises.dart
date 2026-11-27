@@ -21,6 +21,7 @@ List<LibraryRow> foldFranchises(List<LibraryEntry> entries) {
 LibraryRow _foldGroup(List<LibraryEntry> group) {
   final story = group.where((entry) => !entry.isExtra).toList();
   final current = _currentSeason(story.isEmpty ? group : story);
+  final place = ([...story]..sort(_byRelease)).indexOf(current);
   final seasonsDone = story
       .where((entry) => entry.status == EntryStatus.completed)
       .length;
@@ -31,6 +32,7 @@ LibraryRow _foldGroup(List<LibraryEntry> group) {
     changedAt: group.map((entry) => entry.changedAt).reduce(max),
     seasonsDone: story.length > 1 ? seasonsDone : null,
     seasonsTotal: story.length > 1 ? story.length : null,
+    seasonNumber: story.length > 1 && place >= 0 ? place + 1 : null,
   );
 }
 

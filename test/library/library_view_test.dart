@@ -99,4 +99,75 @@ void main() {
     expect(ids(filterRowsByFind(rows, const {})), isEmpty);
     expect(filterRowsByFind(rows, null), rows);
   });
+
+  group('header bar sort', () {
+    const recent = LibrarySort.recent;
+
+    test('a click goes up, then down, then off', () {
+      final up = nextColumnSort(null, ListColumn.mal, recent);
+      expect(up, (column: ListColumn.mal, descending: false));
+      final down = nextColumnSort(up, ListColumn.mal, recent);
+      expect(down, (column: ListColumn.mal, descending: true));
+      expect(nextColumnSort(down, ListColumn.mal, recent), isNull);
+    });
+
+    test('another column starts again at up', () {
+      expect(
+        nextColumnSort(
+          (column: ListColumn.mal, descending: true),
+          ListColumn.name,
+          recent,
+        ),
+        (column: ListColumn.name, descending: false),
+      );
+    });
+
+    test('A to Z already shows the name column up, so a click goes down', () {
+      expect(columnSortOf(LibrarySort.title), (
+        column: ListColumn.name,
+        descending: false,
+      ));
+      expect(nextColumnSort(null, ListColumn.name, LibrarySort.title), (
+        column: ListColumn.name,
+        descending: true,
+      ));
+    });
+
+    test('a column with no value sorts last both ways, ties A to Z', () {
+      final rows = [
+        row('c', 'watching', name: 'Charlie'),
+        row('a', 'watching', name: 'Alpha', score: 7),
+        row('b', 'watching', name: 'Bravo', score: 7),
+        row('d', 'watching', name: 'Delta', score: 9),
+      ];
+      expect(
+        ids(
+          sortRowsByColumn(rows, (
+            column: ListColumn.yourScore,
+            descending: false,
+          )),
+        ),
+        ['a', 'b', 'd', 'c'],
+      );
+      expect(
+        ids(
+          sortRowsByColumn(rows, (
+            column: ListColumn.yourScore,
+            descending: true,
+          )),
+        ),
+        ['d', 'a', 'b', 'c'],
+      );
+    });
+
+    test('the name column sorts A to Z and Z to A', () {
+      final rows = [row('b', 'watching'), row('a', 'watching')];
+      expect(
+        ids(
+          sortRowsByColumn(rows, (column: ListColumn.name, descending: true)),
+        ),
+        ['b', 'a'],
+      );
+    });
+  });
 }

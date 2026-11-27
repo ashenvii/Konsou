@@ -2,11 +2,15 @@ import '../library/row_labels.dart';
 import 'title_details.dart';
 
 /// "29 Sep 2023 to 22 Mar 2024", "29 Sep 2023 to ?" while it airs, or the one
-/// date for a title that has no end.
-String? formatAired(TitleDetails details) {
-  final start = formatMalDate(details.startDate);
+/// date for a title that has no end. Without [days], months and years only,
+/// "Sep 2023 to Mar 2024", for a line with little room.
+String? formatAired(TitleDetails details, {bool days = true}) {
+  String? date(String? value) => formatMalDate(
+    !days && value != null && value.length > 7 ? value.substring(0, 7) : value,
+  );
+  final start = date(details.startDate);
   if (start == null) return null;
-  final end = formatMalDate(details.endDate);
+  final end = date(details.endDate);
   if (end == start) return start;
   if (end != null) return '$start to $end';
   final airing = details.airingStatus == 'currently_airing';

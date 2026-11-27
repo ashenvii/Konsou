@@ -55,11 +55,16 @@ void main() {
       now: _now,
     );
 
-    expect(
-      found({'num_episodes': 13, 'status': 'finished_airing'}).count,
-      '13 ep',
-    );
-    expect(found({'num_episodes': 0}).count, '? ep');
+    expect(found({'num_episodes': 13, 'status': 'finished_airing'}).count, (
+      done: null,
+      total: '13',
+      unit: 'ep',
+    ));
+    expect(found({'num_episodes': 0}).count, (
+      done: null,
+      total: '?',
+      unit: 'ep',
+    ));
     // weekly from 2 Oct 2026: eight are out by 25 Nov
     expect(
       found({
@@ -68,7 +73,7 @@ void main() {
         'media_type': 'tv',
         'start_date': '2026-10-02',
       }).count,
-      'Ep 8 / 12',
+      (done: '8', total: '12', unit: 'aired'),
     );
   });
 
@@ -107,7 +112,7 @@ void main() {
       startDate: '2023-09-29',
     );
     final row = quickRowFromEntry(entry);
-    expect(row.count, '3 / ?');
+    expect(row.count, (done: '3', total: '?', unit: null));
     expect(row.line, 'TV · 2023');
   });
 }

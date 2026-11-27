@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../design/text_styles.dart';
@@ -9,6 +8,7 @@ import 'cap_centered_text.dart';
 import 'countdown.dart';
 import 'countdown_builder.dart';
 import 'focus_ring.dart';
+import 'hold_fill.dart';
 import 'raised_key.dart';
 
 const holdToRemoveLabel = 'Hold to remove';
@@ -42,16 +42,8 @@ class _HoldRowState extends State<HoldRow> {
 
   void _stop() => _hold.cancel();
 
-  KeyEventResult _key(FocusNode node, KeyEvent event) {
-    if (event.logicalKey != LogicalKeyboardKey.enter &&
-        event.logicalKey != LogicalKeyboardKey.numpadEnter &&
-        event.logicalKey != LogicalKeyboardKey.space) {
-      return KeyEventResult.ignored;
-    }
-    if (event is KeyDownEvent) _start();
-    if (event is KeyUpEvent) _stop();
-    return KeyEventResult.handled;
-  }
+  KeyEventResult _key(FocusNode node, KeyEvent event) =>
+      holdOnKeys(event, start: _start, stop: _stop);
 
   @override
   void dispose() {
@@ -116,18 +108,7 @@ class _HoldRowState extends State<HoldRow> {
                               height: Tokens.controlHeight,
                               child: Stack(
                                 children: [
-                                  // the hold rises through the key from the foot
-                                  Positioned.fill(
-                                    child: FractionallySizedBox(
-                                      alignment: Alignment.bottomCenter,
-                                      heightFactor: fill,
-                                      child: ColoredBox(
-                                        color: Tokens.red.withValues(
-                                          alpha: 0.22,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                                  HoldFill(share: fill),
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [

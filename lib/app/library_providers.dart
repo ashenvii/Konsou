@@ -149,9 +149,42 @@ class LibrarySortChoice extends _$LibrarySortChoice {
       _readChoice(_sortKey, LibrarySort.values, LibrarySort.recent);
 
   Future<void> select(LibrarySort sort) async {
+    // a sort picked in the menu takes over from the header bar's
+    ref.read(libraryColumnSortChoiceProvider.notifier).clear();
     state = AsyncData(sort);
     await _saveChoice(_sortKey, sort);
   }
+}
+
+/// How many quick panels are open. While one is, the Library keeps its rows
+/// in the order they had, so an edit made in the panel does not move the row
+/// out from under it.
+@Riverpod(keepAlive: true)
+class LibraryPanelOpen extends _$LibraryPanelOpen {
+  @override
+  int build() => 0;
+
+  // a panel's mark reports after its frame, when the Library may be gone
+  void opened() {
+    if (ref.mounted) state++;
+  }
+
+  void closed() {
+    if (ref.mounted && state > 0) state--;
+  }
+}
+
+/// The list header bar's sort, over the menu's while set. Not saved: a new
+/// start shows the menu's sort.
+@Riverpod(keepAlive: true)
+class LibraryColumnSortChoice extends _$LibraryColumnSortChoice {
+  @override
+  ColumnSort? build() => null;
+
+  void pick(ListColumn column, LibrarySort menu) =>
+      state = nextColumnSort(state, column, menu);
+
+  void clear() => state = null;
 }
 
 const _layoutKey = 'library.layout';

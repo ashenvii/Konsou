@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import 'app_menu.dart';
+import 'cap_centered_text.dart';
 import 'menu_switcher.dart';
 
 class HeadingSwitcher extends StatelessWidget {
@@ -26,15 +27,19 @@ class HeadingSwitcher extends StatelessWidget {
     final base = AppText.heading.copyWith(
       fontFeatures: AppText.tally(Tokens.ink).fontFeatures,
     );
+    // the page's name carries the size; the menu word is one step lower
+    final menu = base.copyWith(
+      fontSize: Tokens.text2,
+      letterSpacing: Tokens.text2 * Tokens.labelTracking,
+    );
     return SizedBox(
       height: Tokens.controlHeight,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
+          // capitals centred like the menu word, so both share one line
+          CapCenteredText(
             title,
-            maxLines: 1,
-            softWrap: false,
             style: base.copyWith(
               fontWeight: FontWeight.w400,
               color: Tokens.inkMuted,
@@ -46,7 +51,7 @@ class HeadingSwitcher extends StatelessWidget {
             count: count,
             entries: entries,
             footnote: footnote,
-            style: base,
+            style: menu,
           ),
         ],
       ),

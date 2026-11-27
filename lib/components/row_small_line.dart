@@ -5,8 +5,9 @@ import '../design/tokens.dart';
 import '../icons/score_star.dart';
 import '../library/row_labels.dart';
 
-/// The small line under a row's name: "TV · 2023". In a narrow row, where the
-/// MAL column has no room, MAL's score joins it: "TV · 2023 · ★ 9.29". One
+/// The small line under a row's name: "TV · 2023" (the Library list gives the
+/// type alone). In a narrow row, where the MAL column has no room, MAL's
+/// score joins it: "TV · ★ 9.29". One
 /// line of text, so on a very small row it ends in an ellipsis like the name.
 class RowSmallLine extends StatelessWidget {
   const RowSmallLine(
@@ -29,7 +30,7 @@ class RowSmallLine extends StatelessWidget {
         children: [
           TextSpan(text: text),
           if (withScore) ...[
-            const TextSpan(text: ' · '),
+            if (text.isNotEmpty) const TextSpan(text: ' · '),
             const WidgetSpan(
               alignment: PlaceholderAlignment.middle,
               child: ScoreStar(size: Tokens.text1, color: Tokens.star),

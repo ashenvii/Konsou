@@ -96,6 +96,18 @@ _Avoid_: Placeholder, shimmer (for the component)
 One title drawn small: cover, name, facts line, your state, scores, always in that order. Laid out as a grid card, a row or a strip card.
 _Avoid_: Tile, item, result
 
+**Count display**:
+A card's or row's episodes in one small sunk display, "4 / 12", the slash muted.
+_Avoid_: Chip, badge, count wells
+
+**Quick panel**:
+What right click, the three dots or the Menu key opens on a Library title: its details, then the status keys, +1 while watching, Open details and Hold to remove.
+_Avoid_: Context menu, popover, hover card
+
+**Header bar**:
+The bar over the Library list that names its columns once and sorts by them.
+_Avoid_: Table head, column labels
+
 **Key cap**:
 A key drawn like a keyboard key, wherever a shortcut is shown.
 _Avoid_: Shortcut hint, badge

@@ -3,70 +3,37 @@ import 'package:flutter/widgets.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import '../library/entry_status.dart';
-import 'count_style.dart';
+import '../library/row_labels.dart';
+import 'count_display.dart';
 import 'one_line_text.dart';
-import 'status_lamp.dart';
-import 'status_mark.dart';
 import 'value_column.dart';
 
-/// A row's episode column: the count over the lamp and the status word. On a
-/// tab of one status the lamp stands alone, since the tab names it; in a
-/// [narrow] row the word becomes the status mark. A title not on your list
-/// ([status] null) has the count over nothing.
+/// A Quick search row's episode column: the count display over the status
+/// word. A title not on your list ([status] null) has the count alone.
 class EpisodeColumn extends StatelessWidget {
-  const EpisodeColumn({
-    super.key,
-    required this.count,
-    this.status,
-    this.finished = true,
-    this.showStatus = true,
-    this.narrow = false,
-  });
+  const EpisodeColumn({super.key, required this.count, this.status});
 
   /// Wide enough for "12 / 24 seasons" at the value size.
   static const width = Tokens.space5 * 6;
 
-  /// A row narrower than three grid cards is [narrow].
+  /// A row narrower than three grid cards is narrow.
   static const narrowBelow = Tokens.gridCardMinWidth * 3;
 
-  final String count;
+  final CardCount count;
   final EntryStatus? status;
-
-  /// Off for a Completed franchise with a season left, so it does not light.
-  final bool finished;
-
-  /// A tab that mixes statuses.
-  final bool showStatus;
-  final bool narrow;
 
   @override
   Widget build(BuildContext context) {
     final status = this.status;
     return ValueColumn(
       width: width,
-      value: OneLineText(
-        count,
-        style: chooseCountStyle(status, size: Tokens.text2),
+      value: Align(
+        alignment: Alignment.centerLeft,
+        child: FittedBox(fit: BoxFit.scaleDown, child: CountDisplay.of(count)),
       ),
       label: status == null
           ? null
-          : Row(
-              children: [
-                StatusLamp(status, finished: finished),
-                if (showStatus) ...[
-                  const SizedBox(width: Tokens.space1),
-                  if (narrow)
-                    StatusMark(status, green: finished)
-                  else
-                    Flexible(
-                      child: OneLineText(
-                        status.label,
-                        style: AppText.caption(Tokens.inkMuted),
-                      ),
-                    ),
-                ],
-              ],
-            ),
+          : OneLineText(status.label, style: AppText.caption(Tokens.inkSoft)),
     );
   }
 }
