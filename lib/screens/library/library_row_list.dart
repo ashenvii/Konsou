@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../../app/score_fill.dart';
 import '../../components/app_button.dart';
 import '../../components/icon_square_button.dart';
 import '../../components/page_frame.dart';
@@ -143,25 +144,29 @@ class LibraryRowList extends StatelessWidget {
               held: handle.isOpen,
               faded: dimmed && !handle.isOpen,
             )
-          : LibraryListRow(
-              row: row,
-              showStatus: showStatus,
-              onOpen: () => onOpen(row),
-              onCheck: (done) => editLibraryRow(
-                context,
-                row,
-                (actions) => done
-                    ? actions.setStatus(row.entryId, EntryStatus.completed)
-                    : actions.uncheck(row.entryId),
-              ),
-              onContextMenu: (_) =>
-                  openQuickPanel(context, handle, grid: false),
-              menuShown: handle.isOpen,
-              faded: dimmed && !handle.isOpen,
-              menu: IconSquareButton(
-                icon: AppIcons.more,
-                label: 'More',
-                onPressed: () => openQuickPanel(context, handle, grid: false),
+          : ScoreFill(
+              malId: row.malId,
+              pending: row.isScorePending,
+              child: LibraryListRow(
+                row: row,
+                showStatus: showStatus,
+                onOpen: () => onOpen(row),
+                onCheck: (done) => editLibraryRow(
+                  context,
+                  row,
+                  (actions) => done
+                      ? actions.setStatus(row.entryId, EntryStatus.completed)
+                      : actions.uncheck(row.entryId),
+                ),
+                onContextMenu: (_) =>
+                    openQuickPanel(context, handle, grid: false),
+                menuShown: handle.isOpen,
+                faded: dimmed && !handle.isOpen,
+                menu: IconSquareButton(
+                  icon: AppIcons.more,
+                  label: 'More',
+                  onPressed: () => openQuickPanel(context, handle, grid: false),
+                ),
               ),
             ),
     );

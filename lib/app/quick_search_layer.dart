@@ -218,13 +218,17 @@ class _Results extends StatelessWidget {
     var index = 0;
     Widget rowFor(QuickRow row) {
       final at = index++;
-      return _ResultRow(
+      return ScoreFill(
         key: ValueKey(row.entryId ?? 'm${row.malId}'),
-        row: row,
-        focused: at == state.focus,
-        onFocus: () => search.focusRow(at),
-        onOpen: () => search.openRow(row),
-        onTick: () => search.toggleComplete(row),
+        malId: row.malId,
+        pending: row.isScorePending,
+        child: _ResultRow(
+          row: row,
+          focused: at == state.focus,
+          onFocus: () => search.focusRow(at),
+          onOpen: () => search.openRow(row),
+          onTick: () => search.toggleComplete(row),
+        ),
       );
     }
 
@@ -356,7 +360,6 @@ mixin _KeepsInView<T extends StatefulWidget> on State<T> {
 
 class _ResultRow extends StatefulWidget {
   const _ResultRow({
-    super.key,
     required this.row,
     required this.focused,
     required this.onFocus,
@@ -402,43 +405,35 @@ class _ResultRowState extends State<_ResultRow> with _KeepsInView<_ResultRow> {
               horizontal: Tokens.space4,
               vertical: Tokens.space1,
             ),
-            child: ScoreFill(
-              malId: row.malId,
-              pending: row.isScorePending,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final narrow =
-                      constraints.maxWidth < EpisodeColumn.narrowBelow;
-                  return Row(
-                    children: [
-                      AppCheckbox(
-                        value: row.completed
-                            ? CheckValue.checked
-                            : CheckValue.empty,
-                        onChanged: (_) => widget.onTick(),
-                        onHover: (over) => setState(() => _overBox = over),
-                      ),
-                      const SizedBox(width: Tokens.space3),
-                      CoverView(
-                        malId: row.malId,
-                        width: Tokens.quickCoverWidth,
-                      ),
-                      const SizedBox(width: Tokens.space3),
-                      Expanded(child: _NameAndLine(row, narrow: narrow)),
-                      const SizedBox(width: Tokens.space3),
-                      TitleColumns(
-                        count: row.count,
-                        malScore: row.malScore,
-                        narrow: narrow,
-                        status: row.status,
-                        loadingDetails:
-                            row.isLoadingDetails || row.isScorePending,
-                        notLinked: row.isNotLinked,
-                      ),
-                    ],
-                  );
-                },
-              ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final narrow = constraints.maxWidth < EpisodeColumn.narrowBelow;
+                return Row(
+                  children: [
+                    AppCheckbox(
+                      value: row.completed
+                          ? CheckValue.checked
+                          : CheckValue.empty,
+                      onChanged: (_) => widget.onTick(),
+                      onHover: (over) => setState(() => _overBox = over),
+                    ),
+                    const SizedBox(width: Tokens.space3),
+                    CoverView(malId: row.malId, width: Tokens.quickCoverWidth),
+                    const SizedBox(width: Tokens.space3),
+                    Expanded(child: _NameAndLine(row, narrow: narrow)),
+                    const SizedBox(width: Tokens.space3),
+                    TitleColumns(
+                      count: row.count,
+                      malScore: row.malScore,
+                      narrow: narrow,
+                      status: row.status,
+                      loadingDetails:
+                          row.isLoadingDetails || row.isScorePending,
+                      notLinked: row.isNotLinked,
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),

@@ -21,7 +21,6 @@ class DetailsDatabase extends _$DetailsDatabase {
           "REAL GENERATED ALWAYS AS (json_extract(json, '\$.mean')) VIRTUAL",
         );
       }
-      // the scan times checks by what it knows of a franchise, not a streak
       if (from < 5 &&
           (await _readColumns('scan_schedule')).contains('quiet_streak')) {
         await customStatement(
@@ -34,7 +33,7 @@ class DetailsDatabase extends _$DetailsDatabase {
   // version 2 added the cover table but left detail with the old single
   // cover_url column, so a file made before it lacked the two new ones
   Future<void> _fixCoverColumns(Migrator migrator) async {
-    if ((await _readDetailColumns()).isEmpty) {
+    if ((await _readColumns('detail')).isEmpty) {
       return migrator.createTable(detail);
     }
     await _addMissingColumn(
@@ -47,12 +46,10 @@ class DetailsDatabase extends _$DetailsDatabase {
       "TEXT GENERATED ALWAYS AS (json_extract(json, '\$.main_picture.large')) "
           'VIRTUAL',
     );
-    if ((await _readDetailColumns()).contains('cover_url')) {
+    if ((await _readColumns('detail')).contains('cover_url')) {
       await customStatement('ALTER TABLE detail DROP COLUMN cover_url');
     }
   }
-
-  Future<Set<String>> _readDetailColumns() => _readColumns('detail');
 
   Future<Set<String>> _readColumns(String table) async => {
     for (final row in await customSelect(
@@ -64,7 +61,7 @@ class DetailsDatabase extends _$DetailsDatabase {
 
   // a table made by an earlier step of the same upgrade already has the column
   Future<void> _addMissingColumn(String name, String definition) async {
-    if ((await _readDetailColumns()).contains(name)) return;
+    if ((await _readColumns('detail')).contains(name)) return;
     await customStatement('ALTER TABLE detail ADD COLUMN $name $definition');
   }
 }

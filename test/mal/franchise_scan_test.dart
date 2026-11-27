@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:flutter_test/flutter_test.dart';
@@ -58,7 +57,6 @@ void main() {
     int maxChecks = checksPerRun,
   }) => FranchiseScan(
     maxChecks: maxChecks,
-    random: Random(7),
     databases: databases,
     detailRequest: DetailRequest(
       clientId: 'test-client',
@@ -197,6 +195,34 @@ void main() {
       (schedule.nextCheckAt - from.millisecondsSinceEpoch) /
       _day.inMilliseconds;
 
+  Future<ScanSchedule> readSchedule() =>
+      databases.details.select(databases.details.scanSchedule).getSingle();
+
+  Future<void> scheduleCheck(int franchiseId, DateTime next) => databases
+      .details
+      .into(databases.details.scanSchedule)
+      .insert(
+        ScanScheduleCompanion.insert(
+          provider: 'mal',
+          providerId: franchiseId,
+          lastCheckAt: 1,
+          nextCheckAt: next.millisecondsSinceEpoch,
+        ),
+      );
+
+  /// Steins;Gate on the list: the series, its sequel and the movie, saved.
+  Future<Map<int, String>> saveSteinsGate(
+    Duration fetchedAgo, {
+    String status = 'completed',
+  }) async {
+    final steinsGate = buildMalAnswers('steins_gate');
+    await addEntry('steins gate', 9253, status: status);
+    for (final malId in [9253, 10863, 11577]) {
+      await saveDetail(steinsGate, malId, fetchedAgo: fetchedAgo);
+    }
+    return steinsGate;
+  }
+
   test('a franchise with something upcoming is checked in 7 days', () async {
     final danmachi = buildMalAnswers('danmachi');
     await addEntry('s1', 28121);
@@ -204,25 +230,19 @@ void main() {
 
     await scanAnswering(danmachi).run();
 
-    final details = databases.details;
-    final schedule = await details.select(details.scanSchedule).getSingle();
+    final schedule = await readSchedule();
     expect(schedule.providerId, 28121);
     expect(daysFrom(_now, schedule), inInclusiveRange(7, 7 * 1.2));
   });
 
   test('a new franchise is timed from its last fetch, by its age', () async {
-    final steinsGate = buildMalAnswers('steins_gate');
-    await addEntry('steins gate', 9253);
-    for (final malId in [9253, 10863, 11577]) {
-      // the newest story title was fetched ten days ago, which counts
-      await saveDetail(steinsGate, malId, fetchedAgo: _day * 10);
-    }
+    // the newest story title was fetched ten days ago, which counts
+    final steinsGate = await saveSteinsGate(_day * 10);
 
     await scanAnswering(steinsGate).run();
 
     expect(asked, isEmpty);
-    final details = databases.details;
-    final schedule = await details.select(details.scanSchedule).getSingle();
+    final schedule = await readSchedule();
     final fetched = _now.subtract(_day * 10);
     // ended over six years ago: a year, with up to a fifth added
     expect(daysFrom(fetched, schedule), inInclusiveRange(365, 365 * 1.2));
@@ -232,27 +252,13 @@ void main() {
   test(
     'a due check fetches the newest story title and sets the next from now',
     () async {
-      final steinsGate = buildMalAnswers('steins_gate');
-      await addEntry('steins gate', 9253);
-      for (final malId in [9253, 10863, 11577]) {
-        await saveDetail(steinsGate, malId, fetchedAgo: _day * 400);
-      }
-      final details = databases.details;
-      await details
-          .into(details.scanSchedule)
-          .insert(
-            ScanScheduleCompanion.insert(
-              provider: 'mal',
-              providerId: 9253,
-              lastCheckAt: _now.subtract(_day * 400).millisecondsSinceEpoch,
-              nextCheckAt: _now.millisecondsSinceEpoch,
-            ),
-          );
+      final steinsGate = await saveSteinsGate(_day * 400);
+      await scheduleCheck(9253, _now);
 
       await scanAnswering(steinsGate).run();
 
       expect(asked, [11577]);
-      final schedule = await details.select(details.scanSchedule).getSingle();
+      final schedule = await readSchedule();
       expect(schedule.lastCheckAt, _now.millisecondsSinceEpoch);
       expect(daysFrom(_now, schedule), inInclusiveRange(365, 365 * 1.2));
     },
@@ -261,29 +267,14 @@ void main() {
   test(
     'a due franchise whose newest title was fetched lately is not asked again',
     () async {
-      final steinsGate = buildMalAnswers('steins_gate');
-      await addEntry('steins gate', 9253);
-      for (final malId in [9253, 10863, 11577]) {
-        await saveDetail(steinsGate, malId, fetchedAgo: _day * 3);
-      }
-      final details = databases.details;
-      await details
-          .into(details.scanSchedule)
-          .insert(
-            ScanScheduleCompanion.insert(
-              provider: 'mal',
-              providerId: 9253,
-              lastCheckAt: _now.subtract(_day * 400).millisecondsSinceEpoch,
-              nextCheckAt: _now.subtract(_day).millisecondsSinceEpoch,
-            ),
-          );
+      final steinsGate = await saveSteinsGate(_day * 3);
+      await scheduleCheck(9253, _now.subtract(_day));
 
       await scanAnswering(steinsGate).run();
 
       expect(asked, isEmpty);
-      final schedule = await details.select(details.scanSchedule).getSingle();
       expect(
-        daysFrom(_now.subtract(_day * 3), schedule),
+        daysFrom(_now.subtract(_day * 3), await readSchedule()),
         inInclusiveRange(365, 365 * 1.2),
       );
     },
@@ -292,55 +283,26 @@ void main() {
   test(
     'a franchise of only Dropped or Not interested titles is never checked',
     () async {
-      final steinsGate = buildMalAnswers('steins_gate');
-      await addEntry('steins gate', 9253, status: 'dropped');
-      for (final malId in [9253, 10863, 11577]) {
-        await saveDetail(steinsGate, malId, fetchedAgo: _day * 400);
-      }
-      final details = databases.details;
-      await details
-          .into(details.scanSchedule)
-          .insert(
-            ScanScheduleCompanion.insert(
-              provider: 'mal',
-              providerId: 9253,
-              lastCheckAt: 1,
-              nextCheckAt: 2,
-            ),
-          );
+      final steinsGate = await saveSteinsGate(_day * 400, status: 'dropped');
+      final due = _now.subtract(_day);
+      await scheduleCheck(9253, due);
 
       await scanAnswering(steinsGate).run();
 
       expect(asked, isEmpty);
-      final schedule = await details.select(details.scanSchedule).getSingle();
-      expect(schedule.nextCheckAt, 2);
+      expect((await readSchedule()).nextCheckAt, due.millisecondsSinceEpoch);
     },
   );
 
   test(
     'a run makes at most its cap of checks, the longest due first',
     () async {
-      final steinsGate = buildMalAnswers('steins_gate');
+      final steinsGate = await saveSteinsGate(_day * 400);
       final danmachi = buildMalAnswers('danmachi');
-      await addEntry('steins gate', 9253);
       await addEntry('danmachi', 28121);
-      for (final malId in [9253, 10863, 11577]) {
-        await saveDetail(steinsGate, malId, fetchedAgo: _day * 400);
-      }
       await saveDetail(danmachi, 28121, fetchedAgo: _day * 400);
-      final details = databases.details;
-      for (final (id, due) in [(9253, 5), (28121, 3)]) {
-        await details
-            .into(details.scanSchedule)
-            .insert(
-              ScanScheduleCompanion.insert(
-                provider: 'mal',
-                providerId: id,
-                lastCheckAt: 1,
-                nextCheckAt: _now.subtract(_day * due).millisecondsSinceEpoch,
-              ),
-            );
-      }
+      await scheduleCheck(9253, _now.subtract(_day * 5));
+      await scheduleCheck(28121, _now.subtract(_day * 3));
 
       await scanAnswering({...steinsGate, ...danmachi}, maxChecks: 1).run();
 
@@ -370,22 +332,8 @@ void main() {
   test(
     'a changed check fetches the new story title and times by the new one',
     () async {
-      final steinsGate = buildMalAnswers('steins_gate');
-      await addEntry('steins gate', 9253);
-      for (final malId in [9253, 10863, 11577]) {
-        await saveDetail(steinsGate, malId, fetchedAgo: _day * 400);
-      }
-      final details = databases.details;
-      await details
-          .into(details.scanSchedule)
-          .insert(
-            ScanScheduleCompanion.insert(
-              provider: 'mal',
-              providerId: 9253,
-              lastCheckAt: 1,
-              nextCheckAt: _now.millisecondsSinceEpoch,
-            ),
-          );
+      final steinsGate = await saveSteinsGate(_day * 400);
+      await scheduleCheck(9253, _now);
       // MAL now lists an upcoming sequel on the movie, and the sequel lists it back
       final movie = jsonDecode(steinsGate[11577]!) as Map<String, dynamic>;
       (movie['related_anime'] as List).add({
@@ -413,8 +361,10 @@ void main() {
       await scanAnswering(answers).run();
 
       expect(asked, [11577, 99999]);
-      final schedule = await details.select(details.scanSchedule).getSingle();
-      expect(daysFrom(_now, schedule), inInclusiveRange(7, 7 * 1.2));
+      expect(
+        daysFrom(_now, await readSchedule()),
+        inInclusiveRange(7, 7 * 1.2),
+      );
     },
   );
 

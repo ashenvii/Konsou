@@ -29,33 +29,32 @@ Duration getRecheckInterval({
     _ => null,
   };
   if (ended == null) return const Duration(days: 90);
-  final years = now.difference(ended).inDays / 365;
   return Duration(
-    days: years < 1
-        ? 30
-        : years < 3
-        ? 90
-        : years < 6
-        ? 180
-        : 365,
+    days: switch (now.difference(ended).inDays / 365) {
+      < 1 => 30,
+      < 3 => 90,
+      < 6 => 180,
+      _ => 365,
+    },
   );
 }
+
+/// When a franchise was last looked at and how long until the next look.
+typedef _Check = ({DateTime from, Duration interval});
 
 class FranchiseScan {
   FranchiseScan({
     required this.databases,
     required this.detailRequest,
     this.maxChecks = checksPerRun,
-    Random? random,
     DateTime Function()? now,
-  }) : _random = random ?? Random(),
-       _now = now ?? DateTime.now;
+  }) : _now = now ?? DateTime.now;
 
   final Databases databases;
   final DetailRequest detailRequest;
   final int maxChecks;
-  final Random _random;
   final DateTime Function() _now;
+  final _random = Random();
 
   Future<void> run() async {
     var state = await _walk();
@@ -110,17 +109,15 @@ class FranchiseScan {
     var checks = 0;
     var anyChanged = false;
     for (final row in due) {
+      final franchiseId = row.providerId;
       // nobody waits for a sequel to something dropped
-      if (!state.followedFranchises.contains(row.providerId)) continue;
-      final newest = state.findNewestStoryTitle(row.providerId);
+      if (!state.followedFranchises.contains(franchiseId)) continue;
+      final newest = state.findNewestStoryTitle(franchiseId);
       if (newest == null) continue;
-      final interval = state.getInterval(row.providerId, newest, now);
+      final last = state.findLastCheck(franchiseId, newest, now);
       // a fetch by any other route is as good as a check
-      final fetched = DateTime.fromMillisecondsSinceEpoch(
-        state.titles[newest]!.fetchedAt,
-      );
-      if (now.difference(fetched) < interval) {
-        await _writeSchedule(row.providerId, from: fetched, interval: interval);
+      if (now.difference(last.from) < last.interval) {
+        await _writeSchedule(franchiseId, last);
         continue;
       }
       if (checks == maxChecks) break;
@@ -139,11 +136,10 @@ class FranchiseScan {
           before.length != after.length || !before.containsAll(after);
       anyChanged = anyChanged || changed;
       // a new sequel is looked at again in a week, once its title is saved
-      await _writeSchedule(
-        row.providerId,
+      await _writeSchedule(franchiseId, (
         from: now,
-        interval: changed ? const Duration(days: 7) : interval,
-      );
+        interval: changed ? const Duration(days: 7) : last.interval,
+      ));
     }
     return anyChanged;
   }
@@ -159,6 +155,7 @@ class FranchiseScan {
               .get())
         row.read<int>('provider_id'),
     };
+    final now = _now();
     await record.transaction(() async {
       for (final MapEntry(key: entryId, value: malId)
           in state.malIdsByEntry.entries) {
@@ -181,15 +178,9 @@ class FranchiseScan {
       for (final franchiseId in franchises.difference(scheduled)) {
         // the fetch that found the franchise counts as its first check
         final newest = state.findNewestStoryTitle(franchiseId);
-        final now = _now();
         await _writeSchedule(
           franchiseId,
-          from: newest == null
-              ? now
-              : DateTime.fromMillisecondsSinceEpoch(
-                  state.titles[newest]!.fetchedAt,
-                ),
-          interval: state.getInterval(franchiseId, newest, now),
+          state.findLastCheck(franchiseId, newest, now),
         );
       }
       for (final franchiseId in scheduled.difference(franchises)) {
@@ -203,15 +194,8 @@ class FranchiseScan {
 
   // through the record connection, to join the transaction open there; up to
   // a fifth is added, so franchises and installs do not all fall due together
-  Future<void> _writeSchedule(
-    int franchiseId, {
-    required DateTime from,
-    required Duration interval,
-  }) {
-    final wait = Duration(
-      milliseconds: (interval.inMilliseconds * (1 + _random.nextDouble() * 0.2))
-          .round(),
-    );
+  Future<void> _writeSchedule(int franchiseId, _Check check) {
+    final wait = check.interval * (1 + _random.nextDouble() * 0.2);
     return databases.record.customStatement(
       '''
       INSERT OR REPLACE INTO details.scan_schedule
@@ -220,8 +204,8 @@ class FranchiseScan {
       ''',
       [
         franchiseId,
-        from.millisecondsSinceEpoch,
-        from.add(wait).millisecondsSinceEpoch,
+        check.from.millisecondsSinceEpoch,
+        check.from.add(wait).millisecondsSinceEpoch,
       ],
     );
   }
@@ -229,23 +213,18 @@ class FranchiseScan {
   Future<_ScanState> _load() async {
     final record = databases.record;
     final titles = await readSavedTitles(record);
-    final malIdsByEntry = {
-      for (final row in await record.customSelect('''
-        SELECT entry_reference.entry_id, entry_reference.provider_id
-        FROM entry_reference JOIN entry USING (entry_id)
-        WHERE entry_reference.provider = 'mal'
-      ''').get())
-        row.read<String>('entry_id'): row.read<int>('provider_id'),
-    };
-    final idleIds = {
-      for (final row in await record.customSelect('''
-        SELECT entry_reference.provider_id
-        FROM entry_reference JOIN entry USING (entry_id)
-        WHERE entry_reference.provider = 'mal'
-          AND entry.status IN ('dropped', 'not_interested')
-      ''').get())
-        row.read<int>('provider_id'),
-    };
+    final malIdsByEntry = <String, int>{};
+    final idleIds = <int>{};
+    for (final row in await record.customSelect('''
+      SELECT entry_reference.entry_id, entry_reference.provider_id, entry.status
+      FROM entry_reference JOIN entry USING (entry_id)
+      WHERE entry_reference.provider = 'mal'
+    ''').get()) {
+      final malId = row.read<int>('provider_id');
+      malIdsByEntry[row.read<String>('entry_id')] = malId;
+      final status = row.read<String>('status');
+      if (status == 'dropped' || status == 'not_interested') idleIds.add(malId);
+    }
     final gone = await readGonePages(record, _now());
     return _ScanState(
       titles: titles,
@@ -263,11 +242,12 @@ Set<int> _relationIds(SavedTitle? saved) => {
 };
 
 class _ScanState {
+  /// [idleIds] are the list's titles whose entry is Dropped or Not interested.
   _ScanState({
     required this.titles,
     required this.places,
     required this.malIdsByEntry,
-    required this.idleIds,
+    required Set<int> idleIds,
     required this.gone,
   }) : listFranchises = {
          for (final malId in malIdsByEntry.values) ?places[malId]?.franchiseId,
@@ -281,9 +261,6 @@ class _ScanState {
   final Map<int, FranchisePlace> places;
   final Map<String, int> malIdsByEntry;
   final Set<int> gone;
-
-  /// The list's titles whose entry is Dropped or Not interested.
-  final Set<int> idleIds;
 
   final Set<int> listFranchises;
 
@@ -310,13 +287,19 @@ class _ScanState {
       if (!places[malId]!.isExtra) titles[malId]!.title,
   ]).lastOrNull?.id;
 
-  /// The wait before a franchise's newest story title is looked at again.
-  Duration getInterval(int franchiseId, int? newest, DateTime now) {
+  /// The last fetch of the franchise's [newest] story title ([now] when it has
+  /// none), and the wait from there by how long ago that title ended.
+  _Check findLastCheck(int franchiseId, int? newest, DateTime now) {
     final saved = newest == null ? null : titles[newest];
-    return getRecheckInterval(
-      airing: isAiring(franchiseId),
-      now: now,
-      endedOn: saved?.endDate ?? saved?.title.startDate,
+    return (
+      from: saved == null
+          ? now
+          : DateTime.fromMillisecondsSinceEpoch(saved.fetchedAt),
+      interval: getRecheckInterval(
+        airing: isAiring(franchiseId),
+        now: now,
+        endedOn: saved?.endDate ?? saved?.title.startDate,
+      ),
     );
   }
 }

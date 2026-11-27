@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/score_fill.dart';
 import '../../app/providers.dart';
 import '../../components/peek_row.dart';
 import '../../components/pressable.dart';
@@ -62,22 +61,18 @@ class _Recommended extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final shown = title.title;
-    if (shown.isLoadingDetails) {
+    if (shown.isLoadingDetails || shown.isScorePending) {
       ref.watch(detailOnScreenProvider(shown.malId, lane: Lane.page));
     }
-    return ScoreFill(
-      malId: shown.malId,
-      pending: shown.isScorePending,
-      child: Pressable(
-        label: 'Open ${shown.name}',
-        onPressed: onOpen,
-        builder: (context, state) => StripCard(
-          title: shown,
-          width: width,
-          pictureUrl: title.pictureUrl,
-          state: shown.status?.label ?? title.note ?? '',
-          lit: state.hovered || state.focused,
-        ),
+    return Pressable(
+      label: 'Open ${shown.name}',
+      onPressed: onOpen,
+      builder: (context, state) => StripCard(
+        title: shown,
+        width: width,
+        pictureUrl: title.pictureUrl,
+        state: shown.status?.label ?? title.note ?? '',
+        lit: state.hovered || state.focused,
       ),
     );
   }

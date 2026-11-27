@@ -77,18 +77,18 @@ class _AppPopoverState extends State<AppPopover>
   Rect _toLayer(Rect global) =>
       overlayBox.globalToLocal(global.topLeft) & global.size;
 
-  void _show(Rect anchor, {Rect? lift}) {
-    WidgetsBinding.instance.addObserver(this);
-    openPortal(() {
-      _anchor = anchor;
-      _lift = lift ?? anchor;
-    });
-  }
+  void _show(Rect anchor, {Rect? lift}) => openPortal(() {
+    _anchor = anchor;
+    _lift = lift ?? anchor;
+  });
 
   @override
-  void close() {
-    WidgetsBinding.instance.removeObserver(this);
-    closePortal();
+  void close() => closePortal();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   // the anchor was measured against the old window and the page has moved

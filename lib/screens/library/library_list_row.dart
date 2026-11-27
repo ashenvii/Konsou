@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 
 import '../../app/cover_view.dart';
-import '../../app/score_fill.dart';
 import '../../components/app_checkbox.dart';
 import '../../components/count_display.dart';
 import '../../components/faded.dart';
@@ -70,99 +69,92 @@ class _LibraryListRowState extends State<LibraryListRow> {
   Widget build(BuildContext context) {
     final row = widget.row;
     final completed = row.status == EntryStatus.completed;
-    return ScoreFill(
-      malId: row.malId,
-      pending: row.isScorePending,
-      child: RowTapArea(
-        onOpen: widget.onOpen,
-        onContextMenu: widget.onContextMenu,
-        builder: (context, state) => LayoutBuilder(
-          builder: (context, constraints) {
-            // a narrow row also drops Your score
-            final narrow = ListColumns.isNarrow(constraints.maxWidth);
-            return HoverMark(
-              on:
-                  widget.menuShown ||
-                  ((state.hovered || state.focused) && !_overBox),
-              child: Container(
-                height: Tokens.listRowHeight,
-                // the checkbox's tap zone is the whole left cell, so no left padding
-                padding: const EdgeInsets.only(right: Tokens.space3),
-                child: Row(
-                  children: [
-                    AppCheckbox(
-                      value: completed ? CheckValue.checked : CheckValue.empty,
-                      onChanged: (value) =>
-                          widget.onCheck(value == CheckValue.checked),
-                      onHover: (over) => setState(() => _overBox = over),
-                      zone: const Size(
-                        Tokens.touchTarget,
-                        Tokens.listRowHeight,
-                      ),
+    return RowTapArea(
+      onOpen: widget.onOpen,
+      onContextMenu: widget.onContextMenu,
+      builder: (context, state) => LayoutBuilder(
+        builder: (context, constraints) {
+          // a narrow row also drops Your score
+          final narrow = ListColumns.isNarrow(constraints.maxWidth);
+          return HoverMark(
+            on:
+                widget.menuShown ||
+                ((state.hovered || state.focused) && !_overBox),
+            child: Container(
+              height: Tokens.listRowHeight,
+              // the checkbox's tap zone is the whole left cell, so no left padding
+              padding: const EdgeInsets.only(right: Tokens.space3),
+              child: Row(
+                children: [
+                  AppCheckbox(
+                    value: completed ? CheckValue.checked : CheckValue.empty,
+                    onChanged: (value) =>
+                        widget.onCheck(value == CheckValue.checked),
+                    onHover: (over) => setState(() => _overBox = over),
+                    zone: const Size(Tokens.touchTarget, Tokens.listRowHeight),
+                  ),
+                  Faded(
+                    on: widget.faded,
+                    child: CoverView(
+                      malId: row.malId,
+                      width: Tokens.listCoverWidth,
+                      loading: row.isLoadingDetails,
                     ),
-                    Faded(
-                      on: widget.faded,
-                      child: CoverView(
-                        malId: row.malId,
-                        width: Tokens.listCoverWidth,
-                        loading: row.isLoadingDetails,
-                      ),
+                  ),
+                  const SizedBox(width: Tokens.space3),
+                  Expanded(
+                    child: _Titles(
+                      row,
+                      narrow: narrow,
+                      showStatus: widget.showStatus,
                     ),
-                    const SizedBox(width: Tokens.space3),
-                    Expanded(
-                      child: _Titles(
-                        row,
-                        narrow: narrow,
-                        showStatus: widget.showStatus,
-                      ),
-                    ),
-                    const SizedBox(width: Tokens.space3),
-                    // a narrow row has no status column: the word joins the
-                    // small line under the name instead
-                    if (!narrow && widget.showStatus)
-                      SizedBox(
-                        width: ListColumns.status,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: OneLineText(
-                            row.status.label,
-                            style: AppText.label(Tokens.inkSoft),
-                          ),
+                  ),
+                  const SizedBox(width: Tokens.space3),
+                  // a narrow row has no status column: the word joins the
+                  // small line under the name instead
+                  if (!narrow && widget.showStatus)
+                    SizedBox(
+                      width: ListColumns.status,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: OneLineText(
+                          row.status.label,
+                          style: AppText.label(Tokens.inkSoft),
                         ),
                       ),
-                    _EpisodeCell(row),
-                    if (!narrow) ...[
-                      _MalCell(row),
-                      SizedBox(
-                        width: ListColumns.yourScore(context),
-                        // centred under its caption
-                        child: Align(
-                          child: row.score == null
-                              ? null
-                              : CountDisplay(total: '${row.score}'),
-                        ),
+                    ),
+                  _EpisodeCell(row),
+                  if (!narrow) ...[
+                    _MalCell(row),
+                    SizedBox(
+                      width: ListColumns.yourScore(context),
+                      // centred under its caption
+                      child: Align(
+                        child: row.score == null
+                            ? null
+                            : CountDisplay(total: '${row.score}'),
                       ),
-                    ],
-                    const SizedBox(width: Tokens.space2),
-                    // the three dots show only while the row is hovered or
-                    // focused (always on touch); right click does the same
-                    Visibility(
-                      visible:
-                          widget.menuShown ||
-                          state.hovered ||
-                          state.focused ||
-                          TouchTarget.active,
-                      maintainSize: true,
-                      maintainAnimation: true,
-                      maintainState: true,
-                      child: widget.menu,
                     ),
                   ],
-                ),
+                  const SizedBox(width: Tokens.space2),
+                  // the three dots show only while the row is hovered or
+                  // focused (always on touch); right click does the same
+                  Visibility(
+                    visible:
+                        widget.menuShown ||
+                        state.hovered ||
+                        state.focused ||
+                        TouchTarget.active,
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    child: widget.menu,
+                  ),
+                ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
