@@ -6,9 +6,13 @@ import 'package:http/http.dart' as http;
 
 import '../net/backoff.dart';
 import '../net/log.dart';
-import '../net/request_timeout.dart';
 
 const requestGap = Duration(milliseconds: 500);
+
+/// How long the API gate waits on a request. MAL answers in well under a
+/// second when it answers; about 1 in 80 never did in the owner's log, and
+/// each of those held the queue for the old 30 s.
+const malRequestTimeout = Duration(seconds: 15);
 
 // flutter's kDebugMode, spelled out since lib/mal stays plain dart
 const _debugBuild =
@@ -44,7 +48,7 @@ class RequestGate {
   RequestGate({
     this.name = 'mal',
     this.gap = requestGap,
-    this.timeout = requestTimeout,
+    this.timeout = malRequestTimeout,
     DateTime Function()? now,
     Future<void> Function(Duration duration)? wait,
   }) : _now = now ?? DateTime.now,

@@ -13,6 +13,7 @@ import '../mal/request_gate.dart';
 import '../mal/search_request.dart';
 import '../mal/trickle.dart';
 import '../net/log.dart';
+import '../net/request_timeout.dart';
 import '../sync/drive_client.dart';
 import '../sync/drive_sync.dart';
 import '../sync/google_sign_in.dart';
@@ -75,7 +76,11 @@ class Services {
         folder: coversFolder,
         client: client,
         // the image server is not the API: its own, faster gate
-        gate: _coverGate = RequestGate(name: 'covers', gap: coverRequestGap),
+        gate: _coverGate = RequestGate(
+          name: 'covers',
+          gap: coverRequestGap,
+          timeout: requestTimeout,
+        ),
         onSaved: _coverSaved.add,
       );
       // a saved cover reaches the screen through coverSaved, not a reload

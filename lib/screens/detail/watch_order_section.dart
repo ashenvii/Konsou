@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/library_providers.dart';
 import '../../app/providers.dart';
+import '../../app/score_fill.dart';
 import '../../components/app_menu.dart';
 import '../../components/app_popover.dart';
 import '../../components/hold_row.dart';
@@ -87,61 +88,65 @@ class _OrderItem extends ConsumerWidget {
       ref.watch(detailOnScreenProvider(row.malId, lane: Lane.page));
     }
     final entryId = row.entryId;
-    return AppPopover(
-      builder: (context, handle) => RowTapArea(
-        // the open title is this page
-        onOpen: row.isOpenTitle ? () {} : onOpen,
-        onContextMenu: handle.openAt,
-        builder: (context, state) =>
-            cardFor(state.hovered || state.focused || handle.isOpen),
-      ),
-      popoverBuilder: (context, handle) {
-        void close(VoidCallback action) {
-          action();
-          handle.close();
-        }
+    return ScoreFill(
+      malId: row.malId,
+      pending: row.isScorePending,
+      child: AppPopover(
+        builder: (context, handle) => RowTapArea(
+          // the open title is this page
+          onOpen: row.isOpenTitle ? () {} : onOpen,
+          onContextMenu: handle.openAt,
+          builder: (context, state) =>
+              cardFor(state.hovered || state.focused || handle.isOpen),
+        ),
+        popoverBuilder: (context, handle) {
+          void close(VoidCallback action) {
+            action();
+            handle.close();
+          }
 
-        final actions = ref.read(entryActionsProvider);
-        return AppMenu(
-          entries: [
-            ...statusMenuEntries(
-              current: row.status,
-              onPick: (status) => close(
-                () => ref
-                    .read(entryActionsProvider)
-                    .setOrAdd(
-                      EarlierTitle(
-                        malId: row.malId,
-                        entryId: row.entryId,
-                        name: row.name,
-                        isExtra: row.isExtra,
-                        mediaType: row.mediaType,
-                        startDate: row.startDate,
-                        episodes: row.episodes,
+          final actions = ref.read(entryActionsProvider);
+          return AppMenu(
+            entries: [
+              ...statusMenuEntries(
+                current: row.status,
+                onPick: (status) => close(
+                  () => ref
+                      .read(entryActionsProvider)
+                      .setOrAdd(
+                        EarlierTitle(
+                          malId: row.malId,
+                          entryId: row.entryId,
+                          name: row.name,
+                          isExtra: row.isExtra,
+                          mediaType: row.mediaType,
+                          startDate: row.startDate,
+                          episodes: row.episodes,
+                        ),
+                        status,
+                        airing: row.isNotAired ? 'not_yet_aired' : null,
                       ),
-                      status,
-                      airing: row.isNotAired ? 'not_yet_aired' : null,
-                    ),
+                ),
               ),
-            ),
-            if (!row.isOpenTitle)
-              MenuEntry(
-                label: 'Open details',
-                dividerAbove: true,
-                onPressed: () => close(onOpen),
-              ),
-            if (entryId != null)
-              MenuEntry(
-                label: holdToRemoveLabel,
-                destructive: true,
-                hold: true,
-                dividerAbove: true,
-                holdHint: holdToRemoveHint,
-                onPressed: () => close(() => actions.remove([entryId])),
-              ),
-          ],
-        );
-      },
+              if (!row.isOpenTitle)
+                MenuEntry(
+                  label: 'Open details',
+                  dividerAbove: true,
+                  onPressed: () => close(onOpen),
+                ),
+              if (entryId != null)
+                MenuEntry(
+                  label: holdToRemoveLabel,
+                  destructive: true,
+                  hold: true,
+                  dividerAbove: true,
+                  holdHint: holdToRemoveHint,
+                  onPressed: () => close(() => actions.remove([entryId])),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

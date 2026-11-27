@@ -5,7 +5,6 @@ import 'package:drift/drift.dart';
 import '../data/databases.dart';
 import '../data/details_database.dart';
 import '../library/title_language.dart';
-import '../mal/detail_request.dart';
 import 'theme_song.dart';
 import '../library/count_format.dart';
 
@@ -163,9 +162,11 @@ bool isStale({
   required int fetchedAt,
   required DateTime now,
 }) {
-  final maxAge = changingStatuses.contains(airingStatus)
-      ? const Duration(days: 1)
-      : const Duration(days: 30);
+  final maxAge = switch (airingStatus) {
+    'currently_airing' => const Duration(days: 3),
+    'not_yet_aired' => const Duration(days: 7),
+    _ => const Duration(days: 180),
+  };
   return now.difference(DateTime.fromMillisecondsSinceEpoch(fetchedAt)) >
       maxAge;
 }

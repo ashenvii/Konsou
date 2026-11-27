@@ -45,8 +45,9 @@ class _MalTroubleSectionState extends State<MalTroubleSection> {
         const SizedBox(height: Tokens.space2),
         Text(
           'Now: ${_labels[current]}. Slow never answers, so each request '
-          'gives up after ${requestTimeout.inSeconds} s. Every request acts '
-          'up, the background loading too, until it is back on Normal.',
+          'gives up after ${malRequestTimeout.inSeconds} s (covers '
+          '${requestTimeout.inSeconds} s). Every request acts up, the '
+          'background loading too, until it is back on Normal.',
           style: const TextStyle(
             fontFamily: Tokens.mono,
             fontSize: Tokens.text2,

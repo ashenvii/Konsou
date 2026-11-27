@@ -151,7 +151,7 @@ void main() {
       await save('frieren_full', full: true);
       expect((await read()).needsFetch(_now), isFalse);
       expect(
-        (await read()).needsFetch(_now.add(const Duration(days: 31))),
+        (await read()).needsFetch(_now.add(const Duration(days: 181))),
         isTrue,
       );
 
@@ -164,32 +164,49 @@ void main() {
   group('a title on screen is stale', () {
     int fetchedAgo(Duration age) => _now.subtract(age).millisecondsSinceEpoch;
 
-    test('after a day when airing or upcoming', () {
-      for (final status in ['currently_airing', 'not_yet_aired']) {
-        expect(
-          isStale(
-            airingStatus: status,
-            fetchedAt: fetchedAgo(_day * 0.9),
-            now: _now,
-          ),
-          isFalse,
-        );
-        expect(
-          isStale(
-            airingStatus: status,
-            fetchedAt: fetchedAgo(_day * 1.1),
-            now: _now,
-          ),
-          isTrue,
-        );
-      }
+    test('after 3 days when airing', () {
+      expect(
+        isStale(
+          airingStatus: 'currently_airing',
+          fetchedAt: fetchedAgo(_day * 2.9),
+          now: _now,
+        ),
+        isFalse,
+      );
+      expect(
+        isStale(
+          airingStatus: 'currently_airing',
+          fetchedAt: fetchedAgo(_day * 3.1),
+          now: _now,
+        ),
+        isTrue,
+      );
     });
 
-    test('after 30 days when finished', () {
+    test('after 7 days when not yet aired', () {
+      expect(
+        isStale(
+          airingStatus: 'not_yet_aired',
+          fetchedAt: fetchedAgo(_day * 6.9),
+          now: _now,
+        ),
+        isFalse,
+      );
+      expect(
+        isStale(
+          airingStatus: 'not_yet_aired',
+          fetchedAt: fetchedAgo(_day * 7.1),
+          now: _now,
+        ),
+        isTrue,
+      );
+    });
+
+    test('after 180 days when finished', () {
       expect(
         isStale(
           airingStatus: 'finished_airing',
-          fetchedAt: fetchedAgo(_day * 29),
+          fetchedAt: fetchedAgo(_day * 179),
           now: _now,
         ),
         isFalse,
@@ -197,7 +214,7 @@ void main() {
       expect(
         isStale(
           airingStatus: 'finished_airing',
-          fetchedAt: fetchedAgo(_day * 31),
+          fetchedAt: fetchedAgo(_day * 181),
           now: _now,
         ),
         isTrue,

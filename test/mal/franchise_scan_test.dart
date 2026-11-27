@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:flutter_test/flutter_test.dart';
@@ -52,7 +53,12 @@ void main() {
     folder.deleteSync(recursive: true);
   });
 
-  FranchiseScan scanAnswering(Map<int, String> answers) => FranchiseScan(
+  FranchiseScan scanAnswering(
+    Map<int, String> answers, {
+    int maxChecks = checksPerRun,
+  }) => FranchiseScan(
+    maxChecks: maxChecks,
+    random: Random(7),
     databases: databases,
     detailRequest: DetailRequest(
       clientId: 'test-client',
@@ -71,14 +77,18 @@ void main() {
     now: () => _now,
   );
 
-  Future<void> addEntry(String entryId, int malId) async {
+  Future<void> addEntry(
+    String entryId,
+    int malId, {
+    String status = 'completed',
+  }) async {
     final record = databases.record;
     await record
         .into(record.entry)
         .insert(
           EntryCompanion.insert(
             entryId: entryId,
-            status: 'completed',
+            status: status,
             addedAt: 1,
             progressChangedAt: 1,
           ),
@@ -94,7 +104,11 @@ void main() {
         );
   }
 
-  Future<void> saveDetail(Map<int, String> answers, int malId) {
+  Future<void> saveDetail(
+    Map<int, String> answers,
+    int malId, {
+    Duration fetchedAgo = Duration.zero,
+  }) {
     final details = databases.details;
     return details
         .into(details.detail)
@@ -102,7 +116,7 @@ void main() {
           DetailCompanion.insert(
             provider: 'mal',
             providerId: malId,
-            fetchedAt: _now.millisecondsSinceEpoch,
+            fetchedAt: _now.subtract(fetchedAgo).millisecondsSinceEpoch,
             json: answers[malId]!,
           ),
         );
@@ -177,50 +191,164 @@ void main() {
     expect(asked, isEmpty);
   });
 
-  test(
-    'a new franchise with something upcoming is checked in 7 days',
-    () async {
-      final danmachi = buildMalAnswers('danmachi');
-      await addEntry('s1', 28121);
-      await saveDetail(danmachi, 28121);
+  /// The schedule's next check as a number of days from [from], to compare
+  /// with an interval and its jitter of up to a fifth.
+  double daysFrom(DateTime from, ScanSchedule schedule) =>
+      (schedule.nextCheckAt - from.millisecondsSinceEpoch) /
+      _day.inMilliseconds;
 
-      await scanAnswering(danmachi).run();
+  test('a franchise with something upcoming is checked in 7 days', () async {
+    final danmachi = buildMalAnswers('danmachi');
+    await addEntry('s1', 28121);
+    await saveDetail(danmachi, 28121);
 
-      final details = databases.details;
-      final schedule = await details.select(details.scanSchedule).getSingle();
-      expect(schedule.providerId, 28121);
-      expect(schedule.quietStreak, 0);
-      expect(schedule.nextCheckAt, _now.add(_day * 7).millisecondsSinceEpoch);
-    },
-  );
+    await scanAnswering(danmachi).run();
 
-  test('a due check fetches the newest story title and backs off when nothing changed', () async {
+    final details = databases.details;
+    final schedule = await details.select(details.scanSchedule).getSingle();
+    expect(schedule.providerId, 28121);
+    expect(daysFrom(_now, schedule), inInclusiveRange(7, 7 * 1.2));
+  });
+
+  test('a new franchise is timed from its last fetch, by its age', () async {
     final steinsGate = buildMalAnswers('steins_gate');
     await addEntry('steins gate', 9253);
     for (final malId in [9253, 10863, 11577]) {
-      await saveDetail(steinsGate, malId);
+      // the newest story title was fetched ten days ago, which counts
+      await saveDetail(steinsGate, malId, fetchedAgo: _day * 10);
     }
-    final details = databases.details;
-    await details
-        .into(details.scanSchedule)
-        .insert(
-          ScanScheduleCompanion.insert(
-            provider: 'mal',
-            providerId: 9253,
-            lastCheckAt: _now.subtract(_day * 14).millisecondsSinceEpoch,
-            nextCheckAt: _now.millisecondsSinceEpoch,
-            quietStreak: const Value(1),
-          ),
-        );
 
     await scanAnswering(steinsGate).run();
 
-    expect(asked, [11577]);
+    expect(asked, isEmpty);
+    final details = databases.details;
     final schedule = await details.select(details.scanSchedule).getSingle();
-    expect(schedule.quietStreak, 2);
-    expect(schedule.lastCheckAt, _now.millisecondsSinceEpoch);
-    expect(schedule.nextCheckAt, _now.add(_day * 28).millisecondsSinceEpoch);
+    final fetched = _now.subtract(_day * 10);
+    // ended over six years ago: a year, with up to a fifth added
+    expect(daysFrom(fetched, schedule), inInclusiveRange(365, 365 * 1.2));
+    expect(schedule.lastCheckAt, fetched.millisecondsSinceEpoch);
   });
+
+  test(
+    'a due check fetches the newest story title and sets the next from now',
+    () async {
+      final steinsGate = buildMalAnswers('steins_gate');
+      await addEntry('steins gate', 9253);
+      for (final malId in [9253, 10863, 11577]) {
+        await saveDetail(steinsGate, malId, fetchedAgo: _day * 400);
+      }
+      final details = databases.details;
+      await details
+          .into(details.scanSchedule)
+          .insert(
+            ScanScheduleCompanion.insert(
+              provider: 'mal',
+              providerId: 9253,
+              lastCheckAt: _now.subtract(_day * 400).millisecondsSinceEpoch,
+              nextCheckAt: _now.millisecondsSinceEpoch,
+            ),
+          );
+
+      await scanAnswering(steinsGate).run();
+
+      expect(asked, [11577]);
+      final schedule = await details.select(details.scanSchedule).getSingle();
+      expect(schedule.lastCheckAt, _now.millisecondsSinceEpoch);
+      expect(daysFrom(_now, schedule), inInclusiveRange(365, 365 * 1.2));
+    },
+  );
+
+  test(
+    'a due franchise whose newest title was fetched lately is not asked again',
+    () async {
+      final steinsGate = buildMalAnswers('steins_gate');
+      await addEntry('steins gate', 9253);
+      for (final malId in [9253, 10863, 11577]) {
+        await saveDetail(steinsGate, malId, fetchedAgo: _day * 3);
+      }
+      final details = databases.details;
+      await details
+          .into(details.scanSchedule)
+          .insert(
+            ScanScheduleCompanion.insert(
+              provider: 'mal',
+              providerId: 9253,
+              lastCheckAt: _now.subtract(_day * 400).millisecondsSinceEpoch,
+              nextCheckAt: _now.subtract(_day).millisecondsSinceEpoch,
+            ),
+          );
+
+      await scanAnswering(steinsGate).run();
+
+      expect(asked, isEmpty);
+      final schedule = await details.select(details.scanSchedule).getSingle();
+      expect(
+        daysFrom(_now.subtract(_day * 3), schedule),
+        inInclusiveRange(365, 365 * 1.2),
+      );
+    },
+  );
+
+  test(
+    'a franchise of only Dropped or Not interested titles is never checked',
+    () async {
+      final steinsGate = buildMalAnswers('steins_gate');
+      await addEntry('steins gate', 9253, status: 'dropped');
+      for (final malId in [9253, 10863, 11577]) {
+        await saveDetail(steinsGate, malId, fetchedAgo: _day * 400);
+      }
+      final details = databases.details;
+      await details
+          .into(details.scanSchedule)
+          .insert(
+            ScanScheduleCompanion.insert(
+              provider: 'mal',
+              providerId: 9253,
+              lastCheckAt: 1,
+              nextCheckAt: 2,
+            ),
+          );
+
+      await scanAnswering(steinsGate).run();
+
+      expect(asked, isEmpty);
+      final schedule = await details.select(details.scanSchedule).getSingle();
+      expect(schedule.nextCheckAt, 2);
+    },
+  );
+
+  test(
+    'a run makes at most its cap of checks, the longest due first',
+    () async {
+      final steinsGate = buildMalAnswers('steins_gate');
+      final danmachi = buildMalAnswers('danmachi');
+      await addEntry('steins gate', 9253);
+      await addEntry('danmachi', 28121);
+      for (final malId in [9253, 10863, 11577]) {
+        await saveDetail(steinsGate, malId, fetchedAgo: _day * 400);
+      }
+      await saveDetail(danmachi, 28121, fetchedAgo: _day * 400);
+      final details = databases.details;
+      for (final (id, due) in [(9253, 5), (28121, 3)]) {
+        await details
+            .into(details.scanSchedule)
+            .insert(
+              ScanScheduleCompanion.insert(
+                provider: 'mal',
+                providerId: id,
+                lastCheckAt: 1,
+                nextCheckAt: _now.subtract(_day * due).millisecondsSinceEpoch,
+              ),
+            );
+      }
+
+      await scanAnswering({...steinsGate, ...danmachi}, maxChecks: 1).run();
+
+      // only the one due longest, Steins;Gate's newest title
+      expect(asked.where((malId) => malId == 11577), hasLength(1));
+      expect(asked, isNot(contains(28121)));
+    },
+  );
 
   test(
     'an extra on the list never pulls in titles through its own relations',
@@ -239,61 +367,65 @@ void main() {
     },
   );
 
-  test('a changed check starts over and fetches the new story title', () async {
-    final steinsGate = buildMalAnswers('steins_gate');
-    await addEntry('steins gate', 9253);
-    for (final malId in [9253, 10863, 11577]) {
-      await saveDetail(steinsGate, malId);
-    }
-    final details = databases.details;
-    await details
-        .into(details.scanSchedule)
-        .insert(
-          ScanScheduleCompanion.insert(
-            provider: 'mal',
-            providerId: 9253,
-            lastCheckAt: 1,
-            nextCheckAt: _now.millisecondsSinceEpoch,
-            quietStreak: const Value(3),
-          ),
-        );
-    // MAL now lists an upcoming sequel on the movie, and the sequel lists it back
-    final movie = jsonDecode(steinsGate[11577]!) as Map<String, dynamic>;
-    (movie['related_anime'] as List).add({
-      'node': {'id': 99999, 'title': 'Upcoming sequel'},
-      'relation_type': 'sequel',
-    });
-    final answers = {
-      ...steinsGate,
-      11577: jsonEncode(movie),
-      99999: jsonEncode({
-        'id': 99999,
-        'title': 'Upcoming sequel',
-        'media_type': 'tv',
-        'status': 'not_yet_aired',
-        'start_date': null,
-        'related_anime': [
-          {
-            'node': {'id': 11577, 'title': 'movie'},
-            'relation_type': 'prequel',
-          },
-        ],
-      }),
-    };
+  test(
+    'a changed check fetches the new story title and times by the new one',
+    () async {
+      final steinsGate = buildMalAnswers('steins_gate');
+      await addEntry('steins gate', 9253);
+      for (final malId in [9253, 10863, 11577]) {
+        await saveDetail(steinsGate, malId, fetchedAgo: _day * 400);
+      }
+      final details = databases.details;
+      await details
+          .into(details.scanSchedule)
+          .insert(
+            ScanScheduleCompanion.insert(
+              provider: 'mal',
+              providerId: 9253,
+              lastCheckAt: 1,
+              nextCheckAt: _now.millisecondsSinceEpoch,
+            ),
+          );
+      // MAL now lists an upcoming sequel on the movie, and the sequel lists it back
+      final movie = jsonDecode(steinsGate[11577]!) as Map<String, dynamic>;
+      (movie['related_anime'] as List).add({
+        'node': {'id': 99999, 'title': 'Upcoming sequel'},
+        'relation_type': 'sequel',
+      });
+      final answers = {
+        ...steinsGate,
+        11577: jsonEncode(movie),
+        99999: jsonEncode({
+          'id': 99999,
+          'title': 'Upcoming sequel',
+          'media_type': 'tv',
+          'status': 'not_yet_aired',
+          'start_date': null,
+          'related_anime': [
+            {
+              'node': {'id': 11577, 'title': 'movie'},
+              'relation_type': 'prequel',
+            },
+          ],
+        }),
+      };
 
-    await scanAnswering(answers).run();
+      await scanAnswering(answers).run();
 
-    expect(asked, [11577, 99999]);
-    final schedule = await details.select(details.scanSchedule).getSingle();
-    expect(schedule.quietStreak, 0);
-    expect(schedule.nextCheckAt, _now.add(_day * 7).millisecondsSinceEpoch);
-  });
+      expect(asked, [11577, 99999]);
+      final schedule = await details.select(details.scanSchedule).getSingle();
+      expect(daysFrom(_now, schedule), inInclusiveRange(7, 7 * 1.2));
+    },
+  );
 
-  test('the wait between checks', () {
-    expect(getRecheckInterval(airing: true, quietStreak: 6), _day * 7);
-    expect([
-      for (var streak = 0; streak <= 6; streak++)
-        getRecheckInterval(airing: false, quietStreak: streak),
-    ], [7, 14, 28, 56, 90, 90, 90].map((days) => _day * days));
+  test('the wait between checks follows how long ago the title ended', () {
+    Duration wait({bool airing = false, String? endedOn}) =>
+        getRecheckInterval(airing: airing, endedOn: endedOn, now: _now);
+    expect(wait(airing: true, endedOn: '2020-01-01'), _day * 7);
+    expect(wait(endedOn: '2026-06-01'), _day * 30);
+    expect(wait(endedOn: '2025-06'), _day * 90);
+    expect(wait(endedOn: '2022-01-01'), _day * 180);
+    expect(wait(endedOn: '2013'), _day * 365);
+    expect(wait(), _day * 90);
   });
 }

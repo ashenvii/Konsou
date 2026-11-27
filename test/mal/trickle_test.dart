@@ -185,7 +185,7 @@ void main() {
   });
 
   test(
-    'asks again for a saved title that was never asked for its score',
+    'leaves a saved title that was never asked for its score to the screen',
     () async {
       await addEntry('old row', 'completed', 1, malId: 1);
       final details = databases.details;
@@ -209,9 +209,7 @@ void main() {
         ),
       ).run();
 
-      expect(asked, [1]);
-      final saved = await details.select(details.detail).getSingle();
-      expect(saved.malScore, 8.5);
+      expect(asked, isEmpty);
     },
   );
 }

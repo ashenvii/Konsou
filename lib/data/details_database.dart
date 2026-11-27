@@ -8,7 +8,7 @@ class DetailsDatabase extends _$DetailsDatabase {
 
   // details.db is safe to delete, so an upgrade only adds what is new
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -19,6 +19,13 @@ class DetailsDatabase extends _$DetailsDatabase {
         await _addMissingColumn(
           'mal_score',
           "REAL GENERATED ALWAYS AS (json_extract(json, '\$.mean')) VIRTUAL",
+        );
+      }
+      // the scan times checks by what it knows of a franchise, not a streak
+      if (from < 5 &&
+          (await _readColumns('scan_schedule')).contains('quiet_streak')) {
+        await customStatement(
+          'ALTER TABLE scan_schedule DROP COLUMN quiet_streak',
         );
       }
     },
@@ -45,9 +52,12 @@ class DetailsDatabase extends _$DetailsDatabase {
     }
   }
 
-  Future<Set<String>> _readDetailColumns() async => {
+  Future<Set<String>> _readDetailColumns() => _readColumns('detail');
+
+  Future<Set<String>> _readColumns(String table) async => {
     for (final row in await customSelect(
-      "SELECT name FROM pragma_table_xinfo('detail')",
+      'SELECT name FROM pragma_table_xinfo(?)',
+      variables: [Variable(table)],
     ).get())
       row.read<String>('name'),
   };

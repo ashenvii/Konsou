@@ -1,5 +1,4 @@
 import '../data/record_database.dart';
-import '../data/score_checked.dart';
 import '../net/drain_queue.dart';
 import 'detail_request.dart';
 import 'matching.dart';
@@ -16,8 +15,9 @@ const trickleOrder = '''
   END, entry.updated_at DESC''';
 
 /// Fetches details in the background, one title at a time, for entries that
-/// have none yet (or none with MAL's score), then matches not-linked entries. It keeps no progress of its
-/// own: what still has no details is what is left.
+/// have none yet, then matches not-linked entries. It keeps no progress of its
+/// own: what still has no details is what is left. A saved title missing a
+/// newer field is not its work: `ScoreFill` asks for it when it is on screen.
 class Trickle {
   Trickle({
     required this.record,
@@ -72,7 +72,7 @@ class Trickle {
         AND entry_reference.provider = 'mal'
       LEFT JOIN details.detail ON detail.provider = 'mal'
         AND detail.provider_id = entry_reference.provider_id
-      WHERE (detail.provider_id IS NULL OR NOT ($scoreCheckedSql))
+      WHERE detail.provider_id IS NULL
         AND entry_reference.provider_id NOT IN (${passOver.join(', ')})
       ORDER BY $trickleOrder
       LIMIT 1

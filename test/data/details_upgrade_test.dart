@@ -101,4 +101,27 @@ void main() {
         .getSingle();
     expect(row.read<double>('mal_score'), 7.5);
   });
+
+  test('a version 4 details file loses the scan quiet streak column and '
+      'keeps its schedule', () async {
+    final folder = Directory.systemTemp.createTempSync('konsou_upgrade');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final file = File('${folder.path}${Platform.pathSeparator}details.db');
+    sqlite3.open(file.path)
+      ..execute(
+        'CREATE TABLE scan_schedule (provider TEXT NOT NULL, '
+        'provider_id INTEGER NOT NULL, last_check_at INTEGER NOT NULL, '
+        'next_check_at INTEGER NOT NULL, '
+        'quiet_streak INTEGER NOT NULL DEFAULT 0, '
+        'PRIMARY KEY (provider, provider_id))',
+      )
+      ..execute("INSERT INTO scan_schedule VALUES ('mal', 9, 1, 2, 3)")
+      ..execute('PRAGMA user_version = 4')
+      ..close();
+
+    final details = DetailsDatabase(NativeDatabase(file));
+    addTearDown(details.close);
+    final row = await details.select(details.scanSchedule).getSingle();
+    expect((row.providerId, row.lastCheckAt, row.nextCheckAt), (9, 1, 2));
+  });
 }

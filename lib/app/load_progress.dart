@@ -1,5 +1,4 @@
 import '../data/databases.dart';
-import '../data/score_checked.dart';
 
 enum LoadJob { details, covers }
 
@@ -66,8 +65,8 @@ Future<({LoadCount details, LoadCount covers})> readLoadCounts(
     SELECT
       (SELECT COUNT(*) FROM linked) AS details_total,
       (SELECT COUNT(*) FROM linked JOIN details.detail detail
-        ON detail.provider = 'mal' AND detail.provider_id = linked.id
-        WHERE $scoreCheckedSql) AS details_done,
+        ON detail.provider = 'mal' AND detail.provider_id = linked.id)
+        AS details_done,
       (SELECT COUNT(*) FROM linked JOIN details.detail detail
         ON detail.provider = 'mal' AND detail.provider_id = linked.id
         WHERE detail.cover_medium_url IS NOT NULL

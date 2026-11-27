@@ -24,6 +24,7 @@ import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
 import '../library/quick_search.dart';
 import 'cover_view.dart';
+import 'score_fill.dart';
 import 'quick_search_providers.dart';
 
 /// Quick search: the page dimmed, and the popover dropped under the search
@@ -401,35 +402,43 @@ class _ResultRowState extends State<_ResultRow> with _KeepsInView<_ResultRow> {
               horizontal: Tokens.space4,
               vertical: Tokens.space1,
             ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final narrow = constraints.maxWidth < EpisodeColumn.narrowBelow;
-                return Row(
-                  children: [
-                    AppCheckbox(
-                      value: row.completed
-                          ? CheckValue.checked
-                          : CheckValue.empty,
-                      onChanged: (_) => widget.onTick(),
-                      onHover: (over) => setState(() => _overBox = over),
-                    ),
-                    const SizedBox(width: Tokens.space3),
-                    CoverView(malId: row.malId, width: Tokens.quickCoverWidth),
-                    const SizedBox(width: Tokens.space3),
-                    Expanded(child: _NameAndLine(row, narrow: narrow)),
-                    const SizedBox(width: Tokens.space3),
-                    TitleColumns(
-                      count: row.count,
-                      malScore: row.malScore,
-                      narrow: narrow,
-                      status: row.status,
-                      loadingDetails:
-                          row.isLoadingDetails || row.isScorePending,
-                      notLinked: row.isNotLinked,
-                    ),
-                  ],
-                );
-              },
+            child: ScoreFill(
+              malId: row.malId,
+              pending: row.isScorePending,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final narrow =
+                      constraints.maxWidth < EpisodeColumn.narrowBelow;
+                  return Row(
+                    children: [
+                      AppCheckbox(
+                        value: row.completed
+                            ? CheckValue.checked
+                            : CheckValue.empty,
+                        onChanged: (_) => widget.onTick(),
+                        onHover: (over) => setState(() => _overBox = over),
+                      ),
+                      const SizedBox(width: Tokens.space3),
+                      CoverView(
+                        malId: row.malId,
+                        width: Tokens.quickCoverWidth,
+                      ),
+                      const SizedBox(width: Tokens.space3),
+                      Expanded(child: _NameAndLine(row, narrow: narrow)),
+                      const SizedBox(width: Tokens.space3),
+                      TitleColumns(
+                        count: row.count,
+                        malScore: row.malScore,
+                        narrow: narrow,
+                        status: row.status,
+                        loadingDetails:
+                            row.isLoadingDetails || row.isScorePending,
+                        notLinked: row.isNotLinked,
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),

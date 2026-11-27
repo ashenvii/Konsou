@@ -1502,25 +1502,12 @@ class ScanScheduleTable extends Table
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL',
   );
-  static const VerificationMeta _quietStreakMeta = const VerificationMeta(
-    'quietStreak',
-  );
-  late final GeneratedColumn<int> quietStreak = GeneratedColumn<int>(
-    'quiet_streak',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    $customConstraints: 'NOT NULL DEFAULT 0',
-    defaultValue: const CustomExpression('0'),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     provider,
     providerId,
     lastCheckAt,
     nextCheckAt,
-    quietStreak,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1572,15 +1559,6 @@ class ScanScheduleTable extends Table
     } else if (isInserting) {
       context.missing(_nextCheckAtMeta);
     }
-    if (data.containsKey('quiet_streak')) {
-      context.handle(
-        _quietStreakMeta,
-        quietStreak.isAcceptableOrUnknown(
-          data['quiet_streak']!,
-          _quietStreakMeta,
-        ),
-      );
-    }
     return context;
   }
 
@@ -1606,10 +1584,6 @@ class ScanScheduleTable extends Table
         DriftSqlType.int,
         data['${effectivePrefix}next_check_at'],
       )!,
-      quietStreak: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}quiet_streak'],
-      )!,
     );
   }
 
@@ -1631,13 +1605,11 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
   final int providerId;
   final int lastCheckAt;
   final int nextCheckAt;
-  final int quietStreak;
   const ScanSchedule({
     required this.provider,
     required this.providerId,
     required this.lastCheckAt,
     required this.nextCheckAt,
-    required this.quietStreak,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1646,7 +1618,6 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
     map['provider_id'] = Variable<int>(providerId);
     map['last_check_at'] = Variable<int>(lastCheckAt);
     map['next_check_at'] = Variable<int>(nextCheckAt);
-    map['quiet_streak'] = Variable<int>(quietStreak);
     return map;
   }
 
@@ -1656,7 +1627,6 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
       providerId: Value(providerId),
       lastCheckAt: Value(lastCheckAt),
       nextCheckAt: Value(nextCheckAt),
-      quietStreak: Value(quietStreak),
     );
   }
 
@@ -1670,7 +1640,6 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
       providerId: serializer.fromJson<int>(json['provider_id']),
       lastCheckAt: serializer.fromJson<int>(json['last_check_at']),
       nextCheckAt: serializer.fromJson<int>(json['next_check_at']),
-      quietStreak: serializer.fromJson<int>(json['quiet_streak']),
     );
   }
   @override
@@ -1681,7 +1650,6 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
       'provider_id': serializer.toJson<int>(providerId),
       'last_check_at': serializer.toJson<int>(lastCheckAt),
       'next_check_at': serializer.toJson<int>(nextCheckAt),
-      'quiet_streak': serializer.toJson<int>(quietStreak),
     };
   }
 
@@ -1690,13 +1658,11 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
     int? providerId,
     int? lastCheckAt,
     int? nextCheckAt,
-    int? quietStreak,
   }) => ScanSchedule(
     provider: provider ?? this.provider,
     providerId: providerId ?? this.providerId,
     lastCheckAt: lastCheckAt ?? this.lastCheckAt,
     nextCheckAt: nextCheckAt ?? this.nextCheckAt,
-    quietStreak: quietStreak ?? this.quietStreak,
   );
   ScanSchedule copyWithCompanion(ScanScheduleCompanion data) {
     return ScanSchedule(
@@ -1710,9 +1676,6 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
       nextCheckAt: data.nextCheckAt.present
           ? data.nextCheckAt.value
           : this.nextCheckAt,
-      quietStreak: data.quietStreak.present
-          ? data.quietStreak.value
-          : this.quietStreak,
     );
   }
 
@@ -1722,15 +1685,14 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
           ..write('provider: $provider, ')
           ..write('providerId: $providerId, ')
           ..write('lastCheckAt: $lastCheckAt, ')
-          ..write('nextCheckAt: $nextCheckAt, ')
-          ..write('quietStreak: $quietStreak')
+          ..write('nextCheckAt: $nextCheckAt')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(provider, providerId, lastCheckAt, nextCheckAt, quietStreak);
+      Object.hash(provider, providerId, lastCheckAt, nextCheckAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1738,8 +1700,7 @@ class ScanSchedule extends DataClass implements Insertable<ScanSchedule> {
           other.provider == this.provider &&
           other.providerId == this.providerId &&
           other.lastCheckAt == this.lastCheckAt &&
-          other.nextCheckAt == this.nextCheckAt &&
-          other.quietStreak == this.quietStreak);
+          other.nextCheckAt == this.nextCheckAt);
 }
 
 class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
@@ -1747,14 +1708,12 @@ class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
   final Value<int> providerId;
   final Value<int> lastCheckAt;
   final Value<int> nextCheckAt;
-  final Value<int> quietStreak;
   final Value<int> rowid;
   const ScanScheduleCompanion({
     this.provider = const Value.absent(),
     this.providerId = const Value.absent(),
     this.lastCheckAt = const Value.absent(),
     this.nextCheckAt = const Value.absent(),
-    this.quietStreak = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ScanScheduleCompanion.insert({
@@ -1762,7 +1721,6 @@ class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
     required int providerId,
     required int lastCheckAt,
     required int nextCheckAt,
-    this.quietStreak = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : provider = Value(provider),
        providerId = Value(providerId),
@@ -1773,7 +1731,6 @@ class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
     Expression<int>? providerId,
     Expression<int>? lastCheckAt,
     Expression<int>? nextCheckAt,
-    Expression<int>? quietStreak,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1781,7 +1738,6 @@ class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
       if (providerId != null) 'provider_id': providerId,
       if (lastCheckAt != null) 'last_check_at': lastCheckAt,
       if (nextCheckAt != null) 'next_check_at': nextCheckAt,
-      if (quietStreak != null) 'quiet_streak': quietStreak,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1791,7 +1747,6 @@ class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
     Value<int>? providerId,
     Value<int>? lastCheckAt,
     Value<int>? nextCheckAt,
-    Value<int>? quietStreak,
     Value<int>? rowid,
   }) {
     return ScanScheduleCompanion(
@@ -1799,7 +1754,6 @@ class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
       providerId: providerId ?? this.providerId,
       lastCheckAt: lastCheckAt ?? this.lastCheckAt,
       nextCheckAt: nextCheckAt ?? this.nextCheckAt,
-      quietStreak: quietStreak ?? this.quietStreak,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1819,9 +1773,6 @@ class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
     if (nextCheckAt.present) {
       map['next_check_at'] = Variable<int>(nextCheckAt.value);
     }
-    if (quietStreak.present) {
-      map['quiet_streak'] = Variable<int>(quietStreak.value);
-    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1835,7 +1786,6 @@ class ScanScheduleCompanion extends UpdateCompanion<ScanSchedule> {
           ..write('providerId: $providerId, ')
           ..write('lastCheckAt: $lastCheckAt, ')
           ..write('nextCheckAt: $nextCheckAt, ')
-          ..write('quietStreak: $quietStreak, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4117,7 +4067,6 @@ typedef $ScanScheduleTableCreateCompanionBuilder =
       required int providerId,
       required int lastCheckAt,
       required int nextCheckAt,
-      Value<int> quietStreak,
       Value<int> rowid,
     });
 typedef $ScanScheduleTableUpdateCompanionBuilder =
@@ -4126,7 +4075,6 @@ typedef $ScanScheduleTableUpdateCompanionBuilder =
       Value<int> providerId,
       Value<int> lastCheckAt,
       Value<int> nextCheckAt,
-      Value<int> quietStreak,
       Value<int> rowid,
     });
 
@@ -4156,11 +4104,6 @@ class $ScanScheduleTableFilterComposer
 
   ColumnFilters<int> get nextCheckAt => $composableBuilder(
     column: $table.nextCheckAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get quietStreak => $composableBuilder(
-    column: $table.quietStreak,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4193,11 +4136,6 @@ class $ScanScheduleTableOrderingComposer
     column: $table.nextCheckAt,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<int> get quietStreak => $composableBuilder(
-    column: $table.quietStreak,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $ScanScheduleTableAnnotationComposer
@@ -4224,11 +4162,6 @@ class $ScanScheduleTableAnnotationComposer
 
   GeneratedColumn<int> get nextCheckAt => $composableBuilder(
     column: $table.nextCheckAt,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get quietStreak => $composableBuilder(
-    column: $table.quietStreak,
     builder: (column) => column,
   );
 }
@@ -4268,14 +4201,12 @@ class $ScanScheduleTableTableManager
                 Value<int> providerId = const Value.absent(),
                 Value<int> lastCheckAt = const Value.absent(),
                 Value<int> nextCheckAt = const Value.absent(),
-                Value<int> quietStreak = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ScanScheduleCompanion(
                 provider: provider,
                 providerId: providerId,
                 lastCheckAt: lastCheckAt,
                 nextCheckAt: nextCheckAt,
-                quietStreak: quietStreak,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4284,14 +4215,12 @@ class $ScanScheduleTableTableManager
                 required int providerId,
                 required int lastCheckAt,
                 required int nextCheckAt,
-                Value<int> quietStreak = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ScanScheduleCompanion.insert(
                 provider: provider,
                 providerId: providerId,
                 lastCheckAt: lastCheckAt,
                 nextCheckAt: nextCheckAt,
-                quietStreak: quietStreak,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

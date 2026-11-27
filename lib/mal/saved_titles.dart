@@ -4,10 +4,16 @@ import '../data/record_database.dart';
 import 'franchise_grouping.dart';
 
 class SavedTitle {
-  SavedTitle(this.title, this.airingStatus);
+  SavedTitle(this.title, this.airingStatus, this.endDate, this.fetchedAt);
 
   final FranchiseTitle title;
   final String? airingStatus;
+
+  /// MAL's end date, year only or year and month for some titles.
+  final String? endDate;
+
+  /// When the details were last fetched, in milliseconds.
+  final int fetchedAt;
 }
 
 Future<Map<int, SavedTitle>> readSavedTitles(
@@ -18,7 +24,8 @@ Future<Map<int, SavedTitle>> readSavedTitles(
       .customSelect(
         '''
       SELECT detail.provider_id, detail.media_type, detail.start_date,
-             detail.airing_status,
+             detail.airing_status, detail.fetched_at,
+             json_extract(detail.json, '\$.end_date') AS end_date,
              json_extract(relation.value, '\$.node.id') AS relation_id,
              json_extract(relation.value, '\$.relation_type') AS relation_type
       FROM details.detail
@@ -41,6 +48,8 @@ Future<Map<int, SavedTitle>> readSavedTitles(
           relations: [],
         ),
         row.readNullable<String>('airing_status'),
+        row.readNullable<String>('end_date'),
+        row.read<int>('fetched_at'),
       ),
     );
     final relationId = row.readNullable<int>('relation_id');

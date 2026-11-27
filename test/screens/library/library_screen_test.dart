@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/app/entry_actions.dart';
 import 'package:konsou/app/library_providers.dart';
@@ -38,6 +39,7 @@ LibraryRow row(
   int addedAt = 0,
   int? score,
   int seasons = 1,
+  bool scorePending = false,
 }) => LibraryRow(
   current: LibraryEntry(
     entryId: id,
@@ -52,6 +54,7 @@ LibraryRow row(
     episodes: 12,
     mediaType: 'tv',
     startDate: '2023-01-01',
+    scorePending: scorePending,
   ),
   entryIds: [for (var i = 0; i < seasons; i++) seasons == 1 ? id : '$id-$i'],
   addedAt: addedAt,
@@ -119,6 +122,7 @@ void main() {
     List<LibraryRow> Function()? live,
     bool keys = false,
     double textScale = 1,
+    List<Override> overrides = const [],
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -126,6 +130,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ...overrides,
           libraryRowsProvider.overrideWith(
             (ref) => live != null
                 ? Future.value(live())
@@ -829,5 +834,24 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(QuickPanel), findsNothing);
+  });
+
+  testWidgets('a list row whose MAL score is pending asks for its title while '
+      'it is on screen, a grid card does not', (tester) async {
+    final asked = <int>[];
+    final fill = detailOnScreenProvider(1, lane: Lane.screen).overrideWith((
+      ref,
+    ) async {
+      asked.add(1);
+    });
+    final rows = [
+      row('a', 'watching', name: 'Alpha', scorePending: true),
+      row('b', 'watching', name: 'Bravo'),
+    ];
+    await pumpScreen(tester, rows, overrides: [fill]);
+    expect(asked, isEmpty);
+    await showList(tester);
+    // both rows are malId 1; only the pending one watches
+    expect(asked, [1]);
   });
 }

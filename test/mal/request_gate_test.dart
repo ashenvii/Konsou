@@ -143,6 +143,10 @@ void main() {
     expect(time.starts, [0, 500]);
   });
 
+  test('the API gate gives up on a request after 15 seconds', () {
+    expect(RequestGate().timeout, const Duration(seconds: 15));
+  });
+
   test('a request that never answers times out and slows the gate', () async {
     final quick = RequestGate(
       now: () => time.now,
