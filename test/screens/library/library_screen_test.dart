@@ -754,4 +754,80 @@ void main() {
     await tester.pump();
     expect(edits.calls, ['remove a-0,a-1']);
   });
+
+  testWidgets('focus stays inside the open panel, never on the card copy', (
+    tester,
+  ) async {
+    await pumpScreen(tester, [row('a', 'watching', name: 'Alpha')]);
+    await showList(tester);
+    await tester.tap(find.text('Alpha'), buttons: kSecondaryButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final outside = <String>[];
+    for (var i = 0; i < 14; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final focus = FocusManager.instance.primaryFocus?.context;
+      if (focus == null) {
+        outside.add('none at step $i');
+        continue;
+      }
+      var inside = false;
+      focus.visitAncestorElements((e) {
+        if (e.widget is QuickPanel) inside = true;
+        return !inside;
+      });
+      if (!inside) outside.add('${focus.widget.runtimeType} at step $i');
+    }
+    expect(outside, isEmpty);
+  });
+
+  testWidgets('a window resize closes the open panel', (tester) async {
+    await pumpScreen(tester, [row('a', 'watching', name: 'Alpha')]);
+    await tester.tap(find.text('Alpha'), buttons: kSecondaryButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(QuickPanel), findsOneWidget);
+    tester.view.physicalSize = const Size(900, 700);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(QuickPanel), findsNothing);
+  });
+
+  testWidgets('+ leaves the row alone while the panel is open', (tester) async {
+    await pumpScreen(tester, sample, keys: true);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(tester.getCenter(find.text('Alpha')));
+    await tester.pump();
+    await mouse.down(tester.getCenter(find.text('Alpha')));
+    await mouse.up();
+    await tester.tap(find.text('Alpha'), buttons: kSecondaryButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.equal);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    expect(edits.calls, isEmpty);
+  });
+
+  testWidgets('a touchpad scroll closes the panel like the wheel', (
+    tester,
+  ) async {
+    await pumpScreen(tester, [row('a', 'watching', name: 'Alpha')]);
+    await tester.tap(find.text('Alpha'), buttons: kSecondaryButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final pad = TestPointer(2, PointerDeviceKind.trackpad);
+    await tester.sendEventToBinding(pad.panZoomStart(const Offset(1000, 700)));
+    await tester.sendEventToBinding(
+      pad.panZoomUpdate(const Offset(1000, 700), pan: const Offset(0, -80)),
+    );
+    await tester.sendEventToBinding(pad.panZoomEnd());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(QuickPanel), findsNothing);
+  });
 }

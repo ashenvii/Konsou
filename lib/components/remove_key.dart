@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
@@ -107,7 +108,10 @@ class _RemoveKeyState extends State<RemoveKey>
             }),
             child: Listener(
               behavior: HitTestBehavior.opaque,
-              onPointerDown: (_) => _start(),
+              // a right or middle click is no hold
+              onPointerDown: (event) {
+                if (event.buttons & kPrimaryButton != 0) _start();
+              },
               onPointerUp: (_) => _stop(),
               onPointerCancel: (_) => _hold.cancel(),
               child: AnimatedBuilder(

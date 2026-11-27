@@ -55,7 +55,7 @@ class AppPopover extends StatefulWidget {
 }
 
 class _AppPopoverState extends State<AppPopover>
-    with FadingPortalOwner<AppPopover>
+    with FadingPortalOwner<AppPopover>, WidgetsBindingObserver
     implements PopoverHandle {
   Rect _anchor = Rect.zero;
   Rect _lift = Rect.zero;
@@ -77,13 +77,31 @@ class _AppPopoverState extends State<AppPopover>
   Rect _toLayer(Rect global) =>
       overlayBox.globalToLocal(global.topLeft) & global.size;
 
-  void _show(Rect anchor, {Rect? lift}) => openPortal(() {
-    _anchor = anchor;
-    _lift = lift ?? anchor;
-  });
+  void _show(Rect anchor, {Rect? lift}) {
+    WidgetsBinding.instance.addObserver(this);
+    openPortal(() {
+      _anchor = anchor;
+      _lift = lift ?? anchor;
+    });
+  }
 
   @override
-  void close() => closePortal();
+  void close() {
+    WidgetsBinding.instance.removeObserver(this);
+    closePortal();
+  }
+
+  // the anchor was measured against the old window and the page has moved
+  @override
+  void didChangeMetrics() {
+    if (portalOpen) close();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

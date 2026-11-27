@@ -204,4 +204,17 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.numpadAdd);
     expect(taken, isEmpty);
   });
+
+  testWidgets('a right click on the trash key starts no hold', (tester) async {
+    await pumpPanel(tester, row());
+    final held = await tester.startGesture(
+      tester.getCenter(find.byType(RemoveKey)),
+      kind: PointerDeviceKind.mouse,
+      buttons: kSecondaryMouseButton,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1200));
+    expect(taken, isEmpty);
+    await held.up();
+  });
 }
