@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/detail_providers.dart';
+import '../../components/message.dart';
 import '../../components/page_frame.dart';
-import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../detail/title_entry.dart';
 import 'detail_frame.dart';
@@ -89,12 +89,9 @@ class _Looking extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text('Looking for the page', style: AppText.label(Tokens.inkSoft)),
-        const PickerSkeleton(),
-      ],
+      children: [Message('Looking for the page'), PickerSkeleton()],
     );
   }
 }

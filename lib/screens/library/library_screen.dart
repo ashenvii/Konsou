@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/library_providers.dart';
 import '../../components/dithered_gradient.dart';
 import '../../components/hold_while_scrolling.dart';
+import '../../components/message.dart';
 import '../../components/page_frame.dart';
 import '../../components/presence.dart';
 import '../../design/tokens.dart';
@@ -12,7 +13,6 @@ import '../../library/library_row.dart';
 import '../../library/library_view.dart';
 import 'library_find.dart';
 import 'library_layout_switch.dart';
-import 'library_message.dart';
 import 'library_row_list.dart';
 import 'library_skeleton.dart';
 import 'library_sort_button.dart';
@@ -171,7 +171,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       content = Padding(
         padding: EdgeInsets.only(top: rest),
         child: failed
-            ? const LibraryMessage('Your library could not be read.')
+            ? Message(
+                'Your library could not be read.',
+                padding: libraryMessagePadding,
+              )
             : LibrarySkeleton(layout: layout),
       );
     } else {

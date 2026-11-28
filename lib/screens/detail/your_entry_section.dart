@@ -66,7 +66,6 @@ class _YourEntrySectionState extends ConsumerState<YourEntrySection> {
         key: _notes,
         initial: entry.notes ?? '',
         placeholder: 'Anything you want to remember about it',
-        fill: Tokens.ground,
         onSave: (text) => _actions.setNotes(_id, text),
       ),
     );

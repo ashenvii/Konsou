@@ -41,7 +41,7 @@ class DetailMeta extends StatelessWidget {
             TextSpan(
               children: [
                 for (final (i, part) in parts.indexed) ...[
-                  if (i > 0) TextSpan(text: '  ·  ', style: muted),
+                  if (i > 0) TextSpan(text: partsDot, style: muted),
                   part,
                 ],
               ],

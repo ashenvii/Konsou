@@ -3,7 +3,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../components/cap_centered_text.dart';
 import '../components/key_cap.dart';
-import '../components/search_well.dart';
+import '../components/sunk_well.dart';
 import '../components/pressable.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
@@ -158,7 +158,7 @@ class _QuickSearchButton extends StatelessWidget {
         final ink = state.hovered ? Tokens.ink : Tokens.inkMuted;
         // a well sunk into the bar: near black, shaded at its top where the
         // bar overhangs it, a faint lit lip below. The hover is the live edge.
-        return SearchWell(
+        return SunkWell(
           hovered: state.hovered,
           width: Tokens.quickSearchWidth,
           height: Tokens.quickSearchHeight,

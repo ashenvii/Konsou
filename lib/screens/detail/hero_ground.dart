@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../components/down_fade.dart';
 import '../../components/picture_fade.dart';
 import '../../components/picture_crop.dart';
 import '../../design/tokens.dart';
@@ -54,18 +55,12 @@ class HeroGround extends ConsumerWidget {
           ),
           Positioned.fill(
             bottom: solidFoot,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Tokens.chassisTop.withValues(alpha: 0),
-                    Tokens.chassisTop,
-                  ],
-                  stops: const [0.55, 1],
-                ),
-              ),
+            child: DownFade(
+              colors: [
+                Tokens.chassisTop.withValues(alpha: 0),
+                Tokens.chassisTop,
+              ],
+              stops: const [0.55, 1],
             ),
           ),
         ],

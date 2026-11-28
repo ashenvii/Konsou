@@ -6,7 +6,7 @@ import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
 import 'close_on_escape.dart';
 import 'field_text.dart';
-import 'search_well.dart';
+import 'sunk_well.dart';
 
 /// The small Find text field with its close key.
 class FindField extends StatefulWidget {
@@ -44,7 +44,10 @@ class _FindFieldState extends State<FindField> {
   void initState() {
     super.initState();
     _focus.addListener(_leftEmpty);
+    _focus.addListener(_ring);
   }
+
+  void _ring() => setState(() {});
 
   void _leftEmpty() {
     if (widget.closeWhenEmpty && !_focus.hasFocus && _controller.text.isEmpty) {
@@ -55,6 +58,7 @@ class _FindFieldState extends State<FindField> {
   @override
   void dispose() {
     _focus.removeListener(_leftEmpty);
+    _focus.removeListener(_ring);
     _focus.dispose();
     _controller.dispose();
     super.dispose();
@@ -65,9 +69,10 @@ class _FindFieldState extends State<FindField> {
     return CloseOnEscape(
       onClose: widget.onClose,
       // a well; its lip hangs below, so the well is a lip short of the slot
-      child: SearchWell(
+      child: SunkWell(
         width: widget.width,
-        height: Tokens.controlHeight - SearchWell.lip,
+        height: Tokens.controlHeight - SunkWell.lip,
+        focused: _focus.hasFocus,
         child: Row(
           children: [
             const AppIcon(

@@ -204,6 +204,18 @@ _Avoid_: Notifications, inbox
 The small window from a toast that lists the earlier titles of a franchise to give a status, Completed by default, after a later one is finished.
 _Avoid_: Catch-up, backfill
 
+**Message**:
+A line where content would be, such as "Nothing here." or "Can't reach MyAnimeList.", with its action, such as Retry, under it.
+_Avoid_: Empty state, notice, note
+
+**Group heading**:
+The small muted heading over a group of rows, with a hairline out to the edge and the group's count when it has one.
+_Avoid_: Section label, divider
+
+**Well**:
+A box sunk into the console: near black, shaded at its top, a faint lit lip under it. The title bar's search and every text field are wells.
+_Avoid_: Input box, text box
+
 **Toast**:
 A short message at the bottom of the screen with an optional action, such as Undo. It never closes while the pointer is on it or while a review is open.
 _Avoid_: Snackbar, notification

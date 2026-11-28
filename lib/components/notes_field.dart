@@ -4,7 +4,7 @@ import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import 'countdown.dart';
 import 'field_text.dart';
-import 'focus_ring.dart';
+import 'sunk_well.dart';
 
 /// A box for free text that saves itself: a moment after typing stops, when
 /// it loses focus, and when it leaves the screen. There is no Save button.
@@ -14,13 +14,9 @@ class NotesField extends StatefulWidget {
     required this.initial,
     required this.placeholder,
     required this.onSave,
-    this.fill = Tokens.surface,
   });
 
   final String initial;
-
-  /// The box's color; the ground when it sits on a filled plate.
-  final Color fill;
   final String placeholder;
   final ValueChanged<String> onSave;
 
@@ -76,22 +72,17 @@ class NotesFieldState extends State<NotesField> {
       onTap: _focus.requestFocus,
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
-        child: FocusRing(
-          on: _focus.hasFocus,
-          child: Container(
-            constraints: const BoxConstraints(
-              minHeight: Tokens.controlHeight * 3,
-            ),
-            padding: const EdgeInsets.all(Tokens.space3),
-            color: widget.fill,
-            child: FieldText(
-              controller: _controller,
-              focusNode: _focus,
-              placeholder: widget.placeholder,
-              style: AppText.paragraph(Tokens.ink),
-              multiline: true,
-              onChanged: _changed,
-            ),
+        child: SunkWell(
+          minHeight: Tokens.controlHeight * 3,
+          padding: const EdgeInsets.all(Tokens.space3),
+          focused: _focus.hasFocus,
+          child: FieldText(
+            controller: _controller,
+            focusNode: _focus,
+            placeholder: widget.placeholder,
+            style: AppText.paragraph(Tokens.ink),
+            multiline: true,
+            onChanged: _changed,
           ),
         ),
       ),

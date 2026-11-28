@@ -4,7 +4,7 @@ import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import '../library/row_labels.dart';
 import 'floating_panel.dart';
-import 'hairline.dart';
+import 'group_heading.dart';
 import 'one_line_text.dart';
 import 'smooth_scroll.dart';
 import '../library/earlier_titles.dart';
@@ -121,7 +121,13 @@ class _EarlierReviewState extends State<EarlierReview> {
     Widget group(String heading, List<EarlierTitle> members) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _GroupHeading(heading: heading, count: members.length),
+        Padding(
+          padding: const EdgeInsets.only(
+            top: Tokens.space2,
+            bottom: Tokens.space1,
+          ),
+          child: GroupHeading(heading, count: members.length),
+        ),
         for (final title in members)
           _TitleRow(
             title: title,
@@ -214,29 +220,6 @@ class _EarlierReviewState extends State<EarlierReview> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _GroupHeading extends StatelessWidget {
-  const _GroupHeading({required this.heading, required this.count});
-
-  final String heading;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: Tokens.space2, bottom: Tokens.space1),
-      child: Row(
-        children: [
-          Text(heading, style: AppText.caption(Tokens.inkSoft)),
-          const SizedBox(width: Tokens.space2),
-          Text('$count', style: AppText.caption(Tokens.inkMuted)),
-          const SizedBox(width: Tokens.space3),
-          const Expanded(child: Hairline()),
-        ],
       ),
     );
   }

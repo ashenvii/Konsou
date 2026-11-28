@@ -5,11 +5,7 @@ import '../design/tokens.dart';
 import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
 import 'cap_centered_text.dart';
-import 'countdown.dart';
-import 'countdown_builder.dart';
-import 'focus_ring.dart';
 import 'hold_fill.dart';
-import 'raised_key.dart';
 
 /// Label of the row that removes on hold.
 const holdToRemoveLabel = 'Hold to remove';
@@ -37,23 +33,12 @@ class HoldRow extends StatefulWidget {
   State<HoldRow> createState() => _HoldRowState();
 }
 
-class _HoldRowState extends State<HoldRow> {
-  late final Countdown _hold = Countdown(onDone: () => widget.onDone?.call());
-  var _hovered = false;
-  var _focused = false;
-
-  void _start() => _hold.start(widget.holdTime);
-
-  void _stop() => _hold.cancel();
-
-  KeyEventResult _key(FocusNode node, KeyEvent event) =>
-      holdOnKeys(event, start: _start, stop: _stop);
+class _HoldRowState extends State<HoldRow> with HoldPress {
+  @override
+  Duration get holdTime => widget.holdTime;
 
   @override
-  void dispose() {
-    _hold.dispose();
-    super.dispose();
-  }
+  void holdDone() => widget.onDone?.call();
 
   @override
   Widget build(BuildContext context) {
@@ -74,22 +59,17 @@ class _HoldRowState extends State<HoldRow> {
       child: Focus(
         canRequestFocus: enabled,
         skipTraversal: !enabled,
-        onKeyEvent: enabled ? _key : null,
-        onFocusChange: (focused) {
-          setState(() => _focused = focused);
-          if (!focused) _stop();
-        },
+        onKeyEvent: enabled ? holdKey : null,
+        onFocusChange: focusChanged,
         child: MouseRegion(
           cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-          onEnter: (_) => setState(() => _hovered = true),
-          onExit: (_) => setState(() => _hovered = false),
+          onEnter: (_) => setState(() => hovered = true),
+          onExit: (_) => setState(() => hovered = false),
           child: Listener(
             behavior: HitTestBehavior.opaque,
-            onPointerDown: enabled
-                ? (event) => holdOnPointer(event, _start)
-                : null,
-            onPointerUp: enabled ? (_) => _stop() : null,
-            onPointerCancel: enabled ? (_) => _stop() : null,
+            onPointerDown: enabled ? holdPointer : null,
+            onPointerUp: enabled ? (_) => stopHold() : null,
+            onPointerCancel: enabled ? (_) => hold.cancel() : null,
             child: Padding(
               padding: const EdgeInsets.all(Tokens.space3),
               child: Column(
@@ -99,48 +79,31 @@ class _HoldRowState extends State<HoldRow> {
                   // only as wide as the bin and the words; the slab hangs below
                   Padding(
                     padding: const EdgeInsets.only(bottom: Tokens.buttonDepth),
-                    child: CountdownBuilder(
-                      countdown: _hold,
-                      builder: (context, share, running) {
-                        // empty until held, full when the hold is done
-                        final fill = _hold.started ? 1 - share : 0.0;
-                        return FocusRing(
-                          on: _focused,
-                          corners: Tokens.keyCorners,
-                          child: RaisedKey(
-                            lit: _hovered && enabled,
-                            sunk: _hold.started,
-                            child: SizedBox(
-                              height: Tokens.controlHeight,
-                              child: Stack(
-                                children: [
-                                  HoldFill(share: fill),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      SizedBox(
-                                        width: Tokens.controlHeight,
-                                        height: Tokens.controlHeight,
-                                        child: ColoredBox(
-                                          color: Tokens.red,
-                                          child: Center(
-                                            child: AppIcon(
-                                              AppIcons.bin,
-                                              size: Tokens.iconSize,
-                                              color: Tokens.onPop,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Flexible(child: label),
-                                    ],
+                    child: HoldKey(
+                      press: this,
+                      lit: hovered && enabled,
+                      face: (_) => SizedBox(
+                        height: Tokens.controlHeight,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox.square(
+                              dimension: Tokens.controlHeight,
+                              child: ColoredBox(
+                                color: Tokens.red,
+                                child: Center(
+                                  child: AppIcon(
+                                    AppIcons.bin,
+                                    size: Tokens.iconSize,
+                                    color: Tokens.onPop,
                                   ),
-                                ],
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                            Flexible(child: label),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                   if (widget.hint != null) ...[

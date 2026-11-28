@@ -5,6 +5,7 @@ import '../../components/close_on_escape.dart';
 import '../../components/field_text.dart';
 import '../../components/icon_square_button.dart';
 import '../../components/sunk_decoration.dart';
+import '../../components/sunk_well.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../icons/app_icons.dart';
@@ -111,27 +112,27 @@ class _EpisodeCountState extends State<EpisodeCount> {
         if (_editing)
           CloseOnEscape(
             onClose: _cancel,
-            child: Container(
+            child: SunkWell(
               width: EpisodeCount.fieldWidth,
-              height: Tokens.controlHeight,
+              // the lip below makes up the slot
+              height: Tokens.controlHeight - SunkWell.lip,
               padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
-              decoration: BoxDecoration(
-                color: Tokens.ground,
-                border: Border.all(color: Tokens.pop, width: Tokens.focusRing),
-              ),
-              alignment: Alignment.centerRight,
-              child: FieldText(
-                controller: _controller,
-                focusNode: _focus,
-                placeholder: '',
-                autofocus: true,
-                // the digits go plain ink while typed: pop on the selection
-                // slab is 2.3:1, ink on it 7.9:1
-                style: AppText.tally(Tokens.ink),
-                textAlign: TextAlign.end,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                onSubmitted: (_) => _commit(),
-                onTapOutside: (_) => _focus.unfocus(),
+              focused: true,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FieldText(
+                  controller: _controller,
+                  focusNode: _focus,
+                  placeholder: '',
+                  autofocus: true,
+                  // the digits go plain ink while typed: pop on the selection
+                  // slab is 2.3:1, ink on it 7.9:1
+                  style: AppText.tally(Tokens.ink),
+                  textAlign: TextAlign.end,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  onSubmitted: (_) => _commit(),
+                  onTapOutside: (_) => _focus.unfocus(),
+                ),
               ),
             ),
           )

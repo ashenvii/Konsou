@@ -2,6 +2,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../components/group_heading.dart';
+import '../components/message.dart';
 import '../components/page_dim.dart';
 import '../components/app_button.dart';
 import '../components/app_checkbox.dart';
@@ -303,13 +305,7 @@ class _GroupLabel extends StatelessWidget {
         Tokens.space4,
         Tokens.space1,
       ),
-      child: Row(
-        children: [
-          Text(text, style: AppText.caption(Tokens.inkMuted)),
-          const SizedBox(width: Tokens.space3),
-          const Expanded(child: Hairline()),
-        ],
-      ),
+      child: GroupHeading(text),
     );
   }
 }
@@ -320,12 +316,8 @@ class _Note extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(Tokens.space4),
-      child: Text(text, style: AppText.paragraph(Tokens.inkSoft)),
-    );
-  }
+  Widget build(BuildContext context) =>
+      Message(text, padding: const EdgeInsets.all(Tokens.space4));
 }
 
 /// Moving through the rows with the keys keeps the highlighted one in view,

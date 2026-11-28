@@ -113,7 +113,7 @@ A neutral near-black ground with warm-white inks and one garnet pop. Black and g
 - **Raised Slate** (#0E0E10): menus and popovers.
 - **Divider Slate** (#3A383B): the hairline inside menus. Decoration only.
 - **Ink** (#F6F4F5), **Soft Ink** (#CFC9CC), **Muted Ink** (#9A9296): main, secondary and meta text. Soft and Muted are Ink stepped toward the ground.
-- **Key Face** (#2C2B2E) and **Key Slab** (#222124, so the key's side shows against the ground): the two steps of a key cap. **Well Edge** (#151517): the top cut of the dropped search well.
+- **Key Face** (#2C2B2E) and **Key Slab** (#222124, so the key's side shows against the ground): the two steps of a key cap. **Well Edge** (#151517): the top cut of a sunk well.
 
 ### Named Rules
 **The Rare Color Rule.** Pop and red together cover a small part of any screen. If a screen needs a second place to look, it is wrong.
@@ -144,7 +144,7 @@ A 4-point rhythm (4, 8, 12, 16, 24). The top bar is 36, the Windows rail 48 with
 
 ## Elevation & Depth
 
-Flat by default. Depth comes from tone steps (ground, panel, raised), not shadow. The only shadow is under popovers and the toast (blur 24, drop 8, 55% black). The dropped search well is the one inset effect: a darker top edge and a faint lip.
+Flat by default. Depth comes from tone steps (ground, panel, raised), not shadow. The only shadow is under popovers and the toast (blur 24, drop 8, 55% black). The sunk well is the one inset effect: a darker top edge and a faint lip. The top search and every text field are wells, ringed in Ink on focus.
 
 ### Named Rules
 **The Flat At Rest Rule.** Nothing has a box, border or shadow at rest. State appears on hover, focus or selection only.

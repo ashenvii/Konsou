@@ -3,14 +3,9 @@ import 'package:flutter/widgets.dart';
 import '../design/tokens.dart';
 import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
-import 'countdown.dart';
-import 'countdown_builder.dart';
-import 'focus_ring.dart';
 import 'hold_fill.dart';
 import 'hold_row.dart';
 import 'hover_tip.dart';
-import 'motion.dart';
-import 'raised_key.dart';
 
 /// The trash key: hold it for [holdTime] to remove. Its bin is quiet at rest
 /// and red under the pointer, on focus and while held; the hold rises red
@@ -34,53 +29,24 @@ class RemoveKey extends StatefulWidget {
   State<RemoveKey> createState() => _RemoveKeyState();
 }
 
-class _RemoveKeyState extends State<RemoveKey>
-    with SingleTickerProviderStateMixin {
-  late final Countdown _hold = Countdown(onDone: () => widget.onDone());
-  late final AnimationController _shake = AnimationController(
-    vsync: this,
-    duration: Tokens.motionQuick,
-  );
-  final _reveal = _Signal();
-  var _hovered = false;
-  var _focused = false;
+class _RemoveKeyState extends State<RemoveKey> with HoldPress {
   var _tapped = false;
 
-  void _start() {
-    setState(() => _tapped = false);
-    _hold.start(widget.holdTime);
-  }
-
-  void _stop() {
-    final early = _hold.running;
-    _hold.cancel();
-    if (!early) return;
-    // let go before the hold was done: show how it works
-    setState(() => _tapped = true);
-    _reveal.fire();
-    if (chooseMotionDuration(context, Tokens.motionQuick) > Duration.zero) {
-      _shake.forward(from: 0);
-    }
-  }
-
-  KeyEventResult _key(FocusNode node, KeyEvent event) =>
-      holdOnKeys(event, start: _start, stop: _stop);
+  @override
+  Duration get holdTime => widget.holdTime;
 
   @override
-  void dispose() {
-    _hold.dispose();
-    _shake.dispose();
-    _reveal.dispose();
-    super.dispose();
+  void holdDone() => widget.onDone();
+
+  @override
+  void startHold() {
+    setState(() => _tapped = false);
+    super.startHold();
   }
 
-  // two small swings either way, settling at rest
-  static double _swing(double t) {
-    const swings = [0.0, -2.0, 2.0, -1.0, 0.0];
-    final at = t * (swings.length - 1);
-    final i = at.floor().clamp(0, swings.length - 2);
-    return swings[i] + (swings[i + 1] - swings[i]) * (at - i);
-  }
+  // let go before the hold was done: show how it works
+  @override
+  void letGoEarly() => setState(() => _tapped = true);
 
   @override
   Widget build(BuildContext context) {
@@ -90,61 +56,36 @@ class _RemoveKeyState extends State<RemoveKey>
       onLongPress: widget.onDone,
       child: HoverTip(
         label: _tapped ? holdToRemoveLabel : widget.words,
-        reveal: _reveal,
+        reveal: early,
         child: Focus(
-          onKeyEvent: _key,
-          onFocusChange: (focused) {
-            setState(() => _focused = focused);
-            if (!focused) _hold.cancel();
-          },
+          onKeyEvent: holdKey,
+          onFocusChange: focusChanged,
           child: MouseRegion(
             cursor: SystemMouseCursors.click,
-            onEnter: (_) => setState(() => _hovered = true),
+            onEnter: (_) => setState(() => hovered = true),
             onExit: (_) => setState(() {
-              _hovered = false;
+              hovered = false;
               _tapped = false;
             }),
             child: Listener(
               behavior: HitTestBehavior.opaque,
-              onPointerDown: (event) => holdOnPointer(event, _start),
-              onPointerUp: (_) => _stop(),
-              onPointerCancel: (_) => _hold.cancel(),
-              child: AnimatedBuilder(
-                animation: _shake,
-                builder: (context, child) => Transform.translate(
-                  offset: Offset(_swing(_shake.value), 0),
-                  child: child,
-                ),
-                child: CountdownBuilder(
-                  countdown: _hold,
-                  builder: (context, share, running) {
-                    // empty until held, full when the hold is done
-                    final fill = _hold.started ? 1 - share : 0.0;
-                    final red = running || _hovered || _focused;
-                    return FocusRing(
-                      on: _focused,
-                      corners: Tokens.keyCorners,
-                      child: RaisedKey(
-                        lit: _hovered,
-                        sunk: running,
-                        child: SizedBox.square(
-                          dimension: Tokens.controlHeight,
-                          child: Stack(
-                            children: [
-                              HoldFill(share: fill),
-                              Center(
-                                child: AppIcon(
-                                  AppIcons.bin,
-                                  size: Tokens.iconSize,
-                                  color: red ? Tokens.red : Tokens.inkMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+              onPointerDown: holdPointer,
+              onPointerUp: (_) => stopHold(),
+              onPointerCancel: (_) => hold.cancel(),
+              child: HoldKey(
+                press: this,
+                lit: hovered,
+                face: (running) => SizedBox.square(
+                  dimension: Tokens.controlHeight,
+                  child: Center(
+                    child: AppIcon(
+                      AppIcons.bin,
+                      size: Tokens.iconSize,
+                      color: running || hovered || focused
+                          ? Tokens.red
+                          : Tokens.inkMuted,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -153,9 +94,4 @@ class _RemoveKeyState extends State<RemoveKey>
       ),
     );
   }
-}
-
-/// Fires [RemoveKey]'s tip open after a tap.
-class _Signal extends ChangeNotifier {
-  void fire() => notifyListeners();
 }

@@ -36,6 +36,23 @@ final _rules = <String, (RegExp, Set<String>)>{
     RegExp(r'Tokens\.dimAlpha'),
     {'lib/components/page_dim.dart'},
   ),
+  'a hand-built group heading, use GroupHeading': (
+    RegExp(
+      r'\bText\([^;]*?\),\s*const SizedBox\(width: Tokens\.space3\),\s*const Expanded\(child: Hairline\(\)\)',
+    ),
+    {'lib/components/group_heading.dart'},
+  ),
+  'a text field outside a well, put FieldText in a SunkWell': (
+    RegExp(r'\bFieldText\('),
+    {
+      'lib/components/field_text.dart',
+      'lib/components/find_field.dart',
+      'lib/components/notes_field.dart',
+      'lib/screens/detail/episode_count.dart',
+      // the panel's own top field spans its width; it is not a boxed field
+      'lib/app/quick_search_layer.dart',
+    },
+  ),
   'a font weight, use bold on AppText': (RegExp(r'\bFontWeight\.'), _styles),
   'a text size or tracking, use size on AppText': (
     RegExp(r'\b(fontSize|letterSpacing):'),

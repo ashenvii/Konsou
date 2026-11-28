@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../../app/score_fill.dart';
 import '../../components/app_button.dart';
 import '../../components/icon_square_button.dart';
+import '../../components/message.dart';
 import '../../components/page_frame.dart';
 import '../../components/smooth_scroll.dart';
 import '../../design/tokens.dart';
@@ -14,8 +15,10 @@ import 'grid_layout.dart';
 import 'library_grid_card.dart';
 import 'lettered_rows.dart';
 import 'library_list_row.dart';
-import 'library_message.dart';
 import 'library_row_menu.dart';
+
+/// Where a message in place of the Library's rows sits.
+final libraryMessagePadding = PageFrame.content.copyWith(top: Tokens.space5);
 
 /// The Library's rows, or a message when there are none or none match.
 class LibraryRowList extends StatelessWidget {
@@ -69,14 +72,16 @@ class LibraryRowList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (libraryIsEmpty) {
-      return LibraryMessage(
+      return Message(
         'Your library is empty.',
+        padding: libraryMessagePadding,
         action: AppButton(label: 'Go to Discover', onPressed: onDiscover),
       );
     }
     if (rows.isEmpty) {
-      return LibraryMessage(
+      return Message(
         finding ? 'Nothing matches that.' : 'Nothing here.',
+        padding: libraryMessagePadding,
       );
     }
 

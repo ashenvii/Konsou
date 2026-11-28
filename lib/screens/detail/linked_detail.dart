@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/detail_providers.dart';
+import '../../components/message.dart';
 import '../../components/page_frame.dart';
 import '../../components/skeleton_lines.dart';
 import '../../components/text_action.dart';
@@ -239,19 +240,14 @@ class _Notice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Message(
+      text,
       padding: inset
           ? PageFrame.content.copyWith(top: Tokens.space4, bottom: 0)
           : const EdgeInsets.only(bottom: Tokens.space5),
-      child: Row(
-        children: [
-          Flexible(child: Text(text, style: AppText.label(Tokens.inkSoft))),
-          if (onRetry != null) ...[
-            const SizedBox(width: Tokens.space2),
-            TextAction(label: 'Retry', onPressed: onRetry),
-          ],
-        ],
-      ),
+      action: onRetry == null
+          ? null
+          : TextAction(label: 'Retry', onPressed: onRetry),
     );
   }
 }
