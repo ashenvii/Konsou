@@ -10,7 +10,7 @@ import '../components/page_frame.dart';
 import '../components/page_title.dart';
 import '../components/status_mark.dart';
 import 'card_pieces_section.dart';
-import 'detail_section.dart';
+import 'detail_parts_section.dart';
 import 'gallery_panel.dart';
 import 'mal_trouble_section.dart';
 import 'motion_section.dart';
@@ -23,6 +23,7 @@ import '../icons/app_icons.dart';
 import '../icons/score_star.dart';
 import '../shell/app_rail.dart';
 
+/// The component gallery screen.
 class GalleryScreen extends StatefulWidget {
   const GalleryScreen({super.key});
 
@@ -162,7 +163,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
               'for a title not aired yet; the last line is as the strip card has it.',
             ),
             const _Section('Detail page'),
-            const DetailSection(),
+            const DetailPartsSection(),
             const _Section('Icons'),
             const _Icons(),
             const SizedBox(height: Tokens.space3),

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 part 'record_database.g.dart';
 
+/// record.db: the user's list, the file sync keeps.
 @DriftDatabase(include: {'record.drift'})
 class RecordDatabase extends _$RecordDatabase {
   RecordDatabase(super.executor);

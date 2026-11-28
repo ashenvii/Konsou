@@ -2,6 +2,7 @@ import 'package:flutter/painting.dart';
 
 import 'tokens.dart';
 
+/// The text styles, built from the tokens.
 abstract final class AppText {
   /// How far a style's capitals sit above the middle of their line box, as a
   /// share of the font size. Measured from rendered capitals at 16 px:

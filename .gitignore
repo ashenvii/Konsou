@@ -77,3 +77,6 @@ windows/runner/RC??????
 
 # rendered screen images for looking at on a phone
 shots/
+
+# written by tool/code_map.dart on every check
+CODE_MAP.md

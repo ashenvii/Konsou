@@ -1,5 +1,6 @@
 import 'icon_def.dart';
 
+/// Every icon the app draws.
 abstract final class AppIcons {
   static const nekomimi = IconDef(
     columns: 40,

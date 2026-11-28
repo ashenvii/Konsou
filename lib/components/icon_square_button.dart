@@ -6,6 +6,7 @@ import '../icons/icon_def.dart';
 import 'pressable.dart';
 import 'raised_key.dart';
 
+/// A square icon button with a spoken label and a selected look.
 class IconSquareButton extends StatelessWidget {
   const IconSquareButton({
     super.key,

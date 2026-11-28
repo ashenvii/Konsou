@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 
 import '../design/tokens.dart';
 
+/// Puts a popover under its anchor, else above, else as low as fits.
 Offset placePopover({
   required Rect anchor,
   required Size child,
@@ -71,6 +72,7 @@ final Placer placeBesideCover = _beside((anchor, child, area) {
       : first;
 });
 
+/// Places a popover; [placePopover] is the default.
 typedef Placer = Offset Function({
   required Rect anchor,
   required Size child,

@@ -10,6 +10,7 @@ import '../../components/motion.dart';
 import '../../design/tokens.dart';
 import '../../icons/app_icons.dart';
 
+/// The Library's Find field, wired to the find choice.
 class LibraryFind extends ConsumerStatefulWidget {
   const LibraryFind({super.key});
 

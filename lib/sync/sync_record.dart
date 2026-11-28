@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+/// A database row as column name to value.
 typedef Row = Map<String, Object?>;
 
 /// The format number written into `record.json`. A file with a higher one
@@ -42,7 +43,9 @@ const entryTableColumns = [
 /// An entry in the file also carries its provider references, and its name
 /// while it has no MAL page (a name from MAL never goes to Drive).
 const entryColumns = [...entryTableColumns, 'name', 'references'];
+/// The entry_reference columns sync carries.
 const referenceColumns = ['provider', 'provider_id'];
+/// The completion_log columns sync carries.
 const completionColumns = [
   'entry_id',
   'watch_number',
@@ -51,6 +54,7 @@ const completionColumns = [
   'minutes_per_episode',
   'is_estimated',
 ];
+/// The alert columns sync carries.
 const alertColumns = [
   'entry_id',
   'related_provider',
@@ -60,9 +64,13 @@ const alertColumns = [
   'dismissed',
   'created_at',
 ];
+/// The deletion columns sync carries.
 const deletionColumns = ['entry_id', 'deleted_at'];
+/// The match decline columns sync carries.
 const declineColumns = ['entry_id', 'provider', 'provider_id', 'declined_at'];
+/// The entry alias columns sync carries.
 const aliasColumns = ['alias_id', 'entry_id'];
+/// The setting columns sync carries.
 const settingColumns = ['key', 'value', 'updated_at'];
 
 /// `record.json` came from a newer Konsou, so this one cannot read it.
@@ -170,6 +178,7 @@ class SyncRecord {
   }
 }
 
+/// [row] with only [columns], in that order.
 Row orderColumns(Map<String, Object?> row, List<String> columns) => {
   for (final column in columns) column: row[column],
 };

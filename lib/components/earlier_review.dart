@@ -13,6 +13,7 @@ import 'app_menu.dart';
 import 'menu_switcher.dart';
 import 'text_action.dart';
 
+/// Every word the earlier titles review shows, passed in from the app.
 class EarlierReviewWords {
   const EarlierReviewWords({
     required this.heading,
@@ -48,6 +49,7 @@ class EarlierReviewWords {
 
 const _bulkFrom = 4;
 
+/// Lists earlier titles to mark as completed after a finish.
 class EarlierReview extends StatefulWidget {
   const EarlierReview({
     super.key,

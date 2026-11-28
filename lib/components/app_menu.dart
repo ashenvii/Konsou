@@ -13,6 +13,7 @@ import 'key_cap.dart';
 import 'motion.dart';
 import 'pressable.dart';
 
+/// One row of an [AppMenu]: label, action, shortcut and look.
 class MenuEntry {
   const MenuEntry({
     required this.label,
@@ -66,6 +67,7 @@ class MenuEntry {
   }
 }
 
+/// The floating menu of [MenuEntry] rows, with hold to confirm rows.
 class AppMenu extends StatelessWidget {
   const AppMenu({super.key, required this.entries, this.footnote});
 

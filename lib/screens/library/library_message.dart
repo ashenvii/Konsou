@@ -4,6 +4,7 @@ import '../../components/page_frame.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 
+/// A message in place of rows, with an optional action.
 class LibraryMessage extends StatelessWidget {
   const LibraryMessage(this.text, {super.key, this.action});
 

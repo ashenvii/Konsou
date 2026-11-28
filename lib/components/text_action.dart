@@ -5,6 +5,7 @@ import '../design/tokens.dart';
 import 'hover_mark.dart';
 import 'pressable.dart';
 
+/// A button that is only text, optionally quiet.
 class TextAction extends StatelessWidget {
   const TextAction({
     super.key,

@@ -13,10 +13,13 @@ import 'toast_host.dart';
 
 part 'library_providers.g.dart';
 
+/// How long the Library waits after a background save before it reloads.
 const libraryReloadGap = Duration(seconds: 10);
 
+/// The shorter wait after data a screen asked for, such as a score on screen.
 const libraryScreenReloadGap = Duration(milliseconds: 1500);
 
+/// The Library's rows, reloaded at most once per gap after data changes.
 @riverpod
 Future<List<LibraryRow>> libraryRows(Ref ref) async {
   final services = ref.watch(servicesProvider);
@@ -39,6 +42,7 @@ Future<List<LibraryRow>> libraryRows(Ref ref) async {
   return loadLibraryRows(databases, await readTitleLanguage(databases.record));
 }
 
+/// The shared [EntryEdits], telling sync about each change.
 @Riverpod(keepAlive: true)
 EntryEdits entryEdits(Ref ref) {
   final services = ref.watch(servicesProvider);
@@ -48,6 +52,7 @@ EntryEdits entryEdits(Ref ref) {
   );
 }
 
+/// The shared [EntryActions], wired to the toast host.
 @Riverpod(keepAlive: true)
 EntryActions entryActions(Ref ref) {
   final host = ref.watch(toastHostProvider.notifier);
@@ -60,6 +65,7 @@ EntryActions entryActions(Ref ref) {
   );
 }
 
+/// The status tab the Library shows.
 @Riverpod(keepAlive: true)
 class LibraryTabChoice extends _$LibraryTabChoice {
   @override
@@ -72,6 +78,7 @@ class LibraryTabChoice extends _$LibraryTabChoice {
   }
 }
 
+/// Rows an edit moved out of the tab, kept in view until the tab changes.
 @riverpod
 class LibraryKept extends _$LibraryKept {
   @override
@@ -80,6 +87,7 @@ class LibraryKept extends _$LibraryKept {
   void keep(String entryId) => state = {...state, entryId};
 }
 
+/// The Find field's text, or null while Find is closed.
 @riverpod
 class LibraryFindChoice extends _$LibraryFindChoice {
   @override
@@ -92,6 +100,7 @@ class LibraryFindChoice extends _$LibraryFindChoice {
   void close() => state = null;
 }
 
+/// The title index over the user's entries, rebuilt when the rows change.
 @riverpod
 Future<EntrySearch> entrySearch(Ref ref) async {
   ref.watch(libraryRowsProvider);
@@ -111,6 +120,7 @@ Future<EntrySearch> readEntrySearch(Ref ref) async {
   }
 }
 
+/// The entry ids Find matches, or null when Find is empty.
 @riverpod
 Future<Set<String>?> libraryFindMatches(Ref ref) async {
   final query = ref.watch(libraryFindChoiceProvider)?.trim() ?? '';
@@ -119,6 +129,7 @@ Future<Set<String>?> libraryFindMatches(Ref ref) async {
   return search.findEntries(query).toSet();
 }
 
+/// The entry the pointer is over, for the keys that act on a row.
 @Riverpod(keepAlive: true)
 class LibraryHoveredRow extends _$LibraryHoveredRow {
   @override
@@ -131,6 +142,7 @@ class LibraryHoveredRow extends _$LibraryHoveredRow {
   }
 }
 
+/// The letter the A to Z strip last jumped to; the count makes a repeat fire.
 @Riverpod(keepAlive: true)
 class LibraryLetterJump extends _$LibraryLetterJump {
   @override
@@ -142,6 +154,7 @@ class LibraryLetterJump extends _$LibraryLetterJump {
 
 const _sortKey = 'library.sort';
 
+/// The Library's sort from the menu, saved between runs.
 @Riverpod(keepAlive: true)
 class LibrarySortChoice extends _$LibrarySortChoice {
   @override
@@ -189,6 +202,7 @@ class LibraryColumnSortChoice extends _$LibraryColumnSortChoice {
 
 const _layoutKey = 'library.layout';
 
+/// Grid or list, saved between runs.
 @Riverpod(keepAlive: true)
 class LibraryLayoutChoice extends _$LibraryLayoutChoice {
   @override

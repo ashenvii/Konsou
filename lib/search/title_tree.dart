@@ -1,5 +1,6 @@
 import 'title_words.dart';
 
+/// A search hit: its key, its typos and how many words matched.
 class TitleHit<K> {
   TitleHit(this.key, {required this.typos, required this.matchedWords});
 

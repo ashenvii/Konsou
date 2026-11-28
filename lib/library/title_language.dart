@@ -12,6 +12,7 @@ enum TitleLanguage {
   };
 }
 
+/// A title's names in the order the language wants, blanks and repeats dropped.
 List<String> orderTitles(
   TitleLanguage language, {
   required String? romaji,

@@ -8,6 +8,7 @@ import 'close_on_escape.dart';
 import 'field_text.dart';
 import 'search_well.dart';
 
+/// The small Find text field with its close key.
 class FindField extends StatefulWidget {
   const FindField({
     super.key,

@@ -10,6 +10,7 @@ import 'record_database.dart';
 int pickEditTime(int nowMilliseconds, int newestSeenAt) =>
     max(nowMilliseconds, newestSeenAt + 1);
 
+/// The time to save an edit with, after every edit this device has seen.
 Future<int> readEditTime(RecordDatabase record, DateTime now) async {
   final device = await readDevice(record);
   return pickEditTime(now.millisecondsSinceEpoch, device.newestSeenAt);

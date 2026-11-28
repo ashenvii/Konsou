@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
 
+/// One shared clock, so every skeleton sweeps in step.
 class SkeletonClock extends ChangeNotifier {
   SkeletonClock._();
 
@@ -45,6 +46,7 @@ class SkeletonClock extends ChangeNotifier {
   }
 }
 
+/// A placeholder block that sweeps while content loads.
 class Skeleton extends StatelessWidget {
   const Skeleton({super.key, this.width, this.height});
 

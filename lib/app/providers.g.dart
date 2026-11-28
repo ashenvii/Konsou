@@ -8,13 +8,17 @@ part of 'providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// The app's [Services]; main overrides it with the real ones.
 
 @ProviderFor(services)
 final servicesProvider = ServicesProvider._();
 
+/// The app's [Services]; main overrides it with the real ones.
+
 final class ServicesProvider
     extends $FunctionalProvider<Services, Services, Services>
     with $Provider<Services> {
+  /// The app's [Services]; main overrides it with the real ones.
   ServicesProvider._()
     : super(
         from: null,
@@ -104,12 +108,17 @@ final class OpenLinkProvider
 
 String _$openLinkHash() => r'5e394f335dccc48a652b2837620c8e49bd4906bb';
 
+/// The cover store, null when there is none.
+
 @ProviderFor(coverStore)
 final coverStoreProvider = CoverStoreProvider._();
+
+/// The cover store, null when there is none.
 
 final class CoverStoreProvider
     extends $FunctionalProvider<CoverStore?, CoverStore?, CoverStore?>
     with $Provider<CoverStore?> {
+  /// The cover store, null when there is none.
   CoverStoreProvider._()
     : super(
         from: null,
@@ -145,12 +154,17 @@ final class CoverStoreProvider
 
 String _$coverStoreHash() => r'23429bac3b1807ecb78efaeef448c14e9d28e935';
 
+/// The MAL id of each cover as it is saved.
+
 @ProviderFor(coverSaved)
 final coverSavedProvider = CoverSavedProvider._();
+
+/// The MAL id of each cover as it is saved.
 
 final class CoverSavedProvider
     extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
     with $FutureModifier<int>, $StreamProvider<int> {
+  /// The MAL id of each cover as it is saved.
   CoverSavedProvider._()
     : super(
         from: null,
@@ -178,11 +192,15 @@ final class CoverSavedProvider
 
 String _$coverSavedHash() => r'c327a734ca2863986a60f0b3390a385cb5cb8b3d';
 
+/// The covers on disk by MAL id and size, growing as new ones are saved.
+
 @ProviderFor(KeptCovers)
 final keptCoversProvider = KeptCoversProvider._();
 
+/// The covers on disk by MAL id and size, growing as new ones are saved.
 final class KeptCoversProvider
     extends $AsyncNotifierProvider<KeptCovers, Map<(int, CoverSize), File>> {
+  /// The covers on disk by MAL id and size, growing as new ones are saved.
   KeptCoversProvider._()
     : super(
         from: null,
@@ -203,6 +221,8 @@ final class KeptCoversProvider
 }
 
 String _$keptCoversHash() => r'ad7bac2b0120ec5c098da6cc44f413e2ec9288a9';
+
+/// The covers on disk by MAL id and size, growing as new ones are saved.
 
 abstract class _$KeptCovers
     extends $AsyncNotifier<Map<(int, CoverSize), File>> {
@@ -231,12 +251,17 @@ abstract class _$KeptCovers
   }
 }
 
+/// One cover file, read from disk or fetched in [lane].
+
 @ProviderFor(coverFile)
 final coverFileProvider = CoverFileFamily._();
+
+/// One cover file, read from disk or fetched in [lane].
 
 final class CoverFileProvider
     extends $FunctionalProvider<AsyncValue<File?>, File?, FutureOr<File?>>
     with $FutureModifier<File?>, $FutureProvider<File?> {
+  /// One cover file, read from disk or fetched in [lane].
   CoverFileProvider._({
     required CoverFileFamily super.from,
     required (int, CoverSize, {String? pictureUrl, Lane lane}) super.argument,
@@ -289,6 +314,8 @@ final class CoverFileProvider
 
 String _$coverFileHash() => r'c8f1437c78cd6f1328e6c6cc7cc33c7f6f68280f';
 
+/// One cover file, read from disk or fetched in [lane].
+
 final class CoverFileFamily extends $Family
     with
         $FunctionalFamilyOverride<
@@ -303,6 +330,8 @@ final class CoverFileFamily extends $Family
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
+
+  /// One cover file, read from disk or fetched in [lane].
 
   CoverFileProvider call(
     int malId,
@@ -396,12 +425,17 @@ final class TitlePictureFamily extends $Family
   String toString() => r'titlePictureProvider';
 }
 
+/// Fetches a title's short details while its row is on screen.
+
 @ProviderFor(detailOnScreen)
 final detailOnScreenProvider = DetailOnScreenFamily._();
+
+/// Fetches a title's short details while its row is on screen.
 
 final class DetailOnScreenProvider
     extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
     with $FutureModifier<void>, $FutureProvider<void> {
+  /// Fetches a title's short details while its row is on screen.
   DetailOnScreenProvider._({
     required DetailOnScreenFamily super.from,
     required (int, {Lane lane}) super.argument,
@@ -447,6 +481,8 @@ final class DetailOnScreenProvider
 
 String _$detailOnScreenHash() => r'8a83f5cc75b22cf8803adb0726bdd1abcc95f218';
 
+/// Fetches a title's short details while its row is on screen.
+
 final class DetailOnScreenFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<void>, (int, {Lane lane})> {
   DetailOnScreenFamily._()
@@ -457,6 +493,8 @@ final class DetailOnScreenFamily extends $Family
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
+
+  /// Fetches a title's short details while its row is on screen.
 
   DetailOnScreenProvider call(int malId, {Lane lane = Lane.screen}) =>
       DetailOnScreenProvider._(argument: (malId, lane: lane), from: this);

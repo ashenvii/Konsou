@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 
 import 'countdown.dart';
 
+/// Rebuilds as a [Countdown] runs, with the share left.
 class CountdownBuilder extends StatefulWidget {
   const CountdownBuilder({
     super.key,

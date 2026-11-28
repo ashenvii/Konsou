@@ -1,5 +1,6 @@
 import 'package:flutter/painting.dart';
 
+/// Every color, size, space and duration the app uses.
 abstract final class Tokens {
   // colors
   // black and garnet, picked by the owner 2026-11-22 from a live rig. Pop is

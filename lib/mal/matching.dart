@@ -13,8 +13,10 @@ import 'request_gate.dart';
 import 'search_request.dart';
 import 'trickle.dart';
 
+/// How matching an entry to a MAL page went.
 enum MatchOutcome { linked, suggested, nothing, failed }
 
+/// How many pages matching offers when it is not sure.
 const maxSuggestions = 5;
 
 /// How long until an entry Konsou could not link is searched again; the same

@@ -5,6 +5,7 @@ import '../design/tokens.dart';
 import '../icons/score_star.dart';
 import 'pressable.dart';
 
+/// Ten stars to rate 1 to 10, with a clear action.
 class StarRating extends StatefulWidget {
   const StarRating({
     super.key,

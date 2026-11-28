@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import '../data/databases.dart';
 import '../library/title_language.dart';
 
+/// A MAL page as the page picker shows it.
 class ProviderPage {
   const ProviderPage({
     required this.malId,
@@ -23,6 +24,7 @@ class ProviderPage {
   final String? coverUrl;
 }
 
+/// Reads one MAL search answer into a [ProviderPage].
 ProviderPage parseProviderPage(
   Map<String, dynamic> page,
   TitleLanguage language,
@@ -48,6 +50,7 @@ ProviderPage parseProviderPage(
   );
 }
 
+/// The MAL pages saved as suggestions for a not linked entry, in order.
 Future<List<ProviderPage>> readSuggestions(
   Databases databases,
   String entryId,

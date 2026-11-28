@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../data/databases.dart';
 import '../library/entry_status.dart';
 
+/// One finished watch of an entry: which watch and when.
 class FinishedWatch {
   const FinishedWatch({
     required this.watchNumber,
@@ -16,6 +17,7 @@ class FinishedWatch {
   final bool isEstimated;
 }
 
+/// The user's entry as a title page shows it.
 class TitleEntry {
   const TitleEntry({
     required this.entryId,
@@ -44,6 +46,7 @@ class TitleEntry {
   bool get isNotLinked => malId == null;
 }
 
+/// An entry by id, or null when it is gone.
 Future<TitleEntry?> readEntry(Databases databases, String entryId) async {
   final record = databases.record;
   final entry = await (record.select(
@@ -80,7 +83,8 @@ Future<TitleEntry?> readEntry(Databases databases, String entryId) async {
   );
 }
 
-// two entries can share one page: the one the user opened, else the newest
+/// The entry a MAL page shows. Two entries can share one page: the one the user
+/// opened wins, else the newest.
 Future<TitleEntry?> readEntryOnPage(
   Databases databases,
   int malId, {

@@ -11,7 +11,7 @@ import 'package:konsou/components/mal_score_line.dart';
 import 'package:konsou/components/skeleton.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/detail/watch_order.dart';
-import 'package:konsou/gallery/detail_section.dart';
+import 'package:konsou/gallery/detail_parts_section.dart';
 import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/screens/detail/recommendations_part.dart';
 import 'package:konsou/screens/detail/strip_card.dart';

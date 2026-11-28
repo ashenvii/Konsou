@@ -10,6 +10,7 @@ import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
 import '../icons/icon_def.dart';
 
+/// A page the rail opens: route, label and icon.
 class RailDestination {
   const RailDestination(this.path, this.label, this.icon);
 
@@ -18,24 +19,32 @@ class RailDestination {
   final IconDef icon;
 }
 
+/// Route of the Library.
 const libraryPath = '/';
+/// Route of Watching.
 const watchingPath = '/watching';
+/// Route of Discover.
 const discoverPath = '/discover';
+/// Route of Schedule.
 const schedulePath = '/schedule';
+/// Route of Settings.
 const settingsPath = '/settings';
 
+/// The rail's pages, top to bottom.
 const railDestinations = [
   RailDestination(libraryPath, 'Library', AppIcons.library),
   RailDestination(watchingPath, 'Watching', AppIcons.watching),
   RailDestination(discoverPath, 'Discover', AppIcons.discover),
   RailDestination(schedulePath, 'Schedule', AppIcons.schedule),
 ];
+/// Settings, at the foot of the rail.
 const settingsDestination = RailDestination(
   settingsPath,
   'Settings',
   AppIcons.settings,
 );
 
+/// The left rail of page icons.
 class AppRail extends StatelessWidget {
   const AppRail({super.key, required this.location, required this.onSelect});
 

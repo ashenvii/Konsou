@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 
 import '../design/tokens.dart';
 
+/// Channel to the Windows runner about the maximize button.
 const maximizeButtonChannel = MethodChannel('konsou/window');
 
 /// What Windows says the pointer is doing to the maximize button.
@@ -19,6 +20,7 @@ Future<void> linkMaximizeButton() =>
       'resizeEdge': Tokens.resizeEdge,
     });
 
+/// Calls [onChange] when the maximize button's state changes; null stops.
 void listenToMaximizeButton(ValueChanged<MaximizeButtonState>? onChange) {
   maximizeButtonChannel.setMethodCallHandler(
     onChange == null

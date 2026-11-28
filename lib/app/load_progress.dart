@@ -1,7 +1,9 @@
 import '../data/databases.dart';
 
+/// The background job the wordmark shows progress for.
 enum LoadJob { details, covers }
 
+/// Done and total of one background job.
 typedef LoadCount = ({int done, int total});
 
 /// What the background work is loading, for the wordmark. Nothing loading is

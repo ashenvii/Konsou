@@ -11,6 +11,7 @@ String _sortLabel(LibrarySort sort) => switch (sort) {
   LibrarySort.title => 'A to Z',
 };
 
+/// The sort menu button.
 class LibrarySortButton extends StatelessWidget {
   const LibrarySortButton({
     super.key,

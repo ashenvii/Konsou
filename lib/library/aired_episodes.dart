@@ -1,8 +1,8 @@
 const _japanOffset = Duration(hours: 9);
 
-// null when it cannot be told; only a tv series still airing is counted.
-// a title not aired yet has 0 out, or null with [zeroBeforeAiring] off, for a
-// count of what can be watched yet
+/// Episodes out so far, or null when it cannot be told; only a tv series still
+/// airing is counted. A title not aired yet has 0 out, or null with
+/// [zeroBeforeAiring] off, for a count of what can be watched yet.
 int? countAiredEpisodes({
   required String? airingStatus,
   required String? mediaType,

@@ -7,18 +7,21 @@ import '../data/details_database.dart';
 import '../data/record_database.dart';
 import 'request_gate.dart';
 
+/// The MAL fields a list row and the franchise scan need.
 const shortDetailFields =
     'id,title,main_picture,alternative_titles,start_date,end_date,nsfw,'
     'media_type,status,num_episodes,average_episode_duration,start_season,'
     'broadcast,mean,num_scoring_users,'
     'related_anime{media_type,status,start_date,num_episodes}';
 
+/// Every MAL field a title page shows.
 const fullDetailFields =
     '$shortDetailFields,synopsis,rank,popularity,num_list_users,'
     'genres,created_at,updated_at,source,rating,pictures,'
     'background,related_manga,recommendations,studios,statistics,videos,'
     'opening_themes,ending_themes';
 
+/// How a detail fetch went.
 enum FetchOutcome {
   fetched,
   gone,
@@ -28,6 +31,7 @@ enum FetchOutcome {
   bool get didFail => this == offline || this == failed;
 }
 
+/// How long a MAL page found gone waits before it is asked again.
 const goneRecheck = Duration(days: 30);
 
 /// The MAL pages found gone within the last [goneRecheck]; older ones are due
@@ -45,8 +49,10 @@ Future<Set<int>> readGonePages(RecordDatabase record, DateTime now) async {
   return {for (final row in rows) row.read<int>('provider_id')};
 }
 
+/// MAL airing statuses whose facts still change.
 const changingStatuses = {'currently_airing', 'not_yet_aired'};
 
+/// Sends one MAL detail request for [fields].
 Future<http.Response> getDetail(
   http.Client client, {
   required String clientId,
@@ -57,6 +63,7 @@ Future<http.Response> getDetail(
   headers: {'X-MAL-CLIENT-ID': clientId},
 );
 
+/// Fetches a title's details from MAL through the gate and saves them.
 class DetailRequest {
   DetailRequest({
     required this.clientId,

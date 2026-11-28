@@ -30,6 +30,7 @@ class NotesField extends StatefulWidget {
   State<NotesField> createState() => NotesFieldState();
 }
 
+/// The notes field's state; [flush] saves what is typed now.
 class NotesFieldState extends State<NotesField> {
   late final _controller = TextEditingController(text: widget.initial);
   late final Countdown _wait = Countdown(onDone: flush);

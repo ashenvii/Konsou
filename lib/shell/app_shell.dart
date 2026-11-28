@@ -24,6 +24,7 @@ const titleBarFill = BoxDecoration(
   ),
 );
 
+/// The window frame around every page: title bar, rail, page and overlays.
 class AppShell extends StatefulWidget {
   const AppShell({
     super.key,

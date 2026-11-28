@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 
 import 'countdown.dart';
 
+/// Opens after a short hover and closes after a grace time, so the pointer can
+/// cross onto a popover.
 class HoverDelays {
   HoverDelays({
     required VoidCallback onOpen,

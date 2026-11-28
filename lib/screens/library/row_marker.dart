@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/library_providers.dart';
 
+/// Marks a row as hovered and lets the menu key find the focused one.
 class RowMarker extends ConsumerWidget {
   const RowMarker({
     super.key,

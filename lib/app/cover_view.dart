@@ -5,6 +5,7 @@ import '../components/cover_image.dart';
 import '../covers/cover_size.dart';
 import 'providers.dart';
 
+/// A title's cover by MAL id, read from disk or fetched in [lane].
 class CoverView extends ConsumerWidget {
   const CoverView({
     super.key,

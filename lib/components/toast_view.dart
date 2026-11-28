@@ -6,6 +6,7 @@ import 'floating_panel.dart';
 import '../icons/app_icons.dart';
 import 'icon_square_button.dart';
 
+/// One toast's look: text, actions, footer and timer.
 class ToastView extends StatelessWidget {
   const ToastView({
     super.key,

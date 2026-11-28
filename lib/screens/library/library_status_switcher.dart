@@ -8,6 +8,7 @@ import '../../design/tokens.dart';
 import '../../library/count_format.dart';
 import '../../library/library_view.dart';
 
+/// A tab's name.
 String libraryTabLabel(LibraryTab tab) => switch (tab) {
   LibraryTab.all => 'All',
   LibraryTab.watching => 'Watching',
@@ -18,6 +19,7 @@ String libraryTabLabel(LibraryTab tab) => switch (tab) {
   LibraryTab.notInterested => 'Not interested',
 };
 
+/// The heading that switches the status tab, with counts.
 class LibraryStatusSwitcher extends StatelessWidget {
   const LibraryStatusSwitcher({
     super.key,

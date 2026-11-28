@@ -38,6 +38,7 @@ void log(String tag, String message) {
   sink.writeln('$time $tag $message');
 }
 
+/// Closes the log file.
 Future<void> closeLog() async {
   final sink = _sink;
   _sink = null;

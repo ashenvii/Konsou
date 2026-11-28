@@ -1,3 +1,4 @@
+/// A count with thousands commas.
 String formatCount(int count) {
   final digits = '$count';
   final out = StringBuffer();

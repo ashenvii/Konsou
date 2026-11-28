@@ -5,6 +5,7 @@ import '../../design/tokens.dart';
 import '../../icons/app_icons.dart';
 import '../../library/library_view.dart';
 
+/// The grid and list switch.
 class LibraryLayoutSwitch extends StatelessWidget {
   const LibraryLayoutSwitch({
     super.key,

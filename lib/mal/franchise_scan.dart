@@ -42,6 +42,7 @@ Duration getRecheckInterval({
 /// When a franchise was last looked at and how long until the next look.
 typedef _Check = ({DateTime from, Duration interval});
 
+/// Checks franchises for new related titles, timed by how long ago each ended.
 class FranchiseScan {
   FranchiseScan({
     required this.databases,

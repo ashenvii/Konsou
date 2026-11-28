@@ -7,7 +7,7 @@ import 'package:konsou/app/detail_providers.dart';
 import 'package:konsou/app/routes.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/detail/watch_order.dart';
-import 'package:konsou/gallery/detail_section.dart';
+import 'package:konsou/gallery/detail_parts_section.dart';
 
 import 'package:konsou/shell/window_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,7 +37,7 @@ void main() {
                   color: Tokens.ground,
                   child: Padding(
                     padding: EdgeInsets.all(Tokens.space5),
-                    child: DetailSection(),
+                    child: DetailPartsSection(),
                   ),
                 ),
               ),

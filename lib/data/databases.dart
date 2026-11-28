@@ -6,6 +6,7 @@ import 'package:sqlite3/sqlite3.dart';
 import 'details_database.dart';
 import 'record_database.dart';
 
+/// record.db and details.db, opened together.
 class Databases {
   Databases(this.record, this.details, {this.detailsRebuilt = false});
 

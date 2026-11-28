@@ -6,7 +6,7 @@ import 'package:konsou/components/entry_progress.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/detail/info_labels.dart';
 import 'package:konsou/detail/title_details.dart';
-import 'package:konsou/gallery/detail_section.dart';
+import 'package:konsou/gallery/detail_parts_section.dart';
 import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/library/row_labels.dart';
 import 'package:konsou/screens/detail/entry_controls.dart';

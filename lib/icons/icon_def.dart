@@ -1,7 +1,10 @@
+/// A point on an icon's grid.
 typedef GridPoint = (int, int);
 
+/// A line between two grid points.
 typedef GridLine = (GridPoint, GridPoint);
 
+/// An icon as shapes on a grid: fills, shades and lines.
 class IconDef {
   const IconDef({
     this.columns = 16,

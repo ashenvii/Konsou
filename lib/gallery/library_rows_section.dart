@@ -49,6 +49,7 @@ LibraryRow _row({
   seasonNumber: seasonNumber,
 );
 
+/// Sample Library rows the gallery draws with.
 final sampleRows = [
   _row(
     name: 'Sousou no Frieren',

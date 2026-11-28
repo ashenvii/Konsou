@@ -19,19 +19,25 @@ import 'merge_records.dart';
 import 'sync_errors.dart';
 import 'sync_record.dart';
 
+/// Name of the synced file in Drive's app folder.
 const recordFileName = 'record.json';
 
 /// The old app's Drive file. Read once when there is no `record.json` yet,
 /// never written.
 const oldListFileName = 'list.json';
 
+/// Wait after a change before it is synced.
 const changeDelay = Duration(seconds: 30);
+/// Longest Close waits for a last sync.
 const closeLimit = Duration(seconds: 3);
 
+/// Where sync stands.
 enum SyncPhase { off, syncing, synced, waiting, stopped }
 
+/// Why sync stopped.
 enum StopReason { updateKonsou, signInAgain }
 
+/// Sync's phase, last sync time and stop reason.
 class SyncStatus {
   const SyncStatus(this.phase, {this.lastSyncedAt, this.stopReason});
 

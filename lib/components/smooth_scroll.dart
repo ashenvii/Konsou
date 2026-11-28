@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
+/// A scroll controller whose wheel notches glide on a spring.
 class SmoothScrollController extends ScrollController {
   @override
   ScrollPosition createScrollPosition(
@@ -22,7 +23,7 @@ class SmoothScrollController extends ScrollController {
 // settles in about 0.4s, like chrome
 const _pull = 14.0;
 
-// how far one wheel notch goes, against the platform's own step
+/// How far one wheel notch goes, against the platform's own step.
 const wheelBoost = 1.4;
 
 class _GlidingPosition extends ScrollPositionWithSingleContext {
@@ -157,6 +158,7 @@ class _GlideActivity extends ScrollActivity {
   double get velocity => _speed();
 }
 
+/// Gives [builder] a [SmoothScrollController] and disposes of it.
 class SmoothScroll extends StatefulWidget {
   const SmoothScroll({super.key, required this.builder});
 

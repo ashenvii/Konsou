@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import 'hover_delays.dart';
 
+/// Gives a State the open and close delays of [HoverDelays].
 mixin HoverDelaysState<T extends StatefulWidget> on State<T> {
   late final hoverDelays = HoverDelays(
     onOpen: _open,

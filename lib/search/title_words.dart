@@ -31,6 +31,7 @@ List<String> foldWords(String title) {
   return folded.split(_notLetterOrDigit).where((w) => w.isNotEmpty).toList();
 }
 
+/// Whether two titles have the same words once folded.
 bool isSameTitle(String a, String b) {
   final words = foldWords(a).join(' ');
   return words.isNotEmpty && words == foldWords(b).join(' ');

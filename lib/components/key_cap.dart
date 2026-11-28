@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 
+/// Key caps for a shortcut such as Ctrl+K, one cap per key.
 class KeyCaps extends StatelessWidget {
   const KeyCaps(this.keys, {super.key});
 

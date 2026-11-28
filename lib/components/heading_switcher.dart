@@ -6,6 +6,7 @@ import 'app_menu.dart';
 import 'cap_centered_text.dart';
 import 'menu_switcher.dart';
 
+/// A page heading with its count that opens a menu to switch the view.
 class HeadingSwitcher extends StatelessWidget {
   const HeadingSwitcher({
     super.key,

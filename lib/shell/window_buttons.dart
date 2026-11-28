@@ -7,6 +7,7 @@ import '../icons/app_icon.dart';
 import '../icons/app_icons.dart';
 import '../icons/icon_def.dart';
 
+/// The window buttons' glyphs.
 enum WindowGlyph { minimize, maximize, restore, close }
 
 /// One of the three window buttons, drawn like every other app button: a

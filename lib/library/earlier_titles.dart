@@ -1,3 +1,4 @@
+/// An earlier title in an entry's watch order, offered in the review.
 class EarlierTitle {
   const EarlierTitle({
     required this.malId,

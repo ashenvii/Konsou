@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/detail/watch_order_words.dart';
-import 'package:konsou/gallery/detail_section.dart';
+import 'package:konsou/gallery/detail_parts_section.dart';
 
 void main() {
   test('the watch order summary counts the list and the episodes', () {

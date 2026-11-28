@@ -8,6 +8,7 @@ import '../mal/franchise_members.dart';
 
 const _skipped = {'completed', 'rewatching', 'not_interested'};
 
+/// The earlier titles in an entry's watch order, for the review after a finish.
 Future<List<EarlierTitle>> findEarlierTitles(
   Databases databases,
   String entryId,

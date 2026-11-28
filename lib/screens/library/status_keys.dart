@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 
+/// Keys 1 to 4, which set the four statuses.
 const digitKeys = [
   LogicalKeyboardKey.digit1,
   LogicalKeyboardKey.digit2,
@@ -7,6 +8,7 @@ const digitKeys = [
   LogicalKeyboardKey.digit4,
 ];
 
+/// Numpad 1 to 4, the same as [digitKeys].
 const numpadKeys = [
   LogicalKeyboardKey.numpad1,
   LogicalKeyboardKey.numpad2,

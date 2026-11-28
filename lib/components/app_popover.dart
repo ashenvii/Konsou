@@ -5,6 +5,7 @@ import 'popover_placement.dart';
 import 'fading_portal.dart';
 import 'presence.dart';
 
+/// Opens and closes a popover from its anchor or its panel.
 abstract interface class PopoverHandle {
   bool get isOpen;
 
@@ -18,11 +19,13 @@ abstract interface class PopoverHandle {
   void close();
 }
 
+/// Builds an anchor or a popover, given its handle.
 typedef PopoverBuilder = Widget Function(
   BuildContext context,
   PopoverHandle handle,
 );
 
+/// An anchor that opens a floating panel beside it, placed to fit the window.
 class AppPopover extends StatefulWidget {
   const AppPopover({
     super.key,

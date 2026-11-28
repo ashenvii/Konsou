@@ -8,11 +8,14 @@ part of 'toast_host.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Shows one toast at a time and runs its timer, undo, review and rating.
 
 @ProviderFor(ToastHost)
 final toastHostProvider = ToastHostProvider._();
 
+/// Shows one toast at a time and runs its timer, undo, review and rating.
 final class ToastHostProvider extends $NotifierProvider<ToastHost, ToastState> {
+  /// Shows one toast at a time and runs its timer, undo, review and rating.
   ToastHostProvider._()
     : super(
         from: null,
@@ -41,6 +44,8 @@ final class ToastHostProvider extends $NotifierProvider<ToastHost, ToastState> {
 }
 
 String _$toastHostHash() => r'eb2c41d8cb6854faee08abdb9c46b91c7bf69d2e';
+
+/// Shows one toast at a time and runs its timer, undo, review and rating.
 
 abstract class _$ToastHost extends $Notifier<ToastState> {
   ToastState build();

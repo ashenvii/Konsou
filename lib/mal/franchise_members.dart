@@ -2,6 +2,7 @@ import '../data/record_database.dart';
 import 'franchise_grouping.dart';
 import 'saved_titles.dart';
 
+/// A franchise's titles, with the saved facts they were grouped from.
 class FranchiseMembers {
   const FranchiseMembers(this.saved, this.places, this.members);
 
@@ -11,6 +12,7 @@ class FranchiseMembers {
   final List<FranchiseTitle> members;
 }
 
+/// The franchise a title is in, or null when it is in none.
 Future<FranchiseMembers?> readFranchiseMembers(
   RecordDatabase record,
   int malId,

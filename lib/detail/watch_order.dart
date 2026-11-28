@@ -11,6 +11,7 @@ import '../mal/detail_request.dart';
 import '../mal/franchise_grouping.dart';
 import '../mal/franchise_members.dart';
 
+/// One title in a watch order, story or extra.
 class WatchOrderRow extends StripTitle {
   const WatchOrderRow({
     required super.malId,
@@ -42,6 +43,7 @@ class WatchOrderRow extends StripTitle {
   }
 }
 
+/// A franchise's titles in watch order, with totals across them.
 class WatchOrder {
   const WatchOrder(this.rows);
 
@@ -55,6 +57,7 @@ class WatchOrder {
       rows.fold(0, (sum, row) => sum + (row.episodes ?? 0));
 }
 
+/// Builds the watch order of the franchise holding a title.
 Future<WatchOrder> loadWatchOrder(
   Databases databases,
   int malId,

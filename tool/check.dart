@@ -3,9 +3,10 @@
 //   dart run tool/check.dart
 // It runs all gates even when one fails, prints a summary, and exits with 1 if
 // any gate failed. `--fast` skips code generation, the analyzer and tests, for
-// working on the gates themselves.
+// working on the gates themselves. Every run also rewrites CODE_MAP.md.
 import 'dart:io';
 
+import 'code_map.dart' show codeMapPath, writeCodeMap;
 import 'duplicates.dart';
 import 'tokens_check.dart';
 
@@ -27,6 +28,7 @@ Future<void> main(List<String> args) async {
   }
   results.add(('tokens match tokens.md', _tokens()));
   results.add(('no duplicated code', _duplicates()));
+  results.add(('code map written, every public thing described', _codeMap()));
 
   stdout.writeln('\n--- check ---');
   for (final (name, ok) in results) {
@@ -59,6 +61,15 @@ bool _tokens() {
     File(_tokensDart).readAsStringSync(),
     md.readAsStringSync(),
   );
+  for (final p in problems) {
+    stdout.writeln('  $p');
+  }
+  return problems.isEmpty;
+}
+
+bool _codeMap() {
+  stdout.writeln('\n> $codeMapPath');
+  final problems = writeCodeMap();
   for (final p in problems) {
     stdout.writeln('  $p');
   }

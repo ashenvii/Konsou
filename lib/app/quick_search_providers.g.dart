@@ -8,12 +8,15 @@ part of 'quick_search_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Quick search's state and actions: open, type, page, move focus, open a row.
 
 @ProviderFor(QuickSearch)
 final quickSearchProvider = QuickSearchProvider._();
 
+/// Quick search's state and actions: open, type, page, move focus, open a row.
 final class QuickSearchProvider
     extends $NotifierProvider<QuickSearch, QuickState> {
+  /// Quick search's state and actions: open, type, page, move focus, open a row.
   QuickSearchProvider._()
     : super(
         from: null,
@@ -42,6 +45,8 @@ final class QuickSearchProvider
 }
 
 String _$quickSearchHash() => r'095d2b346f423e91d13e6087e4ed08bd1b204a55';
+
+/// Quick search's state and actions: open, type, page, move focus, open a row.
 
 abstract class _$QuickSearch extends $Notifier<QuickState> {
   QuickState build();

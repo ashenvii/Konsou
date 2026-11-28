@@ -8,6 +8,7 @@ import '../library/title_language.dart';
 import 'theme_song.dart';
 import '../library/count_format.dart';
 
+/// How many MAL users have a title in each status.
 class ListCounts {
   const ListCounts({
     required this.watching,
@@ -54,6 +55,7 @@ class LinkedTitle {
   final String? note;
 }
 
+/// Everything a title page shows about a title, read from details.db.
 class TitleDetails {
   const TitleDetails({
     required this.malId,
@@ -157,6 +159,8 @@ class TitleDetails {
       isStale(airingStatus: airingStatus, fetchedAt: fetchedAt, now: now);
 }
 
+/// Whether saved details are due a refetch: 3 days airing, 7 not aired, else
+/// 180.
 bool isStale({
   required String? airingStatus,
   required int fetchedAt,
@@ -171,6 +175,7 @@ bool isStale({
       maxAge;
 }
 
+/// A title's saved details, or null when none are saved.
 Future<TitleDetails?> readTitleDetails(
   Databases databases,
   int malId,
@@ -185,6 +190,7 @@ Future<TitleDetails?> readTitleDetails(
   return row == null ? null : parseTitleDetails(row, language);
 }
 
+/// Reads a details.db row into [TitleDetails].
 TitleDetails parseTitleDetails(Detail row, TitleLanguage language) {
   final json = jsonDecode(row.json) as Map<String, dynamic>;
   final alternative = _map(json['alternative_titles']);

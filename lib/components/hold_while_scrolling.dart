@@ -1,8 +1,8 @@
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
-// a value that changes mid-scroll waits for the scroll to end; only the
-// nearest scroll view counts, so a rail inside the list does not hold it
+/// Keeps the old value while the nearest scroll view moves, then shows the new
+/// one. Only the nearest counts, so a rail inside the list does not hold it.
 class HoldWhileScrolling<T> extends StatefulWidget {
   const HoldWhileScrolling({
     super.key,

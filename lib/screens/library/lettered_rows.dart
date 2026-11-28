@@ -15,6 +15,7 @@ import 'grid_layout.dart';
 
 const _stripGutter = LetteredRows.stripGutter;
 
+/// Library rows under letter headings, with the A to Z strip and its jumps.
 class LetteredRows extends ConsumerStatefulWidget {
   const LetteredRows({
     super.key,

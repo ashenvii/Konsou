@@ -20,6 +20,7 @@ import '../sync/google_sign_in.dart';
 import 'keys.dart';
 import 'load_progress.dart';
 
+/// Every long-lived service: databases, MAL, covers, sync and the scan.
 class Services {
   Services({
     required this.databases,

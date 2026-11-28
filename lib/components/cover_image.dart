@@ -6,6 +6,7 @@ import '../design/tokens.dart';
 import 'presence.dart';
 import 'skeleton.dart';
 
+/// A cover picture from a file, or a skeleton while it loads.
 class CoverImage extends StatelessWidget {
   const CoverImage({
     super.key,

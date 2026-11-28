@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:clock/clock.dart';
 import 'package:flutter/widgets.dart';
 
+/// A pausable timer that reports the share left and calls [onDone] at zero.
 class Countdown extends ChangeNotifier {
   Countdown({required this.onDone});
 

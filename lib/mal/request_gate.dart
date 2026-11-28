@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import '../net/backoff.dart';
 import '../net/log.dart';
 
+/// Wait between MAL requests.
 const requestGap = Duration(milliseconds: 500);
 
 /// How long the API gate waits on a request. MAL answers in well under a
@@ -35,15 +36,18 @@ enum MalTrouble {
   offline,
 }
 
+/// Thrown when a queued request is no longer wanted.
 class RequestCancelled implements Exception {
   const RequestCancelled();
 }
 
-// a screen shows its retry rather than wait minutes behind the trickle's backoff
+/// Thrown so a screen shows its retry instead of waiting minutes behind the
+/// trickle's backoff.
 class GateBackingOff implements Exception {
   const GateBackingOff();
 }
 
+/// Sends requests one at a time, spaced and timed out, backing off on trouble.
 class RequestGate {
   RequestGate({
     this.name = 'mal',

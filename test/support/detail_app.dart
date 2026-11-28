@@ -8,7 +8,7 @@ import 'package:konsou/detail/title_details.dart';
 import 'package:konsou/detail/title_entry.dart';
 import 'package:konsou/detail/recommended_titles.dart';
 import 'package:konsou/detail/watch_order.dart';
-import 'package:konsou/gallery/detail_section.dart';
+import 'package:konsou/gallery/detail_parts_section.dart';
 import 'package:konsou/library/entry_status.dart';
 import 'package:konsou/library/library_row.dart';
 import 'package:konsou/main.dart';

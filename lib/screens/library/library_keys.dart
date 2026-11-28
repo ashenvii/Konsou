@@ -10,6 +10,7 @@ import 'quick_panel.dart';
 import 'row_marker.dart';
 import 'status_keys.dart';
 
+/// The Library's keys: a row's menu, status 1 to 4, +1 and letter jumps.
 KeyEventResult handleLibraryKey(WidgetRef ref, KeyEvent event) {
   if (event is! KeyDownEvent) return KeyEventResult.ignored;
   final focusContext = FocusManager.instance.primaryFocus?.context;

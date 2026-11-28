@@ -8,12 +8,15 @@ part of 'detail_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// A title page's data, refetched from MAL when stale and reloaded on edits.
 
 @ProviderFor(DetailPage)
 final detailPageProvider = DetailPageFamily._();
 
+/// A title page's data, refetched from MAL when stale and reloaded on edits.
 final class DetailPageProvider
     extends $AsyncNotifierProvider<DetailPage, DetailPageData> {
+  /// A title page's data, refetched from MAL when stale and reloaded on edits.
   DetailPageProvider._({
     required DetailPageFamily super.from,
     required (int, {String? entryId}) super.argument,
@@ -52,6 +55,8 @@ final class DetailPageProvider
 
 String _$detailPageHash() => r'18739c8ea4e4e4912988549ecdc4f7d9ec598b82';
 
+/// A title page's data, refetched from MAL when stale and reloaded on edits.
+
 final class DetailPageFamily extends $Family
     with
         $ClassFamilyOverride<
@@ -70,12 +75,16 @@ final class DetailPageFamily extends $Family
         isAutoDispose: true,
       );
 
+  /// A title page's data, refetched from MAL when stale and reloaded on edits.
+
   DetailPageProvider call(int malId, {String? entryId}) =>
       DetailPageProvider._(argument: (malId, entryId: entryId), from: this);
 
   @override
   String toString() => r'detailPageProvider';
 }
+
+/// A title page's data, refetched from MAL when stale and reloaded on edits.
 
 abstract class _$DetailPage extends $AsyncNotifier<DetailPageData> {
   late final _$args = ref.$arg as (int, {String? entryId});
@@ -102,8 +111,12 @@ abstract class _$DetailPage extends $AsyncNotifier<DetailPageData> {
   }
 }
 
+/// The watch order of the franchise a title belongs to.
+
 @ProviderFor(watchOrder)
 final watchOrderProvider = WatchOrderFamily._();
+
+/// The watch order of the franchise a title belongs to.
 
 final class WatchOrderProvider
     extends
@@ -113,6 +126,7 @@ final class WatchOrderProvider
           FutureOr<WatchOrder>
         >
     with $FutureModifier<WatchOrder>, $FutureProvider<WatchOrder> {
+  /// The watch order of the franchise a title belongs to.
   WatchOrderProvider._({
     required WatchOrderFamily super.from,
     required int super.argument,
@@ -158,6 +172,8 @@ final class WatchOrderProvider
 
 String _$watchOrderHash() => r'8f06ed4f8664a2e7fd4f7b36c2c0da8fc6cb1ef5';
 
+/// The watch order of the franchise a title belongs to.
+
 final class WatchOrderFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<WatchOrder>, int> {
   WatchOrderFamily._()
@@ -168,6 +184,8 @@ final class WatchOrderFamily extends $Family
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
+
+  /// The watch order of the franchise a title belongs to.
 
   WatchOrderProvider call(int malId) =>
       WatchOrderProvider._(argument: malId, from: this);
@@ -267,8 +285,12 @@ final class RecommendedTitlesFamily extends $Family
   String toString() => r'recommendedTitlesProvider';
 }
 
+/// A not linked entry and its suggested pages, reloaded when either changes.
+
 @ProviderFor(notLinkedPage)
 final notLinkedPageProvider = NotLinkedPageFamily._();
+
+/// A not linked entry and its suggested pages, reloaded when either changes.
 
 final class NotLinkedPageProvider
     extends
@@ -278,6 +300,7 @@ final class NotLinkedPageProvider
           FutureOr<NotLinkedPage>
         >
     with $FutureModifier<NotLinkedPage>, $FutureProvider<NotLinkedPage> {
+  /// A not linked entry and its suggested pages, reloaded when either changes.
   NotLinkedPageProvider._({
     required NotLinkedPageFamily super.from,
     required String super.argument,
@@ -324,6 +347,8 @@ final class NotLinkedPageProvider
 
 String _$notLinkedPageHash() => r'c141e0663475bf324f1fa7ce1a6bff24e18d8853';
 
+/// A not linked entry and its suggested pages, reloaded when either changes.
+
 final class NotLinkedPageFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<NotLinkedPage>, String> {
   NotLinkedPageFamily._()
@@ -334,6 +359,8 @@ final class NotLinkedPageFamily extends $Family
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
+
+  /// A not linked entry and its suggested pages, reloaded when either changes.
 
   NotLinkedPageProvider call(String entryId) =>
       NotLinkedPageProvider._(argument: entryId, from: this);

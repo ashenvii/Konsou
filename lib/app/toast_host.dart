@@ -6,13 +6,18 @@ import '../library/earlier_titles.dart';
 
 part 'toast_host.g.dart';
 
+/// Shows a toast.
 typedef ToastSink = void Function(ToastMessage message);
 
+/// Reverses an edit.
 typedef Undo = Future<void> Function();
 
+/// How long a toast with no action stays.
 const toastMessageTime = Duration(seconds: 4);
+/// How long a toast with an action, such as Undo, stays.
 const toastActionTime = Duration(seconds: 6);
 
+/// The earlier titles offered for marking after an entry is finished.
 class ReviewOffer {
   const ReviewOffer({
     required this.entryId,
@@ -26,6 +31,7 @@ class ReviewOffer {
   final Undo? undoFinish;
 }
 
+/// One toast: its text and any undo, review or rating it carries.
 class ToastMessage {
   ToastMessage(
     this.text, {
@@ -48,6 +54,7 @@ class ToastMessage {
   Duration get lifetime => hasAction ? toastActionTime : toastMessageTime;
 }
 
+/// The toast shown now, and whether the pointer or the review holds it.
 class ToastState {
   const ToastState({
     this.shown,
@@ -77,6 +84,7 @@ class ToastState {
   );
 }
 
+/// Shows one toast at a time and runs its timer, undo, review and rating.
 @Riverpod(keepAlive: true)
 class ToastHost extends _$ToastHost {
   late final Countdown time = Countdown(onDone: dismiss);

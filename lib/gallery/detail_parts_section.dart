@@ -31,6 +31,7 @@ import '../screens/detail/recommendations_part.dart';
 import '../detail/watch_order_words.dart';
 import '../screens/detail/watch_order_card.dart';
 
+/// Sample title details the gallery draws with.
 const sampleDetails = TitleDetails(
   malId: 52991,
   name: 'Sousou no Frieren',
@@ -100,6 +101,7 @@ const sampleDetails = TitleDetails(
   ],
 );
 
+/// Sample watch order the gallery draws with.
 final sampleWatchOrder = WatchOrder([
   const WatchOrderRow(
     malId: 1,
@@ -214,14 +216,14 @@ List<MenuEntry> _statusEntries() =>
 /// The Detail page's parts as the page will draw them: the jump bar in both
 /// states, the top, the rating and date controls, the entry controls in each
 /// state, the watch order strip, the page picker and the overview info.
-class DetailSection extends StatefulWidget {
-  const DetailSection({super.key});
+class DetailPartsSection extends StatefulWidget {
+  const DetailPartsSection({super.key});
 
   @override
-  State<DetailSection> createState() => _DetailSectionState();
+  State<DetailPartsSection> createState() => _DetailPartsSectionState();
 }
 
-class _DetailSectionState extends State<DetailSection> {
+class _DetailPartsSectionState extends State<DetailPartsSection> {
   int? _score = 8;
   DateTime? _started = DateTime(2023, 10, 6);
   int _watched = 4;

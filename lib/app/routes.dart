@@ -17,13 +17,16 @@ import 'shortcuts.dart';
 import 'title_page.dart';
 import 'toast_layer.dart';
 
+/// Route of the component gallery.
 const galleryPath = '/gallery';
 
+/// Route of a title's page by MAL id, with the entry to show if given.
 String titlePath(int malId, {String? entryId}) => Uri(
   path: '/title/$malId',
   queryParameters: entryId == null ? null : {'entry': entryId},
 ).toString();
 
+/// Route of an entry's own page, for an entry with no MAL page.
 String entryPath(String entryId) => '/entry/$entryId';
 
 /// A title's page when it has a MAL page, else the entry's own page.
@@ -32,6 +35,7 @@ String detailPath({int? malId, String? entryId}) => switch (malId) {
   null => entryPath(entryId!),
 };
 
+/// The page route for a Library row.
 String detailPathFor(LibraryRow row) =>
     detailPath(malId: row.malId, entryId: row.entryId);
 
@@ -60,6 +64,7 @@ DetailScreen _detailScreen(BuildContext context, GoRouterState state) {
         );
 }
 
+/// The app's routes: the shell and its pages, title pages and the gallery.
 GoRouter buildRouter({
   Future<void> Function()? beforeClose,
   VoidCallback? onFocus,

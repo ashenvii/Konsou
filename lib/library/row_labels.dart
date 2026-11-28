@@ -35,8 +35,10 @@ String formatTypeWhen(String? type, String? date, {required bool notAired}) => [
   formatCardWhen(date, notAired: notAired),
 ].join(' · ');
 
+/// The text with its first letter in upper case.
 String capitalise(String text) => text[0].toUpperCase() + text.substring(1);
 
+/// A count of episodes in words, such as 12 episodes.
 String formatEpisodes(int n) => formatCountOf(n, 'episode');
 
 /// A month's name, 1 for January. Short gives the first three letters.
@@ -86,6 +88,7 @@ String formatProgress(int watched, int? total) =>
 /// list (`countAiredEpisodes`), "ep" for a total alone.
 typedef CardCount = ({String? done, String total, String? unit});
 
+/// A card's count: watched of total on the list, else aired or the total.
 CardCount countCard({
   required bool onList,
   int watched = 0,

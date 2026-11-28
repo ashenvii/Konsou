@@ -24,8 +24,10 @@ export '../mal/matching.dart' show maxSuggestions;
 
 part 'detail_providers.g.dart';
 
+/// Where a title page's fetch from MAL stands.
 enum DetailFetch { idle, running, offline, failed, gone }
 
+/// What a title page shows: saved details, the user's entry, the fetch state.
 class DetailPageData {
   const DetailPageData({
     this.details,
@@ -62,6 +64,7 @@ void _reloadOnEdit(Ref ref, Databases databases, void Function() reload) {
   ref.onDispose(listener.cancel);
 }
 
+/// A title page's data, refetched from MAL when stale and reloaded on edits.
 @riverpod
 class DetailPage extends _$DetailPage {
   @override
@@ -157,6 +160,7 @@ void _reloadOnNewData(Ref ref, Services services) {
   });
 }
 
+/// The watch order of the franchise a title belongs to.
 @riverpod
 Future<WatchOrder> watchOrder(Ref ref, int malId) async {
   final services = ref.watch(servicesProvider);
@@ -186,6 +190,7 @@ Future<List<RecommendedTitle>> recommendedTitles(Ref ref, int malId) async {
   );
 }
 
+/// An entry with no MAL page, and the pages offered for it.
 class NotLinkedPage {
   const NotLinkedPage({required this.entry, required this.suggestions});
 
@@ -194,6 +199,7 @@ class NotLinkedPage {
   final List<ProviderPage> suggestions;
 }
 
+/// A not linked entry and its suggested pages, reloaded when either changes.
 @riverpod
 Future<NotLinkedPage> notLinkedPage(Ref ref, String entryId) async {
   final databases = ref.watch(servicesProvider).databases;
@@ -271,6 +277,7 @@ PageLinking? pageLinking(Ref ref) {
   }, ref.read(lookingForPageProvider.notifier).set);
 }
 
+/// The page picker's search: the words, the results and how it went.
 class PickerSearchState {
   const PickerSearchState({
     this.query = '',

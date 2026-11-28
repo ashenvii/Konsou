@@ -8,8 +8,10 @@ import 'menu_chevron.dart';
 import 'pressable.dart';
 import 'raised_key.dart';
 
+/// Primary or secondary button look.
 enum ButtonKind { primary, secondary }
 
+/// The text button, primary or secondary; can open a menu or show a count.
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,

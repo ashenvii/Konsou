@@ -20,6 +20,7 @@ part 'quick_search_providers.g.dart';
 /// and not once per letter.
 const quickSearchDebounce = Duration(milliseconds: 350);
 
+/// Quick search's state and actions: open, type, page, move focus, open a row.
 @Riverpod(keepAlive: true)
 class QuickSearch extends _$QuickSearch {
   Timer? _debounce;

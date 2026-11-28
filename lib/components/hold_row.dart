@@ -11,9 +11,12 @@ import 'focus_ring.dart';
 import 'hold_fill.dart';
 import 'raised_key.dart';
 
+/// Label of the row that removes on hold.
 const holdToRemoveLabel = 'Hold to remove';
+/// Hint under the hold to remove row.
 const holdToRemoveHint = 'Hold for a second. It cannot be undone.';
 
+/// A menu row that runs [onDone] once held for [holdTime].
 class HoldRow extends StatefulWidget {
   const HoldRow({
     super.key,

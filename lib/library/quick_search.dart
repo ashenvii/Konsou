@@ -6,6 +6,7 @@ import 'title_language.dart';
 
 /// Rows shown at first in each group, and how many more one Load more adds.
 const quickFirst = quickPage;
+/// How many more rows Quick search shows for each More.
 const quickPage = 10;
 
 /// One result in Quick search: an entry on the list, or a title found online.
@@ -57,6 +58,7 @@ class QuickRow {
   bool get isNotLinked => onList && malId == null;
 }
 
+/// A Quick search row for one of the user's entries.
 QuickRow quickRowFromEntry(LibraryEntry entry) {
   return QuickRow(
     name: formatTitle(entry.name),
@@ -123,6 +125,7 @@ QuickRow quickRowFromPage(
   );
 }
 
+/// Quick search's state: the words, each group's results, focus, paging.
 class QuickState {
   const QuickState({
     this.open = false,

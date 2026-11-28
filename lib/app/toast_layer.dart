@@ -30,6 +30,7 @@ const _reviewWords = EarlierReviewWords(
   setTo: reviewSetTo,
 );
 
+/// Draws the toast host's toast over the page, clear of the rail.
 class ToastLayer extends ConsumerWidget {
   const ToastLayer({super.key, this.leftInset = 0});
 

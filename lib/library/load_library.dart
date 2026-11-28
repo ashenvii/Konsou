@@ -9,6 +9,7 @@ import 'fold_franchises.dart';
 import 'library_row.dart';
 import 'title_language.dart';
 
+/// Every entry as the Library reads it, joined with its MAL details.
 Future<List<LibraryEntry>> loadLibraryEntries(
   Databases databases,
   TitleLanguage language,
@@ -55,11 +56,13 @@ Future<List<LibraryEntry>> loadLibraryEntries(
   ];
 }
 
+/// The Library's rows: entries with franchises folded.
 Future<List<LibraryRow>> loadLibraryRows(
   Databases databases,
   TitleLanguage language,
 ) async => foldFranchises(await loadLibraryEntries(databases, language));
 
+/// A row's title in the user's language, else the entry's own name.
 String pickTitleName(QueryRow row, TitleLanguage language) =>
     orderTitles(
       language,
@@ -70,6 +73,7 @@ String pickTitleName(QueryRow row, TitleLanguage language) =>
     row.read<String?>('name') ??
     '';
 
+/// The user's title language setting.
 Future<TitleLanguage> readTitleLanguage(RecordDatabase record) async =>
     TitleLanguage.parse(await record.readSetting('title_language'));
 

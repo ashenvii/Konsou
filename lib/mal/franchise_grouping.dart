@@ -32,6 +32,7 @@ class FranchisePlace {
   final bool isExtra;
 }
 
+/// MAL relations that make two titles one story.
 const storyRelations = {'sequel', 'prequel'};
 
 /// Relations that name a parent, and whether the title holding the relation

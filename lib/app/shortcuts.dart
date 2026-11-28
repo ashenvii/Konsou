@@ -11,6 +11,7 @@ import 'library_providers.dart';
 import 'quick_search_providers.dart';
 import 'toast_host.dart';
 
+/// One keyboard shortcut as the shortcuts list shows it: name, keys, where.
 class AppShortcut {
   const AppShortcut(this.name, this.keys, this.where);
 
@@ -19,6 +20,7 @@ class AppShortcut {
   final String where;
 }
 
+/// Every shortcut, in the order the list shows them.
 const appShortcuts = [
   AppShortcut('Undo', 'Ctrl+Z', 'While a toast with Undo shows'),
   AppShortcut('Quick search', 'Ctrl+K', 'Anywhere'),
@@ -40,6 +42,7 @@ const appShortcuts = [
   AppShortcut('Close a menu or popover', 'Esc', 'Anywhere one is open'),
 ];
 
+/// Handles the app-wide keys around the shell, and the Library's when open.
 class AppShortcuts extends ConsumerWidget {
   const AppShortcuts({
     super.key,

@@ -21,6 +21,7 @@ import 'library_top.dart';
 import 'lettered_rows.dart';
 import 'list_columns.dart';
 
+/// The Library screen.
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({
     super.key,

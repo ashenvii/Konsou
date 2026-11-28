@@ -17,6 +17,7 @@ const _userInfoUrl = 'https://www.googleapis.com/oauth2/v2/userinfo';
 const googleScope =
     'openid email profile https://www.googleapis.com/auth/drive.appdata';
 
+/// Google sign in tokens and the account's email.
 class GoogleTokens {
   GoogleTokens({
     required this.accessToken,

@@ -4,6 +4,7 @@ import '../design/tokens.dart';
 import 'motion.dart';
 import 'pressable.dart';
 
+/// A checkbox's three states.
 enum CheckValue { empty, checked, excluded }
 
 /// A well that lights. Empty is a sunk well with a ring, checked is lit pop

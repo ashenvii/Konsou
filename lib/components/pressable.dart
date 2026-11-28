@@ -5,6 +5,7 @@ import '../design/tokens.dart';
 import 'focus_ring.dart';
 import 'touch_target.dart';
 
+/// Whether a pressable is hovered, focused or pressed, for its builder.
 class PressState {
   const PressState({
     required this.hovered,
@@ -17,6 +18,7 @@ class PressState {
   final bool pressed;
 }
 
+/// The base of every pressable thing: hover, focus, press, keys, semantics.
 class Pressable extends StatefulWidget {
   const Pressable({
     super.key,

@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'app_popover.dart';
 import 'hover_delays_state.dart';
 
+/// A popover that opens on hover.
 class HoverPopover extends StatefulWidget {
   const HoverPopover({
     super.key,

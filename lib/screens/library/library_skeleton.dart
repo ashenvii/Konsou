@@ -8,6 +8,7 @@ import '../../design/tokens.dart';
 import '../../library/library_view.dart';
 import 'grid_layout.dart';
 
+/// Placeholder rows while the Library loads, in grid or list.
 class LibrarySkeleton extends StatelessWidget {
   const LibrarySkeleton({super.key, required this.layout});
 

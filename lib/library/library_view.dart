@@ -2,6 +2,7 @@ import '../search/title_words.dart';
 import 'entry_status.dart';
 import 'library_row.dart';
 
+/// The Library's status tabs.
 enum LibraryTab {
   all,
   watching,
@@ -12,8 +13,10 @@ enum LibraryTab {
   notInterested,
 }
 
+/// The Library's sort orders.
 enum LibrarySort { recent, title }
 
+/// Whether a row belongs in a tab; All leaves out Not interested.
 bool isInTab(LibraryRow row, LibraryTab tab) => switch (tab) {
   LibraryTab.all => row.status != EntryStatus.notInterested,
   LibraryTab.watching => row.status.isWatching,
@@ -24,6 +27,7 @@ bool isInTab(LibraryRow row, LibraryTab tab) => switch (tab) {
   LibraryTab.notInterested => row.status == EntryStatus.notInterested,
 };
 
+/// Rows in a tab, plus any kept in view.
 List<LibraryRow> filterRowsByTab(
   List<LibraryRow> rows,
   LibraryTab tab, {
@@ -33,6 +37,7 @@ List<LibraryRow> filterRowsByTab(
     if (isInTab(row, tab) || keep.contains(row.entryId)) row,
 ];
 
+/// Rows Find matches, or every row when Find is empty.
 List<LibraryRow> filterRowsByFind(List<LibraryRow> rows, Set<String>? matches) {
   if (matches == null) return rows;
   return [
@@ -41,6 +46,7 @@ List<LibraryRow> filterRowsByFind(List<LibraryRow> rows, Set<String>? matches) {
   ];
 }
 
+/// How many rows each tab has.
 Map<LibraryTab, int> countTabs(List<LibraryRow> rows) => {
   for (final tab in LibraryTab.values) tab: filterRowsByTab(rows, tab).length,
 };
@@ -52,6 +58,7 @@ final _foldedTitles = <String, String>{};
 String foldTitle(String name) =>
     _foldedTitles[name] ??= foldWords(name).join(' ');
 
+/// Rows in the chosen sort order.
 List<LibraryRow> sortRows(List<LibraryRow> rows, LibrarySort sort) {
   int byTitle(LibraryRow first, LibraryRow second) {
     final byName = foldTitle(first.name).compareTo(foldTitle(second.name));
@@ -132,4 +139,5 @@ List<LibraryRow> sortRowsByColumn(List<LibraryRow> rows, ColumnSort sort) {
   return [...rows]..sort(compare);
 }
 
+/// Grid or list.
 enum LibraryLayout { grid, list }

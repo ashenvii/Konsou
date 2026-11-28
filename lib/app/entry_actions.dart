@@ -11,6 +11,7 @@ import 'find_earlier_titles.dart';
 import 'toast_host.dart';
 import 'toast_words.dart';
 
+/// Entry edits as screens call them, with the toast, undo and review after.
 class EntryActions {
   EntryActions({
     required this.databases,

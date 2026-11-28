@@ -4,6 +4,7 @@ import '../design/tokens.dart';
 import 'countdown.dart';
 import 'countdown_builder.dart';
 
+/// The toast's bar of time left, urgent in its last quarter.
 class ToastTimer extends StatelessWidget {
   const ToastTimer({super.key, required this.countdown});
 

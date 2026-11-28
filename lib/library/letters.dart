@@ -1,6 +1,7 @@
 import 'library_row.dart';
 import 'library_view.dart';
 
+/// The A to Z strip's headings, # first.
 const letterHeadings = [
   '#',
   'A',
@@ -35,6 +36,7 @@ const letterHeadings = [
 String formatLetterLabel(String letter) =>
     letter == '#' ? 'Numbers and symbols' : letter;
 
+/// The heading a title files under, # for anything not a letter.
 String readLetter(String name) {
   final folded = foldTitle(name);
   if (folded.isEmpty) return '#';
@@ -42,6 +44,7 @@ String readLetter(String name) {
   return letterHeadings.contains(first) ? first : '#';
 }
 
+/// Rows grouped under their letter headings, in strip order.
 List<({String letter, List<LibraryRow> rows})> groupByLetter(
   List<LibraryRow> rows,
 ) {

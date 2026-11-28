@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+/// Runs [onClose] when Escape is pressed inside [child].
 class CloseOnEscape extends StatelessWidget {
   const CloseOnEscape({super.key, required this.onClose, required this.child});
 

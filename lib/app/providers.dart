@@ -13,6 +13,7 @@ export '../mal/request_gate.dart' show Lane;
 
 part 'providers.g.dart';
 
+/// The app's [Services]; main overrides it with the real ones.
 @Riverpod(keepAlive: true)
 Services services(Ref ref) => throw UnimplementedError('override in main');
 
@@ -21,12 +22,15 @@ Services services(Ref ref) => throw UnimplementedError('override in main');
 Future<void> Function(Uri url) openLink(Ref ref) =>
     ref.watch(servicesProvider).openBrowser;
 
+/// The cover store, null when there is none.
 @Riverpod(keepAlive: true)
 CoverStore? coverStore(Ref ref) => ref.watch(servicesProvider).coverStore;
 
+/// The MAL id of each cover as it is saved.
 @Riverpod(keepAlive: true)
 Stream<int> coverSaved(Ref ref) => ref.watch(servicesProvider).coverSaved;
 
+/// The covers on disk by MAL id and size, growing as new ones are saved.
 @Riverpod(keepAlive: true)
 class KeptCovers extends _$KeptCovers {
   @override
@@ -50,6 +54,7 @@ class KeptCovers extends _$KeptCovers {
   }
 }
 
+/// One cover file, read from disk or fetched in [lane].
 @riverpod
 Future<File?> coverFile(
   Ref ref,
@@ -84,6 +89,7 @@ Future<File?> titlePicture(Ref ref, int malId, String url) async {
   return store.pictureFile(malId, url, wanted: () => ref.mounted);
 }
 
+/// Fetches a title's short details while its row is on screen.
 @riverpod
 Future<void> detailOnScreen(
   Ref ref,

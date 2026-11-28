@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
 
+/// The raised panel look of menus and popovers.
 class FloatingPanel extends StatelessWidget {
   const FloatingPanel({super.key, required this.child});
 

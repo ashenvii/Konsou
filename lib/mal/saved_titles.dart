@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../data/record_database.dart';
 import 'franchise_grouping.dart';
 
+/// A title's saved facts that the franchise code works from.
 class SavedTitle {
   SavedTitle(this.title, this.airingStatus, this.endDate, this.fetchedAt);
 
@@ -16,6 +17,7 @@ class SavedTitle {
   final int fetchedAt;
 }
 
+/// Every saved title's facts by MAL id, or only [malId]'s.
 Future<Map<int, SavedTitle>> readSavedTitles(
   RecordDatabase record, {
   int? malId,

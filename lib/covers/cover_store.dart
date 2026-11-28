@@ -10,12 +10,17 @@ import '../data/details_database.dart';
 import '../mal/request_gate.dart';
 import 'cover_size.dart';
 
+/// Bytes of pictures kept on disk before the oldest go.
 const defaultPoolLimit = 150 * 1024 * 1024;
 
+/// Wait between picture downloads.
 const coverRequestGap = Duration(milliseconds: 100);
 
+/// How a cover fetch went.
 enum CoverOutcome { fetched, current, none, failed }
 
+/// Keeps covers and title pictures on disk, fetches missing ones, trims the
+/// pool.
 class CoverStore {
   CoverStore({
     required this.databases,

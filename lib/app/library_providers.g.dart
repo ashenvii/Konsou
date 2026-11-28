@@ -8,9 +8,12 @@ part of 'library_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// The Library's rows, reloaded at most once per gap after data changes.
 
 @ProviderFor(libraryRows)
 final libraryRowsProvider = LibraryRowsProvider._();
+
+/// The Library's rows, reloaded at most once per gap after data changes.
 
 final class LibraryRowsProvider
     extends
@@ -20,6 +23,7 @@ final class LibraryRowsProvider
           FutureOr<List<LibraryRow>>
         >
     with $FutureModifier<List<LibraryRow>>, $FutureProvider<List<LibraryRow>> {
+  /// The Library's rows, reloaded at most once per gap after data changes.
   LibraryRowsProvider._()
     : super(
         from: null,
@@ -48,12 +52,17 @@ final class LibraryRowsProvider
 
 String _$libraryRowsHash() => r'0b2dc0024a643b06083371e9e1125971f3321bb1';
 
+/// The shared [EntryEdits], telling sync about each change.
+
 @ProviderFor(entryEdits)
 final entryEditsProvider = EntryEditsProvider._();
+
+/// The shared [EntryEdits], telling sync about each change.
 
 final class EntryEditsProvider
     extends $FunctionalProvider<EntryEdits, EntryEdits, EntryEdits>
     with $Provider<EntryEdits> {
+  /// The shared [EntryEdits], telling sync about each change.
   EntryEditsProvider._()
     : super(
         from: null,
@@ -89,12 +98,17 @@ final class EntryEditsProvider
 
 String _$entryEditsHash() => r'd4e22babeb247de727d6fa7a463b4446518ac353';
 
+/// The shared [EntryActions], wired to the toast host.
+
 @ProviderFor(entryActions)
 final entryActionsProvider = EntryActionsProvider._();
+
+/// The shared [EntryActions], wired to the toast host.
 
 final class EntryActionsProvider
     extends $FunctionalProvider<EntryActions, EntryActions, EntryActions>
     with $Provider<EntryActions> {
+  /// The shared [EntryActions], wired to the toast host.
   EntryActionsProvider._()
     : super(
         from: null,
@@ -130,11 +144,15 @@ final class EntryActionsProvider
 
 String _$entryActionsHash() => r'c9c74ba5954903ae3c1928f81bc38e0af79fdd37';
 
+/// The status tab the Library shows.
+
 @ProviderFor(LibraryTabChoice)
 final libraryTabChoiceProvider = LibraryTabChoiceProvider._();
 
+/// The status tab the Library shows.
 final class LibraryTabChoiceProvider
     extends $NotifierProvider<LibraryTabChoice, LibraryTab> {
+  /// The status tab the Library shows.
   LibraryTabChoiceProvider._()
     : super(
         from: null,
@@ -164,6 +182,8 @@ final class LibraryTabChoiceProvider
 
 String _$libraryTabChoiceHash() => r'71e48f51518353c8c0d421a05b435cd8a2708faa';
 
+/// The status tab the Library shows.
+
 abstract class _$LibraryTabChoice extends $Notifier<LibraryTab> {
   LibraryTab build();
   @$mustCallSuper
@@ -182,11 +202,15 @@ abstract class _$LibraryTabChoice extends $Notifier<LibraryTab> {
   }
 }
 
+/// Rows an edit moved out of the tab, kept in view until the tab changes.
+
 @ProviderFor(LibraryKept)
 final libraryKeptProvider = LibraryKeptProvider._();
 
+/// Rows an edit moved out of the tab, kept in view until the tab changes.
 final class LibraryKeptProvider
     extends $NotifierProvider<LibraryKept, Set<String>> {
+  /// Rows an edit moved out of the tab, kept in view until the tab changes.
   LibraryKeptProvider._()
     : super(
         from: null,
@@ -216,6 +240,8 @@ final class LibraryKeptProvider
 
 String _$libraryKeptHash() => r'f023d053fbfd5f5d282c9a21a7ef79165249b97a';
 
+/// Rows an edit moved out of the tab, kept in view until the tab changes.
+
 abstract class _$LibraryKept extends $Notifier<Set<String>> {
   Set<String> build();
   @$mustCallSuper
@@ -234,11 +260,15 @@ abstract class _$LibraryKept extends $Notifier<Set<String>> {
   }
 }
 
+/// The Find field's text, or null while Find is closed.
+
 @ProviderFor(LibraryFindChoice)
 final libraryFindChoiceProvider = LibraryFindChoiceProvider._();
 
+/// The Find field's text, or null while Find is closed.
 final class LibraryFindChoiceProvider
     extends $NotifierProvider<LibraryFindChoice, String?> {
+  /// The Find field's text, or null while Find is closed.
   LibraryFindChoiceProvider._()
     : super(
         from: null,
@@ -268,6 +298,8 @@ final class LibraryFindChoiceProvider
 
 String _$libraryFindChoiceHash() => r'49e6c3fdb83d17a0f6a251c180ff702c1e0e668b';
 
+/// The Find field's text, or null while Find is closed.
+
 abstract class _$LibraryFindChoice extends $Notifier<String?> {
   String? build();
   @$mustCallSuper
@@ -286,8 +318,12 @@ abstract class _$LibraryFindChoice extends $Notifier<String?> {
   }
 }
 
+/// The title index over the user's entries, rebuilt when the rows change.
+
 @ProviderFor(entrySearch)
 final entrySearchProvider = EntrySearchProvider._();
+
+/// The title index over the user's entries, rebuilt when the rows change.
 
 final class EntrySearchProvider
     extends
@@ -297,6 +333,7 @@ final class EntrySearchProvider
           FutureOr<EntrySearch>
         >
     with $FutureModifier<EntrySearch>, $FutureProvider<EntrySearch> {
+  /// The title index over the user's entries, rebuilt when the rows change.
   EntrySearchProvider._()
     : super(
         from: null,
@@ -325,8 +362,12 @@ final class EntrySearchProvider
 
 String _$entrySearchHash() => r'72b59e93eb4651b7c09f48999e641133fe064653';
 
+/// The entry ids Find matches, or null when Find is empty.
+
 @ProviderFor(libraryFindMatches)
 final libraryFindMatchesProvider = LibraryFindMatchesProvider._();
+
+/// The entry ids Find matches, or null when Find is empty.
 
 final class LibraryFindMatchesProvider
     extends
@@ -336,6 +377,7 @@ final class LibraryFindMatchesProvider
           FutureOr<Set<String>?>
         >
     with $FutureModifier<Set<String>?>, $FutureProvider<Set<String>?> {
+  /// The entry ids Find matches, or null when Find is empty.
   LibraryFindMatchesProvider._()
     : super(
         from: null,
@@ -365,11 +407,15 @@ final class LibraryFindMatchesProvider
 String _$libraryFindMatchesHash() =>
     r'843894374a5adf2133c8da7e3f075c101a742062';
 
+/// The entry the pointer is over, for the keys that act on a row.
+
 @ProviderFor(LibraryHoveredRow)
 final libraryHoveredRowProvider = LibraryHoveredRowProvider._();
 
+/// The entry the pointer is over, for the keys that act on a row.
 final class LibraryHoveredRowProvider
     extends $NotifierProvider<LibraryHoveredRow, String?> {
+  /// The entry the pointer is over, for the keys that act on a row.
   LibraryHoveredRowProvider._()
     : super(
         from: null,
@@ -399,6 +445,8 @@ final class LibraryHoveredRowProvider
 
 String _$libraryHoveredRowHash() => r'3bccbdf9203266a31861dd16b2bb305ade60a011';
 
+/// The entry the pointer is over, for the keys that act on a row.
+
 abstract class _$LibraryHoveredRow extends $Notifier<String?> {
   String? build();
   @$mustCallSuper
@@ -417,12 +465,16 @@ abstract class _$LibraryHoveredRow extends $Notifier<String?> {
   }
 }
 
+/// The letter the A to Z strip last jumped to; the count makes a repeat fire.
+
 @ProviderFor(LibraryLetterJump)
 final libraryLetterJumpProvider = LibraryLetterJumpProvider._();
 
+/// The letter the A to Z strip last jumped to; the count makes a repeat fire.
 final class LibraryLetterJumpProvider
     extends
         $NotifierProvider<LibraryLetterJump, ({int count, String letter})?> {
+  /// The letter the A to Z strip last jumped to; the count makes a repeat fire.
   LibraryLetterJumpProvider._()
     : super(
         from: null,
@@ -454,6 +506,8 @@ final class LibraryLetterJumpProvider
 
 String _$libraryLetterJumpHash() => r'cad6df7729f4438ee156e4bfca02f354d6e9142c';
 
+/// The letter the A to Z strip last jumped to; the count makes a repeat fire.
+
 abstract class _$LibraryLetterJump
     extends $Notifier<({int count, String letter})?> {
   ({int count, String letter})? build();
@@ -481,11 +535,15 @@ abstract class _$LibraryLetterJump
   }
 }
 
+/// The Library's sort from the menu, saved between runs.
+
 @ProviderFor(LibrarySortChoice)
 final librarySortChoiceProvider = LibrarySortChoiceProvider._();
 
+/// The Library's sort from the menu, saved between runs.
 final class LibrarySortChoiceProvider
     extends $AsyncNotifierProvider<LibrarySortChoice, LibrarySort> {
+  /// The Library's sort from the menu, saved between runs.
   LibrarySortChoiceProvider._()
     : super(
         from: null,
@@ -506,6 +564,8 @@ final class LibrarySortChoiceProvider
 }
 
 String _$librarySortChoiceHash() => r'dc95aaf7ce05cdf634529799848300a9101db2fb';
+
+/// The Library's sort from the menu, saved between runs.
 
 abstract class _$LibrarySortChoice extends $AsyncNotifier<LibrarySort> {
   FutureOr<LibrarySort> build();
@@ -654,11 +714,15 @@ abstract class _$LibraryColumnSortChoice extends $Notifier<ColumnSort?> {
   }
 }
 
+/// Grid or list, saved between runs.
+
 @ProviderFor(LibraryLayoutChoice)
 final libraryLayoutChoiceProvider = LibraryLayoutChoiceProvider._();
 
+/// Grid or list, saved between runs.
 final class LibraryLayoutChoiceProvider
     extends $AsyncNotifierProvider<LibraryLayoutChoice, LibraryLayout> {
+  /// Grid or list, saved between runs.
   LibraryLayoutChoiceProvider._()
     : super(
         from: null,
@@ -680,6 +744,8 @@ final class LibraryLayoutChoiceProvider
 
 String _$libraryLayoutChoiceHash() =>
     r'091ca932d2592b1d6ba01f37f58e59977ff1a083';
+
+/// Grid or list, saved between runs.
 
 abstract class _$LibraryLayoutChoice extends $AsyncNotifier<LibraryLayout> {
   FutureOr<LibraryLayout> build();

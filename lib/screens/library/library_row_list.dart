@@ -17,6 +17,7 @@ import 'library_list_row.dart';
 import 'library_message.dart';
 import 'library_row_menu.dart';
 
+/// The Library's rows, or a message when there are none or none match.
 class LibraryRowList extends StatelessWidget {
   const LibraryRowList({
     super.key,

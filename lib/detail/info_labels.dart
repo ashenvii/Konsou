@@ -17,6 +17,7 @@ String? formatAired(TitleDetails details, {bool days = true}) {
   return airing ? '$start to ?' : start;
 }
 
+/// A title's season, such as Fall 2023, or null when unknown.
 String? formatSeason(TitleDetails details) {
   final season = details.season;
   final year = details.seasonYear;
@@ -56,6 +57,7 @@ const _ratings = {
   'rx': 'Rx, hentai',
 };
 
+/// MAL's age rating in words, or null when there is none.
 String? formatRating(String? rating) =>
     rating == null || rating.isEmpty ? null : _ratings[rating] ?? rating;
 

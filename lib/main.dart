@@ -24,6 +24,7 @@ import 'shell/native_window.dart';
 import 'shell/window_config.dart';
 import 'shell/window_memory.dart';
 
+/// Opens the window, log and databases, starts the services, runs the app.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isWindows) await _setUpWindow();
@@ -108,6 +109,7 @@ Future<void> _setUpWindow() async {
   }
 }
 
+/// The app root: the router with the app's look.
 class KonsouApp extends StatelessWidget {
   const KonsouApp({super.key, required this.router});
 

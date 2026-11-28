@@ -11,6 +11,7 @@ const searchFields =
 
 /// MAL refuses a query outside these lengths with a 400.
 const minQueryLength = 3;
+/// Longest search sent to MAL, in characters.
 const maxQueryLength = 64;
 
 /// The one place a MAL search request is built. Callers send it through the

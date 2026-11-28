@@ -8,8 +8,10 @@ import 'aired_episodes.dart';
 import 'earlier_titles.dart';
 import 'entry_status.dart';
 
+/// Whether an edit went through, and why not.
 enum EditResult { done, notAiredYet, stillAiring, notWatching, notCompleted }
 
+/// Puts an edit back.
 class UndoEdit {
   const UndoEdit(this.run);
 
@@ -25,6 +27,7 @@ class EarlierMark {
   final int applied;
 }
 
+/// Setting key: on a finish, mark earlier titles without asking.
 const autoMarkEarlierKey = 'auto_mark_earlier';
 
 /// Why a title with MAL's airing status [airing] cannot be set to [target],
@@ -44,6 +47,7 @@ EditResult? findAiringLock(String? airing, EntryStatus target) {
   return null;
 }
 
+/// Every change to an entry, with its rules and its undo.
 class EntryEdits {
   EntryEdits({
     required this.databases,

@@ -11,7 +11,7 @@ import 'package:konsou/components/toast_view.dart';
 import 'package:konsou/design/tokens.dart';
 import 'package:konsou/detail/watch_order.dart';
 import 'package:konsou/detail/watch_order_words.dart';
-import 'package:konsou/gallery/detail_section.dart';
+import 'package:konsou/gallery/detail_parts_section.dart';
 import 'package:konsou/screens/detail/cover_viewer.dart';
 import 'package:konsou/screens/detail/detail_back_button.dart';
 import 'package:konsou/screens/detail/detail_frame.dart';
