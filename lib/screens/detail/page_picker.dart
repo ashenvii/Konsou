@@ -102,11 +102,10 @@ class _PagePickerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final count = page.episodes;
-    final episodes = count == null ? '' : formatEpisodes(count);
-    final line = [
+    final line = joinParts([
       formatTypeYear(page.mediaType, page.startDate),
-      episodes,
-    ].where((part) => part.isNotEmpty).join(' · ');
+      if (count != null) formatEpisodes(count),
+    ]);
     return Container(
       height: Tokens.listRowHeight,
       padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),

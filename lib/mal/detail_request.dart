@@ -1,10 +1,9 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 import 'package:http/http.dart' as http;
 
 import '../data/details_database.dart';
 import '../data/record_database.dart';
+import 'mal_api.dart';
 import 'request_gate.dart';
 
 /// The MAL fields a list row and the franchise scan need.
@@ -58,9 +57,11 @@ Future<http.Response> getDetail(
   required String clientId,
   required int malId,
   required String fields,
-}) => client.get(
-  Uri.https('api.myanimelist.net', '/v2/anime/$malId', {'fields': fields}),
-  headers: {'X-MAL-CLIENT-ID': clientId},
+}) => getMal(
+  client,
+  clientId: clientId,
+  path: 'anime/$malId',
+  query: {'fields': fields},
 );
 
 /// Fetches a title's details from MAL through the gate and saves them.
@@ -143,16 +144,11 @@ class DetailRequest {
     return FetchOutcome.fetched;
   }
 
-  String? _readTitle(List<int> bytes, int malId) {
-    try {
-      // the body is utf-8; http assumes latin-1 when no charset is sent
-      final text = utf8.decode(bytes);
-      final body = jsonDecode(text);
-      return body is Map && body['id'] == malId ? text : null;
-    } on FormatException {
-      return null;
-    }
-  }
+  String? _readTitle(List<int> bytes, int malId) =>
+      switch (readMalBody(bytes)) {
+        (:final text, json: {'id': final int id}) when id == malId => text,
+        _ => null,
+      };
 
   Future<bool> _holdsFull(int malId) async {
     final saved =

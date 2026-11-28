@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
@@ -8,6 +7,7 @@ import 'countdown.dart';
 import 'countdown_builder.dart';
 import 'focus_ring.dart';
 import 'hold_fill.dart';
+import 'hold_row.dart';
 import 'hover_tip.dart';
 import 'motion.dart';
 import 'raised_key.dart';
@@ -29,8 +29,6 @@ class RemoveKey extends StatefulWidget {
   final String words;
   final Duration holdTime;
   final VoidCallback onDone;
-
-  static const tapWords = 'Hold to remove';
 
   @override
   State<RemoveKey> createState() => _RemoveKeyState();
@@ -91,7 +89,7 @@ class _RemoveKeyState extends State<RemoveKey>
       label: widget.words,
       onLongPress: widget.onDone,
       child: HoverTip(
-        label: _tapped ? RemoveKey.tapWords : widget.words,
+        label: _tapped ? holdToRemoveLabel : widget.words,
         reveal: _reveal,
         child: Focus(
           onKeyEvent: _key,
@@ -108,10 +106,7 @@ class _RemoveKeyState extends State<RemoveKey>
             }),
             child: Listener(
               behavior: HitTestBehavior.opaque,
-              // a right or middle click is no hold
-              onPointerDown: (event) {
-                if (event.buttons & kPrimaryButton != 0) _start();
-              },
+              onPointerDown: (event) => holdOnPointer(event, _start),
               onPointerUp: (_) => _stop(),
               onPointerCancel: (_) => _hold.cancel(),
               child: AnimatedBuilder(

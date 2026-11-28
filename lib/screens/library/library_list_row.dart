@@ -5,10 +5,10 @@ import '../../components/app_checkbox.dart';
 import '../../components/count_display.dart';
 import '../../components/faded.dart';
 import '../../components/mal_score_line.dart';
+import '../../components/row_titles.dart';
 import '../../components/season_cap.dart';
 import '../../components/hover_mark.dart';
 import '../../components/one_line_text.dart';
-import '../../components/row_small_line.dart';
 import '../../components/skeleton_lines.dart';
 import '../../components/touch_target.dart';
 import '../../design/text_styles.dart';
@@ -171,26 +171,18 @@ class _Titles extends StatelessWidget {
     if (row.isLoadingDetails) {
       return Semantics(label: loadingDetails, child: const SkeletonLines());
     }
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        OneLineText(row.name, style: AppText.label(Tokens.ink)),
-        const SizedBox(height: Tokens.space2),
-        if (row.isNotLinked)
-          OneLineText('Not linked', style: AppText.caption(Tokens.inkMuted))
-        else
-          RowSmallLine(
-            [
+    return RowTitles(
+      name: row.name,
+      line: row.isNotLinked
+          ? 'Not linked'
+          : joinParts([
               if (row.mediaType case final type? when type.isNotEmpty)
                 formatType(type),
               // a narrow row has no status column
               if (narrow && showStatus) row.status.label,
-            ].join(' · '),
-            withScore: narrow && !row.isScorePending,
-            malScore: row.malScore,
-          ),
-      ],
+            ]),
+      withScore: narrow && !row.isNotLinked && !row.isScorePending,
+      malScore: row.malScore,
     );
   }
 }

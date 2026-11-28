@@ -40,6 +40,20 @@ LibraryRow row({
 }
 
 void main() {
+  group('parts and year', () {
+    test('empty parts are left out', () {
+      expect(joinParts(['TV', null, '', '2023']), 'TV · 2023');
+      expect(joinParts([null, '']), '');
+    });
+
+    test('the year is the front of a date, null with none', () {
+      expect(formatYear('2023-10-06'), '2023');
+      expect(formatYear('2023'), '2023');
+      expect(formatYear('20'), isNull);
+      expect(formatYear(null), isNull);
+    });
+  });
+
   group('type and year line', () {
     test('type and year', () {
       expect(_typeYear(row()), 'TV · 2023');

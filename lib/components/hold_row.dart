@@ -85,7 +85,9 @@ class _HoldRowState extends State<HoldRow> {
           onExit: (_) => setState(() => _hovered = false),
           child: Listener(
             behavior: HitTestBehavior.opaque,
-            onPointerDown: enabled ? (_) => _start() : null,
+            onPointerDown: enabled
+                ? (event) => holdOnPointer(event, _start)
+                : null,
             onPointerUp: enabled ? (_) => _stop() : null,
             onPointerCancel: enabled ? (_) => _stop() : null,
             child: Padding(

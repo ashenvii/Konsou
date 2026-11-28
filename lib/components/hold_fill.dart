@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -35,4 +36,10 @@ KeyEventResult holdOnKeys(
   if (event is KeyDownEvent) start();
   if (event is KeyUpEvent) stop();
   return KeyEventResult.handled;
+}
+
+/// A press of the main button starts the hold; a right or middle click is no
+/// hold.
+void holdOnPointer(PointerDownEvent event, VoidCallback start) {
+  if (event.buttons & kPrimaryButton != 0) start();
 }

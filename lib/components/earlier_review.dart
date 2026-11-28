@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
+import '../library/row_labels.dart';
 import 'floating_panel.dart';
 import 'hairline.dart';
 import 'one_line_text.dart';
@@ -258,14 +259,13 @@ class _TitleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final start = title.startDate;
     final episodes = title.episodes;
-    final detail = [
+    final detail = joinParts([
       if (title.mediaType != null) words.mediaType(title.mediaType!),
-      if (start != null && start.length >= 4) start.substring(0, 4),
+      formatYear(title.startDate),
       if (episodes != null && episodes > 0) words.episodes(episodes),
       words.status(title.status),
-    ].join(' · ');
+    ]);
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(

@@ -201,7 +201,7 @@ class _FinishedWatches extends StatelessWidget {
       children: [
         for (final watch in watches)
           Text(
-            [
+            joinParts([
               watch.watchNumber == 0
                   ? 'First watch'
                   : 'Rewatch ${watch.watchNumber}',
@@ -209,7 +209,7 @@ class _FinishedWatches extends StatelessWidget {
                 DateTime.fromMillisecondsSinceEpoch(watch.completedAt),
               ),
               if (watch.isEstimated) 'date estimated',
-            ].join(' · '),
+            ]),
             style: AppText.paragraph(Tokens.ink),
           ),
       ],

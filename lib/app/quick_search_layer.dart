@@ -2,7 +2,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../components/one_line_text.dart';
 import '../components/page_dim.dart';
 import '../components/app_button.dart';
 import '../components/app_checkbox.dart';
@@ -13,8 +12,8 @@ import '../components/floating_panel.dart';
 import '../components/hairline.dart';
 import '../components/hover_mark.dart';
 import '../components/key_cap.dart';
+import '../components/row_titles.dart';
 import '../components/skeleton_lines.dart';
-import '../components/row_small_line.dart';
 import '../components/smooth_scroll.dart';
 import '../components/sweep_button.dart';
 import '../components/title_columns.dart';
@@ -460,25 +459,17 @@ class _NameAndLine extends StatelessWidget {
   final bool narrow;
 
   @override
-  Widget build(BuildContext context) {
-    final nameInk = row.onList ? Tokens.ink : Tokens.inkSoft;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        OneLineText(row.name, style: AppText.label(nameInk)),
-        const SizedBox(height: Tokens.space1),
-        RowSmallLine(
-          row.line,
-          withScore:
-              narrow &&
-              !row.isNotLinked &&
-              !row.isLoadingDetails &&
-              !row.isScorePending,
-          malScore: row.malScore,
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => RowTitles(
+    name: row.name,
+    line: row.line,
+    nameColor: row.onList ? Tokens.ink : Tokens.inkSoft,
+    withScore:
+        narrow &&
+        !row.isNotLinked &&
+        !row.isLoadingDetails &&
+        !row.isScorePending,
+    malScore: row.malScore,
+  );
 }
 
 /// A row of the same shape while a search runs, so nothing pops in.

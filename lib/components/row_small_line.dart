@@ -30,7 +30,7 @@ class RowSmallLine extends StatelessWidget {
         children: [
           TextSpan(text: text),
           if (withScore) ...[
-            if (text.isNotEmpty) const TextSpan(text: ' · '),
+            if (text.isNotEmpty) const TextSpan(text: partsDot),
             const WidgetSpan(
               alignment: PlaceholderAlignment.middle,
               child: ScoreStar(size: Tokens.text1, color: Tokens.star),

@@ -9,6 +9,7 @@ import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../detail/info_labels.dart';
 import '../../detail/title_details.dart';
+import '../../library/row_labels.dart';
 
 /// The details at the top of a title's quick panel, one height for every
 /// title: the name (room for two lines), other names (one), the synopsis
@@ -91,7 +92,7 @@ class CardDetails extends StatelessWidget {
         Padding(
           padding: EdgeInsets.only(right: trailingRoom),
           child: HeldLines(
-            otherNames.join(' · '),
+            joinParts(otherNames),
             lines: 1,
             // a line of 1 cut the tops of the letters off
             style: AppText.caption(Tokens.inkMuted).wrapped,

@@ -17,23 +17,33 @@ const _typeNames = {
   'music': 'Music',
 };
 
+/// What stands between the parts of a small line.
+const partsDot = ' · ';
+
+/// The parts of a small line joined by [partsDot], the empty ones left out:
+/// "TV · 2023".
+String joinParts(Iterable<String?> parts) =>
+    parts.where((part) => part != null && part.isNotEmpty).join(partsDot);
+
+/// The year at the front of a MAL date, "2023" from "2023-10-06", null with
+/// none.
+String? formatYear(String? date) =>
+    date != null && date.length >= 4 ? date.substring(0, 4) : null;
+
+/// A media type as MAL gives it in words, null when MAL gives none.
+String? _typeWords(String? type) =>
+    type == null || type.isEmpty ? null : formatType(type);
+
 /// The small line under a title, from a media type and a start date as MAL
 /// gives them: "TV · 2023". A part MAL has not given is left out; with neither
 /// it is empty.
-String formatTypeYear(String? type, String? date) {
-  final parts = [
-    if (type != null && type.isNotEmpty) formatType(type),
-    if (date != null && date.length >= 4) date.substring(0, 4),
-  ];
-  return parts.join(' · ');
-}
+String formatTypeYear(String? type, String? date) =>
+    joinParts([_typeWords(type), formatYear(date)]);
 
 /// The line under a row's name: "TV · 2023", or the whole date for a title
 /// not aired yet ("Movie · 12 Jan 2027"), "?" where MAL gives no date.
-String formatTypeWhen(String? type, String? date, {required bool notAired}) => [
-  if (type != null && type.isNotEmpty) formatType(type),
-  formatCardWhen(date, notAired: notAired),
-].join(' · ');
+String formatTypeWhen(String? type, String? date, {required bool notAired}) =>
+    joinParts([_typeWords(type), formatCardWhen(date, notAired: notAired)]);
 
 /// The text with its first letter in upper case.
 String capitalise(String text) => text[0].toUpperCase() + text.substring(1);
@@ -112,9 +122,7 @@ String formatMalScore(double? score) => score?.toStringAsFixed(2) ?? '?';
 /// air, "?" with no date.
 String formatCardWhen(String? startDate, {required bool notAired}) {
   if (notAired) return formatMalDate(startDate) ?? '?';
-  return startDate != null && startDate.length >= 4
-      ? startDate.substring(0, 4)
-      : '?';
+  return formatYear(startDate) ?? '?';
 }
 
 /// What a title says, aloud or drawn, while its details come in.

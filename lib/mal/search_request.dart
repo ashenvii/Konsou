@@ -1,7 +1,6 @@
-import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
+import 'mal_api.dart';
 import 'request_gate.dart';
 
 /// Enough to show a result and to judge it as a match.
@@ -23,14 +22,16 @@ Future<http.Response> getSearch(
   required String query,
   int limit = 10,
   int offset = 0,
-}) => client.get(
-  Uri.https('api.myanimelist.net', '/v2/anime', {
+}) => getMal(
+  client,
+  clientId: clientId,
+  path: 'anime',
+  query: {
     'q': query,
     'limit': '$limit',
     if (offset > 0) 'offset': '$offset',
     'fields': searchFields,
-  }),
-  headers: {'X-MAL-CLIENT-ID': clientId},
+  },
 );
 
 /// Searches MAL by title.
@@ -72,18 +73,13 @@ class SearchRequest {
       return null;
     }
     if (response.statusCode != 200) return null;
-    try {
-      // the body is utf-8; http assumes latin-1 when no charset is sent
-      final body = jsonDecode(utf8.decode(response.bodyBytes));
-      final found = body is Map ? body['data'] : null;
-      if (found is! List) return null;
+    if (readMalBody(response.bodyBytes)?.json case {'data': final List found}) {
       return [
         for (final result in found)
           if (result is Map && result['node'] is Map<String, dynamic>)
             result['node'] as Map<String, dynamic>,
       ];
-    } on FormatException {
-      return null;
     }
+    return null;
   }
 }

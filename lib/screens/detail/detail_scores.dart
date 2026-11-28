@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../detail/title_details.dart';
+import '../../library/row_labels.dart';
 import 'score_figure.dart';
 
 /// The page's second voice after the title: the MAL score and [mine], the
@@ -42,7 +43,7 @@ class DetailScores extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.end,
       children: [
         ScoreFigure(
-          value: details.score?.toStringAsFixed(2),
+          value: details.score == null ? null : formatMalScore(details.score),
           empty: 'Not scored yet',
           label: 'MAL score',
           starColor: Tokens.star,

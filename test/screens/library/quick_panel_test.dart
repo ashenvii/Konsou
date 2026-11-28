@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:konsou/components/app_button.dart';
+import 'package:konsou/components/hold_row.dart';
 import 'package:konsou/components/pressable.dart';
 import 'package:konsou/components/raised_key.dart';
 import 'package:konsou/components/remove_key.dart';
@@ -173,7 +174,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
     expect(taken, isEmpty);
-    expect(find.text(RemoveKey.tapWords), findsOneWidget);
+    expect(find.text(holdToRemoveLabel), findsOneWidget);
     await mouse.removePointer();
   });
 
