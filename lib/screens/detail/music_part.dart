@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../components/link_row.dart';
+import '../../components/one_line_text.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../detail/theme_song.dart';
@@ -135,13 +136,7 @@ class _SongRow extends ConsumerWidget {
               ),
               if (artist != null) ...[
                 const SizedBox(height: Tokens.space1),
-                Text(
-                  artist,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.caption(Tokens.inkSoft),
-                ),
+                OneLineText(artist, style: AppText.caption(Tokens.inkSoft)),
               ],
             ],
           ),

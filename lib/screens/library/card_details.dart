@@ -3,13 +3,12 @@ import 'package:flutter/widgets.dart';
 import '../../app/detail_providers.dart';
 import '../../components/fact_row.dart';
 import '../../components/held_lines.dart';
+import '../../components/mal_score_line.dart';
 import '../../components/skeleton.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../detail/info_labels.dart';
 import '../../detail/title_details.dart';
-import '../../icons/score_star.dart';
-import '../../library/row_labels.dart';
 
 /// The details at the top of a title's quick panel, one height for every
 /// title: the name (room for two lines), other names (one), the synopsis
@@ -99,9 +98,8 @@ class CardDetails extends StatelessWidget {
             otherNames.join(' · '),
             lines: 1,
             // a line of 1 cut the tops of the letters off
-            style: AppText.caption(
-              Tokens.inkMuted,
-            ).copyWith(height: Tokens.lineHeightWrapped),
+            style: AppText.caption(Tokens.inkMuted)
+                .copyWith(height: Tokens.lineHeightWrapped),
           ),
         ),
         const SizedBox(height: Tokens.space4),
@@ -134,7 +132,7 @@ class CardDetails extends StatelessWidget {
                     child: Skeleton(height: Tokens.text2),
                   ),
                 )
-              : _Score(malScore),
+              : MalScoreLine(score: malScore, size: Tokens.text2),
         ),
         fact('Aired', value: aired ?? ''),
         fact('Length', value: length ?? ''),
@@ -158,29 +156,6 @@ class CardDetails extends StatelessWidget {
 }
 
 /// MAL's score with the gold star, "?" where MAL has none.
-class _Score extends StatelessWidget {
-  const _Score(this.score);
-
-  final double? score;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    label: 'MAL score ${formatMalScore(score)}',
-    excludeSemantics: true,
-    child: Row(
-      children: [
-        const ScoreStar(size: Tokens.text1, color: Tokens.star),
-        const SizedBox(width: Tokens.space1),
-        Text(
-          formatMalScore(score),
-          maxLines: 1,
-          style: AppText.tally(Tokens.ink, size: Tokens.text2),
-        ),
-      ],
-    ),
-  );
-}
-
 /// Three lines of synopsis while the full fetch runs.
 class _SkeletonLines extends StatelessWidget {
   const _SkeletonLines();

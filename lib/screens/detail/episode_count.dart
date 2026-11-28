@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import '../../components/close_on_escape.dart';
 import '../../components/field_text.dart';
 import '../../components/icon_square_button.dart';
+import '../../components/sunk_decoration.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../icons/app_icons.dart';
@@ -140,13 +141,7 @@ class _EpisodeCountState extends State<EpisodeCount> {
             height: Tokens.controlHeight,
             padding: const EdgeInsets.symmetric(horizontal: Tokens.space3),
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Tokens.wellFill,
-              borderRadius: Tokens.coverCorners,
-              boxShadow: [
-                BoxShadow(color: Tokens.edgeLight, offset: Offset(0, 1)),
-              ],
-            ),
+            decoration: sunkDisplay,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

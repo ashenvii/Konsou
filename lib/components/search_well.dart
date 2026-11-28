@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
 import 'hover_mark.dart';
+import 'sunk_decoration.dart';
 
 /// A well sunk into the page: near black, shaded at its top where what is
 /// above overhangs it, a faint lit lip under it. The title bar's search and
@@ -23,6 +24,7 @@ class SearchWell extends StatelessWidget {
   final bool hovered;
   final Widget child;
 
+  /// How far [wellLip] hangs below the box.
   static const lip = 1.0;
 
   @override
@@ -30,7 +32,7 @@ class SearchWell extends StatelessWidget {
     return DecoratedBox(
       decoration: const BoxDecoration(
         borderRadius: Tokens.keyCorners,
-        boxShadow: [BoxShadow(color: Tokens.edgeLight, offset: Offset(0, lip))],
+        boxShadow: [wellLip],
       ),
       child: ClipRRect(
         borderRadius: Tokens.keyCorners,

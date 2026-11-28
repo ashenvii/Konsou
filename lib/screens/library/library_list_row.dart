@@ -4,6 +4,7 @@ import '../../app/cover_view.dart';
 import '../../components/app_checkbox.dart';
 import '../../components/count_display.dart';
 import '../../components/faded.dart';
+import '../../components/mal_score_line.dart';
 import '../../components/season_cap.dart';
 import '../../components/hover_mark.dart';
 import '../../components/one_line_text.dart';
@@ -15,7 +16,6 @@ import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../library/entry_status.dart';
 import '../../library/library_row.dart';
-import '../../icons/score_star.dart';
 import '../../library/row_labels.dart';
 import 'list_columns.dart';
 import 'row_tap_area.dart';
@@ -262,18 +262,7 @@ class _MalCell extends StatelessWidget {
     } else if (row.isNotLinked) {
       value = null;
     } else {
-      value = Row(
-        children: [
-          const ScoreStar(size: Tokens.text1, color: Tokens.star),
-          const SizedBox(width: Tokens.space1),
-          Flexible(
-            child: OneLineText(
-              formatMalScore(row.malScore),
-              style: AppText.tally(Tokens.ink, size: Tokens.text2),
-            ),
-          ),
-        ],
-      );
+      value = MalScoreLine(score: row.malScore, size: Tokens.text2);
     }
     return SizedBox(
       width: ListColumns.mal,

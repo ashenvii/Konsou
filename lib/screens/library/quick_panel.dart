@@ -5,6 +5,8 @@ import '../../components/app_menu.dart';
 import '../../components/floating_panel.dart';
 import '../../components/hairline.dart';
 import '../../components/hover_tip.dart';
+import '../../components/measure_text.dart';
+import '../../components/one_line_text.dart';
 import '../../components/pressable.dart';
 import '../../components/raised_key.dart';
 import '../../components/remove_key.dart';
@@ -141,10 +143,8 @@ class QuickPanel extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(
-                              child: Text(
+                              child: OneLineText(
                                 current.label,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: AppText.caption(Tokens.ink),
                               ),
                             ),
@@ -189,17 +189,12 @@ class QuickPanel extends StatelessWidget {
     );
   }
 
-  static double _lineHeight(BuildContext context, TextStyle style) {
-    final painter = TextPainter(
-      text: TextSpan(text: ' ', style: style),
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
-      maxLines: 1,
-    )..layout();
-    final height = painter.height;
-    painter.dispose();
-    return height;
-  }
+  static double _lineHeight(BuildContext context, TextStyle style) =>
+      measureText(
+        ' ',
+        style,
+        textScaler: MediaQuery.textScalerOf(context),
+      ).height;
 }
 
 /// A status to pick: an icon key, or with [word] a small word for the rarer

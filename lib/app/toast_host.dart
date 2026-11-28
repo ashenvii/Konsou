@@ -14,6 +14,7 @@ typedef Undo = Future<void> Function();
 
 /// How long a toast with no action stays.
 const toastMessageTime = Duration(seconds: 4);
+
 /// How long a toast with an action, such as Undo, stays.
 const toastActionTime = Duration(seconds: 6);
 

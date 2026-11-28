@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
 import 'motion.dart';
+import 'sunk_decoration.dart';
 
 /// Episodes watched out of [total], drawn as one clickable step per episode
 /// for a short title (up to [maxSteps], or [narrowSteps] on a narrow window),
@@ -123,11 +124,7 @@ class _Display extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(Tokens.displayInset),
-    decoration: const BoxDecoration(
-      color: Tokens.wellFill,
-      borderRadius: Tokens.coverCorners,
-      boxShadow: [BoxShadow(color: Tokens.edgeLight, offset: Offset(0, 1))],
-    ),
+    decoration: sunkDisplay,
     child: child,
   );
 }

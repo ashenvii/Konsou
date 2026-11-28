@@ -21,6 +21,23 @@ void main() {
     expect(find.text('?'), findsOneWidget);
   });
 
+  testWidgets('at a size, and cut rather than spilling in a narrow box', (
+    tester,
+  ) async {
+    await pumpWidget(
+      tester,
+      const SizedBox(
+        width: Tokens.text2 * 2,
+        child: MalScoreLine(score: 9.29, size: Tokens.text2),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    expect(
+      tester.widget<Text>(find.text('9.29')).style?.fontSize,
+      Tokens.text2,
+    );
+  });
+
   testWidgets('a screen reader hears it as one line', (tester) async {
     final handle = tester.ensureSemantics();
     await pumpWidget(tester, const MalScoreLine(score: 9.29));

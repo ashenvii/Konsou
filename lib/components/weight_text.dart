@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 
 import '../design/text_styles.dart';
+import 'measure_text.dart';
+import 'one_line_text.dart';
 
 /// A label that gets bold when [bold] is true without changing its width. The
 /// box is always as wide as the wider of the two (bold is another family, so
@@ -21,20 +23,11 @@ class WeightText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double measure(bool asBold) {
-      final painter = TextPainter(
-        text: TextSpan(
-          text: text,
-          style: AppText.label(color, bold: asBold),
-        ),
-        textDirection: Directionality.of(context),
-        textScaler: MediaQuery.textScalerOf(context),
-        maxLines: 1,
-      )..layout();
-      final width = painter.width;
-      painter.dispose();
-      return width;
-    }
+    double measure(bool asBold) => measureText(
+      text,
+      AppText.label(color, bold: asBold),
+      textScaler: MediaQuery.textScalerOf(context),
+    ).width;
 
     final regular = measure(false);
     final heavy = measure(true);
@@ -43,13 +36,7 @@ class WeightText extends StatelessWidget {
       width: width,
       child: Center(
         widthFactor: 1,
-        child: Text(
-          text,
-          maxLines: 1,
-          softWrap: false,
-          overflow: TextOverflow.ellipsis,
-          style: AppText.label(color, bold: bold),
-        ),
+        child: OneLineText(text, style: AppText.label(color, bold: bold)),
       ),
     );
   }

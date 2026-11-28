@@ -21,12 +21,16 @@ class RailDestination {
 
 /// Route of the Library.
 const libraryPath = '/';
+
 /// Route of Watching.
 const watchingPath = '/watching';
+
 /// Route of Discover.
 const discoverPath = '/discover';
+
 /// Route of Schedule.
 const schedulePath = '/schedule';
+
 /// Route of Settings.
 const settingsPath = '/settings';
 
@@ -37,6 +41,7 @@ const railDestinations = [
   RailDestination(discoverPath, 'Discover', AppIcons.discover),
   RailDestination(schedulePath, 'Schedule', AppIcons.schedule),
 ];
+
 /// Settings, at the foot of the rail.
 const settingsDestination = RailDestination(
   settingsPath,

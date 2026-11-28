@@ -6,6 +6,7 @@ import 'title_language.dart';
 
 /// Rows shown at first in each group, and how many more one Load more adds.
 const quickFirst = quickPage;
+
 /// How many more rows Quick search shows for each More.
 const quickPage = 10;
 

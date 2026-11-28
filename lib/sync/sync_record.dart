@@ -43,8 +43,10 @@ const entryTableColumns = [
 /// An entry in the file also carries its provider references, and its name
 /// while it has no MAL page (a name from MAL never goes to Drive).
 const entryColumns = [...entryTableColumns, 'name', 'references'];
+
 /// The entry_reference columns sync carries.
 const referenceColumns = ['provider', 'provider_id'];
+
 /// The completion_log columns sync carries.
 const completionColumns = [
   'entry_id',
@@ -54,6 +56,7 @@ const completionColumns = [
   'minutes_per_episode',
   'is_estimated',
 ];
+
 /// The alert columns sync carries.
 const alertColumns = [
   'entry_id',
@@ -64,12 +67,16 @@ const alertColumns = [
   'dismissed',
   'created_at',
 ];
+
 /// The deletion columns sync carries.
 const deletionColumns = ['entry_id', 'deleted_at'];
+
 /// The match decline columns sync carries.
 const declineColumns = ['entry_id', 'provider', 'provider_id', 'declined_at'];
+
 /// The entry alias columns sync carries.
 const aliasColumns = ['alias_id', 'entry_id'];
+
 /// The setting columns sync carries.
 const settingColumns = ['key', 'value', 'updated_at'];
 

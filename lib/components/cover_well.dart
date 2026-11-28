@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../design/tokens.dart';
+import 'sunk_decoration.dart';
 
 /// A cover sunk into the console: a near-black well around it, shaded at the
 /// top, with a faint lit lip under it. [lit] (hover or focus) rings the well
@@ -28,7 +29,7 @@ class CoverWell extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Tokens.wellFill,
         borderRadius: Tokens.wellCorners,
-        boxShadow: [BoxShadow(color: Tokens.edgeLight, offset: Offset(0, 1))],
+        boxShadow: [wellLip],
       ),
       position: DecorationPosition.background,
       child: Container(

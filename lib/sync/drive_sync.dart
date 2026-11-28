@@ -28,6 +28,7 @@ const oldListFileName = 'list.json';
 
 /// Wait after a change before it is synced.
 const changeDelay = Duration(seconds: 30);
+
 /// Longest Close waits for a last sync.
 const closeLimit = Duration(seconds: 3);
 

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../app/cover_view.dart';
 import '../../app/providers.dart';
+import '../../components/cover_well.dart';
 import '../../components/fading_portal.dart';
 import '../../components/page_frame.dart';
 import '../../components/pressable.dart';
@@ -115,7 +116,7 @@ class _Poster extends StatefulWidget {
 }
 
 class _PosterState extends State<_Poster> with FadingPortalOwner<_Poster> {
-  static const _coverWidth = Tokens.detailPosterWidth - 2 * Tokens.wellPad;
+  static const _coverWidth = Tokens.detailPosterWidth - CoverWell.inset;
 
   @override
   Widget build(BuildContext context) {
@@ -127,10 +128,9 @@ class _PosterState extends State<_Poster> with FadingPortalOwner<_Poster> {
       child: Pressable(
         label: 'Open the cover full size',
         onPressed: openPortal,
-        builder: (context, state) => Container(
-          padding: const EdgeInsets.all(Tokens.wellPad),
+        // the poster stands off the page: a drop shadow under its well
+        builder: (context, state) => DecoratedBox(
           decoration: const BoxDecoration(
-            color: Tokens.wellFill,
             borderRadius: Tokens.wellCorners,
             boxShadow: [
               BoxShadow(
@@ -138,11 +138,9 @@ class _PosterState extends State<_Poster> with FadingPortalOwner<_Poster> {
                 blurRadius: Tokens.shadowBlur,
                 offset: Offset(0, Tokens.shadowDrop),
               ),
-              BoxShadow(color: Tokens.edgeLight, offset: Offset(0, 1)),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: Tokens.coverCorners,
+          child: CoverWell(
             child: CoverView(
               lane: Lane.page,
               malId: widget.malId,

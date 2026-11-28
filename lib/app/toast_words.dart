@@ -40,35 +40,46 @@ String removed(int count) => count == 1 ? 'Removed' : 'Removed $count';
 
 /// The toast's Undo action.
 const undoLabel = 'Undo';
+
 /// The toast's action that opens the earlier titles review.
 const reviewLabel = 'Review';
+
 /// The toast's close button.
 const closeToastLabel = 'Close';
 
 /// Label of the star that rates [score].
 String rateStarLabel(int score) => 'Rate $score';
+
 /// Label of the rating's clear action.
 const clearRatingLabel = 'Clear';
 
 /// Heading of the earlier titles review.
 const reviewHeading = 'Mark earlier titles as completed';
+
 /// Review heading over titles outside the main story.
 const extrasHeading = 'Extras';
+
 /// Review action that puts it off.
 const notNowLabel = 'Not now';
+
 /// Review button that marks the chosen titles.
 String markButton(int count) => 'Mark $count';
 
 /// Review heading over the story titles in watch order.
 const storiesHeading = 'In watch order';
+
 /// Review action that selects every title.
 const selectAllLabel = 'All';
+
 /// Review action that clears the selection.
 const selectNoneLabel = 'None';
+
 /// Status shown for a title not on the user's list.
 const notOnListLabel = 'Not on your list';
+
 /// How many titles the review has selected.
 String selectedCount(int count, int total) => '$count of $total selected';
+
 /// A stored status as the review shows it.
 String earlierStatusLabel(String? stored) {
   if (stored == null) return notOnListLabel;

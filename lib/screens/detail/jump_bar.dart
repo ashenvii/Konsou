@@ -1,3 +1,5 @@
+import '../../components/measure_text.dart';
+
 import 'dart:math';
 
 import 'package:flutter/widgets.dart';
@@ -236,17 +238,13 @@ class _Sections extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scaler = MediaQuery.textScalerOf(context);
-    double widthOf(String label) {
-      final painter = TextPainter(
-        text: TextSpan(text: label, style: AppText.label(Tokens.ink)),
-        maxLines: 1,
-        textDirection: TextDirection.ltr,
-        textScaler: scaler,
-      )..layout();
-      final width = painter.width + 2 * Tokens.space4;
-      painter.dispose();
-      return width;
-    }
+    double widthOf(String label) =>
+        measureText(
+          label,
+          AppText.label(Tokens.ink),
+          textScaler: scaler,
+        ).width +
+        2 * Tokens.space4;
 
     return LayoutBuilder(
       builder: (context, constraints) {

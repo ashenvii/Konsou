@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../components/cap_centered.dart';
+import '../components/cap_centered_text.dart';
 import '../components/key_cap.dart';
 import '../components/search_well.dart';
 import '../components/pressable.dart';
@@ -170,15 +170,9 @@ class _QuickSearchButton extends StatelessWidget {
               AppIcon(AppIcons.search, size: Tokens.iconSize, color: ink),
               const SizedBox(width: Tokens.space2),
               Expanded(
-                child: CapCentered(
+                child: CapCenteredText(
+                  _searchPlaceholder,
                   style: AppText.label(ink),
-                  child: Text(
-                    _searchPlaceholder,
-                    maxLines: 1,
-                    softWrap: false,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.label(ink),
-                  ),
                 ),
               ),
               const SizedBox(width: Tokens.space2),

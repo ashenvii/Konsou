@@ -4,6 +4,7 @@ import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import 'floating_panel.dart';
 import 'hairline.dart';
+import 'one_line_text.dart';
 import 'smooth_scroll.dart';
 import '../library/earlier_titles.dart';
 import '../library/entry_status.dart';
@@ -294,12 +295,7 @@ class _TitleRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppText.paragraph(Tokens.ink),
                     ),
-                    Text(
-                      detail,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppText.caption(Tokens.inkSoft),
-                    ),
+                    OneLineText(detail, style: AppText.caption(Tokens.inkSoft)),
                   ],
                 ),
               ),

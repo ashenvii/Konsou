@@ -1,3 +1,5 @@
+import '../../components/measure_text.dart';
+
 import 'dart:math';
 
 import 'package:flutter/widgets.dart';
@@ -50,14 +52,11 @@ abstract final class ListColumns {
   /// As wide as its caption at the current text size, and never narrower
   /// than a two-digit well.
   static double yourScore(BuildContext context) {
-    final painter = TextPainter(
-      text: TextSpan(text: yourScoreLabel, style: captionStyle(Tokens.ink)),
-      textDirection: Directionality.of(context),
+    final width = measureText(
+      yourScoreLabel,
+      captionStyle(Tokens.ink),
       textScaler: MediaQuery.textScalerOf(context),
-      maxLines: 1,
-    )..layout();
-    final width = painter.width.ceilToDouble();
-    painter.dispose();
+    ).width.ceilToDouble();
     return max(width + Tokens.space2, Tokens.space5 * 2);
   }
 }

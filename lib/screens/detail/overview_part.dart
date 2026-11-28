@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../../components/measure_text.dart';
 import '../../components/pressable.dart';
 import '../../components/skeleton_lines.dart';
 import '../../design/text_styles.dart';
@@ -221,14 +222,13 @@ class _ClampedState extends State<_Clamped> {
     final style = AppText.paragraph(Tokens.inkSoft);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final painter = TextPainter(
-          text: TextSpan(text: widget.text, style: style),
-          maxLines: widget.lines,
-          textDirection: TextDirection.ltr,
+        final cut = measureText(
+          widget.text,
+          style,
           textScaler: MediaQuery.textScalerOf(context),
-        )..layout(maxWidth: constraints.maxWidth);
-        final cut = painter.didExceedMaxLines;
-        painter.dispose();
+          maxLines: widget.lines,
+          maxWidth: constraints.maxWidth,
+        ).cut;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

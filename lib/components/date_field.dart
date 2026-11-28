@@ -7,6 +7,7 @@ import 'floating_panel.dart';
 import 'hairline.dart';
 import 'hover_mark.dart';
 import 'menu_chevron.dart';
+import 'one_line_text.dart';
 import 'pressable.dart';
 import 'text_action.dart';
 import 'icon_square_button.dart';
@@ -52,11 +53,8 @@ class DateField extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
+                  child: OneLineText(
                     value == null ? 'Not set' : formatDate(value!),
-                    maxLines: 1,
-                    softWrap: false,
-                    overflow: TextOverflow.ellipsis,
                     style: AppText.label(
                       value == null ? Tokens.inkSoft : Tokens.ink,
                     ),

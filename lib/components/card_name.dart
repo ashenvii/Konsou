@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
+import 'measure_text.dart';
 import 'skeleton.dart';
 
 /// A card's name: two lines at most, cut with an ellipsis, and always the
@@ -25,17 +26,12 @@ class CardName extends StatelessWidget {
   ).copyWith(height: Tokens.lineHeightWrapped);
 
   /// The height it always takes, for a grid that sizes its cells ahead.
-  static double heightFor(TextScaler textScaler) {
-    final painter = TextPainter(
-      text: TextSpan(text: '\n', style: _styleFor(Tokens.ink)),
-      maxLines: 2,
-      textDirection: TextDirection.ltr,
-      textScaler: textScaler,
-    )..layout();
-    final height = painter.height;
-    painter.dispose();
-    return height;
-  }
+  static double heightFor(TextScaler textScaler) => measureText(
+    '\n',
+    _styleFor(Tokens.ink),
+    textScaler: textScaler,
+    maxLines: 2,
+  ).height;
 
   @override
   Widget build(BuildContext context) {

@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../components/one_line_text.dart';
 import '../components/page_dim.dart';
 import '../components/app_button.dart';
 import '../components/app_checkbox.dart';
@@ -391,49 +392,60 @@ class _ResultRowState extends State<_ResultRow> with _KeepsInView<_ResultRow> {
   Widget build(BuildContext context) {
     final row = widget.row;
     final focused = widget.focused;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onHover: (_) => point(focused: widget.focused, onFocus: widget.onFocus),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onOpen,
-        // the same mark as every hover in the app
-        child: HoverMark(
-          on: focused && !_overBox,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Tokens.space4,
-              vertical: Tokens.space1,
-            ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final narrow = constraints.maxWidth < EpisodeColumn.narrowBelow;
-                return Row(
-                  children: [
-                    AppCheckbox(
-                      value: row.completed
-                          ? CheckValue.checked
-                          : CheckValue.empty,
-                      onChanged: (_) => widget.onTick(),
-                      onHover: (over) => setState(() => _overBox = over),
-                    ),
-                    const SizedBox(width: Tokens.space3),
-                    CoverView(malId: row.malId, width: Tokens.quickCoverWidth),
-                    const SizedBox(width: Tokens.space3),
-                    Expanded(child: _NameAndLine(row, narrow: narrow)),
-                    const SizedBox(width: Tokens.space3),
-                    TitleColumns(
-                      count: row.count,
-                      malScore: row.malScore,
-                      narrow: narrow,
-                      status: row.status,
-                      loadingDetails:
-                          row.isLoadingDetails || row.isScorePending,
-                      notLinked: row.isNotLinked,
-                    ),
-                  ],
-                );
-              },
+    // a spoken button; the arrow keys keep moving the highlight, so the row
+    // takes no keyboard focus of its own
+    return Semantics(
+      container: true,
+      button: true,
+      onTap: widget.onOpen,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onHover: (_) => point(focused: widget.focused, onFocus: widget.onFocus),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onOpen,
+          // the same mark as every hover in the app
+          child: HoverMark(
+            on: focused && !_overBox,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Tokens.space4,
+                vertical: Tokens.space1,
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final narrow =
+                      constraints.maxWidth < EpisodeColumn.narrowBelow;
+                  return Row(
+                    children: [
+                      AppCheckbox(
+                        value: row.completed
+                            ? CheckValue.checked
+                            : CheckValue.empty,
+                        onChanged: (_) => widget.onTick(),
+                        onHover: (over) => setState(() => _overBox = over),
+                      ),
+                      const SizedBox(width: Tokens.space3),
+                      CoverView(
+                        malId: row.malId,
+                        width: Tokens.quickCoverWidth,
+                      ),
+                      const SizedBox(width: Tokens.space3),
+                      Expanded(child: _NameAndLine(row, narrow: narrow)),
+                      const SizedBox(width: Tokens.space3),
+                      TitleColumns(
+                        count: row.count,
+                        malScore: row.malScore,
+                        narrow: narrow,
+                        status: row.status,
+                        loadingDetails:
+                            row.isLoadingDetails || row.isScorePending,
+                        notLinked: row.isNotLinked,
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -454,12 +466,7 @@ class _NameAndLine extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          row.name,
-          style: AppText.label(nameInk),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        OneLineText(row.name, style: AppText.label(nameInk)),
         const SizedBox(height: Tokens.space1),
         RowSmallLine(
           row.line,
@@ -529,35 +536,40 @@ class _LoadMoreState extends State<_LoadMore> with _KeepsInView<_LoadMore> {
   @override
   Widget build(BuildContext context) {
     final lit = widget.focused || _hovered;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      onHover: (_) => point(focused: widget.focused, onFocus: widget.onFocus),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        child: HoverMark(
-          on: lit,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Tokens.space4,
-              vertical: Tokens.space3,
-            ),
-            child: Row(
-              children: [
-                const Expanded(child: Hairline()),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Tokens.space3,
+    return Semantics(
+      container: true,
+      button: true,
+      onTap: widget.onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        onHover: (_) => point(focused: widget.focused, onFocus: widget.onFocus),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onTap,
+          child: HoverMark(
+            on: lit,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Tokens.space4,
+                vertical: Tokens.space3,
+              ),
+              child: Row(
+                children: [
+                  const Expanded(child: Hairline()),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Tokens.space3,
+                    ),
+                    child: Text(
+                      widget.label,
+                      style: AppText.label(lit ? Tokens.ink : Tokens.inkSoft),
+                    ),
                   ),
-                  child: Text(
-                    widget.label,
-                    style: AppText.label(lit ? Tokens.ink : Tokens.inkSoft),
-                  ),
-                ),
-                const Expanded(child: Hairline()),
-              ],
+                  const Expanded(child: Hairline()),
+                ],
+              ),
             ),
           ),
         ),

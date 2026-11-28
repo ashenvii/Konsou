@@ -1,3 +1,5 @@
+import '../../components/measure_text.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
@@ -111,17 +113,8 @@ double watchOrderMetaHeight(BuildContext context) =>
 /// at the current text size.
 double watchOrderCardMinWidth(BuildContext context) {
   final scaler = MediaQuery.textScalerOf(context);
-  double widthOf(String text, TextStyle style) {
-    final painter = TextPainter(
-      text: TextSpan(text: text, style: style),
-      maxLines: 1,
-      textDirection: TextDirection.ltr,
-      textScaler: scaler,
-    )..layout();
-    final width = painter.width;
-    painter.dispose();
-    return width;
-  }
+  double widthOf(String text, TextStyle style) =>
+      measureText(text, style, textScaler: scaler).width;
 
   final state = StripCard.stateStyle(Tokens.ink);
   final caption = AppText.caption(Tokens.ink);

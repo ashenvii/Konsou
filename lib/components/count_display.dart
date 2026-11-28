@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../design/text_styles.dart';
 import '../design/tokens.dart';
 import '../library/row_labels.dart';
+import 'sunk_decoration.dart';
 
 /// A number pair in one sunk display, "4 / 12", like the Detail page's
 /// episode display but with no glow. The slash and a unit ("ep", "seasons")
@@ -51,11 +52,7 @@ class CountDisplay extends StatelessWidget {
       label: spoken,
       excludeSemantics: true,
       child: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: Tokens.wellFill,
-          borderRadius: Tokens.coverCorners,
-          boxShadow: [BoxShadow(color: Tokens.edgeLight, offset: Offset(0, 1))],
-        ),
+        decoration: sunkDisplay,
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: Tokens.space1,
