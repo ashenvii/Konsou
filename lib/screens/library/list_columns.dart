@@ -14,9 +14,9 @@ import '../../icons/app_icons.dart';
 import '../../library/library_view.dart';
 
 /// The Library list's columns, shared by its header bar and its rows so the
-/// two always line up. A row narrower than three grid cards drops the
-/// status, MAL and Your score columns; the status icon leads its episode
-/// cell instead.
+/// two always line up. A row that would leave the name less than a grid
+/// card's width drops the status, MAL and Your score columns; the status icon
+/// leads its episode cell instead.
 abstract final class ListColumns {
   /// The checkbox's cell, the cover and the gap after it.
   static const lead =
@@ -39,7 +39,19 @@ abstract final class ListColumns {
   /// The menu key at the row's end and the gaps around it.
   static const trail = Tokens.space2 + Tokens.controlHeight + Tokens.space3;
 
-  static bool isNarrow(double rowWidth) => rowWidth < EpisodeColumn.narrowBelow;
+  /// What a wide row takes beside the name at this text size. The status
+  /// column counts on every tab, so all tabs go narrow at one width.
+  static double besideName(TextScaler textScaler) =>
+      lead +
+      Tokens.space3 +
+      status +
+      episodes +
+      mal +
+      yourScore(textScaler) +
+      trail;
+
+  static bool isNarrow(double rowWidth, TextScaler textScaler) =>
+      rowWidth - besideName(textScaler) < Tokens.gridCardMinWidth;
 
   static TextStyle captionStyle(Color color) =>
       AppText.label(color, bold: true, size: Tokens.text1);
@@ -48,11 +60,11 @@ abstract final class ListColumns {
 
   /// As wide as its caption at the current text size, and never narrower
   /// than a two-digit well.
-  static double yourScore(BuildContext context) {
+  static double yourScore(TextScaler textScaler) {
     final width = measureText(
       yourScoreLabel,
       captionStyle(Tokens.ink),
-      textScaler: MediaQuery.textScalerOf(context),
+      textScaler: textScaler,
     ).width.ceilToDouble();
     return max(width + Tokens.space2, Tokens.space5 * 2);
   }
@@ -106,7 +118,11 @@ class LibraryListHeader extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final narrow = ListColumns.isNarrow(constraints.maxWidth - endInset);
+        final textScaler = MediaQuery.textScalerOf(context);
+        final narrow = ListColumns.isNarrow(
+          constraints.maxWidth - endInset,
+          textScaler,
+        );
         return Container(
           height: Tokens.controlHeight,
           padding: EdgeInsets.only(right: endInset),
@@ -140,7 +156,7 @@ class LibraryListHeader extends StatelessWidget {
                 caption(
                   ListColumn.yourScore,
                   ListColumns.yourScoreLabel,
-                  width: ListColumns.yourScore(context),
+                  width: ListColumns.yourScore(textScaler),
                   centred: true,
                 ),
               ],

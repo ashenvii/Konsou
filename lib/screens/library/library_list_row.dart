@@ -74,7 +74,8 @@ class _LibraryListRowState extends State<LibraryListRow> {
       builder: (context, state) => LayoutBuilder(
         builder: (context, constraints) {
           // a narrow row also drops Your score
-          final narrow = ListColumns.isNarrow(constraints.maxWidth);
+          final textScaler = MediaQuery.textScalerOf(context);
+          final narrow = ListColumns.isNarrow(constraints.maxWidth, textScaler);
           return HoverMark(
             on:
                 widget.menuShown ||
@@ -126,7 +127,7 @@ class _LibraryListRowState extends State<LibraryListRow> {
                   if (!narrow) ...[
                     _MalCell(row),
                     SizedBox(
-                      width: ListColumns.yourScore(context),
+                      width: ListColumns.yourScore(textScaler),
                       // centred under its caption
                       child: Align(
                         child: row.score == null
