@@ -15,7 +15,7 @@ class PickerSkeleton extends StatelessWidget {
         for (var i = 0; i < 3; i++)
           const Padding(
             padding: EdgeInsets.all(Tokens.space3),
-            child: SkeletonLines(title: 0.4, line: 0.2),
+            child: SkeletonLines(),
           ),
       ],
     );

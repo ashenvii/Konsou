@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../components/cover_image.dart';
 import '../../components/fading_portal.dart';
+import '../../components/page_dim.dart';
 import '../../components/peek_row.dart';
 import '../../components/pressable.dart';
 import '../../design/tokens.dart';
@@ -64,7 +65,7 @@ class _PicturesPartState extends State<PicturesPart>
                     right: Tokens.space2,
                     child: Container(
                       padding: const EdgeInsets.all(Tokens.space1),
-                      color: Tokens.ground.withValues(alpha: 0.72),
+                      color: PageDim.color,
                       child: const AppIcon(
                         AppIcons.expand,
                         size: Tokens.iconSize,

@@ -68,10 +68,7 @@ class TitleBar extends StatelessWidget {
                           ),
                         ),
                         wordmark ??
-                            const Text(
-                              WindowConfig.title,
-                              style: AppText.heading,
-                            ),
+                            Text(WindowConfig.title, style: AppText.heading),
                       ],
                     ),
                   ),

@@ -23,7 +23,7 @@ class Tag extends StatelessWidget {
         text,
         maxLines: 1,
         softWrap: false,
-        style: AppText.caption(color).copyWith(fontWeight: FontWeight.w700),
+        style: AppText.caption(color, bold: true),
       ),
     );
   }

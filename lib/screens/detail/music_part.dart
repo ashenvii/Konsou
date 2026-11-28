@@ -148,10 +148,7 @@ class _SongRow extends ConsumerWidget {
             child: Text(
               episodes,
               textAlign: TextAlign.right,
-              style: AppText.tally(
-                Tokens.inkMuted,
-                size: Tokens.text1,
-              ).copyWith(height: Tokens.lineHeightWrapped),
+              style: AppText.tally(Tokens.inkMuted, size: Tokens.text1).wrapped,
             ),
           ),
         ],

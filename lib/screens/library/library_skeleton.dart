@@ -46,7 +46,7 @@ class _GridSkeleton extends StatelessWidget {
                 height: CoverImage.heightFor(layout.cardWidth),
               ),
               const SizedBox(height: Tokens.space2),
-              const SkeletonLines(title: 0.8, line: 0.45, gap: Tokens.space1),
+              const SkeletonLines(gap: Tokens.space1),
             ],
           ),
         );
@@ -83,7 +83,7 @@ class _ListSkeleton extends StatelessWidget {
               height: CoverImage.heightFor(Tokens.listCoverWidth),
             ),
             const SizedBox(width: Tokens.space3),
-            const Expanded(child: SkeletonLines(title: 0.5, line: 0.25)),
+            const Expanded(child: SkeletonLines()),
           ],
         ),
       ),

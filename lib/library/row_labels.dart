@@ -117,8 +117,11 @@ String formatCardWhen(String? startDate, {required bool notAired}) {
       : '?';
 }
 
+/// What a title says, aloud or drawn, while its details come in.
+const loadingDetails = 'Loading details';
+
 /// The title to draw. An entry whose name has not come in yet says so.
-String formatTitle(String name) => name.isEmpty ? 'Loading details' : name;
+String formatTitle(String name) => name.isEmpty ? loadingDetails : name;
 
 /// Your progress on a Library row in words, for its quick panel: "Episode 4
 /// of 28", "All 12 episodes", "28 episodes" before you start; a franchise

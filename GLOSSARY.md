@@ -89,7 +89,7 @@ The Library's box that narrows the list to entries with a typed title. It is not
 _Avoid_: Filter, search (for this box)
 
 **Skeleton**:
-The stand-in drawn where something is still loading, with a light band sweeping left to right.
+The stand-in drawn where something is still loading, with a light band sweeping left to right. Text loads as bars of three lengths only: long, short and full (a paragraph's lines).
 _Avoid_: Placeholder, shimmer (for the component)
 
 **Card**:

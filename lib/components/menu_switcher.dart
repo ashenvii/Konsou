@@ -60,7 +60,6 @@ class MenuSwitcher extends StatelessWidget {
                   CapCenteredText(
                     count!,
                     style: style.copyWith(
-                      fontWeight: FontWeight.w400,
                       color: lit ? Tokens.inkSoft : Tokens.inkMuted,
                     ),
                   ),

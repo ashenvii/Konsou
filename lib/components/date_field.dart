@@ -228,16 +228,13 @@ class _MonthGridState extends State<_MonthGrid> {
           color: isSelected ? Tokens.pop : null,
           child: Text(
             '$day',
-            style:
-                AppText.tally(
-                  isSelected
-                      ? Tokens.onPop
-                      : !allowed
-                      ? Tokens.inkMuted
-                      : (isToday ? Tokens.pop : Tokens.ink),
-                ).copyWith(
-                  fontWeight: isSelected || isToday ? FontWeight.w700 : null,
-                ),
+            style: AppText.tally(
+              isSelected
+                  ? Tokens.onPop
+                  : !allowed
+                  ? Tokens.inkMuted
+                  : (isToday ? Tokens.pop : Tokens.ink),
+            ),
           ),
         ),
       ),

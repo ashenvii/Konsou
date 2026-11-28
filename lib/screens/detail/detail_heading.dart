@@ -12,10 +12,6 @@ class DetailHeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     header: true,
-    child: Text(
-      title,
-      style: AppText.caption(Tokens.inkMuted)
-          .copyWith(fontWeight: FontWeight.w700),
-    ),
+    child: Text(title, style: AppText.caption(Tokens.inkMuted, bold: true)),
   );
 }

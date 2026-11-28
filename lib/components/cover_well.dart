@@ -4,20 +4,13 @@ import '../design/tokens.dart';
 import 'sunk_decoration.dart';
 
 /// A cover sunk into the console: a near-black well around it, shaded at the
-/// top, with a faint lit lip under it. [lit] (hover or focus) rings the well
-/// in pop. A [foot] sits in the well under the cover, which then has no
-/// padding below it.
+/// top, with a faint lit lip under it. A [foot] sits in the well under the
+/// cover, which then has no padding below it.
 class CoverWell extends StatelessWidget {
-  const CoverWell({
-    super.key,
-    required this.child,
-    this.foot,
-    this.lit = false,
-  });
+  const CoverWell({super.key, required this.child, this.foot});
 
   final Widget child;
   final Widget? foot;
-  final bool lit;
 
   /// How much narrower the cover is than the well.
   static const inset = Tokens.wellPad * 2;
@@ -38,12 +31,6 @@ class CoverWell extends StatelessWidget {
           Tokens.wellPad,
           Tokens.wellPad,
           foot == null ? Tokens.wellPad : 0,
-        ),
-        foregroundDecoration: BoxDecoration(
-          borderRadius: Tokens.wellCorners,
-          border: Border.all(
-            color: Tokens.pop.withValues(alpha: lit ? 0.6 : 0),
-          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -4,7 +4,7 @@ import '../../app/detail_providers.dart';
 import '../../components/fact_row.dart';
 import '../../components/held_lines.dart';
 import '../../components/mal_score_line.dart';
-import '../../components/skeleton.dart';
+import '../../components/skeleton_lines.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../detail/info_labels.dart';
@@ -85,11 +85,7 @@ class CardDetails extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.only(right: trailingRoom),
-          child: HeldLines(
-            shownName,
-            lines: 2,
-            style: AppText.heading.copyWith(height: Tokens.lineHeightWrapped),
-          ),
+          child: HeldLines(shownName, lines: 2, style: AppText.heading.wrapped),
         ),
         const SizedBox(height: Tokens.space1),
         Padding(
@@ -98,8 +94,7 @@ class CardDetails extends StatelessWidget {
             otherNames.join(' · '),
             lines: 1,
             // a line of 1 cut the tops of the letters off
-            style: AppText.caption(Tokens.inkMuted)
-                .copyWith(height: Tokens.lineHeightWrapped),
+            style: AppText.caption(Tokens.inkMuted).wrapped,
           ),
         ),
         const SizedBox(height: Tokens.space4),
@@ -113,7 +108,7 @@ class CardDetails extends StatelessWidget {
           style: notLinked || cannot
               ? AppText.paragraph(Tokens.inkMuted)
               : paragraph,
-          over: waiting ? const _SkeletonLines() : null,
+          loading: waiting,
         ),
         const SizedBox(height: Tokens.space3),
         fact(
@@ -125,54 +120,17 @@ class CardDetails extends StatelessWidget {
                   style: AppText.paragraph(Tokens.inkMuted),
                 )
               : scorePending
-              ? const Align(
-                  alignment: Alignment.centerLeft,
-                  child: FractionallySizedBox(
-                    widthFactor: 0.4,
-                    child: Skeleton(height: Tokens.text2),
-                  ),
-                )
+              ? const SkeletonLine()
               : MalScoreLine(score: malScore, size: Tokens.text2),
         ),
         fact('Aired', value: aired ?? ''),
         fact('Length', value: length ?? ''),
         if (waiting)
-          fact(
-            'Genres',
-            child: const Align(
-              alignment: Alignment.centerLeft,
-              child: FractionallySizedBox(
-                widthFactor: 0.6,
-                child: Skeleton(height: Tokens.text2),
-              ),
-            ),
-          )
+          fact('Genres', child: const SkeletonLine())
         else
           fact('Genres', value: genres.join(', ')),
         fact('Progress', value: progress),
       ],
     );
   }
-}
-
-/// MAL's score with the gold star, "?" where MAL has none.
-/// Three lines of synopsis while the full fetch runs.
-class _SkeletonLines extends StatelessWidget {
-  const _SkeletonLines();
-
-  @override
-  Widget build(BuildContext context) => const Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      Skeleton(height: Tokens.text2),
-      SizedBox(height: Tokens.space2),
-      Skeleton(height: Tokens.text2),
-      SizedBox(height: Tokens.space2),
-      FractionallySizedBox(
-        alignment: Alignment.centerLeft,
-        widthFactor: 0.6,
-        child: Skeleton(height: Tokens.text2),
-      ),
-    ],
-  );
 }

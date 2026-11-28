@@ -97,8 +97,8 @@ class _LoadWordmarkState extends State<LoadWordmark> {
   Widget build(BuildContext context) {
     final progress = _progress.value;
     final face = switch (_side) {
-      _Side.word => const Text(WindowConfig.title, style: AppText.heading),
-      _Side.allLoaded => const Text('All loaded', style: AppText.heading),
+      _Side.word => Text(WindowConfig.title, style: AppText.heading),
+      _Side.allLoaded => Text('All loaded', style: AppText.heading),
       _Side.count => _LoadCount(progress),
     };
     final faceKey = _side == _Side.count

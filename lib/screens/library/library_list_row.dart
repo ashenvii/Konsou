@@ -10,7 +10,6 @@ import '../../components/hover_mark.dart';
 import '../../components/one_line_text.dart';
 import '../../components/row_small_line.dart';
 import '../../components/skeleton_lines.dart';
-import '../../components/skeleton.dart';
 import '../../components/touch_target.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
@@ -170,10 +169,7 @@ class _Titles extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (row.isLoadingDetails) {
-      return Semantics(
-        label: 'Loading details',
-        child: const SkeletonLines(title: 0.6, line: 0.3),
-      );
+      return Semantics(label: loadingDetails, child: const SkeletonLines());
     }
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -255,10 +251,7 @@ class _MalCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final Widget? value;
     if (row.isLoadingDetails || row.isScorePending) {
-      value = const FractionallySizedBox(
-        widthFactor: 0.6,
-        child: Skeleton(height: Tokens.text2),
-      );
+      value = const SkeletonLine();
     } else if (row.isNotLinked) {
       value = null;
     } else {

@@ -21,21 +21,25 @@ abstract final class AppText {
   static const _labelFallback = [Tokens.sans];
 
   /// A plain label is Plex Sans JP; a bold one (buttons, tabs, titles) is
-  /// Chakra Petch, its one weight.
-  static TextStyle label(Color color, {bool bold = false}) => bold
+  /// Chakra Petch, its one weight, tracked by its [size].
+  static TextStyle label(
+    Color color, {
+    bool bold = false,
+    double size = Tokens.text2,
+  }) => bold
       ? TextStyle(
           fontFamily: Tokens.label,
           fontFamilyFallback: _labelFallback,
           fontWeight: FontWeight.w600,
-          fontSize: Tokens.text2,
-          letterSpacing: Tokens.text2 * Tokens.labelTracking,
+          fontSize: size,
+          letterSpacing: size * Tokens.labelTracking,
           height: 1,
           color: color,
         )
       : TextStyle(
           fontFamily: Tokens.sans,
           fontWeight: FontWeight.w400,
-          fontSize: Tokens.text2,
+          fontSize: size,
           height: 1,
           color: color,
         );
@@ -48,18 +52,13 @@ abstract final class AppText {
     color: color,
   );
 
-  static const heading = TextStyle(
-    fontFamily: Tokens.label,
-    fontFamilyFallback: _labelFallback,
-    fontWeight: FontWeight.w600,
-    fontSize: Tokens.text3,
-    letterSpacing: Tokens.text3 * Tokens.labelTracking,
-    height: 1,
-    color: Tokens.ink,
-  );
+  /// A page or section title: a bold [label] one size up.
+  static final heading = label(Tokens.ink, bold: true, size: Tokens.text3);
 
-  static TextStyle caption(Color color) => TextStyle(
+  /// Small text under or beside a label. A bold one is Plex Sans JP Bold.
+  static TextStyle caption(Color color, {bool bold = false}) => TextStyle(
     fontFamily: Tokens.sans,
+    fontWeight: bold ? FontWeight.w700 : null,
     fontSize: Tokens.text1,
     height: 1,
     color: color,
@@ -80,4 +79,10 @@ abstract final class AppText {
       tally(color, size: size).copyWith(
         shadows: [Shadow(color: color, blurRadius: Tokens.ledGlow)],
       );
+}
+
+/// Any style on the taller line height, for text that may wrap onto more
+/// lines.
+extension WrappedText on TextStyle {
+  TextStyle get wrapped => copyWith(height: Tokens.lineHeightWrapped);
 }

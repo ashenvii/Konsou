@@ -11,7 +11,7 @@ import '../../components/hover_mark.dart';
 import '../../components/key_cap.dart';
 import '../../components/mal_score_line.dart';
 import '../../components/one_line_text.dart';
-import '../../components/skeleton.dart';
+import '../../components/skeleton_lines.dart';
 import '../../design/text_styles.dart';
 import '../../design/tokens.dart';
 import '../../detail/strip_title.dart';
@@ -60,7 +60,7 @@ class StripCard extends StatelessWidget {
           2;
 
   static TextStyle stateStyle(Color color) =>
-      AppText.caption(color).copyWith(fontWeight: FontWeight.w700);
+      AppText.caption(color, bold: true);
 
   @override
   Widget build(BuildContext context) {
@@ -127,10 +127,7 @@ class StripCard extends StatelessWidget {
           CardName(title.name, color: nameInk, loading: title.name.isEmpty),
           const SizedBox(height: Tokens.space1),
           if (loading || title.isScorePending)
-            const FractionallySizedBox(
-              widthFactor: 0.5,
-              child: Skeleton(height: Tokens.text1),
-            )
+            const SkeletonLine(size: Tokens.text1)
           else
             MalScoreLine(score: title.malScore),
           const SizedBox(height: Tokens.space1),

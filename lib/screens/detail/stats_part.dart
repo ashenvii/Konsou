@@ -96,13 +96,7 @@ class _Figure extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              value,
-              style: AppText.tally(
-                Tokens.ink,
-                size: Tokens.text3,
-              ).copyWith(fontWeight: FontWeight.w700),
-            ),
+            Text(value, style: AppText.tally(Tokens.ink, size: Tokens.text3)),
             const SizedBox(height: Tokens.space1),
             Text(label, style: AppText.caption(Tokens.inkMuted)),
           ],
@@ -207,8 +201,7 @@ class _Chip extends StatelessWidget {
             maxLines: 1,
             softWrap: false,
             overflow: TextOverflow.fade,
-            style: AppText.tally(Tokens.inkSoft)
-                .copyWith(fontWeight: FontWeight.w700),
+            style: AppText.tally(Tokens.inkSoft),
           ),
           const SizedBox(height: Tokens.space1),
           Text(shown, style: AppText.caption(Tokens.inkMuted)),

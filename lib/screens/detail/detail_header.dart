@@ -23,10 +23,11 @@ class DetailHeader extends StatelessWidget {
           name,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: AppText.heading.copyWith(
-            fontSize: Tokens.text5,
-            height: Tokens.lineHeightWrapped,
-          ),
+          style: AppText.label(
+            Tokens.ink,
+            bold: true,
+            size: Tokens.text5,
+          ).wrapped,
         ),
         if (otherName != null) ...[
           const SizedBox(height: Tokens.space1),

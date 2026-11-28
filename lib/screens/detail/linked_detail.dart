@@ -66,7 +66,7 @@ class LinkedDetail extends ConsumerWidget {
               loading: !page.hasError,
               header: page.hasError
                   ? const SizedBox.shrink()
-                  : const SkeletonLines(title: 0.5, line: 0.3),
+                  : const SkeletonLines(),
             ),
             if (page.hasError) const _Notice('This title could not be read.'),
           ],
@@ -105,9 +105,7 @@ class LinkedDetail extends ConsumerWidget {
             hidden: data.isHidden,
             loading: details == null && fetching,
             header: name.isEmpty
-                ? (fetching
-                      ? const SkeletonLines(title: 0.5, line: 0.3)
-                      : const SizedBox.shrink())
+                ? (fetching ? const SkeletonLines() : const SizedBox.shrink())
                 : DetailHeader(name: name, otherName: details?.otherName),
             meta: details != null && DetailMeta.hasAny(details)
                 ? DetailMeta(details)
@@ -213,9 +211,9 @@ class LinkedDetail extends ConsumerWidget {
     DetailFetch.running => const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SkeletonLines(title: 0.6, line: 0.4),
+        SkeletonLines(),
         SizedBox(height: Tokens.space4),
-        SkeletonLines(title: 0.5, line: 0.3),
+        SkeletonLines(),
       ],
     ),
     DetailFetch.gone => const _Notice(

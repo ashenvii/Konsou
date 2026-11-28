@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 
+import '../../components/held_lines.dart';
 import '../../components/measure_text.dart';
 import '../../components/pressable.dart';
-import '../../components/skeleton_lines.dart';
 import '../../design/text_styles.dart';
 import '../../components/fact_row.dart';
 import '../../components/hairline.dart';
@@ -90,7 +90,12 @@ class _OverviewPartState extends State<OverviewPart> {
         else if (synopsis != null)
           _Clamped(synopsis, lines: lines)
         else if (widget.fetching)
-          const SkeletonLines(title: 1, line: 0.7),
+          HeldLines(
+            '',
+            style: AppText.paragraph(Tokens.inkSoft),
+            lines: lines,
+            loading: true,
+          ),
         if (background != null) ...[
           const SizedBox(height: Tokens.space5 + Tokens.space2),
           DetailBlock(

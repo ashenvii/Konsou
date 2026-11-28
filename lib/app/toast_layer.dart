@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../components/close_on_escape.dart';
+import '../components/page_dim.dart';
 import 'cover_view.dart';
 import '../components/earlier_review.dart';
 import '../components/presence.dart';
@@ -47,11 +48,7 @@ class ToastLayer extends ConsumerWidget {
       children: [
         if (reviewOpen)
           Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => host.setReviewOpen(false),
-              child: ColoredBox(color: Tokens.ground.withValues(alpha: 0.72)),
-            ),
+            child: PageDim(onClose: () => host.setReviewOpen(false)),
           ),
         Positioned.fill(
           child: Padding(

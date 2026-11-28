@@ -1,3 +1,4 @@
+import '../library/row_labels.dart';
 import 'watch_order.dart';
 
 /// "3 of 5 on your list · 59 of 87 episodes watched".
@@ -9,7 +10,7 @@ String watchOrderSummary(WatchOrder order) {
 
 /// The state in words, for a screen reader: the square has no text.
 String watchOrderStateLabel(WatchOrderRow row) {
-  if (row.isLoadingDetails) return 'Loading details';
+  if (row.isLoadingDetails) return loadingDetails;
   final status = row.status;
   if (status != null) return status.label;
   return row.isNotAired ? 'Not aired yet' : 'Not on your list';

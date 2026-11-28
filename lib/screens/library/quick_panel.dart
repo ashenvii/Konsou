@@ -77,10 +77,7 @@ class QuickPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final current = row.status;
     // the trash key's face centred on the heading's first line
-    final headingLine = _lineHeight(
-      context,
-      AppText.heading.copyWith(height: Tokens.lineHeightWrapped),
-    );
+    final headingLine = _lineHeight(context, AppText.heading.wrapped);
     final cornerTop = (headingLine - Tokens.controlHeight) / 2 - keyLift.dy;
     return CallbackShortcuts(
       bindings: {

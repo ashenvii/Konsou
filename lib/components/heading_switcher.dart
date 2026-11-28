@@ -25,14 +25,8 @@ class HeadingSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = AppText.heading.copyWith(
-      fontFeatures: AppText.tally(Tokens.ink).fontFeatures,
-    );
     // the page's name carries the size; the menu word is one step lower
-    final menu = base.copyWith(
-      fontSize: Tokens.text2,
-      letterSpacing: Tokens.text2 * Tokens.labelTracking,
-    );
+    final menu = AppText.label(Tokens.ink, bold: true);
     return SizedBox(
       height: Tokens.controlHeight,
       child: Row(
@@ -41,10 +35,7 @@ class HeadingSwitcher extends StatelessWidget {
           // capitals centred like the menu word, so both share one line
           CapCenteredText(
             title,
-            style: base.copyWith(
-              fontWeight: FontWeight.w400,
-              color: Tokens.inkMuted,
-            ),
+            style: AppText.heading.copyWith(color: Tokens.inkMuted),
           ),
           const SizedBox(width: Tokens.space2),
           MenuSwitcher(

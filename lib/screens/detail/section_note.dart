@@ -14,7 +14,6 @@ class SectionNote extends StatelessWidget {
   Widget build(BuildContext context) => Text(
     text,
     textAlign: TextAlign.right,
-    style: AppText.caption(Tokens.inkMuted)
-        .copyWith(height: Tokens.lineHeightWrapped),
+    style: AppText.caption(Tokens.inkMuted).wrapped,
   );
 }

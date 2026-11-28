@@ -189,8 +189,7 @@ class _Field extends StatelessWidget {
                   controller: controller,
                   focusNode: focus,
                   placeholder: 'Type a title',
-                  style: AppText.label(Tokens.ink)
-                      .copyWith(fontSize: Tokens.text3),
+                  style: AppText.label(Tokens.ink, size: Tokens.text3),
                   placeholderColor: Tokens.inkMuted,
                   cursorColor: Tokens.ink,
                   autofocus: true,
@@ -499,7 +498,7 @@ class _SkeletonRow extends StatelessWidget {
           SizedBox(width: Tokens.space3),
           CoverImage(width: Tokens.quickCoverWidth, loading: true),
           SizedBox(width: Tokens.space3),
-          Expanded(child: SkeletonLines(title: 0.6, line: 0.3)),
+          Expanded(child: SkeletonLines()),
         ],
       ),
     );

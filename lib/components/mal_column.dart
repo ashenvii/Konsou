@@ -5,7 +5,7 @@ import '../design/tokens.dart';
 import '../icons/score_star.dart';
 import '../library/row_labels.dart';
 import 'one_line_text.dart';
-import 'skeleton.dart';
+import 'skeleton_lines.dart';
 import 'value_column.dart';
 
 /// A row's MAL column: MAL's score over the gold star and "MAL", "?" where
@@ -30,10 +30,7 @@ class MalColumn extends StatelessWidget {
     final style = AppText.tally(Tokens.ink, size: Tokens.text2);
     final Widget value;
     if (loading) {
-      value = const FractionallySizedBox(
-        widthFactor: 0.6,
-        child: Skeleton(height: Tokens.text2),
-      );
+      value = const SkeletonLine();
     } else {
       // a blank keeps the line's height so the label stays put
       value = Opacity(

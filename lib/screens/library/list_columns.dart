@@ -42,10 +42,7 @@ abstract final class ListColumns {
   static bool isNarrow(double rowWidth) => rowWidth < EpisodeColumn.narrowBelow;
 
   static TextStyle captionStyle(Color color) =>
-      AppText.label(color, bold: true).copyWith(
-        fontSize: Tokens.text1,
-        letterSpacing: Tokens.text1 * Tokens.labelTracking,
-      );
+      AppText.label(color, bold: true, size: Tokens.text1);
 
   static const yourScoreLabel = 'Your score';
 
